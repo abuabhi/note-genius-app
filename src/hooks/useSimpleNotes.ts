@@ -258,7 +258,7 @@ export const useSimpleNotes = () => {
     }
   });
 
-  // Delete note mutation
+  // Delete note mutation with optimistic updates
   const deleteMutation = useMutation({
     mutationFn: async (noteId: string) => {
       console.log('🗑️ [SIMPLE NOTES] Deleting note:', noteId);
@@ -271,25 +271,46 @@ export const useSimpleNotes = () => {
       
       return noteId;
     },
-    onSuccess: (deletedId) => {
-      // Remove from cache immediately
+    onMutate: async (noteId: string) => {
+      // Cancel outgoing refetches to avoid optimistic update conflicts
+      await queryClient.cancelQueries({ queryKey: NOTES_QUERY_KEY });
+
+      // Snapshot previous value for rollback
+      const previousData = queryClient.getQueriesData({ queryKey: NOTES_QUERY_KEY });
+
+      // Optimistically update cache - remove note immediately
       queryClient.setQueriesData(
         { queryKey: NOTES_QUERY_KEY },
         (oldData: any) => {
           if (!oldData?.notes) return oldData;
           
+          const filteredNotes = oldData.notes.filter((note: Note) => note.id !== noteId);
+          console.log('🔄 [SIMPLE NOTES] Optimistic delete - notes before:', oldData.notes.length, 'after:', filteredNotes.length);
+          
           return {
             ...oldData,
-            notes: oldData.notes.filter((note: Note) => note.id !== deletedId),
+            notes: filteredNotes,
             totalCount: Math.max(0, oldData.totalCount - 1)
           };
         }
       );
-      
+
+      return { previousData };
+    },
+    onSuccess: () => {
+      console.log('✅ [SIMPLE NOTES] Delete confirmed by server');
       toast.success('Note deleted successfully');
     },
-    onError: (error) => {
-      console.error('Failed to delete note:', error);
+    onError: (error, noteId, context) => {
+      console.error('❌ [SIMPLE NOTES] Delete failed, reverting optimistic update:', error);
+      
+      // Revert optimistic update
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      
       toast.error('Failed to delete note');
     }
   });

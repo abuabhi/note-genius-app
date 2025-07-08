@@ -31,7 +31,9 @@ export const OptimizedNotesContent = React.memo(({ viewMode }: OptimizedNotesCon
     searchTerm,
     selectedSubject,
     updateNote,
-    deleteNote
+    deleteNote,
+    error,
+    refetch
   } = useSimpleNotes();
 
   // Virtualization control with memoized threshold - no UI toggle needed
@@ -65,7 +67,7 @@ export const OptimizedNotesContent = React.memo(({ viewMode }: OptimizedNotesCon
   return (
     <div className="space-y-6">
       {/* Error handling */}
-      <NotesErrorHandler />
+      <NotesErrorHandler error={error} onRetry={refetch} />
 
       {/* Filters */}
       <NotesFiltersSection />
@@ -76,24 +78,17 @@ export const OptimizedNotesContent = React.memo(({ viewMode }: OptimizedNotesCon
         isPartiallyLoaded={notes.length > 0}
         skeletonCount={6}
       >
-        {notes.length === 0 && !isInitialLoading ? (
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200 shadow-sm">
-            <EmptyNotesState
-              onCreateNote={() => {}}
-              isFiltered={isFiltered}
-            />
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <NotesContentGrid
-              notes={notes}
-              shouldVirtualize={shouldVirtualize}
-              viewMode={viewMode}
-              onUpdateNote={updateNote}
-              onDeleteNote={deleteNote}
-            />
-            
-            {/* Load More Button */}
+        <div className="space-y-6">
+          <NotesContentGrid
+            notes={notes}
+            shouldVirtualize={shouldVirtualize}
+            viewMode={viewMode}
+            onUpdateNote={updateNote}
+            onDeleteNote={deleteNote}
+          />
+          
+          {/* Load More Button - only show if we have notes */}
+          {notes.length > 0 && (
             <NotesLoadMoreSection
               hasMore={hasMore}
               shouldVirtualize={shouldVirtualize}
@@ -102,15 +97,17 @@ export const OptimizedNotesContent = React.memo(({ viewMode }: OptimizedNotesCon
               currentCount={notes.length}
               onLoadMore={loadMore}
             />
-            
-            {/* Notes Counter */}
+          )}
+          
+          {/* Notes Counter - only show if we have notes */}
+          {notes.length > 0 && (
             <NotesCounter
               currentCount={notes.length}
               totalCount={totalCount}
               shouldVirtualize={shouldVirtualize}
             />
-          </div>
-        )}
+          )}
+        </div>
       </ProgressiveLoader>
     </div>
   );

@@ -73,7 +73,8 @@ export const NoteActionsMenu = ({
       <DropdownMenuSeparator className="bg-mint-100 my-2" />
       
       <DeleteAction 
-        noteId={noteId} 
+        noteId={noteId}
+        noteTitle={noteTitle}
         onDelete={handleDelete} 
       />
     </>

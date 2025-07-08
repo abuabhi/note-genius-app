@@ -26,23 +26,20 @@ export const NotesContentGrid = memo(({
     shouldVirtualize 
   });
 
-  if (notes.length === 0) {
-    return (
-      <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-lg shadow-mint-500/5">
-        <EmptyNotesState onCreateNote={() => {}} isFiltered={false} />
-      </div>
-    );
-  }
-
+  // Always render the container to prevent flash screens during optimistic updates
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
-      <OptimizedNotesGrid
-        notes={notes}
-        viewMode={viewMode}
-        onUpdateNote={onUpdateNote}
-        onDeleteNote={onDeleteNote}
-        shouldVirtualize={shouldVirtualize}
-      />
+      {notes.length === 0 ? (
+        <EmptyNotesState onCreateNote={() => {}} isFiltered={false} />
+      ) : (
+        <OptimizedNotesGrid
+          notes={notes}
+          viewMode={viewMode}
+          onUpdateNote={onUpdateNote}
+          onDeleteNote={onDeleteNote}
+          shouldVirtualize={shouldVirtualize}
+        />
+      )}
     </div>
   );
 });
