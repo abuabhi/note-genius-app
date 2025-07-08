@@ -82,12 +82,13 @@ export const ContentExpansionContextMenu = React.memo(({
       ref={menuRef}
       className="fixed z-[99999] bg-white rounded-xl shadow-2xl border-2 border-green-200 p-4 min-w-64 max-w-80"
       style={{
-        left: Math.max(16, Math.min(position.x - 160, window.innerWidth - 320)),
-        top: Math.max(16, Math.min(position.y - 80, window.innerHeight - 120)),
+        left: position.x,
+        top: position.y,
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(34, 197, 94, 0.3)',
         backgroundColor: 'white',
         border: '2px solid #22c55e',
-        pointerEvents: 'auto'
+        pointerEvents: 'auto',
+        transform: 'none' // Prevent any transform that might offset positioning
       }}
     >
       <div className="text-sm text-muted-foreground mb-3 px-1 font-medium">

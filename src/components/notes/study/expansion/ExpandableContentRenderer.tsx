@@ -66,6 +66,18 @@ export const ExpandableContentRenderer = ({
         const beforeText = processedText.substring(0, position + expansion.originalText.length);
         const afterText = processedText.substring(position + expansion.originalText.length);
         
+        // Clean the expanded content - remove markdown formatting and bold text
+        const cleanExpandedContent = expansion.expandedContent
+          .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
+          .replace(/\*(.*?)\*/g, '$1')     // Remove italic markdown
+          .replace(/#{1,6}\s*/g, '')       // Remove headers
+          .replace(/^\s*[-*+]\s*/gm, '')   // Remove bullet points
+          .replace(/^\s*\d+\.\s*/gm, '')   // Remove numbered lists
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0)
+          .join('\n\n');
+
         const expansionBlock = `
 
 ---
@@ -73,7 +85,7 @@ export const ExpandableContentRenderer = ({
 <div class="ai-expansion-header">🧠 AI Expanded Content</div>
 
 <div class="ai-expansion-content">
-${expansion.expandedContent.split('\n').map(line => line.trim()).filter(line => line.length > 0).join('\n\n')}
+${cleanExpandedContent}
 </div>
 
 <div class="expansion-remove-wrapper" data-expansion-id="${expansion.id}">
@@ -91,9 +103,12 @@ ${expansion.expandedContent.split('\n').map(line => line.trim()).filter(line => 
 
   // DEBOUNCED selection handler to prevent multiple rapid calls
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const selectionRef = useRef<{ text: string; position: { x: number; y: number } } | null>(null);
+  const selectionRef = useRef<Range | null>(null);
 
   const handleTextSelection = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    // Prevent event from bubbling up
+    event.stopPropagation();
+    
     console.log("🎯 SELECTION: Text selection handler triggered");
     
     // Clear existing timeout
@@ -126,39 +141,65 @@ ${expansion.expandedContent.split('\n').map(line => line.trim()).filter(line => 
       
       console.log("📍 SELECTION: Position rect:", rect);
       
-      // Store selection in ref to prevent loss during re-renders
-      const selectionData = {
-        text,
-        position: {
-          x: rect.left + (rect.width / 2),
-          y: rect.top + window.scrollY - 10
-        }
-      };
+      // Store the actual range to preserve selection
+      selectionRef.current = range.cloneRange();
       
-      selectionRef.current = selectionData;
+      // Calculate position next to the selection (to the right, or below if no space)
+      const viewportWidth = window.innerWidth;
+      const menuWidth = 320; // Approximate menu width
+      
+      let x = rect.right + 10; // Position to the right of selection
+      let y = rect.top + window.scrollY;
+      
+      // If menu would go off-screen on the right, position it to the left
+      if (x + menuWidth > viewportWidth) {
+        x = rect.left - menuWidth - 10;
+      }
+      
+      // If still off-screen on the left, position it below the selection
+      if (x < 16) {
+        x = Math.max(16, rect.left);
+        y = rect.bottom + window.scrollY + 10;
+      }
+      
+      const menuPosition = { x, y };
+      
       setSelectedText(text);
-      setMenuPosition(selectionData.position);
+      setMenuPosition(menuPosition);
       setIsMenuVisible(true);
       
-      console.log("✅ SELECTION: Menu should be visible now at position:", selectionData.position);
+      console.log("✅ SELECTION: Menu positioned at:", menuPosition, "Selection preserved");
     }, 100); // 100ms debounce
   }, []);
 
   const handleExpand = async (text: string) => {
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
+    // Use preserved selection from ref
+    const range = selectionRef.current;
+    if (!range) return;
 
-    const range = selection.getRangeAt(0);
     const startOffset = range.startOffset;
     
     await expandContent(text, startOffset);
     setIsMenuVisible(false);
-    selection.removeAllRanges();
+    
+    // Clear the selection after expansion
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+    }
+    selectionRef.current = null;
   };
 
   const handleCloseMenu = () => {
     setIsMenuVisible(false);
     setSelectedText('');
+    selectionRef.current = null;
+    
+    // Clear browser selection
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+    }
   };
 
   // Expose removeExpansion function globally for button clicks
@@ -240,7 +281,8 @@ ${expansion.expandedContent.split('\n').map(line => line.trim()).filter(line => 
           padding: 1rem 1.25rem;
           margin: 0.5rem 0 1.5rem 0;
           border-radius: 0 0.5rem 0.5rem 0;
-          font-style: italic;
+          font-style: normal;
+          font-weight: normal;
           color: #166534;
           line-height: 1.6;
           position: relative;
