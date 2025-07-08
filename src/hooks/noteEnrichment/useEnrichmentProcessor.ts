@@ -34,6 +34,7 @@ export const useEnrichmentProcessor = () => {
   const saveEnhancedContent = async (noteId: string, enhancementType: string, content: string) => {
     const contentField = getContentFieldName(enhancementType);
     const statusField = `${enhancementType.replace(/-/g, '_')}_status`;
+    const generatedAtField = getGeneratedAtFieldName(enhancementType);
     
     try {
       const { error } = await supabase
@@ -41,7 +42,7 @@ export const useEnrichmentProcessor = () => {
         .update({ 
           [contentField]: content,
           [statusField]: 'completed',
-          [`${enhancementType.replace(/-/g, '_')}_generated_at`]: new Date().toISOString()
+          [generatedAtField]: new Date().toISOString()
         })
         .eq('id', noteId);
         
@@ -67,6 +68,18 @@ export const useEnrichmentProcessor = () => {
     };
     
     return mappings[enhancementType] || 'enriched_content';
+  };
+
+  const getGeneratedAtFieldName = (enhancementType: string): string => {
+    const mappings: Record<string, string> = {
+      'summarize': 'summary_generated_at',
+      'extract-key-points': 'key_points_generated_at', 
+      'improve-clarity': 'improved_content_generated_at',
+      'convert-to-markdown': 'markdown_content_generated_at',
+      'enrich-note': 'enriched_content_generated_at'
+    };
+    
+    return mappings[enhancementType] || 'enriched_content_generated_at';
   };
 
   const processEnhancement = async (

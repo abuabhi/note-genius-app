@@ -1,7 +1,7 @@
 
 import type { TokenUsage } from './types.ts';
 
-export const callOpenAI = async (prompt: string, apiKey: string): Promise<{ enhancedContent: string; tokenUsage?: TokenUsage }> => {
+export const callOpenAI = async (prompt: string, apiKey: string, signal?: AbortSignal): Promise<{ enhancedContent: string; tokenUsage?: TokenUsage }> => {
   console.log('Calling OpenAI API...');
   
   try {
@@ -11,6 +11,7 @@ export const callOpenAI = async (prompt: string, apiKey: string): Promise<{ enha
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
+      signal,
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
@@ -19,8 +20,8 @@ export const callOpenAI = async (prompt: string, apiKey: string): Promise<{ enha
             content: prompt
           }
         ],
-        temperature: 0.7,
-        max_tokens: 4000,
+        temperature: 0.5,
+        max_tokens: 1500,
       }),
     });
 

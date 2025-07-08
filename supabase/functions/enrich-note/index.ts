@@ -21,6 +21,10 @@ serve(async (req) => {
     timestamp: new Date().toISOString()
   });
   
+  // Set timeout to 45 seconds (before the 60s client timeout)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 45000);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -112,20 +116,28 @@ serve(async (req) => {
     let tokenUsage;
     
     try {
-      const openAIResult = await callOpenAI(prompt, openaiApiKey);
+      const openAIResult = await callOpenAI(prompt, openaiApiKey, controller.signal);
       enhancedContent = openAIResult.enhancedContent;
       tokenUsage = openAIResult.tokenUsage;
       console.log("Enhancement successful. Content length:", enhancedContent.length);
+      clearTimeout(timeoutId);
     } catch (openAIError) {
+      clearTimeout(timeoutId);
       console.error('❌ OpenAI API error:', openAIError);
-      console.error('🔍 OpenAI error details:', {
-        errorType: typeof openAIError,
-        errorMessage: openAIError.message,
-        errorStack: openAIError.stack
-      });
+      
+      if (controller.signal.aborted) {
+        return createCorsResponse(
+          { 
+            error: 'Request timeout', 
+            details: 'The enhancement request took too long. Please try with shorter content or try again later.'
+          } as ErrorResponse,
+          408
+        );
+      }
+      
       return createCorsResponse(
         { 
-          error: `OpenAI API error: ${openAIError.message}`, 
+          error: `AI service error: ${openAIError.message}`, 
           details: 'The AI service is experiencing issues. Please try again.'
         } as ErrorResponse,
         502
