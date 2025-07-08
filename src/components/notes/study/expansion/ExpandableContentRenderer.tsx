@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { ContentExpansionContextMenu } from './ContentExpansionContextMenu';
 import { ExpansionPreviewDialog } from './ExpansionPreviewDialog';
 import { useContentExpansion } from './useContentExpansion';
@@ -89,39 +89,60 @@ ${expansion.expandedContent.split('\n').map(line => line.trim()).filter(line => 
     return processedText;
   }, [content, expansions]);
 
-  const handleTextSelection = () => {
+  // DEBOUNCED selection handler to prevent multiple rapid calls
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const selectionRef = useRef<{ text: string; position: { x: number; y: number } } | null>(null);
+
+  const handleTextSelection = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     console.log("🎯 SELECTION: Text selection handler triggered");
     
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
-      console.log("❌ SELECTION: No selection or range");
-      setIsMenuVisible(false);
-      return;
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
+    
+    // Debounce to prevent rapid calls
+    debounceTimeoutRef.current = setTimeout(() => {
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) {
+        console.log("❌ SELECTION: No selection or range");
+        setIsMenuVisible(false);
+        selectionRef.current = null;
+        return;
+      }
 
-    const text = selection.toString().trim();
-    console.log("📝 SELECTION: Selected text:", text, "Length:", text.length);
-    
-    if (text.length < 5) { // Reduced minimum selection length
-      console.log("⚠️ SELECTION: Text too short, hiding menu");
-      setIsMenuVisible(false);
-      return;
-    }
+      const text = selection.toString().trim();
+      console.log("📝 SELECTION: Selected text:", `"${text}"`, "Length:", text.length);
+      
+      if (text.length < 5) {
+        console.log("⚠️ SELECTION: Text too short, hiding menu");
+        setIsMenuVisible(false);
+        selectionRef.current = null;
+        return;
+      }
 
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    
-    console.log("📍 SELECTION: Position rect:", rect);
-    
-    setSelectedText(text);
-    setMenuPosition({
-      x: rect.left + (rect.width / 2),
-      y: rect.top + window.scrollY - 10
-    });
-    setIsMenuVisible(true);
-    
-    console.log("✅ SELECTION: Menu should be visible now");
-  };
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      
+      console.log("📍 SELECTION: Position rect:", rect);
+      
+      // Store selection in ref to prevent loss during re-renders
+      const selectionData = {
+        text,
+        position: {
+          x: rect.left + (rect.width / 2),
+          y: rect.top + window.scrollY - 10
+        }
+      };
+      
+      selectionRef.current = selectionData;
+      setSelectedText(text);
+      setMenuPosition(selectionData.position);
+      setIsMenuVisible(true);
+      
+      console.log("✅ SELECTION: Menu should be visible now at position:", selectionData.position);
+    }, 100); // 100ms debounce
+  }, []);
 
   const handleExpand = async (text: string) => {
     const selection = window.getSelection();
@@ -146,8 +167,12 @@ ${expansion.expandedContent.split('\n').map(line => line.trim()).filter(line => 
       removeExpansion(expansionId);
     };
     
+    // Cleanup timeout on unmount
     return () => {
       delete (window as any).removeExpansion;
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
     };
   }, [removeExpansion]);
 
@@ -157,11 +182,10 @@ ${expansion.expandedContent.split('\n').map(line => line.trim()).filter(line => 
         ref={contentRef}
         className={`expandable-content ${className}`}
         style={{
-          userSelect: 'text'
+          userSelect: 'text',
+          position: 'relative'
         }}
         onMouseUp={handleTextSelection}
-        onTouchEnd={handleTextSelection}
-        onSelect={handleTextSelection}
       >
         {/* FIXED: Use NuclearContentRenderer for consistent, beautiful formatting */}
         <NuclearContentRenderer
