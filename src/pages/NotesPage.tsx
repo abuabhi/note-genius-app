@@ -6,14 +6,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
 import { useViewPreferences } from '@/hooks/useViewPreferences';
-import { useState } from 'react';
-import { useUserTier } from '@/hooks/useUserTier';
-import { EnhancedImportDialog } from '@/components/notes/import/EnhancedImportDialog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CreateNoteForm } from '@/components/notes/page/CreateNoteForm';
-import { Note } from '@/types/note';
-import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
-import { toast } from 'sonner';
 
 // Enhanced error fallback component with better debugging
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => {
@@ -50,42 +42,12 @@ const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetError
 
 const NotesPageContent = () => {
   const { viewMode, setViewMode } = useViewPreferences('notes');
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
-  const { userTier } = useUserTier();
 
   // Convert ViewMode to the expected type for the header and content
   const convertedViewMode: 'grid' | 'list' = viewMode === 'compact' ? 'grid' : viewMode as 'grid' | 'list';
   
   const handleViewModeChange = (mode: 'grid' | 'list') => {
     setViewMode(mode);
-  };
-
-  const { addNote, refreshNotes } = useOptimizedNotes();
-
-  const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
-    try {
-      console.log('🚀 Creating note and closing dialog...');
-      
-      // Close dialog immediately to prevent UI lag
-      setIsManualDialogOpen(false);
-      
-      // Create the note
-      const newNote = await addNote(noteData);
-      if (newNote) {
-        toast.success('Note created successfully!');
-        // The OptimizedNotesContext will automatically update the notes list
-        console.log('✅ Note created, context will handle UI update');
-        return newNote;
-      }
-      return null;
-    } catch (error) {
-      console.error('Failed to create note:', error);
-      toast.error('Failed to create note. Please try again.');
-      // Reopen dialog if creation failed
-      setIsManualDialogOpen(true);
-      return null;
-    }
   };
 
   return (
@@ -95,8 +57,8 @@ const NotesPageContent = () => {
         loading={false}
         viewMode={convertedViewMode}
         onViewModeChange={handleViewModeChange}
-        onOpenManualDialog={() => setIsManualDialogOpen(true)}
-        onOpenImportDialog={() => setIsImportDialogOpen(true)}
+        onOpenManualDialog={() => {}}
+        onOpenImportDialog={() => {}}
       />
       
       <div className="container mx-auto px-6 py-8">
@@ -112,26 +74,6 @@ const NotesPageContent = () => {
           <OptimizedNotesContent viewMode={convertedViewMode} />
         </ErrorBoundary>
       </div>
-
-      {/* Import Dialog */}
-      <EnhancedImportDialog 
-        isVisible={isImportDialogOpen} 
-        onClose={() => setIsImportDialogOpen(false)}
-        onSaveNote={async (note) => {
-          return true;
-        }}
-        isPremiumUser={userTier === 'GRADUATE' || userTier === 'MASTER'}
-      />
-
-      {/* Manual Note Creation Dialog */}
-      <Dialog open={isManualDialogOpen} onOpenChange={setIsManualDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create New Note</DialogTitle>
-          </DialogHeader>
-          <CreateNoteForm onSave={handleSaveNote} />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
