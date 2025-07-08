@@ -33,7 +33,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() || !selectedSubject || !content.trim()) return;
 
     setIsSubmitting(true);
     try {
@@ -71,7 +71,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label htmlFor="title">Title</Label>
+        <Label htmlFor="title">Title <span className="text-red-500">*</span></Label>
         <Input
           id="title"
           value={title}
@@ -82,8 +82,8 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
       </div>
       
       <div>
-        <Label htmlFor="subject">Subject</Label>
-        <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+        <Label htmlFor="subject">Subject <span className="text-red-500">*</span></Label>
+        <Select value={selectedSubject} onValueChange={setSelectedSubject} required>
           <SelectTrigger>
             <SelectValue placeholder="Select a subject" />
           </SelectTrigger>
@@ -114,20 +114,21 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
       </div>
 
       <div>
-        <Label htmlFor="content">Content</Label>
+        <Label htmlFor="content">Content <span className="text-red-500">*</span></Label>
         <Textarea
           id="content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Enter your note content..."
           rows={6}
+          required
         />
       </div>
 
       <div className="flex justify-end gap-2">
         <Button
           type="submit"
-          disabled={!title.trim() || isSubmitting}
+          disabled={!title.trim() || !selectedSubject || !content.trim() || isSubmitting}
           className="bg-mint-600 hover:bg-mint-700"
         >
           {isSubmitting ? (initialData ? 'Updating...' : 'Creating...') : (initialData ? 'Update Note' : 'Create Note')}
