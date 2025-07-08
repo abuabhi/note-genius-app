@@ -32,11 +32,13 @@ serve(async (req) => {
   
   // Health check endpoint
   if (req.url.includes('/health')) {
+    clearTimeout(timeoutId);
     return createCorsResponse({
       status: 'healthy',
       timestamp: new Date().toISOString(),
       openaiConfigured: !!openaiApiKey,
-      supabaseConfigured: !!(supabaseUrl && supabaseAnonKey)
+      supabaseConfigured: !!(supabaseUrl && supabaseAnonKey),
+      version: '2.0.0'
     });
   }
   

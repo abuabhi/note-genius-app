@@ -2,7 +2,7 @@
 import type { TokenUsage } from './types.ts';
 
 export const callOpenAI = async (prompt: string, apiKey: string, signal?: AbortSignal): Promise<{ enhancedContent: string; tokenUsage?: TokenUsage }> => {
-  console.log('Calling OpenAI API...');
+  console.log('🤖 Calling OpenAI API...');
   
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -20,15 +20,25 @@ export const callOpenAI = async (prompt: string, apiKey: string, signal?: AbortS
             content: prompt
           }
         ],
-        temperature: 0.5,
-        max_tokens: 1500,
+        temperature: 0.3, // Lower temperature for consistency
+        max_tokens: 1200, // Reduced for faster response
+        stream: false
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error response:', errorText);
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+      console.error('❌ OpenAI API error response:', response.status, errorText);
+      
+      if (response.status === 429) {
+        throw new Error('AI service is busy. Please try again in a moment.');
+      } else if (response.status === 401) {
+        throw new Error('AI service authentication failed. Please check configuration.');
+      } else if (response.status >= 500) {
+        throw new Error('AI service is temporarily unavailable. Please try again.');
+      } else {
+        throw new Error(`AI service error: ${response.status}`);
+      }
     }
 
     const data = await response.json();

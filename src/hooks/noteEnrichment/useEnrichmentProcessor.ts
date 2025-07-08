@@ -22,12 +22,13 @@ export const useEnrichmentProcessor = () => {
         .eq('id', noteId);
         
       if (error) {
-        console.warn(`Failed to update ${statusField}:`, error);
-      } else {
-        console.log(`✅ Updated ${statusField} to ${status}`);
+        console.error(`❌ Failed to update ${statusField}:`, error);
+        throw error;
       }
+      console.log(`✅ Updated ${statusField} to ${status}`);
     } catch (error) {
-      console.warn(`Failed to update note status:`, error);
+      console.error(`❌ Failed to update note status:`, error);
+      throw error;
     }
   };
 
@@ -37,6 +38,7 @@ export const useEnrichmentProcessor = () => {
     const generatedAtField = getGeneratedAtFieldName(enhancementType);
     
     try {
+      // Use transaction for consistency
       const { error } = await supabase
         .from('notes')
         .update({ 
@@ -47,13 +49,12 @@ export const useEnrichmentProcessor = () => {
         .eq('id', noteId);
         
       if (error) {
-        console.error(`Failed to save ${contentField}:`, error);
+        console.error(`❌ Failed to save ${contentField}:`, error);
         throw error;
-      } else {
-        console.log(`✅ Saved content to ${contentField}`);
       }
+      console.log(`✅ Saved content to ${contentField}`);
     } catch (error) {
-      console.error(`Failed to save enhanced content:`, error);
+      console.error(`❌ Failed to save enhanced content:`, error);
       throw error;
     }
   };
@@ -91,41 +92,34 @@ export const useEnrichmentProcessor = () => {
     console.log("🚀 Starting enhancement processing:", enhancementType);
     setIsLoading(true);
     
-    // Update status to generating immediately
-    await updateNoteStatus(noteId, enhancementType, 'generating');
-    
     try {
+      // Update status to generating
+      await updateNoteStatus(noteId, enhancementType, 'generating');
+      
+      // Call the API
       const result = await callEnrichmentAPI(
         { id: noteId, content, title },
         enhancementType
       );
       
-      console.log("✅ Enhancement completed successfully, saving to database");
-      
-      // CRITICAL FIX: Save the actual content to the database
+      // Save the content to database
       await saveEnhancedContent(noteId, enhancementType, result);
       
+      console.log("✅ Enhancement completed successfully");
       return { success: true, content: result };
+      
     } catch (error) {
       console.error("❌ Enhancement failed:", error);
-      console.error("❌ Error type:", typeof error);
-      console.error("❌ Error constructor:", error?.constructor?.name);
       
       // Update status to failed
-      await updateNoteStatus(noteId, enhancementType, 'failed');
-      
-      // Enhanced error message extraction
-      let errorMessage = 'Unknown error';
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      } else if (error && typeof error === 'object') {
-        errorMessage = JSON.stringify(error);
+      try {
+        await updateNoteStatus(noteId, enhancementType, 'failed');
+      } catch (statusError) {
+        console.error("❌ Failed to update status to failed:", statusError);
       }
       
-      console.error("🔍 Final error message being returned:", errorMessage);
+      // Extract clean error message
+      const errorMessage = error instanceof Error ? error.message : String(error);
       
       return { 
         success: false, 

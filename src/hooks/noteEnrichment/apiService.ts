@@ -20,8 +20,8 @@ const callEnrichmentAPIWithRetry = async (
   enhancementType: EnhancementFunction,
   attempt: number = 1
 ): Promise<string> => {
-  const maxRetries = 2;
-  const timeout = 60000; // 60 seconds
+  const maxRetries = 1; // Reduced retries for faster response
+  const timeout = 55000; // 55 seconds to stay under 60s limit
   
   console.log(`🚀 Enhancement attempt ${attempt}/${maxRetries + 1}: ${enhancementType} for note ${note.id.substring(0, 8)}`);
   
@@ -34,14 +34,6 @@ const callEnrichmentAPIWithRetry = async (
     }, timeout);
     
     console.log('🔄 Calling enrich-note function...');
-    console.log('📋 Request details:', {
-      noteId: note.id.substring(0, 8) + '...',
-      titleLength: (note.title || '').length,
-      contentLength: note.content.length,
-      enhancementType,
-      attempt,
-      timestamp: new Date().toISOString()
-    });
     
     const { data, error } = await supabase.functions.invoke('enrich-note', {
       body: {
@@ -55,48 +47,29 @@ const callEnrichmentAPIWithRetry = async (
     clearTimeout(timeoutId);
     
     if (controller.signal.aborted) {
-      throw new Error('timeout');
+      throw new Error('Request timed out. Please try with shorter content.');
     }
     
     if (error) {
-      console.error('❌ Error calling enrich-note function:', error);
-      console.error('📄 Full error details:', JSON.stringify(error, null, 2));
+      console.error('❌ API Error:', error);
       
-      // Extract detailed error information from Supabase response
-      let errorMessage = 'API call failed';
-      
-      if (error.message) {
-        errorMessage = error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      } else if (error.error_description) {
-        errorMessage = error.error_description;
-      } else if (error.details) {
-        errorMessage = error.details;
-      }
-      
-      console.error('🔍 Extracted error message:', errorMessage);
+      // Extract clean error message
+      const errorMessage = error.message || error.error_description || error.details || 'API call failed';
       throw new Error(errorMessage);
     }
     
     if (!data?.enhancedContent) {
-      console.error('No enhanced content in response:', data);
       throw new Error('No enhanced content returned from AI service');
     }
     
-    console.log('✅ Enhancement completed successfully:', {
-      contentLength: data.enhancedContent.length,
-      hasTokenUsage: !!data.tokenUsage,
-      enhancementType,
-      attempt
-    });
+    console.log('✅ Enhancement completed:', data.enhancedContent.length, 'characters');
     
-    // Track token usage (if available)
+    // Track token usage if available
     if (data.tokenUsage) {
       try {
         await trackTokenUsage(note.id, data.tokenUsage);
       } catch (trackError) {
-        console.error('Error tracking token usage:', trackError);
+        console.warn('Token tracking failed:', trackError);
       }
     }
 
@@ -104,39 +77,24 @@ const callEnrichmentAPIWithRetry = async (
   } catch (error) {
     console.error(`❌ Enhancement attempt ${attempt} failed:`, error);
     
-    // Check if we should retry
+    // Check if we should retry for network/timeout errors only
     const isRetryableError = (
       error instanceof Error && (
         error.message.includes('timeout') ||
         error.message.includes('network') ||
-        error.message.includes('fetch') ||
-        error.message === 'timeout'
+        error.message.includes('fetch')
       )
     );
     
     if (isRetryableError && attempt <= maxRetries) {
-      console.log(`🔄 Retrying enhancement in ${attempt * 2} seconds... (attempt ${attempt + 1}/${maxRetries + 1})`);
-      await sleep(attempt * 2000); // Exponential backoff
+      console.log(`🔄 Retrying enhancement... (attempt ${attempt + 1}/${maxRetries + 1})`);
+      await sleep(2000); // Fixed 2 second wait
       return callEnrichmentAPIWithRetry(note, enhancementType, attempt + 1);
     }
     
-    // Final error handling
-    if (error instanceof Error) {
-      if (error.message.includes('timeout') || error.message === 'timeout') {
-        throw new Error(`Request timed out after ${timeout/1000} seconds. The AI service may be experiencing high load. Please try again.`);
-      }
-      if (error.message?.includes('quota') || error.message?.includes('limit')) {
-        throw new Error('AI service quota exceeded. Please try again later or upgrade your plan.');
-      }
-      if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        throw new Error('Network error occurred. Please check your connection and try again.');
-      }
-    }
-    
-    // Preserve the original error details instead of generic message
-    const originalError = error instanceof Error ? error.message : String(error);
-    console.error('🔍 Final error being thrown:', originalError);
-    throw new Error(originalError);
+    // Clean error message for user
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -176,10 +134,9 @@ export const callEnrichmentAPI = async (
     throw new Error('No content to enhance');
   }
   
-  // Add pre-flight health check for debugging
-  console.log('🏥 Running pre-flight health check...');
-  const healthCheck = await testEnrichmentHealth();
-  console.log('🏥 Health check result:', healthCheck);
+  if (note.content.length > 8000) {
+    throw new Error('Content too long. Please use shorter text (max 8000 characters).');
+  }
   
   return callEnrichmentAPIWithRetry(note, enhancementType, 1);
 };
