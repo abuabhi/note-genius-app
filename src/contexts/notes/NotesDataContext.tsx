@@ -1,8 +1,10 @@
 
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Note } from '@/types/note';
 import { useNotesDataStateMachine } from '@/hooks/notes/useNotesDataStateMachine';
 import { useOptimizedNotesWithQuery } from '@/hooks/useOptimizedNotesWithQuery';
+import { notesQueryKeys } from '@/hooks/queries/useNotesQueries';
 
 interface NotesDataContextType {
   // Core data
@@ -40,6 +42,7 @@ const NotesDataContext = createContext<NotesDataContextType | undefined>(undefin
 const NotesDataProviderInner = React.memo(({ children }: { children: ReactNode }) => {
   const dataStateMachine = useNotesDataStateMachine();
   const queryHook = useOptimizedNotesWithQuery();
+  const queryClient = useQueryClient();
 
   // Direct synchronization - no complex state machine logic
   React.useEffect(() => {
@@ -55,6 +58,32 @@ const NotesDataProviderInner = React.memo(({ children }: { children: ReactNode }
       );
     }
   }, [queryHook.loading, queryHook.error, queryHook.notes, queryHook.totalCount, queryHook.hasMore]);
+
+  // Cache synchronization - watch for React Query cache updates from mutations
+  React.useEffect(() => {
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      // Only handle successful updates to notes list queries
+      if (event.type === 'updated' && 
+          event.query.queryKey.some(key => 
+            Array.isArray(key) && key[0] === 'notes' && key[1] === 'list'
+          ) &&
+          event.query.state.status === 'success' &&
+          event.query.state.data) {
+        
+        console.log('🔄 [CACHE SYNC] React Query cache updated, syncing to state machine');
+        const data = event.query.state.data as any;
+        
+        // Immediately sync cache data to state machine for instant UI updates
+        dataStateMachine.actions.fetchSuccess(
+          data.notes || [],
+          data.totalCount || 0,
+          data.hasMore || false
+        );
+      }
+    });
+
+    return unsubscribe;
+  }, [queryClient, dataStateMachine.actions]);
 
   // Simplified load more function
   const loadMore = React.useCallback(() => {
