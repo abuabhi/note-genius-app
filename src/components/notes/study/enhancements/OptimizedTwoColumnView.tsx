@@ -6,6 +6,7 @@ import { EnhancementSelector, EnhancementContentType } from "./EnhancementSelect
 import { EnhancementDisplayPanel } from "./EnhancementDisplayPanel";
 import { useEnrichmentProcessor } from "@/hooks/noteEnrichment/useEnrichmentProcessor";
 import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
+import { extractErrorMessage, logErrorWithContext } from "@/utils/errorUtils";
 
 interface OptimizedTwoColumnViewProps {
   note: Note;
@@ -64,14 +65,15 @@ export const OptimizedTwoColumnView = ({
         // Keep error in state for user feedback
         setEnhancedContents(prev => ({
           ...prev,
-          [enhancementType]: `Error: ${result.error}`
+          [enhancementType]: `Error: ${result.error || 'Enhancement failed'}`
         }));
       }
     } catch (error) {
-      console.error("❌ Enhancement processing error:", error);
+      logErrorWithContext(error, "Enhancement processing", { enhancementType, noteId: note.id });
+      const errorInfo = extractErrorMessage(error);
       setEnhancedContents(prev => ({
         ...prev,
-        [enhancementType]: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        [enhancementType]: `Error: ${errorInfo.message}`
       }));
     }
   };

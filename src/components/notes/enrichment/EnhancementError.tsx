@@ -2,9 +2,10 @@ import React from 'react';
 import { AlertTriangle, RefreshCw, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { extractErrorMessage } from '@/utils/errorUtils';
 
 interface EnhancementErrorProps {
-  error: string;
+  error: string | unknown;
   onRetry?: () => void;
   title?: string;
   enhancementType?: string;
@@ -16,6 +17,10 @@ export const EnhancementError = ({
   title = "Enhancement Failed",
   enhancementType = ""
 }: EnhancementErrorProps) => {
+  
+  // Extract error message using utility
+  const errorInfo = extractErrorMessage(error);
+  const errorMessage = errorInfo.message;
   
   const getErrorMessage = (error: string, enhancementType: string) => {
     if (error.includes('timeout') || error.includes('timed out')) {
@@ -57,7 +62,7 @@ export const EnhancementError = ({
     };
   };
   
-  const errorDetails = getErrorMessage(error, enhancementType);
+  const errorDetails = getErrorMessage(errorMessage, enhancementType);
   
   return (
     <Card className="m-6 border-red-200 bg-red-50/50">
@@ -112,7 +117,9 @@ export const EnhancementError = ({
             </summary>
             <div className="mt-2 p-3 bg-red-100 rounded text-xs text-red-700 font-mono text-left">
               Enhancement Type: {enhancementType}<br/>
-              Error: {error}
+              Error: {errorMessage}<br/>
+              {errorInfo.code && `Code: ${errorInfo.code}`}<br/>
+              {errorInfo.details && `Details: ${errorInfo.details.substring(0, 200)}...`}
             </div>
           </details>
         </div>

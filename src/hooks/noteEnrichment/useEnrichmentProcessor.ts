@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { callEnrichmentAPI } from "./apiService";
 import { EnhancementFunction } from "./types";
 import { supabase } from "@/integrations/supabase/client";
+import { extractErrorMessage, logErrorWithContext } from "@/utils/errorUtils";
 
 interface EnrichmentResult {
   success: boolean;
@@ -109,22 +110,22 @@ export const useEnrichmentProcessor = () => {
       return { success: true, content: result };
       
     } catch (error) {
-      console.error("❌ Enhancement failed:", error);
+      logErrorWithContext(error, "Enhancement processing", { noteId, enhancementType });
       
       // Update status to failed
       try {
         await updateNoteStatus(noteId, enhancementType, 'failed');
       } catch (statusError) {
-        console.error("❌ Failed to update status to failed:", statusError);
+        logErrorWithContext(statusError, "Failed to update status to failed", { noteId, enhancementType });
       }
       
-      // Extract clean error message
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      // Extract clean error message using utility
+      const errorInfo = extractErrorMessage(error);
       
       return { 
         success: false, 
         content: '', 
-        error: errorMessage
+        error: errorInfo.message
       };
     } finally {
       setIsLoading(false);

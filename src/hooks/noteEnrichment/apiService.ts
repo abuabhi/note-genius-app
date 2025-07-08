@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancementFunction } from "./types";
 import { trackTokenUsage } from "./tokenTracking";
+import { extractErrorMessage, logErrorWithContext } from "@/utils/errorUtils";
 
 /**
  * Calls the edge function to enrich a note with AI
@@ -51,11 +52,11 @@ const callEnrichmentAPIWithRetry = async (
     }
     
     if (error) {
-      console.error('❌ API Error:', error);
+      logErrorWithContext(error, 'Enhancement API Error', { noteId: note.id, enhancementType });
       
-      // Extract clean error message
-      const errorMessage = error.message || error.error_description || error.details || 'API call failed';
-      throw new Error(errorMessage);
+      // Extract clean error message using utility
+      const errorInfo = extractErrorMessage(error);
+      throw new Error(errorInfo.message);
     }
     
     if (!data?.enhancedContent) {
@@ -75,26 +76,27 @@ const callEnrichmentAPIWithRetry = async (
 
     return data.enhancedContent.trim();
   } catch (error) {
-    console.error(`❌ Enhancement attempt ${attempt} failed:`, error);
+    logErrorWithContext(error, `Enhancement attempt ${attempt} failed`, { noteId: note.id, enhancementType });
     
     // Check if we should retry for network/timeout errors only
-    const isRetryableError = (
-      error instanceof Error && (
-        error.message.includes('timeout') ||
-        error.message.includes('network') ||
-        error.message.includes('fetch')
-      )
+    const errorInfo = extractErrorMessage(error);
+    const isRetryable = (
+      errorInfo.message.includes('timeout') ||
+      errorInfo.message.includes('network') ||
+      errorInfo.message.includes('fetch') ||
+      errorInfo.code === '408' ||
+      errorInfo.code === '502' ||
+      errorInfo.code === '503'
     );
     
-    if (isRetryableError && attempt <= maxRetries) {
+    if (isRetryable && attempt <= maxRetries) {
       console.log(`🔄 Retrying enhancement... (attempt ${attempt + 1}/${maxRetries + 1})`);
       await sleep(2000); // Fixed 2 second wait
       return callEnrichmentAPIWithRetry(note, enhancementType, attempt + 1);
     }
     
-    // Clean error message for user
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(errorMessage);
+    // Use extracted error message
+    throw new Error(errorInfo.message);
   }
 };
 
