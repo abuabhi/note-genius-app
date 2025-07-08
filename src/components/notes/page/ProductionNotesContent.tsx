@@ -36,11 +36,7 @@ export const ProductionNotesContent = React.memo(({
         }}
       >
         <Suspense fallback={<LoadingState />}>
-          {viewMode === 'grid' ? (
-            <ProductionNotesGrid />
-          ) : (
-            <ProductionNotesGrid /> // For now, both use grid - can add list view later
-          )}
+          <ProductionNotesGrid viewMode={viewMode} />
         </Suspense>
       </ErrorBoundary>
     </div>

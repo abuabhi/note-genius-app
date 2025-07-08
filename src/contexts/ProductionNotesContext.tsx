@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useCallback, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
@@ -32,6 +32,14 @@ interface ProductionNotesContextType {
   isCreating: boolean;
   isUpdating: boolean;
   isDeleting: boolean;
+  
+  // Search and filtering
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  selectedSubject: string;
+  setSelectedSubject: (subject: string) => void;
+  sortType: string;
+  setSortType: (sort: string) => void;
   
   // Performance utilities
   prefetchNote: (id: string) => void;
@@ -90,6 +98,11 @@ const fetchNotes = async (): Promise<{ notes: Note[]; totalCount: number }> => {
 
 const ProductionNotesProviderInner = React.memo(({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
+  
+  // Search and filtering state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('all');
+  const [sortType, setSortType] = useState('newest');
 
   // Main notes query with optimized caching
   const {
@@ -240,10 +253,40 @@ const ProductionNotesProviderInner = React.memo(({ children }: { children: React
     queryClient.invalidateQueries({ queryKey: notesQueryKeys.all() });
   }, [queryClient]);
 
+  // Filter and sort notes based on current filters
+  const filteredNotes = useMemo(() => {
+    let filtered = notesData.notes;
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(note => 
+        note.title?.toLowerCase().includes(searchLower) ||
+        note.content?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply subject filter
+    if (selectedSubject !== 'all') {
+      filtered = filtered.filter(note => note.subject === selectedSubject);
+    }
+
+    // Apply sorting
+    switch (sortType) {
+      case 'oldest':
+        return [...filtered].sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime());
+      case 'alphabetical':
+        return [...filtered].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+      case 'newest':
+      default:
+        return [...filtered].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+    }
+  }, [notesData.notes, searchTerm, selectedSubject, sortType]);
+
   // Memoized context value
   const contextValue = useMemo(() => ({
     // Core data
-    notes: notesData.notes,
+    notes: filteredNotes,
     loading,
     error: error?.message || null,
     totalCount: notesData.totalCount,
@@ -256,11 +299,19 @@ const ProductionNotesProviderInner = React.memo(({ children }: { children: React
     isUpdating: updateNoteMutation.isPending,
     isDeleting: deleteNoteMutation.isPending,
     
+    // Search and filtering
+    searchTerm,
+    setSearchTerm,
+    selectedSubject,
+    setSelectedSubject,
+    sortType,
+    setSortType,
+    
     // Performance utilities
     prefetchNote,
     invalidateNotes,
   }), [
-    notesData.notes,
+    filteredNotes,
     notesData.totalCount,
     loading,
     error,
@@ -268,6 +319,9 @@ const ProductionNotesProviderInner = React.memo(({ children }: { children: React
     createNoteMutation.isPending,
     updateNoteMutation.isPending,
     deleteNoteMutation.isPending,
+    searchTerm,
+    selectedSubject,
+    sortType,
     prefetchNote,
     invalidateNotes,
   ]);

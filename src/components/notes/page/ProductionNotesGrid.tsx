@@ -3,13 +3,15 @@ import { Note } from '@/types/note';
 import { NoteCard } from '@/components/notes/card/NoteCard';
 import { LoadingState } from '@/components/notes/page/LoadingState';
 import { EmptyNotesState } from '@/components/notes/EmptyNotesState';
+import { ProductionNotesListView } from './ProductionNotesListView';
 import { useProductionNotes } from '@/contexts/ProductionNotesContext';
 
 interface ProductionNotesGridProps {
   className?: string;
+  viewMode?: 'grid' | 'list';
 }
 
-export const ProductionNotesGrid = React.memo(({ className = '' }: ProductionNotesGridProps) => {
+export const ProductionNotesGrid = React.memo(({ className = '', viewMode = 'grid' }: ProductionNotesGridProps) => {
   const { 
     notes, 
     loading, 
@@ -82,23 +84,32 @@ export const ProductionNotesGrid = React.memo(({ className = '' }: ProductionNot
     );
   }
 
-  // Notes grid
+  // Notes display - list or grid
   return (
-    <div className={`production-notes-grid ${className}`}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {notes.map((note) => (
-          <NoteCard
-            key={note.id}
-            note={note}
-            onNoteClick={noteOperations.onNoteClick}
-            onShowDetails={noteOperations.onShowDetails}
-            onDelete={noteOperations.onDelete}
-            onPin={noteOperations.onPin}
-            confirmDelete={null}
-            viewMode="grid"
-          />
-        ))}
-      </div>
+    <div className={`production-notes-display ${className}`}>
+      {viewMode === 'list' ? (
+        <ProductionNotesListView
+          notes={notes}
+          onNoteClick={noteOperations.onNoteClick}
+          onPin={noteOperations.onPin}
+          onDelete={noteOperations.onDelete}
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {notes.map((note) => (
+            <NoteCard
+              key={note.id}
+              note={note}
+              onNoteClick={noteOperations.onNoteClick}
+              onShowDetails={noteOperations.onShowDetails}
+              onDelete={noteOperations.onDelete}
+              onPin={noteOperations.onPin}
+              confirmDelete={null}
+              viewMode="grid"
+            />
+          ))}
+        </div>
+      )}
       
       {/* Loading indicator for background operations */}
       {loading && notes.length > 0 && (

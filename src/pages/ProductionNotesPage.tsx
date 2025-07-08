@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { ProductionNotesContent } from '@/components/notes/page/ProductionNotesContent';
-import { NotesPageHeader } from '@/components/notes/page/NotesPageHeader';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,9 @@ import { CreateNoteForm } from '@/components/notes/page/CreateNoteForm';
 import { Note } from '@/types/note';
 import { useProductionNotes } from '@/contexts/ProductionNotesContext';
 import { toast } from 'sonner';
+import { NotesHeaderTop } from '@/components/notes/page/header/NotesHeaderTop';
+import { NotesFilters } from '@/components/notes/NotesFilters';
+import { useUserSubjects } from '@/hooks/useUserSubjects';
 
 // Streamlined error fallback
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => {
@@ -45,13 +47,27 @@ const ProductionNotesPageContent = () => {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
   const { userTier } = useUserTier();
-  const { addNote, loading } = useProductionNotes();
+  const { addNote, loading, notes, searchTerm, setSearchTerm, selectedSubject, setSelectedSubject, sortType, setSortType } = useProductionNotes();
+  const { subjects } = useUserSubjects();
 
   // Convert ViewMode to the expected type
   const convertedViewMode: 'grid' | 'list' = viewMode === 'compact' ? 'grid' : viewMode as 'grid' | 'list';
   
   const handleViewModeChange = (mode: 'grid' | 'list') => {
     setViewMode(mode);
+  };
+
+  const handleFiltersChange = (filters: {
+    search?: string;
+    subject?: string;
+    showArchived?: boolean;
+  }) => {
+    if (filters.search !== undefined) {
+      setSearchTerm(filters.search || '');
+    }
+    if (filters.subject !== undefined) {
+      setSelectedSubject(filters.subject || 'all');
+    }
   };
 
   const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
@@ -85,16 +101,51 @@ const ProductionNotesPageContent = () => {
   });
 
   return (
-    <div className="h-full">
-      <NotesPageHeader
-        loading={loading}
-        viewMode={convertedViewMode}
-        onViewModeChange={handleViewModeChange}
-        onOpenManualDialog={() => setIsManualDialogOpen(true)}
-        onOpenImportDialog={() => setIsImportDialogOpen(true)}
-      />
-      
+    <div className="min-h-screen bg-gradient-to-br from-mint-50 via-blue-50 to-purple-50">
       <div className="container mx-auto px-6 py-8">
+        {/* Header with search and controls */}
+        <div className="mb-8">
+          <NotesHeaderTop
+            onOpenManualDialog={() => setIsManualDialogOpen(true)}
+            onOpenImportDialog={() => setIsImportDialogOpen(true)}
+          />
+          
+          {/* View Mode Toggle */}
+          <div className="mt-6 flex justify-end">
+            <div className="flex rounded-lg border border-gray-200 bg-white shadow-sm">
+              <Button
+                variant={convertedViewMode === 'grid' ? "default" : "ghost"}
+                size="sm"
+                onClick={() => handleViewModeChange('grid')}
+                className={`rounded-r-none ${convertedViewMode === 'grid' ? 'bg-mint-500 text-white' : 'text-gray-600'}`}
+              >
+                Grid
+              </Button>
+              <Button
+                variant={convertedViewMode === 'list' ? "default" : "ghost"}
+                size="sm"
+                onClick={() => handleViewModeChange('list')}
+                className={`rounded-l-none ${convertedViewMode === 'list' ? 'bg-mint-500 text-white' : 'text-gray-600'}`}
+              >
+                List
+              </Button>
+            </div>
+          </div>
+
+          {/* Filters Section */}
+          <div className="mt-6">
+            <NotesFilters
+              onFiltersChange={handleFiltersChange}
+              totalNotes={notes.length}
+              searchTerm={searchTerm}
+              selectedSubject={selectedSubject}
+              showArchived={false}
+              sortType={sortType}
+              onSortChange={setSortType}
+            />
+          </div>
+        </div>
+        
         <ErrorBoundary
           FallbackComponent={ErrorFallback}
           onReset={() => {
