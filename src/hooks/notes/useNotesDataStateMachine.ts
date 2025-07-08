@@ -55,10 +55,17 @@ const initialContext: DataContext = {
   paginationMode: 'infinite',
 };
 
-const initialState: DataMachineState = {
-  state: 'idle',
-  context: initialContext,
+// Get cached loading state to prevent flash on subsequent visits
+const getInitialState = (): DataMachineState => {
+  const hasLoadedBefore = sessionStorage.getItem('notes-has-loaded') === 'true';
+  
+  return {
+    state: hasLoadedBefore ? 'idle' : 'initial_loading',
+    context: initialContext,
+  };
 };
+
+const initialState: DataMachineState = getInitialState();
 
 const MAX_RETRY_ATTEMPTS = 3;
 
@@ -118,6 +125,9 @@ function dataReducer(state: DataMachineState, event: DataEvent): DataMachineStat
       };
 
     case 'FETCH_SUCCESS':
+      // Mark as loaded in session to prevent flash on subsequent visits
+      sessionStorage.setItem('notes-has-loaded', 'true');
+      
       return {
         ...state,
         state: 'success',

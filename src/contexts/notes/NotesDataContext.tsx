@@ -51,34 +51,41 @@ const NotesDataProviderInner = React.memo(({ children }: { children: ReactNode }
   const dataStateMachine = useNotesDataStateMachine();
   const queryHook = useOptimizedNotesWithQuery();
 
-  // Sync query hook state with data state machine
+  // Simplified single effect for state synchronization
   React.useEffect(() => {
-    if (queryHook.loading && dataStateMachine.isIdle) {
-      // Determine the type of loading based on current state
-      if (dataStateMachine.notes.length === 0) {
+    // Handle loading state changes
+    if (queryHook.loading && (dataStateMachine.isIdle || dataStateMachine.isInitialLoading)) {
+      if (dataStateMachine.notes.length === 0 && !dataStateMachine.isInitialLoading) {
         dataStateMachine.actions.startInitialLoad();
-      } else {
+      } else if (dataStateMachine.notes.length > 0) {
         dataStateMachine.actions.startBackgroundLoad();
       }
     }
-  }, [queryHook.loading, dataStateMachine.isIdle, dataStateMachine.notes.length]);
-
-  React.useEffect(() => {
-    if (!queryHook.loading && queryHook.notes.length >= 0) {
+    
+    // Handle success state
+    else if (!queryHook.loading && !queryHook.error && queryHook.notes.length >= 0) {
       dataStateMachine.actions.fetchSuccess(
         queryHook.notes,
         queryHook.totalCount,
         queryHook.hasMore,
-        false // For now, we don't append - this would be handled by pagination logic
+        false
       );
     }
-  }, [queryHook.loading, queryHook.notes, queryHook.totalCount, queryHook.hasMore]);
-
-  React.useEffect(() => {
-    if (queryHook.error) {
+    
+    // Handle error state
+    else if (queryHook.error) {
       dataStateMachine.actions.fetchError(queryHook.error);
     }
-  }, [queryHook.error]);
+  }, [
+    queryHook.loading, 
+    queryHook.error, 
+    queryHook.notes, 
+    queryHook.totalCount, 
+    queryHook.hasMore,
+    dataStateMachine.isIdle,
+    dataStateMachine.isInitialLoading,
+    dataStateMachine.notes.length
+  ]);
 
   // Enhanced load more function
   const loadMore = React.useCallback(async () => {
