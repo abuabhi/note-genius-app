@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { Note } from "@/types/note";
-import { useDeleteNoteMutation, usePinNoteMutation } from "@/hooks/queries/useNoteOperations";
 import { NoteDetailsSheet } from "./NoteDetailsSheet";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -9,6 +8,7 @@ import { NoteCard } from "./card/NoteCard";
 import { EmptyNotesState } from "./EmptyNotesState";
 import { ViewMode } from "@/hooks/useViewPreferences";
 import { extractErrorMessage } from "@/utils/errorUtils";
+import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 
 interface NotesGridProps {
   notes: Note[];
@@ -16,9 +16,8 @@ interface NotesGridProps {
 }
 
 export const NotesGrid = ({ notes, viewMode = 'grid' }: NotesGridProps) => {
-  // Direct React Query mutations - no context wrapper
-  const deleteNoteMutation = useDeleteNoteMutation();
-  const pinNoteMutation = usePinNoteMutation();
+  // Use OptimizedNotesContext for unified data management
+  const { deleteNote, pinNote } = useOptimizedNotes();
   
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -30,23 +29,24 @@ export const NotesGrid = ({ notes, viewMode = 'grid' }: NotesGridProps) => {
 
   const handlePin = async (id: string, isPinned: boolean) => {
     try {
-      console.log("NotesGrid - Pinning note:", id, "New state:", !isPinned);
-      await pinNoteMutation.mutateAsync({ id, pinned: !isPinned });
+      console.log("🔧 [NOTES GRID] Pinning note via OptimizedNotesContext:", id, "New state:", !isPinned);
+      await pinNote(id, !isPinned);
+      console.log("✅ [NOTES GRID] Note pinned successfully:", id);
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
-      console.error("NotesGrid - Error pinning note:", { id, error, message: errorMessage.message });
+      console.error("❌ [NOTES GRID] Error pinning note:", { id, error, message: errorMessage.message });
       toast.error(`Failed to update note pin status: ${errorMessage.message}`);
     }
   };
 
   const handleDelete = async (id: string): Promise<void> => {
     try {
-      console.log("NotesGrid - Deleting note:", id);
-      await deleteNoteMutation.mutateAsync(id);
-      console.log("NotesGrid - Note deleted successfully:", id);
+      console.log("🗑️ [NOTES GRID] Deleting note via OptimizedNotesContext:", id);
+      await deleteNote(id);
+      console.log("✅ [NOTES GRID] Note deleted successfully - UI should update immediately:", id);
     } catch (error) {
       const errorMessage = extractErrorMessage(error);
-      console.error("NotesGrid - Error deleting note:", { 
+      console.error("❌ [NOTES GRID] Error deleting note:", { 
         id, 
         error, 
         message: errorMessage.message,
