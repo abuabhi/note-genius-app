@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
@@ -47,16 +47,18 @@ const fetchNotes = async (options: {
   }
 
   if (selectedSubject && selectedSubject !== 'all') {
-    query = query.eq('subject', selectedSubject);
+    // Filter by both subject field and subject_id relationship
+    query = query.or(`subject.eq.${selectedSubject},user_subjects.name.eq.${selectedSubject}`);
   }
 
   if (!showArchived) {
     query = query.eq('archived', false);
   }
 
-  // Apply sorting
+  // Apply sorting - fix mapping for consistency
   switch (sortType) {
     case 'recent':
+    case 'newest':
       query = query.order('created_at', { ascending: false });
       break;
     case 'oldest':
@@ -113,17 +115,17 @@ export const useSimpleNotes = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [showArchived, setShowArchived] = useState(false);
-  const [sortType, setSortType] = useState('recent');
+  const [sortType, setSortType] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Build query options
-  const queryOptions = {
+  // Build query options (memoized for better caching)
+  const queryOptions = useMemo(() => ({
     page: currentPage,
     searchTerm,
     selectedSubject,
     showArchived,
     sortType
-  };
+  }), [currentPage, searchTerm, selectedSubject, showArchived, sortType]);
 
   // Main query
   const {
@@ -346,7 +348,7 @@ export const useSimpleNotes = () => {
     setSearchTerm('');
     setSelectedSubject('all');
     setShowArchived(false);
-    setSortType('recent');
+    setSortType('newest');
     setCurrentPage(1);
   }, []);
 
