@@ -13,7 +13,7 @@ const fetchNotes = async (options: {
   limit?: number;
   searchTerm?: string;
   selectedSubject?: string;
-  showArchived?: boolean;
+  
   sortType?: string;
 } = {}): Promise<{ notes: Note[]; totalCount: number; hasMore: boolean }> => {
   const {
@@ -21,7 +21,7 @@ const fetchNotes = async (options: {
     limit = 20,
     searchTerm = '',
     selectedSubject = '',
-    showArchived = false,
+    
     sortType = 'recent'
   } = options;
 
@@ -47,13 +47,12 @@ const fetchNotes = async (options: {
   }
 
   if (selectedSubject && selectedSubject !== 'all') {
-    // Filter by subject field or by the joined user_subjects.name
-    query = query.or(`subject.eq.${selectedSubject},user_subjects.name.eq.${selectedSubject}`);
+    // Filter by subject - use the joined user_subjects.name for accurate filtering
+    query = query.eq('user_subjects.name', selectedSubject);
   }
 
-  if (!showArchived) {
-    query = query.eq('archived', false);
-  }
+  // Always exclude archived for now (no archive functionality implemented)
+  query = query.eq('archived', false);
 
   // Apply sorting - fix mapping for consistency
   switch (sortType) {
@@ -114,7 +113,7 @@ export const useSimpleNotes = () => {
   // UI state
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('all');
-  const [showArchived, setShowArchived] = useState(false);
+  
   const [sortType, setSortType] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -123,9 +122,8 @@ export const useSimpleNotes = () => {
     page: currentPage,
     searchTerm,
     selectedSubject,
-    showArchived,
     sortType
-  }), [currentPage, searchTerm, selectedSubject, showArchived, sortType]);
+  }), [currentPage, searchTerm, selectedSubject, sortType]);
 
   // Main query
   const {
@@ -347,21 +345,18 @@ export const useSimpleNotes = () => {
   const clearFilters = useCallback(() => {
     setSearchTerm('');
     setSelectedSubject('all');
-    setShowArchived(false);
     setSortType('newest');
     setCurrentPage(1);
   }, []);
 
   const hasActiveFilters = Boolean(
     searchTerm || 
-    (selectedSubject && selectedSubject !== 'all') || 
-    showArchived
+    (selectedSubject && selectedSubject !== 'all')
   );
 
   const activeFilterCount = [
     Boolean(searchTerm),
-    Boolean(selectedSubject && selectedSubject !== 'all'),
-    Boolean(showArchived)
+    Boolean(selectedSubject && selectedSubject !== 'all')
   ].filter(Boolean).length;
 
   return {
@@ -385,8 +380,7 @@ export const useSimpleNotes = () => {
     setSearchTerm,
     selectedSubject,
     setSelectedSubject,
-    showArchived,
-    setShowArchived,
+    
     sortType,
     setSortType,
     clearFilters,

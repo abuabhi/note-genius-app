@@ -29,18 +29,32 @@ export const useQuizList = (filters: {
           source_id
         `);
 
-      // Apply basic filters - now filtering by user_subjects
-      if (filters.subject) {
-        // The subject filter now contains the user_subject ID
-        query = query.eq('subject_id', filters.subject);
+      // Get current user for filtering - show public quizzes and user's own quizzes
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Apply basic filters - use user_subjects for filtering
+      if (filters.subject && filters.subject !== 'all' && user) {
+        try {
+          // Get user_subjects first to find the subject_id by name
+          const { data: userSubjects, error: subjectError } = await supabase
+            .from('user_subjects')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('name', filters.subject);
+          
+          if (subjectError) {
+            console.warn('Error fetching user subjects for quiz filtering:', subjectError);
+          } else if (userSubjects && userSubjects.length > 0) {
+            query = query.eq('subject_id', userSubjects[0].id);
+          }
+        } catch (error) {
+          console.warn('Failed to apply subject filter to quizzes:', error);
+        }
       }
 
       if (filters.search) {
         query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
-
-      // Get current user for filtering - show public quizzes and user's own quizzes
-      const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
         query = query.or(`is_public.eq.true,user_id.eq.${user.id}`);

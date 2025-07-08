@@ -1,16 +1,16 @@
 
 import { useState, useCallback } from 'react';
-import { FlashcardFilters } from '../components/AdvancedFlashcardFilters';
+
+interface FlashcardFilters {
+  search?: string;
+  subject?: string;
+  sortBy?: string;
+}
 
 const defaultFilters: FlashcardFilters = {
-  searchQuery: '',
-  subjectFilter: 'all',
-  difficultyFilter: 'all',
-  progressFilter: 'all',
-  sortBy: 'updated_at',
-  sortOrder: 'desc',
-  viewMode: 'grid',
-  showPinnedOnly: false
+  search: '',
+  subject: 'all',
+  sortBy: 'updated_at'
 };
 
 export const useFlashcardsPageState = () => {
@@ -19,6 +19,7 @@ export const useFlashcardsPageState = () => {
   const [deletingSet, setDeletingSet] = useState<string | null>(null);
 
   const updateFilters = useCallback((newFilters: FlashcardFilters) => {
+    console.log('🔄 Updating flashcard filters:', newFilters);
     setFilters(newFilters);
     setPage(1); // Reset to first page when filters change
   }, []);

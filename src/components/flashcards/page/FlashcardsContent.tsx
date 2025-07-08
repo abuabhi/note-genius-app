@@ -7,9 +7,11 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Plus, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { useFlashcardsPageState } from './useFlashcardsPageState';
 
 export const FlashcardsContent = () => {
   const navigate = useNavigate();
+  const { filters } = useFlashcardsPageState();
   const { 
     flashcardSets, 
     loading
@@ -45,8 +47,8 @@ export const FlashcardsContent = () => {
         deletingSet={null}
         onDeleteSet={() => {}}
         hasInitiallyLoaded={true}
-        searchQuery=""
-        subjectFilter={undefined}
+        searchQuery={filters.search || ""}
+        subjectFilter={filters.subject !== 'all' ? filters.subject : undefined}
       />
     </div>
   );

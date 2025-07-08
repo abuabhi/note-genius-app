@@ -11,8 +11,6 @@ export const OptimizedNotesFilters = memo(() => {
     setSearchTerm,
     selectedSubject,
     setSelectedSubject,
-    showArchived,
-    setShowArchived,
     sortType,
     setSortType,
     hasActiveFilters,
@@ -53,15 +51,13 @@ export const OptimizedNotesFilters = memo(() => {
         search={localSearch}
         subject={selectedSubject}
         sort={sortType}
-        showArchived={showArchived}
         onSearchChange={setLocalSearch}
         onSubjectChange={setSelectedSubject}
         onSortChange={setSortType}
-        onShowArchivedChange={setShowArchived}
         subjects={subjects}
         sortOptions={sortOptions}
         searchPlaceholder="Search notes..."
-        enableArchived={true}
+        enableArchived={false}
         isLoading={loading || subjectsLoading}
         totalCount={totalCount}
         hasActiveFilters={hasActiveFilters}
