@@ -60,7 +60,7 @@ const getInitialState = (): DataMachineState => {
   const hasLoadedBefore = sessionStorage.getItem('notes-has-loaded') === 'true';
   
   return {
-    state: hasLoadedBefore ? 'idle' : 'initial_loading',
+    state: hasLoadedBefore ? 'success' : 'idle',
     context: initialContext,
   };
 };
