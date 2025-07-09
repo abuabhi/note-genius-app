@@ -1,8 +1,9 @@
 
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useRef } from 'react';
 import { Note } from '@/types/note';
 import { ViewMode } from '@/hooks/useViewPreferences';
 import { NoteCard } from '@/components/notes/card/NoteCard';
+import { VirtualizedNotesGrid } from '@/components/performance/VirtualizedNotesGrid';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -14,6 +15,7 @@ interface OptimizedNotesGridProps {
   shouldVirtualize?: boolean;
   totalCount?: number;
   hasFilters?: boolean;
+  debugMode?: boolean;
 }
 
 export const OptimizedNotesGrid = memo(({
@@ -23,9 +25,11 @@ export const OptimizedNotesGrid = memo(({
   onDeleteNote,
   shouldVirtualize = false,
   totalCount,
-  hasFilters = false
+  hasFilters = false,
+  debugMode = false
 }: OptimizedNotesGridProps) => {
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const handlePin = useMemo(() => async (id: string, isPinned: boolean) => {
@@ -48,6 +52,19 @@ export const OptimizedNotesGrid = memo(({
   const pinnedNotes = useMemo(() => notes.filter(note => note.pinned), [notes]);
   const unpinnedNotes = useMemo(() => notes.filter(note => !note.pinned), [notes]);
 
+  // Determine virtualization threshold based on view mode
+  const virtualizationThreshold = useMemo(() => {
+    switch (viewMode) {
+      case 'list': return 30; // List view can handle more items before virtualizing
+      case 'compact': return 60; // Compact cards are smaller
+      case 'grid': 
+      default: return 20; // Grid cards are larger, virtualize sooner
+    }
+  }, [viewMode]);
+
+  // Decide if we should virtualize unpinned notes
+  const shouldVirtualizeUnpinned = shouldVirtualize && unpinnedNotes.length > virtualizationThreshold;
+
   const gridClasses = useMemo(() => {
     switch (viewMode) {
       case 'list':
@@ -61,8 +78,8 @@ export const OptimizedNotesGrid = memo(({
   }, [viewMode]);
 
   return (
-    <div className="space-y-8">
-      {/* Pinned Notes Section */}
+    <div ref={containerRef} className="space-y-8">
+      {/* Pinned Notes Section - Always rendered normally */}
       {pinnedNotes.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -87,30 +104,49 @@ export const OptimizedNotesGrid = memo(({
         </div>
       )}
 
-      {/* All Notes Section */}
+      {/* All Notes Section - Virtualized when needed */}
       {unpinnedNotes.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-mint-500 rounded-full"></div>
             <h3 className="text-lg font-semibold text-gray-800">
               {pinnedNotes.length > 0 ? 'All Notes' : 'My Notes'}
+              {shouldVirtualizeUnpinned && (
+                <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
+                  Performance Mode
+                </span>
+              )}
             </h3>
             <div className="h-px bg-gradient-to-r from-mint-200 to-transparent flex-1 ml-4"></div>
           </div>
-          <div className={gridClasses}>
-            {unpinnedNotes.map((note) => (
-              <NoteCard
-                key={note.id}
-                note={note}
-                onNoteClick={handleNoteClick}
-                onShowDetails={handleShowDetails}
-                onPin={handlePin}
-                onDelete={onDeleteNote}
-                confirmDelete={confirmDelete}
-                viewMode={viewMode}
-              />
-            ))}
-          </div>
+          
+          {shouldVirtualizeUnpinned ? (
+            <VirtualizedNotesGrid
+              notes={unpinnedNotes}
+              viewMode={viewMode}
+              height={600}
+              onNoteUpdate={onUpdateNote}
+              onNoteDelete={onDeleteNote}
+              onNoteClick={handleNoteClick}
+              onShowDetails={handleShowDetails}
+              debugMode={debugMode}
+            />
+          ) : (
+            <div className={gridClasses}>
+              {unpinnedNotes.map((note) => (
+                <NoteCard
+                  key={note.id}
+                  note={note}
+                  onNoteClick={handleNoteClick}
+                  onShowDetails={handleShowDetails}
+                  onPin={handlePin}
+                  onDelete={onDeleteNote}
+                  confirmDelete={confirmDelete}
+                  viewMode={viewMode}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -122,6 +158,11 @@ export const OptimizedNotesGrid = memo(({
               ? `${notes.length} of ${totalCount} ${totalCount === 1 ? 'note' : 'notes'}`
               : `${totalCount} ${totalCount === 1 ? 'note' : 'notes'}`
             }
+            {shouldVirtualizeUnpinned && (
+              <span className="ml-2 text-xs text-blue-600">
+                • Optimized for {unpinnedNotes.length} items
+              </span>
+            )}
           </div>
         </div>
       )}
