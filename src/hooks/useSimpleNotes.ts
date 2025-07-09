@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 import { toast } from 'sonner';
@@ -13,11 +13,14 @@ interface FetchNotesParams {
   search: string;
   subject: string;
   sort: string;
+  pageParam?: number;
 }
 
-// Enhanced fetch function with search, subject filter, and sorting
-const fetchNotes = async ({ search, subject, sort }: FetchNotesParams): Promise<{ notes: Note[]; totalCount: number; hasMore: boolean }> => {
-  console.log('🔍 [SIMPLE NOTES] Fetching notes with filters:', { search, subject, sort });
+const NOTES_PER_PAGE = 20;
+
+// Enhanced fetch function with search, subject filter, sorting, and pagination
+const fetchNotesPage = async ({ search, subject, sort, pageParam = 0 }: FetchNotesParams): Promise<{ notes: Note[]; totalCount: number; hasMore: boolean; nextCursor?: number }> => {
+  console.log('🔍 [SIMPLE NOTES] Fetching notes page:', { search, subject, sort, pageParam });
 
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('User not authenticated');
@@ -59,6 +62,11 @@ const fetchNotes = async ({ search, subject, sort }: FetchNotesParams): Promise<
       break;
   }
 
+  // Add pagination
+  const from = pageParam * NOTES_PER_PAGE;
+  const to = from + NOTES_PER_PAGE - 1;
+  query = query.range(from, to);
+
   const { data, error, count } = await query;
 
   if (error) {
@@ -69,6 +77,8 @@ const fetchNotes = async ({ search, subject, sort }: FetchNotesParams): Promise<
   console.log('📊 [FETCH NOTES] Raw query results:', {
     dataLength: data?.length || 0,
     count,
+    from,
+    to,
     filters: { search, subject, sort }
   });
 
@@ -87,14 +97,18 @@ const fetchNotes = async ({ search, subject, sort }: FetchNotesParams): Promise<
   }));
 
   const totalCount = count || 0;
+  const hasMore = (from + notes.length) < totalCount;
+  const nextCursor = hasMore ? pageParam + 1 : undefined;
 
-  console.log('✅ [SIMPLE NOTES] Fetched notes:', {
+  console.log('✅ [SIMPLE NOTES] Fetched notes page:', {
     notesCount: notes.length,
     totalCount,
+    hasMore,
+    nextCursor,
     appliedFilters: { search, subject, sort }
   });
 
-  return { notes, totalCount, hasMore: false }; // No pagination
+  return { notes, totalCount, hasMore, nextCursor };
 };
 
 // Main hook with filter state management
@@ -116,23 +130,30 @@ export const useSimpleNotes = () => {
     sort: sortType
   };
 
-  // Query with filters
+  // Infinite query with pagination
   const {
     data,
     isLoading,
     error,
-    refetch
-  } = useQuery({
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isInitialLoading
+  } = useInfiniteQuery({
     queryKey: getNotesQueryKey(currentFilters),
-    queryFn: () => fetchNotes(currentFilters),
+    queryFn: ({ pageParam = 0 }) => fetchNotesPage({ ...currentFilters, pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
     staleTime: 2 * 60 * 1000, // 2 minutes stale time
     gcTime: 5 * 60 * 1000, // 5 minutes cache retention
     refetchOnWindowFocus: false,
   });
 
-  const notes = data?.notes || [];
-  const totalCount = data?.totalCount || 0;
-  const hasMore = data?.hasMore || false;
+  // Flatten pages into single notes array
+  const notes = data?.pages.flatMap(page => page.notes) || [];
+  const totalCount = data?.pages[0]?.totalCount || 0;
+  const hasMore = hasNextPage || false;
 
   // Filter calculations
   const hasActiveFilters = !!(searchTerm || (selectedSubject && selectedSubject !== 'all'));
@@ -190,26 +211,40 @@ export const useSimpleNotes = () => {
       return newNote;
     },
     onSuccess: (newNote) => {
-      console.log('🚀 [SIMPLE NOTES] Adding note to cache immediately');
+      console.log('🚀 [SIMPLE NOTES] Adding note to infinite query cache');
       
-      // Immediate cache update with proper query key matching
+      // Update infinite query cache
       queryClient.setQueriesData(
         { queryKey: ['notes'], exact: false },
         (oldData: any) => {
-          if (!oldData) return { notes: [newNote], totalCount: 1, hasMore: false };
+          if (!oldData?.pages) {
+            return {
+              pages: [{ notes: [newNote], totalCount: 1, hasMore: false }],
+              pageParams: [0]
+            };
+          }
+          
+          // Add to first page
+          const updatedPages = [...oldData.pages];
+          if (updatedPages[0]) {
+            updatedPages[0] = {
+              ...updatedPages[0],
+              notes: [newNote, ...updatedPages[0].notes],
+              totalCount: updatedPages[0].totalCount + 1
+            };
+          }
           
           return {
             ...oldData,
-            notes: [newNote, ...oldData.notes],
-            totalCount: oldData.totalCount + 1
+            pages: updatedPages
           };
         }
       );
 
-      // Also invalidate all notes queries to ensure fresh data
+      // Invalidate to refresh data
       queryClient.invalidateQueries({ queryKey: ['notes'] });
       
-      console.log('✅ [SIMPLE NOTES] Cache updated - note should appear immediately');
+      console.log('✅ [SIMPLE NOTES] Infinite query cache updated');
       toast.success('Note created successfully');
     },
     onError: (error) => {
@@ -241,17 +276,22 @@ export const useSimpleNotes = () => {
       return data;
     },
     onSuccess: (_, { id, updates }) => {
-      // Update cache immediately with proper query key matching
+      // Update infinite query cache
       queryClient.setQueriesData(
         { queryKey: ['notes'], exact: false },
         (oldData: any) => {
-          if (!oldData?.notes) return oldData;
+          if (!oldData?.pages) return oldData;
+          
+          const updatedPages = oldData.pages.map((page: any) => ({
+            ...page,
+            notes: page.notes.map((note: Note) =>
+              note.id === id ? { ...note, ...updates } : note
+            )
+          }));
           
           return {
             ...oldData,
-            notes: oldData.notes.map((note: Note) =>
-              note.id === id ? { ...note, ...updates } : note
-            )
+            pages: updatedPages
           };
         }
       );
@@ -287,19 +327,26 @@ export const useSimpleNotes = () => {
       // Snapshot previous value for rollback
       const previousData = queryClient.getQueriesData({ queryKey: ['notes'] });
 
-      // Optimistically update cache - remove note immediately with proper query key matching
+      // Optimistically update infinite query cache - remove note immediately
       queryClient.setQueriesData(
         { queryKey: ['notes'], exact: false },
         (oldData: any) => {
-          if (!oldData?.notes) return oldData;
+          if (!oldData?.pages) return oldData;
           
-          const filteredNotes = oldData.notes.filter((note: Note) => note.id !== noteId);
-          console.log('🔄 [SIMPLE NOTES] Optimistic delete - notes before:', oldData.notes.length, 'after:', filteredNotes.length);
+          const updatedPages = oldData.pages.map((page: any) => {
+            const filteredNotes = page.notes.filter((note: Note) => note.id !== noteId);
+            return {
+              ...page,
+              notes: filteredNotes,
+              totalCount: Math.max(0, page.totalCount - 1)
+            };
+          });
+          
+          console.log('🔄 [SIMPLE NOTES] Optimistic delete from infinite query');
           
           return {
             ...oldData,
-            notes: filteredNotes,
-            totalCount: Math.max(0, oldData.totalCount - 1)
+            pages: updatedPages
           };
         }
       );
@@ -353,25 +400,33 @@ export const useSimpleNotes = () => {
     await updateNote(id, { archived });
   }, [updateNote]);
 
-  // Pagination (simplified)
-  const currentPage = 1;
-  const setCurrentPage = useCallback(() => {}, []);
+  // Load more functionality
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      console.log('📄 [SIMPLE NOTES] Loading next page...');
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Pagination compatibility
+  const currentPage = data?.pages?.length || 1;
+  const setCurrentPage = useCallback(() => {}, []); // Deprecated for infinite scroll
 
   return {
     // Data
     notes,
     totalCount,
     hasMore,
-    loading: isLoading,
-    isLoading,
-    isInitialLoading: isLoading,
+    loading: isLoading || isFetchingNextPage,
+    isLoading: isLoading || isFetchingNextPage,
+    isInitialLoading,
     error: error ? String(error) : null,
     
     // Pagination
     currentPage,
     setCurrentPage,
-    totalPages: Math.ceil(totalCount / 20),
-    loadMore: () => {},
+    totalPages: Math.ceil(totalCount / NOTES_PER_PAGE),
+    loadMore,
     
     // Filter functionality - now working!
     searchTerm,
