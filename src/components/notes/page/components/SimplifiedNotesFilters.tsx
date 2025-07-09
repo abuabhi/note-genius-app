@@ -22,6 +22,17 @@ export const SimplifiedNotesFilters = memo(() => {
 
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
 
+  // Log filter changes for debugging
+  React.useEffect(() => {
+    console.log('🔍 [SIMPLIFIED FILTERS] Filter state changed:', {
+      searchTerm,
+      selectedSubject,
+      sortType,
+      hasActiveFilters,
+      activeFilterCount
+    });
+  }, [searchTerm, selectedSubject, sortType, hasActiveFilters, activeFilterCount]);
+
   const sortOptions = [
     { value: 'newest', label: 'Newest First' },
     { value: 'oldest', label: 'Oldest First' },

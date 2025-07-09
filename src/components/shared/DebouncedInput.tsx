@@ -18,32 +18,36 @@ export const DebouncedInput = React.memo(({
   debounceMs = 300,
   className 
 }: DebouncedInputProps) => {
-  const [localValue, setLocalValue] = useState(value);
+  // Don't use internal state to prevent focus issues
+  console.log('🔍 [DEBOUNCED INPUT] Rendering with value:', value);
 
-  // Sync with external value changes
-  useEffect(() => {
-    if (localValue !== value) {
-      setLocalValue(value);
-    }
-  }, [value, localValue]);
+  // Use ref to track the last onChange call to prevent infinite updates
+  const lastChangeRef = React.useRef<string>('');
 
-  // Debounced change handler
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (localValue !== value) {
-        onChange(localValue);
-      }
-    }, debounceMs);
-
-    return () => clearTimeout(timeout);
-  }, [localValue, onChange, value, debounceMs]);
+  // Debounced change handler - only call onChange if value actually changed
+  const debouncedOnChange = React.useMemo(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    return (newValue: string) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        if (newValue !== lastChangeRef.current) {
+          console.log('🔍 [DEBOUNCED INPUT] Calling onChange with:', newValue);
+          lastChangeRef.current = newValue;
+          onChange(newValue);
+        }
+      }, debounceMs);
+    };
+  }, [onChange, debounceMs]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalValue(e.target.value);
-  }, []);
+    const newValue = e.target.value;
+    console.log('🔍 [DEBOUNCED INPUT] Input changed to:', newValue);
+    debouncedOnChange(newValue);
+  }, [debouncedOnChange]);
 
   const clearInput = useCallback(() => {
-    setLocalValue('');
+    console.log('🔍 [DEBOUNCED INPUT] Clearing input');
     onChange('');
   }, [onChange]);
 
@@ -52,13 +56,13 @@ export const DebouncedInput = React.memo(({
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-mint-400" />
       <Input
         type="text"
-        value={localValue}
+        value={value}
         onChange={handleChange}
         placeholder={placeholder}
         className={`pl-10 pr-10 border-mint-200 focus-visible:ring-mint-400 ${className || ''}`}
         autoComplete="off"
       />
-      {localValue && (
+      {value && (
         <Button
           variant="ghost"
           size="icon"

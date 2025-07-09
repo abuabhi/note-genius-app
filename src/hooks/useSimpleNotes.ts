@@ -1,9 +1,10 @@
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 import { toast } from 'sonner';
 import { useUniversalFilters } from './useUniversalFilters';
+import { useQueryInvalidation } from './useQueryInvalidation';
 
 // Simple query key - no complex factory
 const NOTES_QUERY_KEY = ['notes'];
@@ -113,12 +114,30 @@ const fetchNotes = async (options: {
 export const useSimpleNotes = () => {
   const queryClient = useQueryClient();
   
-  // Use unified filter system
+  // Use unified filter system with enhanced debugging
   const filters = useUniversalFilters({
     defaultSort: 'newest',
     defaultSubject: 'all',
     debounceMs: 300
   });
+
+  // Log filter changes for debugging
+  React.useEffect(() => {
+    console.log('🔄 [SIMPLE NOTES] Filter state changed:', {
+      search: filters.search,
+      debouncedSearch: filters.debouncedSearch,
+      subject: filters.subject,
+      sort: filters.sort,
+      hasActiveFilters: filters.hasActiveFilters
+    });
+  }, [filters.search, filters.debouncedSearch, filters.subject, filters.sort, filters.hasActiveFilters]);
+
+  // Force query invalidation when filter values change to ensure fresh data
+  useQueryInvalidation(
+    NOTES_QUERY_KEY,
+    [filters.debouncedSearch, filters.subject, filters.sort],
+    200 // Small delay to batch filter changes
+  );
 
   // Get user subjects for mapping
   const { data: userSubjects = [] } = useQuery({
@@ -147,27 +166,54 @@ export const useSimpleNotes = () => {
     return map;
   }, [userSubjects]);
 
-  // Build query options (memoized for better caching)
-  const queryOptions = useMemo(() => ({
-    page: 1, // Always page 1 for simplicity
-    searchTerm: filters.debouncedSearch,
-    selectedSubject: filters.subject,
-    subjectNameToId,
-    sortType: filters.sort
-  }), [filters.debouncedSearch, filters.subject, filters.sort, subjectNameToId]);
+  // Build query options (memoized for better caching) with debugging
+  const queryOptions = useMemo(() => {
+    const options = {
+      page: 1, // Always page 1 for simplicity
+      searchTerm: filters.debouncedSearch,
+      selectedSubject: filters.subject,
+      subjectNameToId,
+      sortType: filters.sort
+    };
+    console.log('🎯 [SIMPLE NOTES] Building query options:', options);
+    return options;
+  }, [filters.debouncedSearch, filters.subject, filters.sort, subjectNameToId]);
 
-  // Main query
+  // Main query with enhanced debugging and cache invalidation
   const {
     data,
     isLoading,
     error,
     refetch
   } = useQuery({
-    queryKey: [...NOTES_QUERY_KEY, queryOptions],
-    queryFn: () => fetchNotes(queryOptions),
-    staleTime: 1000, // 1 second - fresh data
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    queryKey: [...NOTES_QUERY_KEY, 
+      filters.debouncedSearch, 
+      filters.subject, 
+      filters.sort, 
+      'page-1' // Always page 1 for simplicity
+    ],
+    queryFn: () => {
+      console.log('🚀 [SIMPLE NOTES] EXECUTING QUERY with filters:', {
+        search: filters.debouncedSearch,
+        subject: filters.subject,
+        sort: filters.sort
+      });
+      return fetchNotes(queryOptions);
+    },
+    staleTime: 500, // 500ms - very fresh data for immediate filter feedback
+    gcTime: 2 * 60 * 1000, // 2 minutes cache time
+    refetchOnWindowFocus: false,
   });
+
+  // Log when query data changes
+  React.useEffect(() => {
+    console.log('📊 [SIMPLE NOTES] Query data updated:', {
+      notesCount: data?.notes?.length || 0,
+      totalCount: data?.totalCount || 0,
+      isLoading,
+      error: !!error
+    });
+  }, [data, isLoading, error]);
 
   const notes = data?.notes || [];
   const totalCount = data?.totalCount || 0;
@@ -220,9 +266,9 @@ export const useSimpleNotes = () => {
     onSuccess: (newNote) => {
       console.log('🚀 [SIMPLE NOTES] Adding note to cache immediately');
       
-      // Immediate cache update - no complex logic
+      // Immediate cache update with proper query key matching
       queryClient.setQueriesData(
-        { queryKey: NOTES_QUERY_KEY },
+        { queryKey: NOTES_QUERY_KEY, exact: false },
         (oldData: any) => {
           if (!oldData) return { notes: [newNote], totalCount: 1, hasMore: false };
           
@@ -233,6 +279,9 @@ export const useSimpleNotes = () => {
           };
         }
       );
+
+      // Also invalidate all notes queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       
       console.log('✅ [SIMPLE NOTES] Cache updated - note should appear immediately');
       toast.success('Note created successfully');
@@ -266,9 +315,9 @@ export const useSimpleNotes = () => {
       return data;
     },
     onSuccess: (_, { id, updates }) => {
-      // Update cache immediately
+      // Update cache immediately with proper query key matching
       queryClient.setQueriesData(
-        { queryKey: NOTES_QUERY_KEY },
+        { queryKey: NOTES_QUERY_KEY, exact: false },
         (oldData: any) => {
           if (!oldData?.notes) return oldData;
           
@@ -280,6 +329,9 @@ export const useSimpleNotes = () => {
           };
         }
       );
+
+      // Invalidate to ensure all views are updated
+      queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
       
       toast.success('Note updated successfully');
     },
@@ -309,9 +361,9 @@ export const useSimpleNotes = () => {
       // Snapshot previous value for rollback
       const previousData = queryClient.getQueriesData({ queryKey: NOTES_QUERY_KEY });
 
-      // Optimistically update cache - remove note immediately
+      // Optimistically update cache - remove note immediately with proper query key matching
       queryClient.setQueriesData(
-        { queryKey: NOTES_QUERY_KEY },
+        { queryKey: NOTES_QUERY_KEY, exact: false },
         (oldData: any) => {
           if (!oldData?.notes) return oldData;
           
@@ -325,6 +377,9 @@ export const useSimpleNotes = () => {
           };
         }
       );
+
+      // Invalidate all notes queries
+      queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
 
       return { previousData };
     },
