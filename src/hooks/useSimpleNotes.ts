@@ -225,29 +225,19 @@ export const useSimpleNotes = () => {
     return options;
   }, [filters.debouncedSearch, filters.subject, filters.sort, subjectNameToId]);
 
-  // FORCE INVALIDATION when filters change
-  React.useEffect(() => {
-    console.log('🔥 [SIMPLE NOTES] Filter dependency changed - FORCING INVALIDATION');
-    // Invalidate all queries immediately when filters change
-    queryClient.invalidateQueries({ 
-      queryKey: NOTES_QUERY_KEY, 
-      exact: false 
-    });
-  }, [filters.debouncedSearch, filters.subject, filters.sort, queryClient]);
-
-  // Main query with enhanced debugging and cache invalidation
+  // Main query with proper caching and invalidation
   const {
     data,
     isLoading,
     error,
     refetch
   } = useQuery({
-    queryKey: [...NOTES_QUERY_KEY, 
+    queryKey: [
+      ...NOTES_QUERY_KEY, 
       filters.debouncedSearch, 
       filters.subject, 
       filters.sort, 
-      'page-1', // Always page 1 for simplicity
-      Date.now() // Force fresh query every time
+      'page-1' // Always page 1 for simplicity
     ],
     queryFn: () => {
       console.log('🚀 [SIMPLE NOTES] EXECUTING QUERY with filters:', {
@@ -258,10 +248,10 @@ export const useSimpleNotes = () => {
       console.log('🔥 [SIMPLE NOTES] NETWORK REQUEST ABOUT TO BE MADE');
       return fetchNotes(queryOptions);
     },
-    staleTime: 0, // Always consider data stale
-    gcTime: 0, // Don't cache results
+    staleTime: 2 * 60 * 1000, // 2 minutes stale time for reasonable caching
+    gcTime: 5 * 60 * 1000, // 5 minutes cache retention
     refetchOnWindowFocus: false,
-    enabled: true, // Force enable the query
+    enabled: true,
   });
 
   // Log when query data changes
