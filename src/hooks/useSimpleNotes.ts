@@ -1,19 +1,20 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 import { toast } from 'sonner';
+import { useUniversalFilters } from './useUniversalFilters';
 
 // Simple query key - no complex factory
 const NOTES_QUERY_KEY = ['notes'];
 
-// Fetch function - clean and simple
+// Fetch function with pre-loaded subject mapping
 const fetchNotes = async (options: {
   page?: number;
   limit?: number;
   searchTerm?: string;
   selectedSubject?: string;
-  
+  subjectNameToId?: Map<string, string>;
   sortType?: string;
 } = {}): Promise<{ notes: Note[]; totalCount: number; hasMore: boolean }> => {
   const {
@@ -21,8 +22,8 @@ const fetchNotes = async (options: {
     limit = 20,
     searchTerm = '',
     selectedSubject = '',
-    
-    sortType = 'recent'
+    subjectNameToId,
+    sortType = 'newest'
   } = options;
 
   console.log('🔍 [SIMPLE NOTES] Fetching notes with options:', options);
@@ -46,27 +47,19 @@ const fetchNotes = async (options: {
     query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
   }
 
-  // Apply subject filter - filter by subject_id for efficiency
-  if (selectedSubject && selectedSubject !== 'all') {
-    // Get user subjects to map name to ID
-    const { data: userSubjects } = await supabase
-      .from('user_subjects')
-      .select('id')
-      .eq('user_id', user.user.id)
-      .eq('name', selectedSubject)
-      .single();
-    
-    if (userSubjects) {
-      query = query.eq('subject_id', userSubjects.id);
+  // Apply subject filter using pre-loaded mapping
+  if (selectedSubject && selectedSubject !== 'all' && subjectNameToId) {
+    const subjectId = subjectNameToId.get(selectedSubject);
+    if (subjectId) {
+      query = query.eq('subject_id', subjectId);
     }
   }
 
   // Always exclude archived (no archive functionality)
   query = query.eq('archived', false);
 
-  // Apply sorting - fix mapping for consistency
+  // Apply sorting - consistent mapping
   switch (sortType) {
-    case 'recent':
     case 'newest':
       query = query.order('created_at', { ascending: false });
       break;
@@ -76,8 +69,8 @@ const fetchNotes = async (options: {
     case 'alphabetical':
       query = query.order('title', { ascending: true });
       break;
-    case 'pinned':
-      query = query.order('pinned', { ascending: false }).order('created_at', { ascending: false });
+    default:
+      query = query.order('created_at', { ascending: false });
       break;
   }
 
@@ -116,24 +109,52 @@ const fetchNotes = async (options: {
   return { notes, totalCount, hasMore };
 };
 
-// Main hook - simple and clean
+// Main hook - using unified filters
 export const useSimpleNotes = () => {
   const queryClient = useQueryClient();
   
-  // UI state
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('all');
-  
-  const [sortType, setSortType] = useState('newest');
-  const [currentPage, setCurrentPage] = useState(1);
+  // Use unified filter system
+  const filters = useUniversalFilters({
+    defaultSort: 'newest',
+    defaultSubject: 'all',
+    debounceMs: 300
+  });
+
+  // Get user subjects for mapping
+  const { data: userSubjects = [] } = useQuery({
+    queryKey: ['userSubjects'],
+    queryFn: async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return [];
+
+      const { data, error } = await supabase
+        .from('user_subjects')
+        .select('id, name')
+        .eq('user_id', user.user.id);
+
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Create subject name to ID mapping
+  const subjectNameToId = useMemo(() => {
+    const map = new Map<string, string>();
+    userSubjects.forEach(subject => {
+      map.set(subject.name, subject.id);
+    });
+    return map;
+  }, [userSubjects]);
 
   // Build query options (memoized for better caching)
   const queryOptions = useMemo(() => ({
-    page: currentPage,
-    searchTerm,
-    selectedSubject,
-    sortType
-  }), [currentPage, searchTerm, selectedSubject, sortType]);
+    page: 1, // Always page 1 for simplicity
+    searchTerm: filters.debouncedSearch,
+    selectedSubject: filters.subject,
+    subjectNameToId,
+    sortType: filters.sort
+  }), [filters.debouncedSearch, filters.subject, filters.sort, subjectNameToId]);
 
   // Main query
   const {
@@ -351,23 +372,9 @@ export const useSimpleNotes = () => {
     await updateNote(id, { archived });
   }, [updateNote]);
 
-  // Filter operations
-  const clearFilters = useCallback(() => {
-    setSearchTerm('');
-    setSelectedSubject('all');
-    setSortType('newest');
-    setCurrentPage(1);
-  }, []);
-
-  const hasActiveFilters = Boolean(
-    searchTerm || 
-    (selectedSubject && selectedSubject !== 'all')
-  );
-
-  const activeFilterCount = [
-    Boolean(searchTerm),
-    Boolean(selectedSubject && selectedSubject !== 'all')
-  ].filter(Boolean).length;
+  // Pagination (simplified)
+  const currentPage = 1;
+  const setCurrentPage = useCallback(() => {}, []);
 
   return {
     // Data
@@ -383,19 +390,18 @@ export const useSimpleNotes = () => {
     currentPage,
     setCurrentPage,
     totalPages: Math.ceil(totalCount / 20),
-    loadMore: () => setCurrentPage(prev => prev + 1),
+    loadMore: () => {},
     
-    // Filters
-    searchTerm,
-    setSearchTerm,
-    selectedSubject,
-    setSelectedSubject,
-    
-    sortType,
-    setSortType,
-    clearFilters,
-    hasActiveFilters,
-    activeFilterCount,
+    // Filters (from unified system)
+    searchTerm: filters.search,
+    setSearchTerm: filters.setSearch,
+    selectedSubject: filters.subject,
+    setSelectedSubject: filters.setSubject,
+    sortType: filters.sort,
+    setSortType: filters.setSort,
+    clearFilters: filters.clearFilters,
+    hasActiveFilters: filters.hasActiveFilters,
+    activeFilterCount: filters.activeFilterCount,
     isFiltering: isLoading,
     filterError: null,
     

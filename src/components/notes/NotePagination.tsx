@@ -19,17 +19,14 @@ export const NotePagination = () => {
   };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    // Scroll to top when page changes
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
+    // In simplified version, pagination is disabled
+    console.log('Page change to:', page);
   };
 
   const handleNotesPerPageChange = (value: string) => {
     setNotesPerPage(parseInt(value));
-    setCurrentPage(1); // Reset to first page when changing items per page
+    // In simplified version, pagination is disabled
+    console.log('Notes per page changed to:', value);
   };
 
   if (totalPages <= 1) {

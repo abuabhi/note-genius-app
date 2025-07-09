@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -52,7 +52,7 @@ interface UniversalFiltersProps {
   onClearFilters: () => void;
 }
 
-export const UniversalFilters: React.FC<UniversalFiltersProps> = ({
+export const UniversalFilters: React.FC<UniversalFiltersProps> = memo(({
   search,
   subject,
   sort,
@@ -211,4 +211,6 @@ export const UniversalFilters: React.FC<UniversalFiltersProps> = ({
       </div>
     </div>
   );
-};
+});
+
+UniversalFilters.displayName = 'UniversalFilters';
