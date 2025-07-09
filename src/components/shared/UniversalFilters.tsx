@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { DebouncedInput } from './DebouncedInput';
+import { SimpleSearchInput } from './SimpleSearchInput';
 
 interface Subject {
   id: string;
@@ -100,11 +100,10 @@ export const UniversalFilters: React.FC<UniversalFiltersProps> = memo(({
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Search Input */}
         <div className="flex-1">
-          <DebouncedInput
+          <SimpleSearchInput
             value={search}
             onChange={handleSearchChange}
             placeholder={searchPlaceholder}
-            debounceMs={300}
             className="border-mint-200 focus:border-mint-500"
           />
         </div>

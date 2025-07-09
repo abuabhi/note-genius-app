@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 import { toast } from 'sonner';
 import { useUniversalFilters } from './useUniversalFilters';
-import { useQueryInvalidation } from './useQueryInvalidation';
 
 // Simple query key - no complex factory
 const NOTES_QUERY_KEY = ['notes'];
@@ -132,12 +131,15 @@ export const useSimpleNotes = () => {
     });
   }, [filters.search, filters.debouncedSearch, filters.subject, filters.sort, filters.hasActiveFilters]);
 
-  // Force query invalidation when filter values change to ensure fresh data
-  useQueryInvalidation(
-    NOTES_QUERY_KEY,
-    [filters.debouncedSearch, filters.subject, filters.sort],
-    200 // Small delay to batch filter changes
-  );
+  // Log filter changes for real-time debugging
+  console.log('🎯 [SIMPLE NOTES] Current filter state:', {
+    search: filters.search,
+    debouncedSearch: filters.debouncedSearch,
+    subject: filters.subject,
+    sort: filters.sort,
+    hasActiveFilters: filters.hasActiveFilters,
+    activeFilterCount: filters.activeFilterCount
+  });
 
   // Get user subjects for mapping
   const { data: userSubjects = [] } = useQuery({
@@ -200,8 +202,8 @@ export const useSimpleNotes = () => {
       });
       return fetchNotes(queryOptions);
     },
-    staleTime: 500, // 500ms - very fresh data for immediate filter feedback
-    gcTime: 2 * 60 * 1000, // 2 minutes cache time
+    staleTime: 0, // Always refetch for immediate filter response
+    gcTime: 30 * 1000, // 30 seconds cache time
     refetchOnWindowFocus: false,
   });
 

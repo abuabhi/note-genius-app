@@ -1,165 +1,75 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 
-export interface FilterState {
-  search: string;
-  subject: string;
-  sort: string;
-  showArchived?: boolean;
-}
-
-export interface FilterOptions {
-  defaultSort?: string;
+interface UniversalFiltersOptions {
+  defaultSearch?: string;
   defaultSubject?: string;
-  enableArchived?: boolean;
-  searchPlaceholder?: string;
+  defaultSort?: string;
+  defaultShowArchived?: boolean;
   debounceMs?: number;
 }
 
-export interface UniversalFiltersReturn {
-  // Filter values
-  search: string;
-  subject: string;
-  sort: string;
-  showArchived: boolean;
-  
-  // Debounced values (for queries)
-  debouncedSearch: string;
-  
-  // Setters
-  setSearch: (value: string) => void;
-  setSubject: (value: string) => void;
-  setSort: (value: string) => void;
-  setShowArchived: (value: boolean) => void;
-  
-  // Computed values
-  hasActiveFilters: boolean;
-  activeFilterCount: number;
-  clearFilters: () => void;
-  
-  // For query keys
-  queryFilters: {
-    search: string;
-    subject: string;
-    sort: string;
-    showArchived?: boolean;
-  };
-}
-
-// Custom debounce hook
-const useDebounce = (value: string, delay: number): string => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-};
-
-export const useUniversalFilters = (options: FilterOptions = {}): UniversalFiltersReturn => {
+export const useUniversalFilters = (options: UniversalFiltersOptions = {}) => {
   const {
-    defaultSort = 'newest',
+    defaultSearch = '',
     defaultSubject = 'all',
-    enableArchived = false,
+    defaultSort = 'newest',
+    defaultShowArchived = false,
     debounceMs = 300
   } = options;
 
   // Filter state
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(defaultSearch);
   const [subject, setSubject] = useState(defaultSubject);
   const [sort, setSort] = useState(defaultSort);
-  const [showArchived, setShowArchived] = useState(false);
+  const [showArchived, setShowArchived] = useState(defaultShowArchived);
 
-  // Debounced search for performance
+  // Debounced search for query optimization
   const debouncedSearch = useDebounce(search, debounceMs);
 
-  // Optimized setters with immediate UI update
-  const handleSearchChange = useCallback((value: string) => {
-    setSearch(value);
-  }, []);
-
-  const handleSubjectChange = useCallback((value: string) => {
-    setSubject(value);
-  }, []);
-
-  const handleSortChange = useCallback((value: string) => {
-    setSort(value);
-  }, []);
-
-  const handleShowArchivedChange = useCallback((value: boolean) => {
-    setShowArchived(value);
-  }, []);
-
-  // Computed values
+  // Filter calculations
   const hasActiveFilters = useMemo(() => {
-    return Boolean(
-      search || 
-      (subject && subject !== 'all') || 
-      (enableArchived && showArchived)
-    );
-  }, [search, subject, showArchived, enableArchived]);
+    return !!(search || 
+             (subject && subject !== 'all') || 
+             showArchived);
+  }, [search, subject, showArchived]);
 
   const activeFilterCount = useMemo(() => {
-    return [
-      Boolean(search),
-      Boolean(subject && subject !== 'all'),
-      Boolean(enableArchived && showArchived)
-    ].filter(Boolean).length;
-  }, [search, subject, showArchived, enableArchived]);
+    let count = 0;
+    if (search) count++;
+    if (subject && subject !== 'all') count++;
+    if (showArchived) count++;
+    return count;
+  }, [search, subject, showArchived]);
 
   // Clear all filters
   const clearFilters = useCallback(() => {
-    setSearch('');
+    console.log('🧹 [UNIVERSAL FILTERS] Clearing all filters');
+    setSearch(defaultSearch);
     setSubject(defaultSubject);
     setSort(defaultSort);
-    if (enableArchived) {
-      setShowArchived(false);
-    }
-  }, [defaultSort, defaultSubject, enableArchived]);
-
-  // Query filters object (for React Query keys)
-  const queryFilters = useMemo(() => {
-    const filters: any = {
-      search: debouncedSearch,
-      subject: subject === 'all' ? '' : subject,
-      sort
-    };
-    
-    if (enableArchived) {
-      filters.showArchived = showArchived;
-    }
-    
-    return filters;
-  }, [debouncedSearch, subject, sort, showArchived, enableArchived]);
+    setShowArchived(defaultShowArchived);
+  }, [defaultSearch, defaultSubject, defaultSort, defaultShowArchived]);
 
   return {
-    // Current filter values
+    // Raw filter values
     search,
     subject,
     sort,
     showArchived,
     
-    // Debounced values
+    // Debounced value for queries
     debouncedSearch,
     
-    // Setters (optimized)
-    setSearch: handleSearchChange,
-    setSubject: handleSubjectChange,
-    setSort: handleSortChange,
-    setShowArchived: handleShowArchivedChange,
+    // Setters
+    setSearch,
+    setSubject,
+    setSort,
+    setShowArchived,
     
     // Computed values
     hasActiveFilters,
     activeFilterCount,
-    clearFilters,
-    
-    // For queries
-    queryFilters
+    clearFilters
   };
 };
