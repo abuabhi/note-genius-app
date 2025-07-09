@@ -8,14 +8,39 @@ import { Plus, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useFlashcardsPageState } from './useFlashcardsPageState';
+import { UniversalFilters } from '@/components/shared/UniversalFilters';
+import { useUserSubjects } from '@/hooks/useUserSubjects';
 
 export const FlashcardsContent = () => {
   const navigate = useNavigate();
-  const { filters } = useFlashcardsPageState();
+  const { filters, setFilters } = useFlashcardsPageState();
+  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
   const { 
     flashcardSets, 
     loading
   } = useFlashcards();
+
+  const handleFiltersChange = (newFilters: typeof filters) => {
+    setFilters(newFilters);
+  };
+
+  const hasActiveFilters = Boolean(
+    filters.search || 
+    (filters.subject && filters.subject !== 'all')
+  );
+
+  const activeFilterCount = [
+    Boolean(filters.search),
+    Boolean(filters.subject && filters.subject !== 'all')
+  ].filter(Boolean).length;
+
+  const clearFilters = () => {
+    setFilters({
+      search: '',
+      subject: 'all',
+      sortBy: 'updated_at'
+    });
+  };
 
   if (loading.sets) {
     return <LoadingState />;
@@ -41,6 +66,31 @@ export const FlashcardsContent = () => {
 
   return (
     <div className="space-y-6">
+      {/* Universal Filters */}
+      <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200 shadow-sm p-4">
+        <UniversalFilters
+          search={filters.search || ''}
+          subject={filters.subject || 'all'}
+          sort={filters.sortBy || 'updated_at'}
+          onSearchChange={(search) => handleFiltersChange({ ...filters, search })}
+          onSubjectChange={(subject) => handleFiltersChange({ ...filters, subject })}
+          onSortChange={(sortBy) => handleFiltersChange({ ...filters, sortBy })}
+          subjects={subjects}
+          sortOptions={[
+            { value: 'updated_at', label: 'Recently Updated' },
+            { value: 'created_at', label: 'Recently Created' },
+            { value: 'name', label: 'Name A-Z' }
+          ]}
+          searchPlaceholder="Search flashcard sets..."
+          enableArchived={false}
+          isLoading={loading.sets || subjectsLoading}
+          totalCount={flashcardSets?.length || 0}
+          hasActiveFilters={hasActiveFilters}
+          activeFilterCount={activeFilterCount}
+          onClearFilters={clearFilters}
+        />
+      </div>
+
       <FlashcardSetGrid
         sets={flashcardSets}
         setProgressData={{}}

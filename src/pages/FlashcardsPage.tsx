@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { FlashcardsPageHeader } from "@/components/flashcards/page/FlashcardsPageHeader";
 import { FlashcardsContent } from "@/components/flashcards/page/FlashcardsContent";
-import { EnhancedFlashcardFilters } from "@/components/flashcards/EnhancedFlashcardFilters";
+
 import { useFlashcardsPageState } from "@/components/flashcards/page/useFlashcardsPageState";
 import { ErrorBoundary } from "@/components/flashcards/components/ErrorBoundary";
 import { FlashcardProvider } from "@/contexts/flashcards/index.tsx";
@@ -35,11 +35,6 @@ const FlashcardsPage = () => {
               onViewModeChange={setViewMode}
             />
             
-            <EnhancedFlashcardFilters
-              onFiltersChange={handleFiltersChange}
-              totalSets={0}
-              isLoading={false}
-            />
             
             <FlashcardsContent />
           </div>

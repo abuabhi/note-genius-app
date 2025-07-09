@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/ui/empty-state';
-import { EnhancedQuizFilters } from './EnhancedQuizFilters';
+import { UniversalFilters } from '@/components/shared/UniversalFilters';
+import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { QuizGrid } from './components/QuizGrid';
 import { QuizListView } from './components/QuizListView';
 import { Badge } from '@/components/ui/badge';
@@ -20,19 +21,31 @@ interface QuizListProps {
 }
 
 const QuizList = ({ viewMode }: QuizListProps) => {
-  const [filters, setFilters] = useState<{
-    search?: string;
-    subject?: string;
-  }>({});
+  const [search, setSearch] = useState('');
+  const [subject, setSubject] = useState('all');
+  const [sort, setSort] = useState('newest');
   
   const { favoriteQuizIds, toggleFavorite, getFavoriteCount } = useFavoritesManager();
   const { user } = useAuth();
+  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
+
+  const filters = {
+    search: search || undefined,
+    subject: subject === 'all' ? undefined : subject
+  };
 
   const { data, isLoading, error, refetch } = useQuizList(filters);
-  const { data: filterOptions, isLoading: optionsLoading } = useQuizFilterOptions();
 
-  const handleFiltersChange = (newFilters: typeof filters) => {
-    setFilters(newFilters);
+  const hasActiveFilters = Boolean(search || (subject && subject !== 'all'));
+  const activeFilterCount = [
+    Boolean(search),
+    Boolean(subject && subject !== 'all')
+  ].filter(Boolean).length;
+
+  const clearFilters = () => {
+    setSearch('');
+    setSubject('all');
+    setSort('newest');
   };
 
   if (error) {
@@ -64,11 +77,29 @@ const QuizList = ({ viewMode }: QuizListProps) => {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <EnhancedQuizFilters
-        onFiltersChange={handleFiltersChange}
-        totalQuizzes={totalQuizzes}
-        isLoading={isLoading}
-      />
+      <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200 shadow-sm p-4">
+        <UniversalFilters
+          search={search}
+          subject={subject}
+          sort={sort}
+          onSearchChange={setSearch}
+          onSubjectChange={setSubject}
+          onSortChange={setSort}
+          subjects={subjects}
+          sortOptions={[
+            { value: 'newest', label: 'Newest First' },
+            { value: 'oldest', label: 'Oldest First' },
+            { value: 'alphabetical', label: 'Alphabetical' }
+          ]}
+          searchPlaceholder="Search quizzes..."
+          enableArchived={false}
+          isLoading={isLoading || subjectsLoading}
+          totalCount={totalQuizzes}
+          hasActiveFilters={hasActiveFilters}
+          activeFilterCount={activeFilterCount}
+          onClearFilters={clearFilters}
+        />
+      </div>
 
       {/* Stats */}
       <div className="flex items-center gap-4">

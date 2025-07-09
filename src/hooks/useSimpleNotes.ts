@@ -41,17 +41,27 @@ const fetchNotes = async (options: {
     `, { count: 'exact' })
     .eq('user_id', user.user.id);
 
-  // Apply filters
+  // Apply search filter - use proper text search
   if (searchTerm) {
-    query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
+    query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
   }
 
+  // Apply subject filter - filter by subject_id for efficiency
   if (selectedSubject && selectedSubject !== 'all') {
-    // Filter by subject - use the joined user_subjects.name for accurate filtering
-    query = query.eq('user_subjects.name', selectedSubject);
+    // Get user subjects to map name to ID
+    const { data: userSubjects } = await supabase
+      .from('user_subjects')
+      .select('id')
+      .eq('user_id', user.user.id)
+      .eq('name', selectedSubject)
+      .single();
+    
+    if (userSubjects) {
+      query = query.eq('subject_id', userSubjects.id);
+    }
   }
 
-  // Always exclude archived for now (no archive functionality implemented)
+  // Always exclude archived (no archive functionality)
   query = query.eq('archived', false);
 
   // Apply sorting - fix mapping for consistency
