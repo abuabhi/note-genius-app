@@ -45,7 +45,7 @@ const fetchNotesPage = async ({ search, subject, sort, pageParam = 0 }: FetchNot
   // Apply subject filter
   if (subject && subject !== 'all') {
     // Try both subject_id relationship and legacy subject field
-    query = query.or(`user_subjects.name.eq.${subject},subject.eq.${subject}`);
+    query = query.or(`user_subjects.name.eq."${subject}",subject.eq."${subject}"`);
   }
 
   // Apply sorting
