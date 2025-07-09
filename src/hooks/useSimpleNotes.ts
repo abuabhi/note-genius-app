@@ -1,37 +1,20 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 import { toast } from 'sonner';
-import { useUniversalFilters } from './useUniversalFilters';
 
 // Simple query key - no complex factory
 const NOTES_QUERY_KEY = ['notes'];
 
-// Fetch function with pre-loaded subject mapping
-const fetchNotes = async (options: {
-  page?: number;
-  limit?: number;
-  searchTerm?: string;
-  selectedSubject?: string;
-  subjectNameToId?: Map<string, string>;
-  sortType?: string;
-} = {}): Promise<{ notes: Note[]; totalCount: number; hasMore: boolean }> => {
-  const {
-    page = 1,
-    limit = 20,
-    searchTerm = '',
-    selectedSubject = '',
-    subjectNameToId,
-    sortType = 'newest'
-  } = options;
-
-  console.log('🔍 [SIMPLE NOTES] Fetching notes with options:', options);
+// Simple fetch function - no filters, no search, no sorting
+const fetchNotes = async (): Promise<{ notes: Note[]; totalCount: number; hasMore: boolean }> => {
+  console.log('🔍 [SIMPLE NOTES] Fetching all notes (no filters)');
 
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('User not authenticated');
 
-  let query = supabase
+  const { data, error, count } = await supabase
     .from('notes')
     .select(`
       *,
@@ -40,68 +23,9 @@ const fetchNotes = async (options: {
         name
       )
     `, { count: 'exact' })
-    .eq('user_id', user.user.id);
-
-  // Apply search filter - use proper text search with debugging
-  if (searchTerm) {
-    console.log('🔍 [SEARCH FILTER] Applying search filter for:', searchTerm);
-    query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
-  }
-
-  // Apply subject filter using pre-loaded mapping with comprehensive debugging and fallback
-  if (selectedSubject && selectedSubject !== 'all') {
-    console.log('🎯 [SUBJECT FILTER] Attempting to filter by subject:', selectedSubject);
-    console.log('🎯 [SUBJECT FILTER] Available mapping:', subjectNameToId ? Array.from(subjectNameToId.entries()) : 'NO MAPPING');
-    
-    if (subjectNameToId) {
-      const subjectId = subjectNameToId.get(selectedSubject);
-      console.log(`🎯 [SUBJECT FILTER] Looking up "${selectedSubject}" -> "${subjectId}"`);
-      
-      if (subjectId) {
-        console.log('✅ [SUBJECT FILTER] Using subject_id filter:', subjectId);
-        query = query.eq('subject_id', subjectId);
-      } else {
-        console.log('⚠️ [SUBJECT FILTER] No ID found, using fallback subject name filter');
-        // Fallback: filter by subject name directly
-        query = query.eq('subject', selectedSubject);
-      }
-    } else {
-      console.log('⚠️ [SUBJECT FILTER] No mapping available, using fallback subject name filter');
-      // Fallback: filter by subject name directly
-      query = query.eq('subject', selectedSubject);
-    }
-  }
-
-  // Always exclude archived (no archive functionality)
-  query = query.eq('archived', false);
-
-  // Apply sorting - consistent mapping with debugging
-  console.log('📊 [SORT FILTER] Applying sort:', sortType);
-  switch (sortType) {
-    case 'newest':
-      console.log('📊 [SORT FILTER] Sorting by newest first (created_at DESC)');
-      query = query.order('created_at', { ascending: false });
-      break;
-    case 'oldest':
-      console.log('📊 [SORT FILTER] Sorting by oldest first (created_at ASC)');
-      query = query.order('created_at', { ascending: true });
-      break;
-    case 'alphabetical':
-      console.log('📊 [SORT FILTER] Sorting alphabetically (title ASC)');
-      query = query.order('title', { ascending: true });
-      break;
-    default:
-      console.log('📊 [SORT FILTER] Default sorting (created_at DESC)');
-      query = query.order('created_at', { ascending: false });
-      break;
-  }
-
-  // Apply pagination
-  const offset = (page - 1) * limit;
-  query = query.range(offset, offset + limit - 1);
-
-  console.log('🚀 [FETCH NOTES] Executing final query...');
-  const { data, error, count } = await query;
+    .eq('user_id', user.user.id)
+    .eq('archived', false) // Only show non-archived notes
+    .order('created_at', { ascending: false }); // Default newest first
 
   if (error) {
     console.error('❌ [FETCH NOTES] Query failed:', error);
@@ -110,14 +34,7 @@ const fetchNotes = async (options: {
 
   console.log('📊 [FETCH NOTES] Raw query results:', {
     dataLength: data?.length || 0,
-    count,
-    firstFewResults: data?.slice(0, 3).map(item => ({
-      id: item.id,
-      title: item.title,
-      subject: item.subject,
-      subject_id: item.subject_id,
-      subjectName: item.user_subjects?.name
-    }))
+    count
   });
 
   const notes: Note[] = (data || []).map(item => ({
@@ -135,134 +52,32 @@ const fetchNotes = async (options: {
   }));
 
   const totalCount = count || 0;
-  const hasMore = offset + limit < totalCount;
 
   console.log('✅ [SIMPLE NOTES] Fetched notes:', {
     notesCount: notes.length,
-    totalCount,
-    hasMore,
-    page
+    totalCount
   });
 
-  return { notes, totalCount, hasMore };
+  return { notes, totalCount, hasMore: false }; // No pagination
 };
 
-// Main hook - using unified filters
+// Main hook - simplified with no filters
 export const useSimpleNotes = () => {
   const queryClient = useQueryClient();
-  
-  // Use unified filter system with enhanced debugging
-  const filters = useUniversalFilters({
-    defaultSort: 'newest',
-    defaultSubject: 'all',
-    debounceMs: 300
-  });
 
-  // Log filter changes for debugging
-  React.useEffect(() => {
-    console.log('🔄 [SIMPLE NOTES] Filter state changed:', {
-      search: filters.search,
-      debouncedSearch: filters.debouncedSearch,
-      subject: filters.subject,
-      sort: filters.sort,
-      hasActiveFilters: filters.hasActiveFilters
-    });
-  }, [filters.search, filters.debouncedSearch, filters.subject, filters.sort, filters.hasActiveFilters]);
-
-  // Log filter changes for real-time debugging
-  console.log('🎯 [SIMPLE NOTES] Current filter state:', {
-    search: filters.search,
-    debouncedSearch: filters.debouncedSearch,
-    subject: filters.subject,
-    sort: filters.sort,
-    hasActiveFilters: filters.hasActiveFilters,
-    activeFilterCount: filters.activeFilterCount
-  });
-
-  // Get user subjects for mapping
-  const { data: userSubjects = [] } = useQuery({
-    queryKey: ['userSubjects'],
-    queryFn: async () => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return [];
-
-      const { data, error } = await supabase
-        .from('user_subjects')
-        .select('id, name')
-        .eq('user_id', user.user.id);
-
-      if (error) throw error;
-      return data || [];
-    },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
-
-  // Create subject name to ID mapping with extensive debugging
-  const subjectNameToId = useMemo(() => {
-    const map = new Map<string, string>();
-    console.log('🔍 [SUBJECT MAPPING] Creating subject name to ID mapping');
-    console.log('🔍 [SUBJECT MAPPING] Available userSubjects:', userSubjects);
-    
-    userSubjects.forEach(subject => {
-      map.set(subject.name, subject.id);
-      console.log(`🔍 [SUBJECT MAPPING] Mapped "${subject.name}" -> "${subject.id}"`);
-    });
-    
-    console.log('🔍 [SUBJECT MAPPING] Final mapping:', Array.from(map.entries()));
-    return map;
-  }, [userSubjects]);
-
-  // Build query options (memoized for better caching) with debugging
-  const queryOptions = useMemo(() => {
-    const options = {
-      page: 1, // Always page 1 for simplicity
-      searchTerm: filters.debouncedSearch,
-      selectedSubject: filters.subject,
-      subjectNameToId,
-      sortType: filters.sort
-    };
-    console.log('🎯 [SIMPLE NOTES] Building query options:', options);
-    return options;
-  }, [filters.debouncedSearch, filters.subject, filters.sort, subjectNameToId]);
-
-  // Main query with proper caching and invalidation
+  // Simple query with no filters
   const {
     data,
     isLoading,
     error,
     refetch
   } = useQuery({
-    queryKey: [
-      ...NOTES_QUERY_KEY, 
-      filters.debouncedSearch, 
-      filters.subject, 
-      filters.sort, 
-      'page-1' // Always page 1 for simplicity
-    ],
-    queryFn: () => {
-      console.log('🚀 [SIMPLE NOTES] EXECUTING QUERY with filters:', {
-        search: filters.debouncedSearch,
-        subject: filters.subject,
-        sort: filters.sort
-      });
-      console.log('🔥 [SIMPLE NOTES] NETWORK REQUEST ABOUT TO BE MADE');
-      return fetchNotes(queryOptions);
-    },
-    staleTime: 2 * 60 * 1000, // 2 minutes stale time for reasonable caching
+    queryKey: NOTES_QUERY_KEY,
+    queryFn: fetchNotes,
+    staleTime: 2 * 60 * 1000, // 2 minutes stale time
     gcTime: 5 * 60 * 1000, // 5 minutes cache retention
     refetchOnWindowFocus: false,
-    enabled: true,
   });
-
-  // Log when query data changes
-  React.useEffect(() => {
-    console.log('📊 [SIMPLE NOTES] Query data updated:', {
-      notesCount: data?.notes?.length || 0,
-      totalCount: data?.totalCount || 0,
-      isLoading,
-      error: !!error
-    });
-  }, [data, isLoading, error]);
 
   const notes = data?.notes || [];
   const totalCount = data?.totalCount || 0;
@@ -496,17 +311,17 @@ export const useSimpleNotes = () => {
     totalPages: Math.ceil(totalCount / 20),
     loadMore: () => {},
     
-    // Filters (from unified system)
-    searchTerm: filters.search,
-    setSearchTerm: filters.setSearch,
-    selectedSubject: filters.subject,
-    setSelectedSubject: filters.setSubject,
-    sortType: filters.sort,
-    setSortType: filters.setSort,
-    clearFilters: filters.clearFilters,
-    hasActiveFilters: filters.hasActiveFilters,
-    activeFilterCount: filters.activeFilterCount,
-    isFiltering: isLoading,
+    // Removed filter functionality - keeping empty stubs for compatibility
+    searchTerm: '',
+    setSearchTerm: () => {},
+    selectedSubject: 'all',
+    setSelectedSubject: () => {},
+    sortType: 'newest',
+    setSortType: () => {},
+    clearFilters: () => {},
+    hasActiveFilters: false,
+    activeFilterCount: 0,
+    isFiltering: false,
     filterError: null,
     
     // Operations

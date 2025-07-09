@@ -35,7 +35,7 @@ export const NoteSorter = () => {
           return (
             <DropdownMenuItem
               key={option.value}
-              onClick={() => setSortType(option.value)}
+              onClick={() => setSortType()}
               className={`flex items-center gap-2 ${
                 sortType === option.value ? 'bg-accent' : ''
               }`}

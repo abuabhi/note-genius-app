@@ -1,9 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Import } from "lucide-react";
-import { SimpleSearchInput } from "@/components/shared/SimpleSearchInput";
-import { SimplifiedNotesFilters } from "./SimplifiedNotesFilters";
-import { useSimpleNotes } from "@/hooks/useSimpleNotes";
 
 interface SimplifiedNotesHeaderProps {
   onOpenManualDialog: () => void;
@@ -14,10 +11,6 @@ export const SimplifiedNotesHeader = ({
   onOpenManualDialog,
   onOpenImportDialog
 }: SimplifiedNotesHeaderProps) => {
-  const { searchTerm, setSearchTerm } = useSimpleNotes();
-  
-  console.log('🔄 [SIMPLIFIED HEADER] Current search term:', searchTerm);
-
   return (
     <div className="space-y-4">
       {/* Top Row: Title and Action Buttons */}
@@ -46,26 +39,6 @@ export const SimplifiedNotesHeader = ({
             Import
           </Button>
         </div>
-      </div>
-
-      {/* Second Row: Search Bar Only */}
-      <div className="flex justify-center">
-        <div className="w-full max-w-md">
-          <SimpleSearchInput
-            value={searchTerm}
-            onChange={(value) => {
-              console.log('🔍 [SIMPLIFIED HEADER] Search changing to:', value);
-              setSearchTerm(value);
-            }}
-            placeholder="Search notes..."
-            className="w-full"
-          />
-        </div>
-      </div>
-      
-      {/* Third Row: Filters */}
-      <div>
-        <SimplifiedNotesFilters />
       </div>
     </div>
   );
