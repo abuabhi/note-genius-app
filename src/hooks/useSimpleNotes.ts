@@ -44,8 +44,11 @@ const fetchNotesPage = async ({ search, subject, sort, pageParam = 0 }: FetchNot
 
   // Apply subject filter
   if (subject && subject !== 'all') {
-    // First try the subject_id relationship, then fall back to legacy subject field
-    query = query.or(`user_subjects.name.eq.${subject},subject.eq.${subject}`);
+    console.log('🔍 Applying subject filter:', subject);
+    // Use correct PostgREST OR syntax with quotes around string values
+    // Order: legacy subject field first, then relationship field
+    query = query.or(`subject.eq."${subject}",user_subjects.name.eq."${subject}"`);
+    console.log('🔍 OR query applied for subject filtering');
   }
 
   // Apply sorting
