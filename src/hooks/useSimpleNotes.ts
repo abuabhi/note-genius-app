@@ -42,34 +42,56 @@ const fetchNotes = async (options: {
     `, { count: 'exact' })
     .eq('user_id', user.user.id);
 
-  // Apply search filter - use proper text search
+  // Apply search filter - use proper text search with debugging
   if (searchTerm) {
+    console.log('🔍 [SEARCH FILTER] Applying search filter for:', searchTerm);
     query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
   }
 
-  // Apply subject filter using pre-loaded mapping
-  if (selectedSubject && selectedSubject !== 'all' && subjectNameToId) {
-    const subjectId = subjectNameToId.get(selectedSubject);
-    if (subjectId) {
-      query = query.eq('subject_id', subjectId);
+  // Apply subject filter using pre-loaded mapping with comprehensive debugging and fallback
+  if (selectedSubject && selectedSubject !== 'all') {
+    console.log('🎯 [SUBJECT FILTER] Attempting to filter by subject:', selectedSubject);
+    console.log('🎯 [SUBJECT FILTER] Available mapping:', subjectNameToId ? Array.from(subjectNameToId.entries()) : 'NO MAPPING');
+    
+    if (subjectNameToId) {
+      const subjectId = subjectNameToId.get(selectedSubject);
+      console.log(`🎯 [SUBJECT FILTER] Looking up "${selectedSubject}" -> "${subjectId}"`);
+      
+      if (subjectId) {
+        console.log('✅ [SUBJECT FILTER] Using subject_id filter:', subjectId);
+        query = query.eq('subject_id', subjectId);
+      } else {
+        console.log('⚠️ [SUBJECT FILTER] No ID found, using fallback subject name filter');
+        // Fallback: filter by subject name directly
+        query = query.eq('subject', selectedSubject);
+      }
+    } else {
+      console.log('⚠️ [SUBJECT FILTER] No mapping available, using fallback subject name filter');
+      // Fallback: filter by subject name directly
+      query = query.eq('subject', selectedSubject);
     }
   }
 
   // Always exclude archived (no archive functionality)
   query = query.eq('archived', false);
 
-  // Apply sorting - consistent mapping
+  // Apply sorting - consistent mapping with debugging
+  console.log('📊 [SORT FILTER] Applying sort:', sortType);
   switch (sortType) {
     case 'newest':
+      console.log('📊 [SORT FILTER] Sorting by newest first (created_at DESC)');
       query = query.order('created_at', { ascending: false });
       break;
     case 'oldest':
+      console.log('📊 [SORT FILTER] Sorting by oldest first (created_at ASC)');
       query = query.order('created_at', { ascending: true });
       break;
     case 'alphabetical':
+      console.log('📊 [SORT FILTER] Sorting alphabetically (title ASC)');
       query = query.order('title', { ascending: true });
       break;
     default:
+      console.log('📊 [SORT FILTER] Default sorting (created_at DESC)');
       query = query.order('created_at', { ascending: false });
       break;
   }
@@ -78,9 +100,25 @@ const fetchNotes = async (options: {
   const offset = (page - 1) * limit;
   query = query.range(offset, offset + limit - 1);
 
+  console.log('🚀 [FETCH NOTES] Executing final query...');
   const { data, error, count } = await query;
 
-  if (error) throw error;
+  if (error) {
+    console.error('❌ [FETCH NOTES] Query failed:', error);
+    throw error;
+  }
+
+  console.log('📊 [FETCH NOTES] Raw query results:', {
+    dataLength: data?.length || 0,
+    count,
+    firstFewResults: data?.slice(0, 3).map(item => ({
+      id: item.id,
+      title: item.title,
+      subject: item.subject,
+      subject_id: item.subject_id,
+      subjectName: item.user_subjects?.name
+    }))
+  });
 
   const notes: Note[] = (data || []).map(item => ({
     id: item.id,
@@ -159,12 +197,18 @@ export const useSimpleNotes = () => {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Create subject name to ID mapping
+  // Create subject name to ID mapping with extensive debugging
   const subjectNameToId = useMemo(() => {
     const map = new Map<string, string>();
+    console.log('🔍 [SUBJECT MAPPING] Creating subject name to ID mapping');
+    console.log('🔍 [SUBJECT MAPPING] Available userSubjects:', userSubjects);
+    
     userSubjects.forEach(subject => {
       map.set(subject.name, subject.id);
+      console.log(`🔍 [SUBJECT MAPPING] Mapped "${subject.name}" -> "${subject.id}"`);
     });
+    
+    console.log('🔍 [SUBJECT MAPPING] Final mapping:', Array.from(map.entries()));
     return map;
   }, [userSubjects]);
 
