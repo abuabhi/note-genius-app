@@ -200,11 +200,13 @@ export const useSimpleNotes = () => {
         subject: filters.subject,
         sort: filters.sort
       });
+      console.log('🔥 [SIMPLE NOTES] NETWORK REQUEST ABOUT TO BE MADE');
       return fetchNotes(queryOptions);
     },
     staleTime: 0, // Always refetch for immediate filter response
     gcTime: 30 * 1000, // 30 seconds cache time
     refetchOnWindowFocus: false,
+    enabled: true, // Force enable the query
   });
 
   // Log when query data changes
