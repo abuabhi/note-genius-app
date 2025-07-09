@@ -5,12 +5,23 @@ import { useCreateNoteMutation, useUpdateNoteMutation, useDeleteNoteMutation, us
 import { NotesQueryOptions } from '@/contexts/notes/noteUtils';
 import { Note } from '@/types/note';
 
-export const useOptimizedNotesWithQuery = () => {
-  // Filter state
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('all');
-  const [showArchived, setShowArchived] = useState(false);
-  const [sortType, setSortType] = useState('newest');
+export const useOptimizedNotesWithQuery = (filterState?: {
+  searchTerm: string;
+  selectedSubject: string;
+  showArchived: boolean;
+  sortType: string;
+}) => {
+  // Use passed filter state if provided, otherwise use local state
+  const [localSearchTerm, setLocalSearchTerm] = useState('');
+  const [localSelectedSubject, setLocalSelectedSubject] = useState('all');
+  const [localShowArchived, setLocalShowArchived] = useState(false);
+  const [localSortType, setLocalSortType] = useState('newest');
+  
+  // Use external filter state if provided, otherwise use local
+  const searchTerm = filterState?.searchTerm ?? localSearchTerm;
+  const selectedSubject = filterState?.selectedSubject ?? localSelectedSubject;
+  const showArchived = filterState?.showArchived ?? localShowArchived;
+  const sortType = filterState?.sortType ?? localSortType;
   
   // Pagination mode - can switch between regular and infinite
   const [paginationMode, setPaginationMode] = useState<'regular' | 'infinite'>('infinite');
@@ -139,15 +150,15 @@ export const useOptimizedNotesWithQuery = () => {
     loading: isFetching || createNoteMutation.isPending,
     error: error?.message || null,
     
-    // Filter state
+    // Filter state (only if not using external filter state)
     searchTerm,
-    setSearchTerm,
+    setSearchTerm: filterState ? undefined : setLocalSearchTerm,
     selectedSubject,
-    setSelectedSubject,
+    setSelectedSubject: filterState ? undefined : setLocalSelectedSubject,
     showArchived,
-    setShowArchived,
+    setShowArchived: filterState ? undefined : setLocalShowArchived,
     sortType,
-    setSortType,
+    setSortType: filterState ? undefined : setLocalSortType,
     
     // Pagination
     currentPage,

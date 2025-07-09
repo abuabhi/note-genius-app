@@ -39,9 +39,17 @@ interface NotesDataContextType {
 
 const NotesDataContext = createContext<NotesDataContextType | undefined>(undefined);
 
-const NotesDataProviderInner = React.memo(({ children }: { children: ReactNode }) => {
+const NotesDataProviderInner = React.memo(({ children, filterState }: { 
+  children: ReactNode;
+  filterState?: {
+    searchTerm: string;
+    selectedSubject: string;
+    showArchived: boolean;
+    sortType: string;
+  };
+}) => {
   const dataStateMachine = useNotesDataStateMachine();
-  const queryHook = useOptimizedNotesWithQuery();
+  const queryHook = useOptimizedNotesWithQuery(filterState);
   const queryClient = useQueryClient();
 
   // Direct synchronization - no complex state machine logic
@@ -201,9 +209,17 @@ const NotesDataProviderInner = React.memo(({ children }: { children: ReactNode }
 
 NotesDataProviderInner.displayName = 'NotesDataProviderInner';
 
-export const NotesDataProvider = ({ children }: { children: ReactNode }) => {
+export const NotesDataProvider = ({ children, filterState }: { 
+  children: ReactNode;
+  filterState?: {
+    searchTerm: string;
+    selectedSubject: string;
+    showArchived: boolean;
+    sortType: string;
+  };
+}) => {
   return (
-    <NotesDataProviderInner>
+    <NotesDataProviderInner filterState={filterState}>
       {children}
     </NotesDataProviderInner>
   );

@@ -1,7 +1,7 @@
 
 import React, { ReactNode } from 'react';
 import { NotesDataProvider } from './NotesDataContext';
-import { NotesUIProvider } from './NotesUIContext';
+import { NotesUIProvider, useNotesUI } from './NotesUIContext';
 import { NotesOperationsProvider } from './NotesOperationsContext';
 
 interface NotesContextProviderProps {
@@ -10,12 +10,30 @@ interface NotesContextProviderProps {
 
 export const NotesContextProvider = ({ children }: NotesContextProviderProps) => {
   return (
-    <NotesDataProvider>
-      <NotesUIProvider>
+    <NotesUIProvider>
+      <NotesDataProviderWithFilters>
         <NotesOperationsProvider>
           {children}
         </NotesOperationsProvider>
-      </NotesUIProvider>
+      </NotesDataProviderWithFilters>
+    </NotesUIProvider>
+  );
+};
+
+// Wrapper that connects filter state to data provider
+const NotesDataProviderWithFilters = ({ children }: { children: ReactNode }) => {
+  const { searchTerm, selectedSubject, showArchived, sortType } = useNotesUI();
+  
+  const filterState = {
+    searchTerm,
+    selectedSubject,
+    showArchived,
+    sortType
+  };
+  
+  return (
+    <NotesDataProvider filterState={filterState}>
+      {children}
     </NotesDataProvider>
   );
 };

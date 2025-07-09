@@ -44,14 +44,16 @@ export const NotesHeaderTop = ({
         </div>
       </div>
 
-      {/* Second Row: Search and Filters */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div className="flex-1 max-w-md">
+      {/* Second Row: Search Bar Only */}
+      <div className="flex justify-center">
+        <div className="w-full max-w-md">
           <NoteSearch />
         </div>
-        <div className="flex-shrink-0">
-          <NotesFilterSortControls />
-        </div>
+      </div>
+      
+      {/* Third Row: Filters and Sort */}
+      <div>
+        <NotesFilterSortControls />
       </div>
     </div>
   );

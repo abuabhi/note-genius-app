@@ -1,19 +1,53 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Filter, SortAsc } from "lucide-react";
+import { UniversalFilters } from "@/components/shared/UniversalFilters";
+import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 
-export const NotesFilterSortControls = () => {
+export const NotesFilterSortControls = React.memo(() => {
+  const { 
+    searchTerm,
+    setSearchTerm,
+    selectedSubject,
+    setSelectedSubject,
+    sortType,
+    setSortType,
+    hasActiveFilters,
+    activeFilterCount,
+    clearFilters,
+    loading,
+    totalCount
+  } = useOptimizedNotes();
+
+  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
+
+  const sortOptions = [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'oldest', label: 'Oldest First' },
+    { value: 'alphabetical', label: 'Alphabetical' },
+  ];
+
   return (
-    <div className="flex gap-2">
-      <Button variant="outline" size="sm" className="border-mint-200 text-mint-700 hover:bg-mint-50">
-        <Filter className="mr-2 h-4 w-4" />
-        All Subjects
-      </Button>
-      <Button variant="outline" size="sm" className="border-mint-200 text-mint-700 hover:bg-mint-50">
-        <SortAsc className="mr-2 h-4 w-4" />
-        Sort
-      </Button>
+    <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200 shadow-sm p-4">
+      <UniversalFilters
+        search={searchTerm}
+        subject={selectedSubject}
+        sort={sortType}
+        onSearchChange={setSearchTerm}
+        onSubjectChange={setSelectedSubject}
+        onSortChange={setSortType}
+        subjects={subjects}
+        sortOptions={sortOptions}
+        searchPlaceholder="Search notes..."
+        enableArchived={false}
+        isLoading={loading || subjectsLoading}
+        totalCount={totalCount}
+        hasActiveFilters={hasActiveFilters}
+        activeFilterCount={activeFilterCount}
+        onClearFilters={clearFilters}
+      />
     </div>
   );
-};
+});
+
+NotesFilterSortControls.displayName = 'NotesFilterSortControls';

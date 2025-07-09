@@ -1,6 +1,5 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { 
   Select,
   SelectContent,
@@ -9,9 +8,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Search, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { DebouncedInput } from './DebouncedInput';
 
 interface Subject {
   id: string;
@@ -71,26 +71,45 @@ export const UniversalFilters: React.FC<UniversalFiltersProps> = memo(({
   activeFilterCount,
   onClearFilters
 }) => {
+  // Memoized handlers to prevent re-renders
+  const handleSearchChange = useCallback((value: string) => {
+    onSearchChange(value);
+  }, [onSearchChange]);
+
+  const handleSubjectChange = useCallback((value: string) => {
+    onSubjectChange(value);
+  }, [onSubjectChange]);
+
+  const handleSortChange = useCallback((value: string) => {
+    onSortChange(value);
+  }, [onSortChange]);
+
+  const handleShowArchivedChange = useCallback((value: boolean) => {
+    onShowArchivedChange?.(value);
+  }, [onShowArchivedChange]);
+
+  const handleClearFilters = useCallback(() => {
+    onClearFilters();
+  }, [onClearFilters]);
   return (
     <div className="space-y-4">
       {/* Main Filter Row */}
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Search Input */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder={searchPlaceholder}
+        <div className="flex-1">
+          <DebouncedInput
             value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 border-mint-200 focus:border-mint-500"
-            disabled={isLoading}
+            onChange={handleSearchChange}
+            placeholder={searchPlaceholder}
+            debounceMs={300}
+            className="border-mint-200 focus:border-mint-500"
           />
         </div>
         
         {/* Subject Filter */}
         <Select 
           value={subject} 
-          onValueChange={onSubjectChange} 
+          onValueChange={handleSubjectChange} 
           disabled={isLoading}
         >
           <SelectTrigger className="w-full lg:w-48 border-mint-200">
@@ -107,7 +126,7 @@ export const UniversalFilters: React.FC<UniversalFiltersProps> = memo(({
         </Select>
 
         {/* Sort Options */}
-        <Select value={sort} onValueChange={onSortChange} disabled={isLoading}>
+        <Select value={sort} onValueChange={handleSortChange} disabled={isLoading}>
           <SelectTrigger className="w-full lg:w-48 border-mint-200">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
@@ -126,7 +145,7 @@ export const UniversalFilters: React.FC<UniversalFiltersProps> = memo(({
             <Switch
               id="show-archived"
               checked={showArchived}
-              onCheckedChange={onShowArchivedChange}
+              onCheckedChange={handleShowArchivedChange}
               disabled={isLoading}
             />
             <Label htmlFor="show-archived" className="text-sm text-gray-600">
@@ -160,7 +179,7 @@ export const UniversalFilters: React.FC<UniversalFiltersProps> = memo(({
                   variant="ghost"
                   size="sm"
                   className="h-4 w-4 p-0 ml-1 hover:bg-mint-200"
-                  onClick={() => onSearchChange('')}
+                  onClick={() => handleSearchChange('')}
                 >
                   <X className="h-3 w-3" />
                 </Button>
@@ -175,7 +194,7 @@ export const UniversalFilters: React.FC<UniversalFiltersProps> = memo(({
                   variant="ghost"
                   size="sm"
                   className="h-4 w-4 p-0 ml-1 hover:bg-blue-200"
-                  onClick={() => onSubjectChange('all')}
+                  onClick={() => handleSubjectChange('all')}
                 >
                   <X className="h-3 w-3" />
                 </Button>
@@ -190,7 +209,7 @@ export const UniversalFilters: React.FC<UniversalFiltersProps> = memo(({
                   variant="ghost"
                   size="sm"
                   className="h-4 w-4 p-0 ml-1 hover:bg-orange-200"
-                  onClick={() => onShowArchivedChange?.(false)}
+                  onClick={() => handleShowArchivedChange(false)}
                 >
                   <X className="h-3 w-3" />
                 </Button>
@@ -201,7 +220,7 @@ export const UniversalFilters: React.FC<UniversalFiltersProps> = memo(({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onClearFilters}
+              onClick={handleClearFilters}
               className="text-gray-500 hover:text-gray-700"
             >
               Clear all
