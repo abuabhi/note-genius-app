@@ -1,20 +1,28 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 import { toast } from 'sonner';
+import { useDebounce } from '@/hooks/useDebounce';
 
-// Simple query key - no complex factory
-const NOTES_QUERY_KEY = ['notes'];
+// Filter-aware query key factory
+const getNotesQueryKey = (filters: { search: string; subject: string; sort: string }) => 
+  ['notes', filters];
 
-// Simple fetch function - no filters, no search, no sorting
-const fetchNotes = async (): Promise<{ notes: Note[]; totalCount: number; hasMore: boolean }> => {
-  console.log('🔍 [SIMPLE NOTES] Fetching all notes (no filters)');
+interface FetchNotesParams {
+  search: string;
+  subject: string;
+  sort: string;
+}
+
+// Enhanced fetch function with search, subject filter, and sorting
+const fetchNotes = async ({ search, subject, sort }: FetchNotesParams): Promise<{ notes: Note[]; totalCount: number; hasMore: boolean }> => {
+  console.log('🔍 [SIMPLE NOTES] Fetching notes with filters:', { search, subject, sort });
 
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('User not authenticated');
 
-  const { data, error, count } = await supabase
+  let query = supabase
     .from('notes')
     .select(`
       *,
@@ -24,8 +32,34 @@ const fetchNotes = async (): Promise<{ notes: Note[]; totalCount: number; hasMor
       )
     `, { count: 'exact' })
     .eq('user_id', user.user.id)
-    .eq('archived', false) // Only show non-archived notes
-    .order('created_at', { ascending: false }); // Default newest first
+    .eq('archived', false); // Only show non-archived notes
+
+  // Apply search filter - case-insensitive title search
+  if (search.trim()) {
+    query = query.ilike('title', `%${search.trim()}%`);
+  }
+
+  // Apply subject filter
+  if (subject && subject !== 'all') {
+    // Try both subject_id relationship and legacy subject field
+    query = query.or(`user_subjects.name.eq.${subject},subject.eq.${subject}`);
+  }
+
+  // Apply sorting
+  switch (sort) {
+    case 'oldest':
+      query = query.order('created_at', { ascending: true });
+      break;
+    case 'alphabetical':
+      query = query.order('title', { ascending: true });
+      break;
+    case 'newest':
+    default:
+      query = query.order('created_at', { ascending: false });
+      break;
+  }
+
+  const { data, error, count } = await query;
 
   if (error) {
     console.error('❌ [FETCH NOTES] Query failed:', error);
@@ -34,7 +68,8 @@ const fetchNotes = async (): Promise<{ notes: Note[]; totalCount: number; hasMor
 
   console.log('📊 [FETCH NOTES] Raw query results:', {
     dataLength: data?.length || 0,
-    count
+    count,
+    filters: { search, subject, sort }
   });
 
   const notes: Note[] = (data || []).map(item => ({
@@ -55,25 +90,41 @@ const fetchNotes = async (): Promise<{ notes: Note[]; totalCount: number; hasMor
 
   console.log('✅ [SIMPLE NOTES] Fetched notes:', {
     notesCount: notes.length,
-    totalCount
+    totalCount,
+    appliedFilters: { search, subject, sort }
   });
 
   return { notes, totalCount, hasMore: false }; // No pagination
 };
 
-// Main hook - simplified with no filters
+// Main hook with filter state management
 export const useSimpleNotes = () => {
   const queryClient = useQueryClient();
 
-  // Simple query with no filters
+  // Filter state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('all');
+  const [sortType, setSortType] = useState('newest');
+
+  // Debounced search for performance
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
+  // Current filter values for query
+  const currentFilters = {
+    search: debouncedSearch,
+    subject: selectedSubject,
+    sort: sortType
+  };
+
+  // Query with filters
   const {
     data,
     isLoading,
     error,
     refetch
   } = useQuery({
-    queryKey: NOTES_QUERY_KEY,
-    queryFn: fetchNotes,
+    queryKey: getNotesQueryKey(currentFilters),
+    queryFn: () => fetchNotes(currentFilters),
     staleTime: 2 * 60 * 1000, // 2 minutes stale time
     gcTime: 5 * 60 * 1000, // 5 minutes cache retention
     refetchOnWindowFocus: false,
@@ -82,6 +133,17 @@ export const useSimpleNotes = () => {
   const notes = data?.notes || [];
   const totalCount = data?.totalCount || 0;
   const hasMore = data?.hasMore || false;
+
+  // Filter calculations
+  const hasActiveFilters = !!(searchTerm || (selectedSubject && selectedSubject !== 'all'));
+  const activeFilterCount = [searchTerm, selectedSubject !== 'all'].filter(Boolean).length;
+
+  const clearFilters = useCallback(() => {
+    console.log('🧹 [SIMPLE NOTES] Clearing all filters');
+    setSearchTerm('');
+    setSelectedSubject('all');
+    setSortType('newest');
+  }, []);
 
   // Create note mutation
   const createMutation = useMutation({
@@ -132,7 +194,7 @@ export const useSimpleNotes = () => {
       
       // Immediate cache update with proper query key matching
       queryClient.setQueriesData(
-        { queryKey: NOTES_QUERY_KEY, exact: false },
+        { queryKey: ['notes'], exact: false },
         (oldData: any) => {
           if (!oldData) return { notes: [newNote], totalCount: 1, hasMore: false };
           
@@ -145,7 +207,7 @@ export const useSimpleNotes = () => {
       );
 
       // Also invalidate all notes queries to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
       
       console.log('✅ [SIMPLE NOTES] Cache updated - note should appear immediately');
       toast.success('Note created successfully');
@@ -181,7 +243,7 @@ export const useSimpleNotes = () => {
     onSuccess: (_, { id, updates }) => {
       // Update cache immediately with proper query key matching
       queryClient.setQueriesData(
-        { queryKey: NOTES_QUERY_KEY, exact: false },
+        { queryKey: ['notes'], exact: false },
         (oldData: any) => {
           if (!oldData?.notes) return oldData;
           
@@ -195,7 +257,7 @@ export const useSimpleNotes = () => {
       );
 
       // Invalidate to ensure all views are updated
-      queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
       
       toast.success('Note updated successfully');
     },
@@ -220,14 +282,14 @@ export const useSimpleNotes = () => {
     },
     onMutate: async (noteId: string) => {
       // Cancel outgoing refetches to avoid optimistic update conflicts
-      await queryClient.cancelQueries({ queryKey: NOTES_QUERY_KEY });
+      await queryClient.cancelQueries({ queryKey: ['notes'] });
 
       // Snapshot previous value for rollback
-      const previousData = queryClient.getQueriesData({ queryKey: NOTES_QUERY_KEY });
+      const previousData = queryClient.getQueriesData({ queryKey: ['notes'] });
 
       // Optimistically update cache - remove note immediately with proper query key matching
       queryClient.setQueriesData(
-        { queryKey: NOTES_QUERY_KEY, exact: false },
+        { queryKey: ['notes'], exact: false },
         (oldData: any) => {
           if (!oldData?.notes) return oldData;
           
@@ -243,7 +305,7 @@ export const useSimpleNotes = () => {
       );
 
       // Invalidate all notes queries
-      queryClient.invalidateQueries({ queryKey: NOTES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
 
       return { previousData };
     },
@@ -311,18 +373,18 @@ export const useSimpleNotes = () => {
     totalPages: Math.ceil(totalCount / 20),
     loadMore: () => {},
     
-    // Removed filter functionality - keeping empty stubs for compatibility
-    searchTerm: '',
-    setSearchTerm: () => {},
-    selectedSubject: 'all',
-    setSelectedSubject: () => {},
-    sortType: 'newest',
-    setSortType: () => {},
-    clearFilters: () => {},
-    hasActiveFilters: false,
-    activeFilterCount: 0,
-    isFiltering: false,
-    filterError: null,
+    // Filter functionality - now working!
+    searchTerm,
+    setSearchTerm,
+    selectedSubject,
+    setSelectedSubject,
+    sortType,
+    setSortType,
+    clearFilters,
+    hasActiveFilters,
+    activeFilterCount,
+    isFiltering: isLoading,
+    filterError: error ? String(error) : null,
     
     // Operations
     addNote,
