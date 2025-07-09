@@ -73,14 +73,17 @@ export const UniversalFilters: React.FC<UniversalFiltersProps> = memo(({
 }) => {
   // Memoized handlers to prevent re-renders
   const handleSearchChange = useCallback((value: string) => {
+    console.log('🔍 [UNIVERSAL FILTERS] Search changing to:', value);
     onSearchChange(value);
   }, [onSearchChange]);
 
   const handleSubjectChange = useCallback((value: string) => {
+    console.log('📚 [UNIVERSAL FILTERS] Subject changing to:', value);
     onSubjectChange(value);
   }, [onSubjectChange]);
 
   const handleSortChange = useCallback((value: string) => {
+    console.log('🔀 [UNIVERSAL FILTERS] Sort changing to:', value);
     onSortChange(value);
   }, [onSortChange]);
 

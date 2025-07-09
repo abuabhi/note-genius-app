@@ -22,8 +22,10 @@ export const DebouncedInput = React.memo(({
 
   // Sync with external value changes
   useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
+    if (localValue !== value) {
+      setLocalValue(value);
+    }
+  }, [value, localValue]);
 
   // Debounced change handler
   useEffect(() => {

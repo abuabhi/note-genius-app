@@ -23,19 +23,31 @@ export const useOptimizedNotesWithQuery = (filterState?: {
   const showArchived = filterState?.showArchived ?? localShowArchived;
   const sortType = filterState?.sortType ?? localSortType;
   
+  console.log('🔍 [QUERY HOOK] Filter state received:', {
+    searchTerm,
+    selectedSubject, 
+    showArchived,
+    sortType,
+    fromExternal: !!filterState
+  });
+  
   // Pagination mode - can switch between regular and infinite
   const [paginationMode, setPaginationMode] = useState<'regular' | 'infinite'>('infinite');
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Build query options
-  const queryOptions: NotesQueryOptions = useMemo(() => ({
-    search: searchTerm,
-    subject: selectedSubject,
-    showArchived,
-    sortBy: sortType as any,
-    page: currentPage,
-    pageSize: 20
-  }), [searchTerm, selectedSubject, showArchived, sortType, currentPage]);
+  // Build query options with debugging
+  const queryOptions: NotesQueryOptions = useMemo(() => {
+    const options = {
+      search: searchTerm,
+      subject: selectedSubject,
+      showArchived,
+      sortBy: sortType as any,
+      page: currentPage,
+      pageSize: 20
+    };
+    console.log('🎯 [QUERY HOOK] Building query options:', options);
+    return options;
+  }, [searchTerm, selectedSubject, showArchived, sortType, currentPage]);
 
   // Choose between regular or infinite query
   const regularQuery = useNotesQuery(queryOptions);

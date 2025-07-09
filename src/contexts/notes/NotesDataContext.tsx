@@ -48,6 +48,8 @@ const NotesDataProviderInner = React.memo(({ children, filterState }: {
     sortType: string;
   };
 }) => {
+  console.log('🔄 [NOTES DATA] Provider re-rendering with filterState:', filterState);
+  
   const dataStateMachine = useNotesDataStateMachine();
   const queryHook = useOptimizedNotesWithQuery(filterState);
   const queryClient = useQueryClient();

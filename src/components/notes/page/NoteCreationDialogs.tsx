@@ -9,6 +9,10 @@ import { Note } from "@/types/note";
 import { TierLimits, UserTier } from "@/hooks/useRequireAuth";
 
 interface NoteCreationDialogsProps {
+  isManualDialogOpen: boolean;
+  setIsManualDialogOpen: (open: boolean) => void;
+  isImportDialogOpen: boolean;
+  setIsImportDialogOpen: (open: boolean) => void;
   onSaveNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
   onScanNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
   onImportNote: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -16,21 +20,23 @@ interface NoteCreationDialogsProps {
 }
 
 export const NoteCreationDialogs = ({
+  isManualDialogOpen,
+  setIsManualDialogOpen,
+  isImportDialogOpen,
+  setIsImportDialogOpen,
   onSaveNote,
   onScanNote,
   onImportNote,
   tierLimits
 }: NoteCreationDialogsProps) => {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [scanDialogOpen, setScanDialogOpen] = useState(false);
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   const handleSaveNote = async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
     try {
       const result = await onSaveNote(noteData);
       if (result) {
         // Only close if successful
-        setCreateDialogOpen(false);
+        setIsManualDialogOpen(false);
       }
       return result;
     } catch (error) {
@@ -58,7 +64,7 @@ export const NoteCreationDialogs = ({
       const result = await onImportNote(noteData);
       if (result) {
         // Only close if successful
-        setImportDialogOpen(false);
+        setIsImportDialogOpen(false);
       }
       return result;
     } catch (error) {
@@ -70,7 +76,7 @@ export const NoteCreationDialogs = ({
   return (
     <>
       {/* Create Note Dialog */}
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+      <Dialog open={isManualDialogOpen} onOpenChange={setIsManualDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create a New Note</DialogTitle>
@@ -92,8 +98,8 @@ export const NoteCreationDialogs = ({
 
       {/* Import Note Dialog */}
       <ImportDialog
-        isVisible={importDialogOpen}
-        onClose={() => setImportDialogOpen(false)}
+        isVisible={isImportDialogOpen}
+        onClose={() => setIsImportDialogOpen(false)}
         onSaveNote={async (note) => {
           const result = await handleImportNote(note);
           return result !== null;

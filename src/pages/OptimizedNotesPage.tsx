@@ -1,10 +1,9 @@
 
 import Layout from '@/components/layout/Layout';
-import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
 import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
 import { FileText } from 'lucide-react';
 import EnhancedErrorBoundary from '@/components/error/EnhancedErrorBoundary';
-import { SecureOptimizedNotesContent } from '@/components/notes/page/SecureOptimizedNotesContent';
+import { SimplifiedNotesContent } from '@/components/notes/page/SimplifiedNotesContent';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 const OptimizedNotesPage = () => {
@@ -26,9 +25,7 @@ const OptimizedNotesPage = () => {
           />
           
           <div className="container mx-auto px-6 py-8">
-            <OptimizedNotesProvider>
-              <SecureOptimizedNotesContent />
-            </OptimizedNotesProvider>
+            <SimplifiedNotesContent />
           </div>
         </div>
       </Layout>
