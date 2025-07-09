@@ -225,6 +225,16 @@ export const useSimpleNotes = () => {
     return options;
   }, [filters.debouncedSearch, filters.subject, filters.sort, subjectNameToId]);
 
+  // FORCE INVALIDATION when filters change
+  React.useEffect(() => {
+    console.log('🔥 [SIMPLE NOTES] Filter dependency changed - FORCING INVALIDATION');
+    // Invalidate all queries immediately when filters change
+    queryClient.invalidateQueries({ 
+      queryKey: NOTES_QUERY_KEY, 
+      exact: false 
+    });
+  }, [filters.debouncedSearch, filters.subject, filters.sort, queryClient]);
+
   // Main query with enhanced debugging and cache invalidation
   const {
     data,
@@ -236,7 +246,8 @@ export const useSimpleNotes = () => {
       filters.debouncedSearch, 
       filters.subject, 
       filters.sort, 
-      'page-1' // Always page 1 for simplicity
+      'page-1', // Always page 1 for simplicity
+      Date.now() // Force fresh query every time
     ],
     queryFn: () => {
       console.log('🚀 [SIMPLE NOTES] EXECUTING QUERY with filters:', {
@@ -247,8 +258,8 @@ export const useSimpleNotes = () => {
       console.log('🔥 [SIMPLE NOTES] NETWORK REQUEST ABOUT TO BE MADE');
       return fetchNotes(queryOptions);
     },
-    staleTime: 0, // Always refetch for immediate filter response
-    gcTime: 30 * 1000, // 30 seconds cache time
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // Don't cache results
     refetchOnWindowFocus: false,
     enabled: true, // Force enable the query
   });
