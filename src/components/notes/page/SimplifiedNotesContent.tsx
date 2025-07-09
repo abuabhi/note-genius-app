@@ -9,6 +9,7 @@ import { EmptyNotesState } from '../EmptyNotesState';
 import { Note } from '@/types/note';
 import { useState } from 'react';
 import { NoteCreationDialogs } from './NoteCreationDialogs';
+import { NotesFiltersSection } from './components/NotesFiltersSection';
 
 const SimplifiedNotesGridWrapper = React.memo(() => {
   console.log('🔄 [SIMPLIFIED GRID] Component rendering');
@@ -106,6 +107,9 @@ export const SimplifiedNotesContent = () => {
         onOpenManualDialog={() => setIsManualDialogOpen(true)}
         onOpenImportDialog={() => setIsImportDialogOpen(true)}
       />
+      
+      {/* Add the filters section */}
+      <NotesFiltersSection />
       
       <Suspense fallback={<LoadingState />}>
         <SimplifiedNotesGridWrapper />

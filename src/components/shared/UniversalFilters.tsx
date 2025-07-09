@@ -71,6 +71,17 @@ export const UniversalFilters: React.FC<UniversalFiltersProps> = memo(({
   activeFilterCount,
   onClearFilters
 }) => {
+  console.log('🌍 [UNIVERSAL FILTERS] Component rendering with props:', {
+    search,
+    subject,
+    sort,
+    subjects: subjects?.map(s => s.name) || [],
+    sortOptions: sortOptions?.map(s => s.label) || [],
+    hasActiveFilters,
+    activeFilterCount,
+    totalCount
+  });
+
   // Memoized handlers to prevent re-renders
   const handleSearchChange = useCallback((value: string) => {
     console.log('🔍 [UNIVERSAL FILTERS] Search changing to:', value);
