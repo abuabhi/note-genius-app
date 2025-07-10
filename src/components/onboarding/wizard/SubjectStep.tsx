@@ -199,7 +199,7 @@ export const SubjectStep = ({ data, updateData, onNext, onPrev }: SubjectStepPro
     return [];
   };
 
-  // Auto-select subjects when grade/stream/degree changes
+  // Auto-select top 7 subjects when grade/stream/degree changes
   useEffect(() => {
     const availableSubjects = getAvailableSubjects();
     const predefinedSubjectsArray = [...PREDEFINED_SUBJECTS];
@@ -212,7 +212,9 @@ export const SubjectStep = ({ data, updateData, onNext, onPrev }: SubjectStepPro
       // Only auto-select if we have grade-specific subjects and haven't selected any yet
       if (data.selectedSubjects.size === 0 || 
           !Array.from(data.selectedSubjects).some(subject => availableSubjects.includes(subject))) {
-        const newSelected = new Set(availableSubjects);
+        // Select top 7 subjects
+        const topSevenSubjects = availableSubjects.slice(0, 7);
+        const newSelected = new Set(topSevenSubjects);
         updateData({ selectedSubjects: newSelected });
       }
     }
@@ -368,6 +370,12 @@ export const SubjectStep = ({ data, updateData, onNext, onPrev }: SubjectStepPro
                 </button>
               </div>
             ))}
+          </div>
+          
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-700">
+              💡 You can add or remove subjects later from your Settings page.
+            </p>
           </div>
         </div>
       )}
