@@ -13,6 +13,8 @@ interface NotesContentGridProps {
   onDeleteNote: (id: string) => Promise<void>;
   onCreateNote?: () => void;
   onImportNote?: () => void;
+  hasActiveFilters?: boolean;
+  selectedSubject?: string;
 }
 
 export const NotesContentGrid = ({
@@ -22,7 +24,9 @@ export const NotesContentGrid = ({
   onUpdateNote,
   onDeleteNote,
   onCreateNote,
-  onImportNote
+  onImportNote,
+  hasActiveFilters = false,
+  selectedSubject
 }: NotesContentGridProps) => {
   console.log('🎯 [NOTES CONTENT GRID] COMPONENT IS RENDERING! Notes data:', { 
     noteCount: notes.length, 
@@ -49,7 +53,8 @@ export const NotesContentGrid = ({
           <EmptyNotesState 
             onCreateNote={onCreateNote} 
             onImportNote={onImportNote}
-            isFiltered={false} 
+            isFiltered={hasActiveFilters}
+            selectedSubject={selectedSubject}
           />
         </>
       ) : (

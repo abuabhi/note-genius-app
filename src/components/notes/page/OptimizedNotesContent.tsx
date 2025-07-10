@@ -106,6 +106,8 @@ export const OptimizedNotesContent = ({ viewMode, onCreateNote, onImportNote }: 
             onDeleteNote={deleteNote}
             onCreateNote={onCreateNote}
             onImportNote={onImportNote}
+            hasActiveFilters={searchTerm !== '' || selectedSubject !== 'all'}
+            selectedSubject={selectedSubject}
           />
           
           {/* Load More Button - only show if we have notes */}

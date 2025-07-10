@@ -211,11 +211,9 @@ export const useNotes = () => {
   }, [updateNote]);
 
   // Filter utilities
-  const hasActiveFilters = useMemo(() => {
-    const result = searchTerm !== '' || selectedSubject !== 'all' || showArchived;
-    console.log('🐛 [USE NOTES] hasActiveFilters:', { searchTerm, selectedSubject, showArchived, result });
-    return result;
-  }, [searchTerm, selectedSubject, showArchived]);
+  const hasActiveFilters = useMemo(() => 
+    searchTerm !== '' || selectedSubject !== 'all' || showArchived
+  , [searchTerm, selectedSubject, showArchived]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
