@@ -38,7 +38,7 @@ export const OptimizedNotesContent = ({ viewMode, onCreateNote, onImportNote }: 
     refetch
   } = useServerSideNotes();
 
-  console.log('🚀 [OPTIMIZED NOTES CONTENT] Received notes from hook:', {
+  console.log('🚀 [OPTIMIZED NOTES CONTENT] Component is rendering! Data:', {
     notesLength: notes.length,
     selectedSubject,
     totalCount,

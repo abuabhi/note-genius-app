@@ -24,7 +24,7 @@ export const NotesContentGrid = ({
   onCreateNote,
   onImportNote
 }: NotesContentGridProps) => {
-  console.log('🎯 [NOTES CONTENT GRID] Rendering with notes data:', { 
+  console.log('🎯 [NOTES CONTENT GRID] COMPONENT IS RENDERING! Notes data:', { 
     noteCount: notes.length, 
     viewMode, 
     shouldVirtualize,
