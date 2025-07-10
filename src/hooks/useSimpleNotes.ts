@@ -193,13 +193,13 @@ export const useSimpleNotes = () => {
     refetchInterval: false, // Disable auto refetch
   });
 
-  // ✅ FIX: Add query validation to prevent stale data display
-  const isQueryStale = !data || isLoading || isFetching;
+  // ✅ FIX: Remove isFetching from validation - allow filtered data to display immediately
+  const hasValidData = data && data.pages && data.pages.length > 0;
   
-  // Only flatten and return data if query is fresh and matches current filters
-  const notes = (!isQueryStale && data?.pages) ? data.pages.flatMap(page => page.notes) : [];
-  const totalCount = (!isQueryStale && data?.pages[0]) ? data.pages[0].totalCount : 0;
-  const hasMore = !isQueryStale && (hasNextPage || false);
+  // Display filtered results immediately when available, only block on actual loading
+  const notes = (hasValidData && !isInitialLoading) ? data.pages.flatMap(page => page.notes) : [];
+  const totalCount = (hasValidData && !isInitialLoading && data.pages[0]) ? data.pages[0].totalCount : 0;
+  const hasMore = hasValidData && !isInitialLoading && (hasNextPage || false);
 
   // Filter calculations (moved before debug logs)
   const hasActiveFilters = !!(searchTerm || (selectedSubject && selectedSubject !== 'all'));
