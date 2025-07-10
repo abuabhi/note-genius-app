@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
@@ -182,8 +182,10 @@ export const useSimpleNotes = () => {
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     staleTime: 0, // Set to 0 for debugging - always fetch fresh data
-    gcTime: 5 * 60 * 1000, // 5 minutes cache retention
+    gcTime: 0, // No cache retention for debugging
     refetchOnWindowFocus: false,
+    refetchOnMount: true, // Always refetch on mount
+    refetchInterval: false, // Disable auto refetch
   });
 
   // Flatten pages into single notes array
@@ -466,17 +468,29 @@ export const useSimpleNotes = () => {
   const updateSelectedSubject = useCallback((subject: string) => {
     console.log('🔄 [SIMPLE NOTES] Subject filter changing:', { from: selectedSubject, to: subject });
     setSelectedSubject(subject);
-  }, [selectedSubject]);
+    
+    // Immediately invalidate all queries to force refetch with new filter
+    queryClient.invalidateQueries({ queryKey: ['notes'] });
+    console.log('🔄 [SIMPLE NOTES] Invalidated queries due to subject change');
+  }, [selectedSubject, queryClient]);
 
   const updateSearchTerm = useCallback((term: string) => {
     console.log('🔍 [SIMPLE NOTES] Search term changing:', { from: searchTerm, to: term });
     setSearchTerm(term);
-  }, [searchTerm]);
+    
+    // Invalidate queries when search changes
+    queryClient.invalidateQueries({ queryKey: ['notes'] });
+    console.log('🔍 [SIMPLE NOTES] Invalidated queries due to search change');
+  }, [searchTerm, queryClient]);
 
   const updateSortType = useCallback((sort: string) => {
     console.log('🔀 [SIMPLE NOTES] Sort changing:', { from: sortType, to: sort });
     setSortType(sort);
-  }, [sortType]);
+    
+    // Invalidate queries when sort changes
+    queryClient.invalidateQueries({ queryKey: ['notes'] });
+    console.log('🔀 [SIMPLE NOTES] Invalidated queries due to sort change');
+  }, [sortType, queryClient]);
 
   return {
     // Data
