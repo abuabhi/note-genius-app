@@ -98,7 +98,7 @@ const GRADE_SPECIFIC_SUBJECTS = {
     ]
   },
   "Undergraduate": {
-    "Bachelor of Science (B.Sc.)": [
+    "Science": [
       "Physics",
       "Chemistry",
       "Biology",
@@ -107,7 +107,7 @@ const GRADE_SPECIFIC_SUBJECTS = {
       "Statistics",
       "Environmental Science"
     ],
-    "Bachelor of Commerce (B.Com.)": [
+    "Commerce": [
       "Accountancy",
       "Business Law",
       "Economics",
@@ -117,7 +117,7 @@ const GRADE_SPECIFIC_SUBJECTS = {
       "Business Mathematics",
       "Marketing"
     ],
-    "Bachelor of Arts (B.A.)": [
+    "Arts": [
       "History",
       "Political Science",
       "Sociology",
@@ -128,7 +128,7 @@ const GRADE_SPECIFIC_SUBJECTS = {
       "Anthropology",
       "Linguistics"
     ],
-    "Bachelor of Technology / Engineering (B.Tech/B.E.)": [
+    "Engineering": [
       "Mathematics",
       "Physics", 
       "Chemistry",
@@ -141,6 +141,29 @@ const GRADE_SPECIFIC_SUBJECTS = {
       "Civil Engineering",
       "Engineering Drawing",
       "Control Systems"
+    ],
+    "Computer Science": [
+      "Data Structures",
+      "Algorithms",
+      "Computer Programming",
+      "Database Management",
+      "Software Engineering",
+      "Computer Networks",
+      "Operating Systems",
+      "Web Development",
+      "Mobile App Development",
+      "Artificial Intelligence",
+      "Machine Learning",
+      "Cybersecurity"
+    ],
+    "Others": [
+      "Mathematics",
+      "English",
+      "Research Methodology",
+      "Statistics",
+      "Critical Thinking",
+      "Communication Skills",
+      "Project Management"
     ]
   }
 };
@@ -188,8 +211,8 @@ export const SubjectStep = ({ data, updateData, onNext, onPrev }: SubjectStepPro
     return [];
   };
 
-  // Get available degrees for Undergraduate
-  const getAvailableDegrees = (): string[] => {
+  // Get available fields for Undergraduate
+  const getAvailableFields = (): string[] => {
     if (grade === "Undergraduate") {
       const gradeData = GRADE_SPECIFIC_SUBJECTS.Undergraduate;
       if (gradeData && typeof gradeData === 'object') {
@@ -247,7 +270,7 @@ export const SubjectStep = ({ data, updateData, onNext, onPrev }: SubjectStepPro
 
   const availableSubjects = getAvailableSubjects();
   const availableStreams = getAvailableStreams();
-  const availableDegrees = getAvailableDegrees();
+  const availableFields = getAvailableFields();
 
   return (
     <div className="space-y-8">
@@ -285,18 +308,18 @@ export const SubjectStep = ({ data, updateData, onNext, onPrev }: SubjectStepPro
         </div>
       )}
 
-      {/* Degree Selection for Undergraduate */}
-      {availableDegrees.length > 0 && (
+      {/* Field Selection for Undergraduate */}
+      {availableFields.length > 0 && (
         <div className="space-y-3">
-          <Label className="font-semibold text-slate-800">Select Your Degree</Label>
+          <Label className="font-semibold text-slate-800">Select Your Field of Study</Label>
           <Select value={selectedDegree} onValueChange={setSelectedDegree}>
             <SelectTrigger>
-              <SelectValue placeholder="Choose your degree type" />
+              <SelectValue placeholder="Choose your field of study" />
             </SelectTrigger>
             <SelectContent>
-              {availableDegrees.map((degree) => (
-                <SelectItem key={degree} value={degree}>
-                  {degree}
+              {availableFields.map((field) => (
+                <SelectItem key={field} value={field}>
+                  {field}
                 </SelectItem>
               ))}
             </SelectContent>
