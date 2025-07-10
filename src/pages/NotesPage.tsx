@@ -5,6 +5,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useSimpleNotes } from '@/hooks/useSimpleNotes';
+import { useServerSideNotes } from '@/hooks/useServerSideFilter';
 import { useViewPreferences } from '@/hooks/useViewPreferences';
 import { useState, useCallback } from 'react';
 import { Note } from '@/types/note';
@@ -48,6 +49,9 @@ const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetError
 const NotesPageContent = () => {
   const { viewMode, setViewMode } = useViewPreferences('notes');
   const { addNote } = useSimpleNotes();
+  
+  // Get server-side notes data to force re-rendering
+  const { selectedSubject, totalCount } = useServerSideNotes();
   
   // Dialog state
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
@@ -131,6 +135,7 @@ const NotesPageContent = () => {
           }}
         >
           <OptimizedNotesContent 
+            key={`${selectedSubject}-${totalCount}`}
             viewMode={convertedViewMode} 
             onCreateNote={() => setIsManualDialogOpen(true)}
             onImportNote={() => setIsImportDialogOpen(true)}
