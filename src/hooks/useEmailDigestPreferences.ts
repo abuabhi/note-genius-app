@@ -58,12 +58,26 @@ export const useEmailDigestPreferences = () => {
         };
         setPreferences(typedData);
       } else {
+        // Get user's timezone from their profile
+        let userTimezone = 'UTC';
+        try {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('timezone')
+            .eq('id', user.id)
+            .single();
+          
+          userTimezone = profileData?.timezone || 'UTC';
+        } catch (error) {
+          console.log('Could not fetch user timezone, using UTC');
+        }
+
         // Create default preferences with new fields
         const defaultPrefs = {
           user_id: user.id,
           digest_enabled: true,
           digest_time: '08:00:00',
-          timezone: 'UTC',
+          timezone: userTimezone,
           frequency: 'daily' as const,
           include_goals: true,
           include_todos: true,

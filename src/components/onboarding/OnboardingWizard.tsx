@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 import { GradeLevel } from "@/types/subject";
 import { WelcomeStep } from "./wizard/WelcomeStep";
+import { LocationStep } from "./wizard/LocationStep";
 import { SubjectStep } from "./wizard/SubjectStep";
 import { PreferencesStep } from "./wizard/PreferencesStep";
 import { CompletionStep } from "./wizard/CompletionStep";
@@ -16,6 +17,8 @@ export interface OnboardingData {
   firstName: string;
   grade: GradeLevel | "";
   school: string;
+  countryId: string;
+  timezone: string;
   selectedSubjects: Set<string>;
   studyGoal: number;
   notifications: boolean;
@@ -31,12 +34,14 @@ export const OnboardingWizard = () => {
     firstName: "",
     grade: "",
     school: "",
+    countryId: "",
+    timezone: "",
     selectedSubjects: new Set(),
     studyGoal: 5,
     notifications: true,
   });
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
@@ -70,6 +75,11 @@ export const OnboardingWizard = () => {
       return;
     }
     
+    if (!data.countryId || !data.timezone) {
+      toast.error("Please select your country and timezone");
+      return;
+    }
+    
     if (data.selectedSubjects.size === 0) {
       toast.error("Please select at least one subject");
       return;
@@ -91,6 +101,8 @@ export const OnboardingWizard = () => {
           first_name: data.firstName.trim(),
           grade: data.grade as GradeLevel,
           school: data.school.trim() || null,
+          country_id: data.countryId,
+          timezone: data.timezone,
           onboarding_completed: true
         })
         .eq('id', user.id);
@@ -148,7 +160,7 @@ export const OnboardingWizard = () => {
         );
       case 2:
         return (
-          <SubjectStep
+          <LocationStep
             data={data}
             updateData={updateData}
             onNext={nextStep}
@@ -156,6 +168,15 @@ export const OnboardingWizard = () => {
           />
         );
       case 3:
+        return (
+          <SubjectStep
+            data={data}
+            updateData={updateData}
+            onNext={nextStep}
+            onPrev={prevStep}
+          />
+        );
+      case 4:
         return (
           <PreferencesStep
             data={data}
@@ -165,7 +186,7 @@ export const OnboardingWizard = () => {
             isSubmitting={isSubmitting}
           />
         );
-      case 4:
+      case 5:
         return (
           <CompletionStep onFinish={finishOnboarding} />
         );
