@@ -1,17 +1,17 @@
 
-import { OptimizedNotesContent } from '@/components/notes/page/OptimizedNotesContent';
 import { NotesPageHeader } from '@/components/notes/page/NotesPageHeader';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { useSimpleNotes } from '@/hooks/useSimpleNotes';
-import { useServerSideNotes } from '@/hooks/useServerSideFilter';
 import { useViewPreferences } from '@/hooks/useViewPreferences';
 import { useState, useCallback } from 'react';
 import { Note } from '@/types/note';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CreateNoteForm } from '@/components/notes/page/CreateNoteForm';
 import { EnhancedImportDialog } from '@/components/notes/import/EnhancedImportDialog';
+import { NotesFilters } from '@/components/notes/NotesFilters';
+import { NotesGrid } from '@/components/notes/NotesGrid';
+import { useNotes } from '@/hooks/useNotes';
 
 // Enhanced error fallback component with better debugging
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => {
@@ -48,15 +48,30 @@ const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetError
 
 const NotesPageContent = () => {
   const { viewMode, setViewMode } = useViewPreferences('notes');
-  const { addNote } = useSimpleNotes();
   
-  // Get server-side notes data to force re-rendering
-  const { selectedSubject, totalCount } = useServerSideNotes();
+  // Use the simplified notes hook - single source of truth
+  const {
+    notes,
+    totalCount,
+    loading,
+    searchTerm,
+    setSearchTerm,
+    selectedSubject,
+    setSelectedSubject,
+    sortType,
+    setSortType,
+    hasActiveFilters,
+    activeFilterCount,
+    clearFilters,
+    addNote,
+    updateNote,
+    deleteNote,
+    isCreating
+  } = useNotes();
   
   // Dialog state
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Convert ViewMode to the expected type for the header and content
   const convertedViewMode: 'grid' | 'list' = viewMode === 'compact' ? 'grid' : viewMode as 'grid' | 'list';
@@ -65,43 +80,34 @@ const NotesPageContent = () => {
     setViewMode(mode);
   };
 
-  // Note creation handlers using OptimizedNotesContext
+  // Note creation handlers using simplified architecture
   const handleSaveNote = useCallback(async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
-    if (isSubmitting) return null;
+    if (isCreating) return null;
     
-    setIsSubmitting(true);
     try {
-      console.log('📝 [NOTES PAGE] Creating note via OptimizedNotesContext:', noteData.title);
+      console.log('📝 [NOTES PAGE] Creating note:', noteData.title);
       const result = await addNote(noteData);
       if (result) {
-        console.log('✅ [NOTES PAGE] Note created successfully - UI should update immediately:', result.id);
+        console.log('✅ [NOTES PAGE] Note created successfully:', result.id);
         setIsManualDialogOpen(false);
         return result;
-      } else {
-        console.error('❌ [NOTES PAGE] Note creation failed - no result returned');
-        // Still close the dialog even if creation failed
-        setIsManualDialogOpen(false);
-        return null;
       }
+      return null;
     } catch (error) {
       console.error('❌ [NOTES PAGE] Error creating note:', error);
-      // Close dialog on error too
       setIsManualDialogOpen(false);
       return null;
-    } finally {
-      setIsSubmitting(false);
     }
-  }, [addNote, isSubmitting]);
+  }, [addNote, isCreating]);
 
   const handleImportNote = useCallback(async (noteData: Omit<Note, 'id'>): Promise<boolean> => {
-    if (isSubmitting) return false;
+    if (isCreating) return false;
     
-    setIsSubmitting(true);
     try {
-      console.log('📥 [NOTES PAGE] Importing note via OptimizedNotesContext');
-      const result = await addNote({ ...noteData, sourceType: 'import' });
+      console.log('📥 [NOTES PAGE] Importing note');
+      const result = await addNote({ ...noteData, sourceType: noteData.sourceType || 'import' });
       if (result) {
-        console.log('✅ [NOTES PAGE] Note imported successfully - UI should update immediately:', result.id);
+        console.log('✅ [NOTES PAGE] Note imported successfully:', result.id);
         setIsImportDialogOpen(false);
         return true;
       }
@@ -109,10 +115,8 @@ const NotesPageContent = () => {
     } catch (error) {
       console.error('❌ [NOTES PAGE] Error importing note:', error);
       return false;
-    } finally {
-      setIsSubmitting(false);
     }
-  }, [addNote, isSubmitting]);
+  }, [addNote, isCreating]);
 
   return (
     <div className="h-full">
@@ -134,17 +138,37 @@ const NotesPageContent = () => {
             console.error('Notes page error caught by boundary:', error, errorInfo);
           }}
         >
-          <OptimizedNotesContent 
-            viewMode={convertedViewMode} 
-            onCreateNote={() => setIsManualDialogOpen(true)}
-            onImportNote={() => setIsImportDialogOpen(true)}
-          />
+          <div className="space-y-6">
+            <NotesFilters
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              selectedSubject={selectedSubject}
+              setSelectedSubject={setSelectedSubject}
+              sortType={sortType}
+              setSortType={setSortType}
+              hasActiveFilters={hasActiveFilters}
+              activeFilterCount={activeFilterCount}
+              clearFilters={clearFilters}
+              loading={loading}
+              totalCount={totalCount}
+            />
+            
+            <NotesGrid
+              notes={notes}
+              viewMode={convertedViewMode}
+              onUpdateNote={updateNote}
+              onDeleteNote={deleteNote}
+              onCreateNote={() => setIsManualDialogOpen(true)}
+              onImportNote={() => setIsImportDialogOpen(true)}
+              loading={loading}
+            />
+          </div>
         </ErrorBoundary>
       </div>
 
       {/* Manual Entry Dialog */}
       <Dialog open={isManualDialogOpen} onOpenChange={(open) => {
-        if (!isSubmitting) setIsManualDialogOpen(open);
+        if (!isCreating) setIsManualDialogOpen(open);
       }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-mint-200 bg-white">
           <DialogHeader>
@@ -161,7 +185,7 @@ const NotesPageContent = () => {
         onSaveNote={handleImportNote}
         isVisible={isImportDialogOpen}
         onClose={() => {
-          if (!isSubmitting) setIsImportDialogOpen(false);
+          if (!isCreating) setIsImportDialogOpen(false);
         }}
         isPremiumUser={true}
       />

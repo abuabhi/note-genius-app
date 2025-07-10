@@ -126,7 +126,13 @@ export const NotesDisplay = ({
     <div className="space-y-8">
       {/* Modern notes grid with enhanced spacing */}
       <div className="relative">
-        <NotesGrid notes={paginatedNotes} />
+        <NotesGrid 
+          notes={paginatedNotes} 
+          viewMode="grid"
+          onUpdateNote={async () => {}}
+          onDeleteNote={async () => {}}
+          loading={false}
+        />
       </div>
       
       {/* Enhanced pagination */}

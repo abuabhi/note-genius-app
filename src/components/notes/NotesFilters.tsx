@@ -1,160 +1,62 @@
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Search, X } from 'lucide-react';
+import React from 'react';
+import { UniversalFilters } from '@/components/shared/UniversalFilters';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
 
 interface NotesFiltersProps {
-  onFiltersChange: (filters: {
-    search?: string;
-    subject?: string;
-    showArchived?: boolean;
-  }) => void;
-  totalNotes: number;
   searchTerm: string;
+  setSearchTerm: (value: string) => void;
   selectedSubject: string;
-  showArchived: boolean;
+  setSelectedSubject: (value: string) => void;
   sortType: string;
-  onSortChange: (sort: string) => void;
+  setSortType: (value: string) => void;
+  hasActiveFilters: boolean;
+  activeFilterCount: number;
+  clearFilters: () => void;
+  loading: boolean;
+  totalCount: number;
 }
 
-export const NotesFilters: React.FC<NotesFiltersProps> = ({
-  onFiltersChange,
-  totalNotes,
-  searchTerm: initialSearchTerm,
+export const NotesFilters = ({
+  searchTerm,
+  setSearchTerm,
   selectedSubject,
-  showArchived,
+  setSelectedSubject,
   sortType,
-  onSortChange
-}) => {
-  const [search, setSearch] = useState(initialSearchTerm);
+  setSortType,
+  hasActiveFilters,
+  activeFilterCount,
+  clearFilters,
+  loading,
+  totalCount
+}: NotesFiltersProps) => {
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
 
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    onFiltersChange({
-      search: value || undefined,
-      subject: selectedSubject !== 'all' ? selectedSubject : undefined,
-      showArchived,
-    });
-  };
-
-  const handleSubjectChange = (value: string) => {
-    const newSubject = value === 'all' ? 'all' : value;
-    onFiltersChange({
-      search: search || undefined,
-      subject: newSubject !== 'all' ? newSubject : undefined,
-      showArchived,
-    });
-  };
-
-  const clearFilters = () => {
-    setSearch('');
-    onFiltersChange({});
-  };
-
-  const hasActiveFilters = search || selectedSubject !== 'all';
-  const activeFiltersCount = [search, selectedSubject !== 'all' ? selectedSubject : null].filter(Boolean).length;
+  const sortOptions = [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'oldest', label: 'Oldest First' },
+    { value: 'alphabetical', label: 'Alphabetical' },
+  ];
 
   return (
-    <div className="space-y-4">
-      {/* Single Filter Row */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Search notes..."
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-10 border-mint-200 focus:border-mint-500"
-            disabled={subjectsLoading}
-          />
-        </div>
-        
-        <Select value={selectedSubject} onValueChange={handleSubjectChange} disabled={subjectsLoading}>
-          <SelectTrigger className="w-full sm:w-48 border-mint-200">
-            <SelectValue placeholder="Filter by Subject" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Subjects</SelectItem>
-            {subjects.map((subject) => (
-              <SelectItem key={subject.id} value={subject.name}>
-                {subject.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={sortType} onValueChange={onSortChange}>
-          <SelectTrigger className="w-full sm:w-48 border-mint-200">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="newest">Newest First</SelectItem>
-            <SelectItem value="oldest">Oldest First</SelectItem>
-            <SelectItem value="alphabetical">Alphabetical</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Results Counter and Active Filters */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="text-sm text-gray-600 font-medium">
-          {totalNotes} note{totalNotes === 1 ? '' : 's'}
-        </div>
-
-        {hasActiveFilters && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-gray-600">Filters ({activeFiltersCount}):</span>
-            
-            {search && (
-              <Badge variant="secondary" className="bg-mint-100 text-mint-800">
-                "{search}"
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 ml-1 hover:bg-mint-200"
-                  onClick={() => handleSearchChange('')}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            )}
-            
-            {selectedSubject !== 'all' && (
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                {selectedSubject}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 ml-1 hover:bg-blue-200"
-                  onClick={() => handleSubjectChange('all')}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            )}
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearFilters}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              Clear all
-            </Button>
-          </div>
-        )}
-      </div>
+    <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200 shadow-sm p-4">
+      <UniversalFilters
+        search={searchTerm}
+        subject={selectedSubject}
+        sort={sortType}
+        onSearchChange={setSearchTerm}
+        onSubjectChange={setSelectedSubject}
+        onSortChange={setSortType}
+        subjects={subjects}
+        sortOptions={sortOptions}
+        searchPlaceholder="Search notes by title..."
+        enableArchived={false}
+        isLoading={loading || subjectsLoading}
+        totalCount={totalCount}
+        hasActiveFilters={hasActiveFilters}
+        activeFilterCount={activeFilterCount}
+        onClearFilters={clearFilters}
+      />
     </div>
   );
 };

@@ -1,109 +1,55 @@
-
-import { useState } from "react";
-import { Note } from "@/types/note";
-import { NoteDetailsSheet } from "./NoteDetailsSheet";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { NoteCard } from "./card/NoteCard";
-import { EmptyNotesState } from "./EmptyNotesState";
-import { ViewMode } from "@/hooks/useViewPreferences";
-import { extractErrorMessage } from "@/utils/errorUtils";
-import { useSimpleNotes } from "@/hooks/useSimpleNotes";
+import React from 'react';
+import { Note } from '@/types/note';
+import { EmptyNotesState } from '@/components/notes/EmptyNotesState';
+import { OptimizedNotesGrid } from './page/components/OptimizedNotesGrid';
 
 interface NotesGridProps {
   notes: Note[];
-  viewMode?: ViewMode;
+  viewMode: 'grid' | 'list';
+  onUpdateNote: (id: string, updates: Partial<Note>) => Promise<void>;
+  onDeleteNote: (id: string) => Promise<void>;
+  onCreateNote?: () => void;
+  onImportNote?: () => void;
+  loading: boolean;
 }
 
-export const NotesGrid = ({ notes, viewMode = 'grid' }: NotesGridProps) => {
-  // Use OptimizedNotesContext for unified data management
-  const { deleteNote, pinNote } = useSimpleNotes();
-  
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const navigate = useNavigate();
-
-  if (notes.length === 0) {
-    return <EmptyNotesState />;
-  }
-
-  const handlePin = async (id: string, isPinned: boolean) => {
-    try {
-      console.log("🔧 [NOTES GRID] Pinning note via OptimizedNotesContext:", id, "New state:", !isPinned);
-      await pinNote(id, !isPinned);
-      console.log("✅ [NOTES GRID] Note pinned successfully:", id);
-    } catch (error) {
-      const errorMessage = extractErrorMessage(error);
-      console.error("❌ [NOTES GRID] Error pinning note:", { id, error, message: errorMessage.message });
-      toast.error(`Failed to update note pin status: ${errorMessage.message}`);
-    }
-  };
-
-  const handleDelete = async (id: string): Promise<void> => {
-    try {
-      console.log("🗑️ [NOTES GRID] Deleting note via OptimizedNotesContext:", id);
-      await deleteNote(id);
-      console.log("✅ [NOTES GRID] Note deleted successfully - UI should update immediately:", id);
-    } catch (error) {
-      const errorMessage = extractErrorMessage(error);
-      console.error("❌ [NOTES GRID] Error deleting note:", { 
-        id, 
-        error, 
-        message: errorMessage.message,
-        details: errorMessage.details,
-        code: errorMessage.code 
-      });
-      toast.error(`Failed to delete note: ${errorMessage.message}`);
-      throw error;
-    }
-  };
-
-  const handleNoteClick = (note: Note) => {
-    navigate(`/notes/study/${note.id}`);
-  };
-
-  const handleShowDetails = (note: Note, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedNote(note);
-    setIsDetailsOpen(true);
-  };
-
-  // Enhanced grid layout for better scaling with many cards
-  const gridClasses = viewMode === 'list' 
-    ? "flex flex-col space-y-3" 
-    : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4";
-
-  return (
-    <>
-      {/* Optimized container for large datasets */}
-      <div className="w-full">
-        <div className={gridClasses} data-guide="notes-list">
-          {notes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note}
-              onNoteClick={handleNoteClick}
-              onShowDetails={handleShowDetails}
-              onPin={handlePin}
-              onDelete={handleDelete}
-              confirmDelete={null}
-              viewMode={viewMode}
-            />
-          ))}
+export const NotesGrid = ({
+  notes,
+  viewMode,
+  onUpdateNote,
+  onDeleteNote,
+  onCreateNote,
+  onImportNote,
+  loading
+}: NotesGridProps) => {
+  if (loading) {
+    return (
+      <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mint-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading notes...</p>
         </div>
       </div>
-      
-      {selectedNote && (
-        <NoteDetailsSheet 
-          note={selectedNote}
-          open={isDetailsOpen}
-          onOpenChange={setIsDetailsOpen}
-          onEdit={() => {
-            setIsDetailsOpen(false);
-            navigate(`/notes/edit/${selectedNote.id}`);
-          }}
+    );
+  }
+
+  return (
+    <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
+      {notes.length === 0 ? (
+        <EmptyNotesState 
+          onCreateNote={onCreateNote} 
+          onImportNote={onImportNote}
+          isFiltered={false} 
+        />
+      ) : (
+        <OptimizedNotesGrid
+          notes={notes}
+          viewMode={viewMode}
+          onUpdateNote={onUpdateNote}
+          onDeleteNote={onDeleteNote}
+          shouldVirtualize={notes.length > 50}
         />
       )}
-    </>
+    </div>
   );
 };
