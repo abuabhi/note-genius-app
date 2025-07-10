@@ -135,7 +135,6 @@ const NotesPageContent = () => {
           }}
         >
           <OptimizedNotesContent 
-            key={`${selectedSubject}-${totalCount}`}
             viewMode={convertedViewMode} 
             onCreateNote={() => setIsManualDialogOpen(true)}
             onImportNote={() => setIsImportDialogOpen(true)}

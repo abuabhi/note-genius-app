@@ -51,7 +51,8 @@ export const OptimizedNotesContent = ({ viewMode, onCreateNote, onImportNote }: 
     notesLength: notes.length,
     notesData: notes,
     isPassingNotes: notes.length > 0,
-    componentShouldRender: true
+    componentShouldRender: true,
+    renderTimestamp: Date.now()
   });
 
   // Virtualization control with memoized threshold - no UI toggle needed
