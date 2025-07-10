@@ -166,7 +166,7 @@ export const useSimpleNotes = () => {
     sort: sortType
   };
 
-  // ✅ FIXED: Infinite query with proper cache management
+  // ✅ FIXED: Infinite query with immediate loading and fresh data for filters
   const {
     data,
     isLoading,
@@ -175,7 +175,8 @@ export const useSimpleNotes = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isInitialLoading
+    isInitialLoading,
+    isFetching
   } = useInfiniteQuery({
     queryKey: getNotesQueryKey(currentFilters),
     queryFn: ({ pageParam = 0 }) => {
@@ -185,17 +186,20 @@ export const useSimpleNotes = () => {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    staleTime: 1000, // 1 second - enough to prevent unnecessary refetches but quick updates
+    staleTime: 0, // ✅ FIX: Immediate fresh data for filters - no stale data allowed
     gcTime: 1000 * 60 * 2, // 2 minutes cache retention  
     refetchOnWindowFocus: false,
     refetchOnMount: 'always', // Always refetch on mount
     refetchInterval: false, // Disable auto refetch
   });
 
-  // Flatten pages into single notes array
-  const notes = data?.pages.flatMap(page => page.notes) || [];
-  const totalCount = data?.pages[0]?.totalCount || 0;
-  const hasMore = hasNextPage || false;
+  // ✅ FIX: Add query validation to prevent stale data display
+  const isQueryStale = !data || isLoading || isFetching;
+  
+  // Only flatten and return data if query is fresh and matches current filters
+  const notes = (!isQueryStale && data?.pages) ? data.pages.flatMap(page => page.notes) : [];
+  const totalCount = (!isQueryStale && data?.pages[0]) ? data.pages[0].totalCount : 0;
+  const hasMore = !isQueryStale && (hasNextPage || false);
 
   // Filter calculations (moved before debug logs)
   const hasActiveFilters = !!(searchTerm || (selectedSubject && selectedSubject !== 'all'));
@@ -471,13 +475,13 @@ export const useSimpleNotes = () => {
   }, [sortType, queryClient, currentFilters]);
 
   return {
-    // Data
+    // Data - ✅ FIX: Enhanced loading states to prevent stale data display
     notes,
     totalCount,
     hasMore,
-    loading: isLoading || isFetchingNextPage,
-    isLoading: isLoading || isFetchingNextPage,
-    isInitialLoading,
+    loading: isLoading || isFetchingNextPage || isFetching, // ✅ Include isFetching for filter changes
+    isLoading: isLoading || isFetchingNextPage || isFetching,
+    isInitialLoading: isInitialLoading || isFetching, // ✅ Show initial loading during filters
     error: error ? String(error) : null,
     
     // Pagination
@@ -496,7 +500,7 @@ export const useSimpleNotes = () => {
     clearFilters,
     hasActiveFilters,
     activeFilterCount,
-    isFiltering: isLoading,
+    isFiltering: isLoading || isFetching, // ✅ More accurate filtering state
     filterError: error ? String(error) : null,
     
     // Operations
