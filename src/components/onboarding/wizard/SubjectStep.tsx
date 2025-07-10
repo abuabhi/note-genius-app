@@ -225,21 +225,29 @@ export const SubjectStep = ({ data, updateData, onNext, onPrev }: SubjectStepPro
   // Auto-select top 7 subjects when grade/stream/degree changes
   useEffect(() => {
     const availableSubjects = getAvailableSubjects();
-    const predefinedSubjectsArray = [...PREDEFINED_SUBJECTS];
     
-    // Check if we have grade-specific subjects (not the default predefined ones)
-    const hasGradeSpecificSubjects = availableSubjects.length > 0 && 
-      JSON.stringify(availableSubjects) !== JSON.stringify(predefinedSubjectsArray);
+    // Auto-select for Grade 10 specifically
+    if (grade === "Grade 10" && availableSubjects.length > 0) {
+      const topSevenSubjects = availableSubjects.slice(0, 7);
+      const newSelected = new Set(topSevenSubjects);
+      updateData({ selectedSubjects: newSelected });
+      return;
+    }
     
-    if (hasGradeSpecificSubjects) {
-      // Only auto-select if we have grade-specific subjects and haven't selected any yet
-      if (data.selectedSubjects.size === 0 || 
-          !Array.from(data.selectedSubjects).some(subject => availableSubjects.includes(subject))) {
-        // Select top 7 subjects
-        const topSevenSubjects = availableSubjects.slice(0, 7);
-        const newSelected = new Set(topSevenSubjects);
-        updateData({ selectedSubjects: newSelected });
-      }
+    // Auto-select for Grade 11/12 when stream is selected
+    if ((grade === "Grade 11" || grade === "Grade 12") && selectedStream && availableSubjects.length > 0) {
+      const topSevenSubjects = availableSubjects.slice(0, 7);
+      const newSelected = new Set(topSevenSubjects);
+      updateData({ selectedSubjects: newSelected });
+      return;
+    }
+    
+    // Auto-select for Undergraduate when field is selected
+    if (grade === "Undergraduate" && selectedDegree && availableSubjects.length > 0) {
+      const topSevenSubjects = availableSubjects.slice(0, 7);
+      const newSelected = new Set(topSevenSubjects);
+      updateData({ selectedSubjects: newSelected });
+      return;
     }
   }, [grade, selectedStream, selectedDegree]);
 

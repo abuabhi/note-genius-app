@@ -31,7 +31,7 @@ export const OnboardingWizard = () => {
     firstName: "",
     grade: "",
     school: "",
-    selectedSubjects: new Set(["English", "Mathematics", "Science", "Technology", "Languages"]),
+    selectedSubjects: new Set(),
     studyGoal: 5,
     notifications: true,
   });
