@@ -1,5 +1,5 @@
 
-import React, { memo } from 'react';
+import React from 'react';
 import { Note } from '@/types/note';
 import { ViewMode } from '@/hooks/useViewPreferences';
 import { OptimizedNotesGrid } from './OptimizedNotesGrid';
@@ -15,7 +15,7 @@ interface NotesContentGridProps {
   onImportNote?: () => void;
 }
 
-export const NotesContentGrid = memo(({
+export const NotesContentGrid = ({
   notes,
   shouldVirtualize,
   viewMode,
@@ -53,6 +53,4 @@ export const NotesContentGrid = memo(({
       )}
     </div>
   );
-});
-
-NotesContentGrid.displayName = 'NotesContentGrid';
+};
