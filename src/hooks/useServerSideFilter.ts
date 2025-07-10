@@ -63,17 +63,21 @@ const callServerFilter = async (
       throw new Error(`Unsupported entity type: ${entityType}`);
   }
 
+  const queryParams = {
+    p_user_id: user.user.id,
+    p_search_term: filters.search || '',
+    p_subject_name: filters.subject || 'all',
+    p_show_archived: filters.showArchived || false,
+    p_sort_by: filters.sort || 'newest',
+    p_page_num: filters.page || 0,
+    p_page_size: filters.pageSize || 20
+  };
+
+  console.log('🔍 [SERVER FILTER] Query params being sent:', queryParams);
+
   // Use direct SQL call since the functions aren't in generated types yet
   const { data, error } = await supabase
-    .rpc(functionName as any, {
-      p_user_id: user.user.id,
-      p_search_term: filters.search || '',
-      p_subject_name: filters.subject || 'all',
-      p_show_archived: filters.showArchived || false,
-      p_sort_by: filters.sort || 'newest',
-      p_page_num: filters.page || 0,
-      p_page_size: filters.pageSize || 20
-    });
+    .rpc(functionName as any, queryParams);
 
   if (error) {
     console.error('❌ Server filter error:', error);
@@ -81,6 +85,11 @@ const callServerFilter = async (
   }
 
   console.log('✅ Server filter result:', data);
+  console.log('📊 [SERVER FILTER] Result summary:', {
+    returnedCount: data?.data?.length || 0,
+    totalCount: data?.total_count || 0,
+    requestedSubject: filters.subject
+  });
   return data as ServerFilterResult;
 };
 
