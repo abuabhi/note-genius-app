@@ -38,6 +38,15 @@ export const OptimizedNotesContent = React.memo(({ viewMode, onCreateNote, onImp
     refetch
   } = useServerSideNotes();
 
+  console.log('🚀 [OPTIMIZED NOTES CONTENT] Received notes from hook:', {
+    notesLength: notes.length,
+    selectedSubject,
+    totalCount,
+    loading,
+    isInitialLoading,
+    notesSummary: notes.map(n => ({ title: n.title, subject: n.subject }))
+  });
+
   // Virtualization control with memoized threshold - no UI toggle needed
   const virtualizationThreshold = useMemo(() => 50, []);
   const shouldVirtualize = useMemo(() => 

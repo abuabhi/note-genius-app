@@ -158,7 +158,8 @@ export const useServerSideFilter = (entityType: EntityType) => {
 
   const handleSubjectChange = useCallback((value: string) => {
     console.log('🎯 [FILTER CHANGE] Subject changing to:', value);
-    // Cancel any ongoing queries to prevent race conditions
+    // Completely clear all cached data for this entity type to prevent stale data
+    queryClient.removeQueries({ queryKey: ['server-filter', entityType] });
     queryClient.cancelQueries({ queryKey: ['server-filter', entityType] });
     setSelectedSubject(value);
     if (currentPage !== 0) setCurrentPage(0);
@@ -212,9 +213,22 @@ export const useServerSideFilter = (entityType: EntityType) => {
   // Update/delete mutations would go here for specific entity types
   // For now, keeping the interface compatible with useSimpleNotes
 
+  // Debug data flow
+  const resultData = query.data?.data || [];
+  const queryStatus = `isLoading: ${query.isLoading}, isFetching: ${query.isFetching}, isSuccess: ${query.isSuccess}, isError: ${query.isError}`;
+  console.log('🔄 [SERVER FILTER] Hook returning data:', {
+    queryKey,
+    queryStatus,
+    serverData: query.data?.data?.length || 0,
+    returnedData: resultData.length,
+    queryData: query.data,
+    isStale: query.isStale,
+    dataUpdatedAt: query.dataUpdatedAt
+  });
+
   return {
     // Data
-    data: query.data?.data || [],
+    data: resultData,
     totalCount: query.data?.total_count || 0,
     hasMore: query.data?.has_more || false,
     currentPage: query.data?.current_page || 0,
@@ -262,6 +276,16 @@ export const useServerSideFilter = (entityType: EntityType) => {
 // Specific hook for notes (maintains backward compatibility)
 export const useServerSideNotes = () => {
   const result = useServerSideFilter('notes');
+  
+  console.log('📝 [USE SERVER SIDE NOTES] Data flow:', {
+    resultDataLength: result.data?.length || 0,
+    notesLength: (result.data || []).length,
+    selectedSubject: result.selectedSubject,
+    totalCount: result.totalCount,
+    firstNoteTitle: result.data?.[0]?.title,
+    firstNoteSubject: result.data?.[0]?.subject
+  });
+  
   return {
     ...result,
     notes: result.data || [], // Alias data as notes for backward compatibility
