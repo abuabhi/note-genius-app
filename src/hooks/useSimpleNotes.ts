@@ -25,6 +25,33 @@ const fetchNotesPage = async ({ search, subject, sort, pageParam = 0 }: FetchNot
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('User not authenticated');
 
+  // Step 1: Get subject_id if filtering by subject name
+  let subjectId: string | null = null;
+  if (subject && subject !== 'all') {
+    console.log('🔍 Step 1: Looking up subject_id for:', subject);
+    
+    const { data: subjectData, error: subjectError } = await supabase
+      .from('user_subjects')
+      .select('id')
+      .eq('user_id', user.user.id)
+      .eq('name', subject)
+      .maybeSingle();
+    
+    if (subjectError) {
+      console.error('❌ Subject lookup failed:', subjectError);
+      throw subjectError;
+    }
+    
+    if (subjectData) {
+      subjectId = subjectData.id;
+      console.log('✅ Found subject_id:', subjectId);
+    } else {
+      console.log('⚠️ No subject_id found for subject name:', subject);
+      // Continue with query but will return no results
+    }
+  }
+
+  // Step 2: Query notes with subject_id filter
   let query = supabase
     .from('notes')
     .select(`
@@ -42,13 +69,16 @@ const fetchNotesPage = async ({ search, subject, sort, pageParam = 0 }: FetchNot
     query = query.ilike('title', `%${search.trim()}%`);
   }
 
-  // Apply subject filter
+  // Apply subject filter using subject_id (two-step approach)
   if (subject && subject !== 'all') {
-    console.log('🔍 Applying subject filter:', subject);
-    // Use correct PostgREST OR syntax with quotes around string values
-    // Order: legacy subject field first, then relationship field
-    query = query.or(`subject.eq."${subject}",user_subjects.name.eq."${subject}"`);
-    console.log('🔍 OR query applied for subject filtering');
+    if (subjectId) {
+      console.log('🔍 Step 2: Filtering notes by subject_id:', subjectId);
+      query = query.eq('subject_id', subjectId);
+    } else {
+      // Fallback: try filtering by legacy subject field for backward compatibility
+      console.log('🔍 Step 2: Fallback to legacy subject field filter');
+      query = query.eq('subject', subject);
+    }
   }
 
   // Apply sorting
