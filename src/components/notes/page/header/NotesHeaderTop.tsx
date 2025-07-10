@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Import } from "lucide-react";
 import { NoteSearch } from "@/components/notes/NoteSearch";
-import { NotesFilterSortControls } from "./NotesFilterSortControls";
+import { NotesFiltersSection } from "../components/NotesFiltersSection";
 
 interface NotesHeaderTopProps {
   onOpenManualDialog: () => void;
@@ -53,7 +53,7 @@ export const NotesHeaderTop = ({
       
       {/* Third Row: Filters and Sort */}
       <div>
-        <NotesFilterSortControls />
+        <NotesFiltersSection />
       </div>
     </div>
   );
