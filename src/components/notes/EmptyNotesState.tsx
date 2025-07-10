@@ -16,6 +16,12 @@ export const EmptyNotesState = ({
   isFiltered = false,
   selectedSubject
 }: EmptyNotesStateProps) => {
+  console.log('🐛 [EMPTY NOTES STATE] Debug:', { 
+    isFiltered, 
+    selectedSubject, 
+    shouldShowSubjectMessage: selectedSubject && selectedSubject !== 'all' 
+  });
+  
   if (isFiltered) {
     const title = selectedSubject && selectedSubject !== 'all' 
       ? `No notes found in ${selectedSubject}`

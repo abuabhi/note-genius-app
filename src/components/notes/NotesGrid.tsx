@@ -26,6 +26,12 @@ export const NotesGrid = ({
   hasActiveFilters = false,
   selectedSubject
 }: NotesGridProps) => {
+  console.log('🐛 [NOTES GRID] Debug:', { 
+    notesLength: notes.length, 
+    hasActiveFilters, 
+    selectedSubject,
+    loading 
+  });
   if (loading) {
     return (
       <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
