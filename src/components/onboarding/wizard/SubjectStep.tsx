@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { BookOpen, Plus, X } from "lucide-react";
 import { OnboardingData } from "../OnboardingWizard";
 import { PREDEFINED_SUBJECTS, GradeLevel } from "@/types/subject";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface SubjectStepProps {
   data: OnboardingData;
@@ -15,39 +16,207 @@ interface SubjectStepProps {
   onPrev: () => void;
 }
 
-const SUBJECT_BUNDLES = {
-  "Elementary": ["Math", "English", "Science", "Social Studies", "Art"],
-  "Middle School": ["Math", "English", "Science", "History", "Geography", "Art", "Physical Education"],
-  "High School": ["Math", "English", "Science", "History", "Physics", "Chemistry", "Biology", "Literature"],
-  "College": ["Computer Science", "Mathematics", "Physics", "Chemistry", "Biology", "Psychology", "Economics"],
-  "University": ["Advanced Mathematics", "Research Methods", "Statistics", "Philosophy", "Critical Thinking"]
+const GRADE_SPECIFIC_SUBJECTS = {
+  "Grade 10": [
+    "Mathematics",
+    "Biology", 
+    "Physics",
+    "Chemistry",
+    "English Language",
+    "English Literature",
+    "History",
+    "Geography",
+    "Civics",
+    "Computer Science",
+    "Physical Education",
+    "Art",
+    "Music",
+    "Second Language"
+  ],
+  "Grade 11": {
+    "Science Stream": [
+      "Mathematics",
+      "Physics", 
+      "Chemistry",
+      "Biology",
+      "Computer Science",
+      "English",
+      "Physical Education",
+      "Environmental Science"
+    ],
+    "Commerce Stream": [
+      "Accountancy",
+      "Business Studies",
+      "Economics", 
+      "Mathematics",
+      "English",
+      "Informatics Practices",
+      "Physical Education"
+    ],
+    "Arts/Humanities Stream": [
+      "History",
+      "Geography",
+      "Political Science",
+      "Sociology",
+      "Psychology", 
+      "English",
+      "Philosophy",
+      "Education",
+      "Fine Arts"
+    ]
+  },
+  "Grade 12": {
+    "Science Stream": [
+      "Mathematics",
+      "Physics",
+      "Chemistry", 
+      "Biology",
+      "Computer Science",
+      "English",
+      "Physical Education",
+      "Environmental Science"
+    ],
+    "Commerce Stream": [
+      "Accountancy",
+      "Business Studies",
+      "Economics",
+      "Mathematics", 
+      "English",
+      "Informatics Practices",
+      "Physical Education"
+    ],
+    "Arts/Humanities Stream": [
+      "History",
+      "Geography",
+      "Political Science",
+      "Sociology",
+      "Psychology",
+      "English", 
+      "Philosophy",
+      "Education",
+      "Fine Arts"
+    ]
+  },
+  "Undergraduate": {
+    "Bachelor of Science (B.Sc.)": [
+      "Physics",
+      "Chemistry",
+      "Biology",
+      "Mathematics",
+      "Computer Science",
+      "Statistics",
+      "Environmental Science"
+    ],
+    "Bachelor of Commerce (B.Com.)": [
+      "Accountancy",
+      "Business Law",
+      "Economics",
+      "Finance",
+      "Taxation",
+      "Auditing",
+      "Business Mathematics",
+      "Marketing"
+    ],
+    "Bachelor of Arts (B.A.)": [
+      "History",
+      "Political Science",
+      "Sociology",
+      "Psychology",
+      "Philosophy",
+      "English",
+      "Education",
+      "Anthropology",
+      "Linguistics"
+    ],
+    "Bachelor of Technology / Engineering (B.Tech/B.E.)": [
+      "Mathematics",
+      "Physics", 
+      "Chemistry",
+      "Data Structures",
+      "Algorithms",
+      "Computer Programming",
+      "Electrical Engineering",
+      "Electronics Engineering",
+      "Mechanical Engineering",
+      "Civil Engineering",
+      "Engineering Drawing",
+      "Control Systems"
+    ]
+  }
 };
 
 export const SubjectStep = ({ data, updateData, onNext, onPrev }: SubjectStepProps) => {
   const [customSubject, setCustomSubject] = useState("");
+  const [selectedStream, setSelectedStream] = useState<string>("");
+  const [selectedDegree, setSelectedDegree] = useState<string>("");
   
   const canProceed = data.selectedSubjects.size > 0;
+  const grade = data.grade as GradeLevel;
 
-  const getRecommendedBundle = (): string[] => {
-    const grade = data.grade as GradeLevel;
-    if (grade.includes("Elementary") || grade.includes("Grade")) {
-      return SUBJECT_BUNDLES["Elementary"];
-    } else if (grade.includes("Middle")) {
-      return SUBJECT_BUNDLES["Middle School"];
-    } else if (grade.includes("High")) {
-      return SUBJECT_BUNDLES["High School"];
-    } else if (grade.includes("College")) {
-      return SUBJECT_BUNDLES["College"];
-    } else if (grade.includes("University") || grade.includes("Graduate")) {
-      return SUBJECT_BUNDLES["University"];
+  // Get available subjects based on grade and stream/degree selection
+  const getAvailableSubjects = (): string[] => {
+    if (grade === "Grade 10" && GRADE_SPECIFIC_SUBJECTS[grade]) {
+      return GRADE_SPECIFIC_SUBJECTS[grade];
     }
-    return SUBJECT_BUNDLES["High School"]; // Default
+    
+    if ((grade === "Grade 11" || grade === "Grade 12") && selectedStream) {
+      const gradeData = GRADE_SPECIFIC_SUBJECTS[grade];
+      if (gradeData && typeof gradeData === 'object' && selectedStream in gradeData) {
+        return (gradeData as any)[selectedStream];
+      }
+    }
+    
+    if (grade === "Undergraduate" && selectedDegree) {
+      const gradeData = GRADE_SPECIFIC_SUBJECTS[grade];
+      if (gradeData && typeof gradeData === 'object' && selectedDegree in gradeData) {
+        return (gradeData as any)[selectedDegree];
+      }
+    }
+    
+    // Fallback to predefined subjects for other grades
+    return [...PREDEFINED_SUBJECTS];
   };
 
-  const selectBundle = (bundle: string[]) => {
-    const newSubjects = new Set([...data.selectedSubjects, ...bundle]);
-    updateData({ selectedSubjects: newSubjects });
+  // Get available streams for Grade 11/12
+  const getAvailableStreams = (): string[] => {
+    if ((grade === "Grade 11" || grade === "Grade 12")) {
+      const gradeData = GRADE_SPECIFIC_SUBJECTS[grade];
+      if (gradeData && typeof gradeData === 'object') {
+        return Object.keys(gradeData);
+      }
+    }
+    return [];
   };
+
+  // Get available degrees for Undergraduate
+  const getAvailableDegrees = (): string[] => {
+    if (grade === "Undergraduate") {
+      const gradeData = GRADE_SPECIFIC_SUBJECTS.Undergraduate;
+      if (gradeData && typeof gradeData === 'object') {
+        return Object.keys(gradeData);
+      }
+    }
+    return [];
+  };
+
+  // Auto-select subjects when grade/stream/degree changes
+  useEffect(() => {
+    const availableSubjects = getAvailableSubjects();
+    const predefinedSubjectsArray = [...PREDEFINED_SUBJECTS];
+    
+    // Check if we have grade-specific subjects (not the default predefined ones)
+    const hasGradeSpecificSubjects = availableSubjects.length > 0 && 
+      JSON.stringify(availableSubjects) !== JSON.stringify(predefinedSubjectsArray);
+    
+    if (hasGradeSpecificSubjects) {
+      // Only auto-select if we have grade-specific subjects and haven't selected any yet
+      if (data.selectedSubjects.size === 0 || 
+          !Array.from(data.selectedSubjects).some(subject => availableSubjects.includes(subject))) {
+        const newSelected = new Set(availableSubjects);
+        updateData({ selectedSubjects: newSelected });
+      }
+    }
+  }, [grade, selectedStream, selectedDegree]);
 
   const toggleSubject = (subject: string) => {
     const newSelected = new Set(data.selectedSubjects);
@@ -74,7 +243,9 @@ export const SubjectStep = ({ data, updateData, onNext, onPrev }: SubjectStepPro
     updateData({ selectedSubjects: newSelected });
   };
 
-  const recommendedBundle = getRecommendedBundle();
+  const availableSubjects = getAvailableSubjects();
+  const availableStreams = getAvailableStreams();
+  const availableDegrees = getAvailableDegrees();
 
   return (
     <div className="space-y-8">
@@ -93,12 +264,55 @@ export const SubjectStep = ({ data, updateData, onNext, onPrev }: SubjectStepPro
       </div>
 
 
+      {/* Stream Selection for Grade 11/12 */}
+      {availableStreams.length > 0 && (
+        <div className="space-y-3">
+          <Label className="font-semibold text-slate-800">Select Your Stream</Label>
+          <Select value={selectedStream} onValueChange={setSelectedStream}>
+            <SelectTrigger>
+              <SelectValue placeholder="Choose your stream" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableStreams.map((stream) => (
+                <SelectItem key={stream} value={stream}>
+                  {stream}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Degree Selection for Undergraduate */}
+      {availableDegrees.length > 0 && (
+        <div className="space-y-3">
+          <Label className="font-semibold text-slate-800">Select Your Degree</Label>
+          <Select value={selectedDegree} onValueChange={setSelectedDegree}>
+            <SelectTrigger>
+              <SelectValue placeholder="Choose your degree type" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableDegrees.map((degree) => (
+                <SelectItem key={degree} value={degree}>
+                  {degree}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {/* Subject Selection */}
       <div className="space-y-4">
-        <h3 className="font-semibold text-slate-800">All Subjects</h3>
+        <h3 className="font-semibold text-slate-800">
+          {grade === "Grade 10" ? `Grade 10 Subjects` :
+           (grade === "Grade 11" || grade === "Grade 12") && selectedStream ? `${selectedStream} Subjects` :
+           grade === "Undergraduate" && selectedDegree ? `${selectedDegree} Subjects` :
+           "Available Subjects"}
+        </h3>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {PREDEFINED_SUBJECTS.map((subject) => (
+          {availableSubjects.map((subject) => (
             <div key={subject} className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
               <Checkbox 
                 id={`subject-${subject}`} 
