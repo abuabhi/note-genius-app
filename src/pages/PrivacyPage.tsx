@@ -121,6 +121,9 @@ const PrivacyPage = () => {
                   We use cookies and similar technologies to enhance your experience and analyze usage patterns. 
                   You can control cookie settings through your browser preferences.
                 </p>
+                <p className="text-gray-700 leading-relaxed">
+                  We improve our products and advertising by using Microsoft Clarity to see how you use our website. By using our site, you agree that we and Microsoft can collect and use this data.
+                </p>
               </section>
 
               <Separator className="my-8" />
