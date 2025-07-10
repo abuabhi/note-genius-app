@@ -37,22 +37,25 @@ export const StandardPageHeader = ({
         {/* Breadcrumbs */}
         <OptimizedBreadcrumb>
           <OptimizedBreadcrumbList>
-            {defaultBreadcrumbs.map((item, index) => (
-              <React.Fragment key={index}>
-                <OptimizedBreadcrumbItem>
-                  {item.href ? (
-                    <OptimizedBreadcrumbLink to={item.href}>
-                      {item.label}
-                    </OptimizedBreadcrumbLink>
-                  ) : (
-                    <OptimizedBreadcrumbPage>
-                      {item.label}
-                    </OptimizedBreadcrumbPage>
-                  )}
-                </OptimizedBreadcrumbItem>
-                {index < defaultBreadcrumbs.length - 1 && <OptimizedBreadcrumbSeparator />}
-              </React.Fragment>
-            ))}
+            {defaultBreadcrumbs.map((item, index) => {
+              const isLast = index === defaultBreadcrumbs.length - 1;
+              return (
+                <React.Fragment key={index}>
+                  <OptimizedBreadcrumbItem>
+                    {item.href ? (
+                      <OptimizedBreadcrumbLink to={item.href}>
+                        {item.label}
+                      </OptimizedBreadcrumbLink>
+                    ) : (
+                      <OptimizedBreadcrumbPage>
+                        {item.label}
+                      </OptimizedBreadcrumbPage>
+                    )}
+                  </OptimizedBreadcrumbItem>
+                  {!isLast && <OptimizedBreadcrumbSeparator />}
+                </React.Fragment>
+              );
+            })}
           </OptimizedBreadcrumbList>
         </OptimizedBreadcrumb>
 
