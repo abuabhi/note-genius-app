@@ -3932,11 +3932,6 @@ export type Database = {
     }
     Enums: {
       grade_level:
-        | "Kindergarten"
-        | "Grade 1"
-        | "Grade 2"
-        | "Grade 3"
-        | "Grade 4"
         | "Grade 5"
         | "Grade 6"
         | "Grade 7"
@@ -3947,7 +3942,7 @@ export type Database = {
         | "Grade 12"
         | "Undergraduate"
         | "Graduate"
-        | "Postgraduate"
+        | "PhD"
       user_tier: "SCHOLAR" | "GRADUATE" | "MASTER" | "DEAN"
     }
     CompositeTypes: {
@@ -4077,11 +4072,6 @@ export const Constants = {
   public: {
     Enums: {
       grade_level: [
-        "Kindergarten",
-        "Grade 1",
-        "Grade 2",
-        "Grade 3",
-        "Grade 4",
         "Grade 5",
         "Grade 6",
         "Grade 7",
@@ -4092,7 +4082,7 @@ export const Constants = {
         "Grade 12",
         "Undergraduate",
         "Graduate",
-        "Postgraduate",
+        "PhD",
       ],
       user_tier: ["SCHOLAR", "GRADUATE", "MASTER", "DEAN"],
     },
