@@ -1,25 +1,36 @@
 import React from 'react';
 import { UniversalFilters } from '@/components/shared/UniversalFilters';
-import { useServerSideNotes } from '@/hooks/useServerSideFilter';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
 
-export const SimplifiedNotesFilters = () => {
+interface SimplifiedNotesFiltersProps {
+  searchTerm: string;
+  setSearchTerm: (value: string) => void;
+  selectedSubject: string;
+  setSelectedSubject: (value: string) => void;
+  sortType: string;
+  setSortType: (value: string) => void;
+  hasActiveFilters: boolean;
+  activeFilterCount: number;
+  clearFilters: () => void;
+  loading: boolean;
+  totalCount: number;
+}
+
+export const SimplifiedNotesFilters = ({
+  searchTerm,
+  setSearchTerm,
+  selectedSubject,
+  setSelectedSubject,
+  sortType,
+  setSortType,
+  hasActiveFilters,
+  activeFilterCount,
+  clearFilters,
+  loading,
+  totalCount
+}: SimplifiedNotesFiltersProps) => {
   console.log('🎯 [SIMPLIFIED NOTES FILTERS] Component rendering');
   
-  const { 
-    searchTerm,
-    setSearchTerm,
-    selectedSubject,
-    setSelectedSubject,
-    sortType,
-    setSortType,
-    hasActiveFilters,
-    activeFilterCount,
-    clearFilters,
-    loading,
-    totalCount
-  } = useServerSideNotes();
-
   console.log('🎯 [SIMPLIFIED NOTES FILTERS] Current state:', {
     searchTerm,
     selectedSubject,
