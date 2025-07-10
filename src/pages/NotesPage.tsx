@@ -161,6 +161,8 @@ const NotesPageContent = () => {
               onCreateNote={() => setIsManualDialogOpen(true)}
               onImportNote={() => setIsImportDialogOpen(true)}
               loading={loading}
+              hasActiveFilters={hasActiveFilters}
+              selectedSubject={selectedSubject}
             />
           </div>
         </ErrorBoundary>

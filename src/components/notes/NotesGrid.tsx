@@ -11,6 +11,8 @@ interface NotesGridProps {
   onCreateNote?: () => void;
   onImportNote?: () => void;
   loading: boolean;
+  hasActiveFilters?: boolean;
+  selectedSubject?: string;
 }
 
 export const NotesGrid = ({
@@ -20,7 +22,9 @@ export const NotesGrid = ({
   onDeleteNote,
   onCreateNote,
   onImportNote,
-  loading
+  loading,
+  hasActiveFilters = false,
+  selectedSubject
 }: NotesGridProps) => {
   if (loading) {
     return (
@@ -39,7 +43,8 @@ export const NotesGrid = ({
         <EmptyNotesState 
           onCreateNote={onCreateNote} 
           onImportNote={onImportNote}
-          isFiltered={false} 
+          isFiltered={hasActiveFilters}
+          selectedSubject={selectedSubject}
         />
       ) : (
         <OptimizedNotesGrid

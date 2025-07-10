@@ -7,19 +7,29 @@ interface EmptyNotesStateProps {
   onCreateNote?: () => void;
   onImportNote?: () => void;
   isFiltered?: boolean;
+  selectedSubject?: string;
 }
 
 export const EmptyNotesState = ({ 
   onCreateNote, 
   onImportNote,
-  isFiltered = false 
+  isFiltered = false,
+  selectedSubject
 }: EmptyNotesStateProps) => {
   if (isFiltered) {
+    const title = selectedSubject && selectedSubject !== 'all' 
+      ? `No notes found in ${selectedSubject}`
+      : "No notes found";
+    
+    const description = selectedSubject && selectedSubject !== 'all'
+      ? `There are no notes in the ${selectedSubject} subject yet. Create your first note to get started!`
+      : "Try adjusting your search terms or filters to find what you're looking for.";
+
     return (
       <div className="py-16">
         <EmptyState
-          title="No notes found"
-          description="Try adjusting your search terms or filters to find what you're looking for."
+          title={title}
+          description={description}
           icon={
             <div className="relative">
               <div className="w-20 h-20 bg-gradient-to-br from-mint-100 to-mint-200 rounded-2xl flex items-center justify-center shadow-lg">
@@ -30,6 +40,15 @@ export const EmptyNotesState = ({
               </div>
             </div>
           }
+          action={selectedSubject && selectedSubject !== 'all' && onCreateNote ? (
+            <Button 
+              onClick={onCreateNote}
+              className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white shadow-lg shadow-mint-500/25 hover:shadow-mint-500/40 transition-all duration-200 px-6 py-3 rounded-xl mt-4"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Note to {selectedSubject}
+            </Button>
+          ) : undefined}
           className="text-center py-12"
         />
       </div>
