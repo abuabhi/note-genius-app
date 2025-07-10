@@ -21,7 +21,7 @@ interface OptimizedNotesContentProps {
   onImportNote?: () => void;
 }
 
-export const OptimizedNotesContent = React.memo(({ viewMode, onCreateNote, onImportNote }: OptimizedNotesContentProps) => {
+export const OptimizedNotesContent = ({ viewMode, onCreateNote, onImportNote }: OptimizedNotesContentProps) => {
   // Use the server-side notes hook for optimized filtering
   const {
     notes,
@@ -124,6 +124,4 @@ export const OptimizedNotesContent = React.memo(({ viewMode, onCreateNote, onImp
       </ProgressiveLoader>
     </div>
   );
-});
-
-OptimizedNotesContent.displayName = 'OptimizedNotesContent';
+};
