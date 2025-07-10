@@ -47,6 +47,13 @@ export const OptimizedNotesContent = ({ viewMode, onCreateNote, onImportNote }: 
     notesSummary: notes.map(n => ({ title: n.title, subject: n.subject }))
   });
 
+  console.log('🚀 [OPTIMIZED NOTES CONTENT] CRITICAL DEBUG - About to render NotesContentGrid with:', {
+    notesLength: notes.length,
+    notesData: notes,
+    isPassingNotes: notes.length > 0,
+    componentShouldRender: true
+  });
+
   // Virtualization control with memoized threshold - no UI toggle needed
   const virtualizationThreshold = useMemo(() => 50, []);
   const shouldVirtualize = useMemo(() => 
