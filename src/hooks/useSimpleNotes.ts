@@ -175,10 +175,13 @@ export const useSimpleNotes = () => {
     isInitialLoading
   } = useInfiniteQuery({
     queryKey: getNotesQueryKey(currentFilters),
-    queryFn: ({ pageParam = 0 }) => fetchNotesPage({ ...currentFilters, pageParam }),
+    queryFn: ({ pageParam = 0 }) => {
+      console.log('🚀 [SIMPLE NOTES] Query function called with:', { ...currentFilters, pageParam });
+      return fetchNotesPage({ ...currentFilters, pageParam });
+    },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    staleTime: 2 * 60 * 1000, // 2 minutes stale time
+    staleTime: 0, // Set to 0 for debugging - always fetch fresh data
     gcTime: 5 * 60 * 1000, // 5 minutes cache retention
     refetchOnWindowFocus: false,
   });
@@ -187,6 +190,20 @@ export const useSimpleNotes = () => {
   const notes = data?.pages.flatMap(page => page.notes) || [];
   const totalCount = data?.pages[0]?.totalCount || 0;
   const hasMore = hasNextPage || false;
+
+  // 🔥 DEBUG: Log the critical data flow
+  console.log('🔥 [SIMPLE NOTES HOOK] Critical Data Flow:', {
+    currentFilters,
+    queryKey: getNotesQueryKey(currentFilters),
+    pagesCount: data?.pages?.length || 0,
+    firstPageData: data?.pages?.[0] ? {
+      notesCount: data.pages[0].notes.length,
+      totalCount: data.pages[0].totalCount
+    } : 'No data',
+    flattenedNotesCount: notes.length,
+    finalTotalCount: totalCount,
+    notesSubjects: notes.slice(0, 3).map(n => ({ title: n.title, subject: n.subject }))
+  });
 
   // Filter calculations
   const hasActiveFilters = !!(searchTerm || (selectedSubject && selectedSubject !== 'all'));
@@ -445,6 +462,22 @@ export const useSimpleNotes = () => {
   const currentPage = data?.pages?.length || 1;
   const setCurrentPage = useCallback(() => {}, []); // Deprecated for infinite scroll
 
+  // Enhanced setters with debugging
+  const updateSelectedSubject = useCallback((subject: string) => {
+    console.log('🔄 [SIMPLE NOTES] Subject filter changing:', { from: selectedSubject, to: subject });
+    setSelectedSubject(subject);
+  }, [selectedSubject]);
+
+  const updateSearchTerm = useCallback((term: string) => {
+    console.log('🔍 [SIMPLE NOTES] Search term changing:', { from: searchTerm, to: term });
+    setSearchTerm(term);
+  }, [searchTerm]);
+
+  const updateSortType = useCallback((sort: string) => {
+    console.log('🔀 [SIMPLE NOTES] Sort changing:', { from: sortType, to: sort });
+    setSortType(sort);
+  }, [sortType]);
+
   return {
     // Data
     notes,
@@ -463,11 +496,11 @@ export const useSimpleNotes = () => {
     
     // Filter functionality - now working!
     searchTerm,
-    setSearchTerm,
+    setSearchTerm: updateSearchTerm,
     selectedSubject,
-    setSelectedSubject,
+    setSelectedSubject: updateSelectedSubject,
     sortType,
-    setSortType,
+    setSortType: updateSortType,
     clearFilters,
     hasActiveFilters,
     activeFilterCount,

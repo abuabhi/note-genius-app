@@ -24,10 +24,12 @@ export const NotesContentGrid = memo(({
   onCreateNote,
   onImportNote
 }: NotesContentGridProps) => {
-  console.log('🎯 NotesContentGrid - Rendering with:', { 
+  console.log('🎯 [NOTES CONTENT GRID] Rendering with:', { 
     noteCount: notes.length, 
     viewMode, 
-    shouldVirtualize 
+    shouldVirtualize,
+    notesTitles: notes.map(n => n.title),
+    notesSubjects: notes.map(n => n.subject)
   });
 
   // Always render the container to prevent flash screens during optimistic updates
