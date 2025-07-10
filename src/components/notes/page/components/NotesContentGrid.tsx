@@ -11,6 +11,8 @@ interface NotesContentGridProps {
   viewMode: ViewMode;
   onUpdateNote: (id: string, updates: Partial<Note>) => Promise<void>;
   onDeleteNote: (id: string) => Promise<void>;
+  onCreateNote?: () => void;
+  onImportNote?: () => void;
 }
 
 export const NotesContentGrid = memo(({
@@ -18,7 +20,9 @@ export const NotesContentGrid = memo(({
   shouldVirtualize,
   viewMode,
   onUpdateNote,
-  onDeleteNote
+  onDeleteNote,
+  onCreateNote,
+  onImportNote
 }: NotesContentGridProps) => {
   console.log('🎯 NotesContentGrid - Rendering with:', { 
     noteCount: notes.length, 
@@ -31,8 +35,8 @@ export const NotesContentGrid = memo(({
     <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
       {notes.length === 0 ? (
         <EmptyNotesState 
-          onCreateNote={() => {}} 
-          onImportNote={() => {}}
+          onCreateNote={onCreateNote} 
+          onImportNote={onImportNote}
           isFiltered={false} 
         />
       ) : (

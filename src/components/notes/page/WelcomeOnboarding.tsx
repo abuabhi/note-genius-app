@@ -17,14 +17,12 @@ import {
 
 interface WelcomeOnboardingProps {
   onCreateNote?: () => void;
-  onScanNote?: () => void;
   onImportNote?: () => void;
   onDismiss?: () => void;
 }
 
 export const WelcomeOnboarding = ({ 
   onCreateNote, 
-  onScanNote, 
   onImportNote,
   onDismiss 
 }: WelcomeOnboardingProps) => {
@@ -81,20 +79,6 @@ export const WelcomeOnboarding = ({
               </div>
               <span className="font-semibold text-slate-800">Create Note</span>
               <span className="text-xs text-slate-500 text-center">Start writing your ideas</span>
-            </Button>
-          )}
-          
-          {onScanNote && (
-            <Button 
-              onClick={onScanNote}
-              variant="outline"
-              className="h-auto p-6 flex flex-col items-center space-y-3 border-2 border-blue-200/50 hover:border-blue-400 bg-white/80 hover:bg-blue-50/80 transition-all duration-300 rounded-xl shadow-lg hover:shadow-xl group hover:scale-105"
-            >
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                <Camera className="h-6 w-6 text-white" />
-              </div>
-              <span className="font-semibold text-slate-800">Scan Document</span>
-              <span className="text-xs text-slate-500 text-center">Upload & digitize images</span>
             </Button>
           )}
           

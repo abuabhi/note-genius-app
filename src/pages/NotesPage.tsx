@@ -130,7 +130,11 @@ const NotesPageContent = () => {
             console.error('Notes page error caught by boundary:', error, errorInfo);
           }}
         >
-          <OptimizedNotesContent viewMode={convertedViewMode} />
+          <OptimizedNotesContent 
+            viewMode={convertedViewMode} 
+            onCreateNote={() => setIsManualDialogOpen(true)}
+            onImportNote={() => setIsImportDialogOpen(true)}
+          />
         </ErrorBoundary>
       </div>
 

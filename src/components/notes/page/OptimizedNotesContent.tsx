@@ -17,9 +17,11 @@ import { NotesCounter } from './components/NotesCounter';
 
 interface OptimizedNotesContentProps {
   viewMode: 'grid' | 'list';
+  onCreateNote?: () => void;
+  onImportNote?: () => void;
 }
 
-export const OptimizedNotesContent = React.memo(({ viewMode }: OptimizedNotesContentProps) => {
+export const OptimizedNotesContent = React.memo(({ viewMode, onCreateNote, onImportNote }: OptimizedNotesContentProps) => {
   // Use the simple notes hook for clean, direct data access
   const {
     notes,
@@ -85,6 +87,8 @@ export const OptimizedNotesContent = React.memo(({ viewMode }: OptimizedNotesCon
             viewMode={viewMode}
             onUpdateNote={updateNote}
             onDeleteNote={deleteNote}
+            onCreateNote={onCreateNote}
+            onImportNote={onImportNote}
           />
           
           {/* Load More Button - only show if we have notes */}
