@@ -1,5 +1,5 @@
 
-import React, { memo } from 'react';
+import React from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
@@ -9,7 +9,7 @@ interface NotesErrorHandlerProps {
   onRetry?: () => void;
 }
 
-export const NotesErrorHandler = memo(({ 
+export const NotesErrorHandler = ({ 
   error, 
   onRetry 
 }: NotesErrorHandlerProps) => {
@@ -37,6 +37,4 @@ export const NotesErrorHandler = memo(({
       </Alert>
     </div>
   );
-});
-
-NotesErrorHandler.displayName = 'NotesErrorHandler';
+};

@@ -1,5 +1,5 @@
 
-import React, { memo } from 'react';
+import React from 'react';
 
 interface NotesCounterProps {
   currentCount: number;
@@ -7,7 +7,7 @@ interface NotesCounterProps {
   shouldVirtualize: boolean;
 }
 
-export const NotesCounter = memo(({
+export const NotesCounter = ({
   currentCount,
   totalCount,
   shouldVirtualize
@@ -31,6 +31,4 @@ export const NotesCounter = memo(({
       </div>
     </div>
   );
-});
-
-NotesCounter.displayName = 'NotesCounter';
+};

@@ -1,5 +1,5 @@
 
-import React, { memo } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
@@ -12,7 +12,7 @@ interface NotesLoadMoreSectionProps {
   onLoadMore: () => void;
 }
 
-export const NotesLoadMoreSection = memo(({
+export const NotesLoadMoreSection = ({
   hasMore,
   shouldVirtualize,
   loading,
@@ -76,6 +76,4 @@ export const NotesLoadMoreSection = memo(({
       </Button>
     </div>
   );
-});
-
-NotesLoadMoreSection.displayName = 'NotesLoadMoreSection';
+};
