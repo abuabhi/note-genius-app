@@ -41,7 +41,8 @@ const getServerFilterQueryKey = (entityType: EntityType, filters: FilterParams) 
 // Server-side filter function caller
 const callServerFilter = async (
   entityType: EntityType,
-  filters: FilterParams
+  filters: FilterParams,
+  signal?: AbortSignal
 ): Promise<ServerFilterResult> => {
   console.log('🚀 [SERVER FILTER] Calling server function:', { entityType, filters });
 
@@ -123,23 +124,18 @@ export const useServerSideFilter = (entityType: EntityType) => {
     return key;
   }, [entityType, filterParams]);
 
-  // Main query using React Query
-  const query = useQuery({
+  // Main query using React Query with race condition prevention
+  const query = useQuery<ServerFilterResult>({
     queryKey,
-    queryFn: () => callServerFilter(entityType, filterParams),
-    staleTime: 0, // Force immediate refetch when query key changes
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2,
+    queryFn: ({ signal }) => {
+      console.log('🚀 [SERVER FILTER] Starting query with signal:', !!signal);
+      return callServerFilter(entityType, filterParams, signal);
+    },
+    staleTime: 0, // Always fetch fresh data for filters
+    gcTime: 0, // No cache retention to prevent stale data
+    retry: 1, // Reduce retries to avoid race conditions
+    retryDelay: 1000,
   });
-
-  // Invalidate queries when filter params change to ensure immediate refetch
-  useEffect(() => {
-    console.log('🔄 [FILTER CHANGE] Filter params changed, invalidating cache:', filterParams);
-    queryClient.invalidateQueries({ 
-      queryKey: ['server-filter', entityType],
-      exact: false 
-    });
-  }, [filterParams, queryClient, entityType]);
 
   // Reset page when filters change
   const resetPage = useCallback(() => {
