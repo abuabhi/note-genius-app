@@ -5,6 +5,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useRequireAuth } from './useRequireAuth';
 
+// Helper function to map database response to Note interface
+const mapDbToNote = (dbNote: any): Note => ({
+  ...dbNote,
+  sourceType: (dbNote.source_type || 'manual') as 'manual' | 'scan' | 'import' | 'youtube',
+  video_metadata: typeof dbNote.video_metadata === 'object' && dbNote.video_metadata !== null 
+    ? dbNote.video_metadata as Note['video_metadata']
+    : undefined
+});
+
 export interface NotesFilters {
   searchTerm: string;
   selectedSubject: string;
@@ -49,7 +58,16 @@ export const useNotes = () => {
       });
 
       if (error) throw error;
-      return data;
+      
+      // Type the response properly
+      const response = data as any;
+      
+      // Map database fields to Note interface
+      if (response?.data) {
+        response.data = response.data.map(mapDbToNote);
+      }
+      
+      return response;
     },
     enabled: !!user?.id,
     staleTime: 30000, // 30 seconds
@@ -71,10 +89,14 @@ export const useNotes = () => {
     mutationFn: async (noteData: Omit<Note, 'id'>) => {
       if (!user?.id) throw new Error('User not authenticated');
       
+      // Map camelCase to snake_case for database
+      const dbData = { ...noteData };
+      delete (dbData as any).sourceType;
+      
       const { data, error } = await supabase
         .from('notes')
         .insert({
-          ...noteData,
+          ...dbData,
           user_id: user.id,
           source_type: noteData.sourceType || 'manual',
           created_at: new Date().toISOString(),
@@ -84,7 +106,9 @@ export const useNotes = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      
+      // Map response back to camelCase
+      return mapDbToNote(data);
     },
     onSuccess: (newNote) => {
       queryClient.invalidateQueries({ queryKey: ['notes', user?.id] });
@@ -99,10 +123,17 @@ export const useNotes = () => {
   // Update note mutation
   const updateNoteMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Note> }) => {
+      // Map camelCase fields to snake_case for database
+      const dbUpdates = { ...updates };
+      if ('sourceType' in dbUpdates) {
+        (dbUpdates as any).source_type = dbUpdates.sourceType;
+        delete (dbUpdates as any).sourceType;
+      }
+      
       const { data, error } = await supabase
         .from('notes')
         .update({
-          ...updates,
+          ...dbUpdates,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
@@ -110,7 +141,9 @@ export const useNotes = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      
+      // Map response back to camelCase
+      return mapDbToNote(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes', user?.id] });
