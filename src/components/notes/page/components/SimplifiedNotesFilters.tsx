@@ -50,7 +50,8 @@ export const SimplifiedNotesFilters = memo(() => {
     subjects: subjects?.map(s => s.name) || [],
     sortOptions,
     hasActiveFilters,
-    activeFilterCount
+    activeFilterCount,
+    setSelectedSubjectType: typeof setSelectedSubject
   });
 
   return (

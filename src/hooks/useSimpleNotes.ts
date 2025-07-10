@@ -5,9 +5,12 @@ import { Note } from '@/types/note';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 
-// Filter-aware query key factory
-const getNotesQueryKey = (filters: { search: string; subject: string; sort: string }) => 
-  ['notes', filters];
+// ✅ FIXED: More robust query key factory with debugging
+const getNotesQueryKey = (filters: { search: string; subject: string; sort: string }) => {
+  const key = ['notes', 'simple', filters.search.trim(), filters.subject.trim(), filters.sort.trim()];
+  console.log('🔑 [QUERY KEY] Generated:', key);
+  return key;
+};
 
 interface FetchNotesParams {
   search: string;
@@ -163,7 +166,7 @@ export const useSimpleNotes = () => {
     sort: sortType
   };
 
-  // Infinite query with pagination
+  // ✅ FIXED: Infinite query with proper cache management
   const {
     data,
     isLoading,
@@ -177,14 +180,15 @@ export const useSimpleNotes = () => {
     queryKey: getNotesQueryKey(currentFilters),
     queryFn: ({ pageParam = 0 }) => {
       console.log('🚀 [SIMPLE NOTES] Query function called with:', { ...currentFilters, pageParam });
+      console.log('🚀 [SIMPLE NOTES] Full query key:', getNotesQueryKey(currentFilters));
       return fetchNotesPage({ ...currentFilters, pageParam });
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    staleTime: 0, // Set to 0 for debugging - always fetch fresh data
-    gcTime: 0, // No cache retention for debugging
+    staleTime: 1000, // 1 second - enough to prevent unnecessary refetches but quick updates
+    gcTime: 1000 * 60 * 2, // 2 minutes cache retention  
     refetchOnWindowFocus: false,
-    refetchOnMount: true, // Always refetch on mount
+    refetchOnMount: 'always', // Always refetch on mount
     refetchInterval: false, // Disable auto refetch
   });
 
@@ -193,23 +197,31 @@ export const useSimpleNotes = () => {
   const totalCount = data?.pages[0]?.totalCount || 0;
   const hasMore = hasNextPage || false;
 
-  // 🔥 DEBUG: Log the critical data flow
-  console.log('🔥 [SIMPLE NOTES HOOK] Critical Data Flow:', {
-    currentFilters,
-    queryKey: getNotesQueryKey(currentFilters),
-    pagesCount: data?.pages?.length || 0,
-    firstPageData: data?.pages?.[0] ? {
-      notesCount: data.pages[0].notes.length,
-      totalCount: data.pages[0].totalCount
-    } : 'No data',
-    flattenedNotesCount: notes.length,
-    finalTotalCount: totalCount,
-    notesSubjects: notes.slice(0, 3).map(n => ({ title: n.title, subject: n.subject }))
-  });
-
-  // Filter calculations
+  // Filter calculations (moved before debug logs)
   const hasActiveFilters = !!(searchTerm || (selectedSubject && selectedSubject !== 'all'));
   const activeFilterCount = [searchTerm, selectedSubject !== 'all'].filter(Boolean).length;
+
+  // ✅ COMPREHENSIVE DEBUG: Log the complete data flow
+  console.log('🔥 [SIMPLE NOTES HOOK] === COMPLETE DATA FLOW DEBUG ===');
+  console.log('🔥 [FILTERS] Current filters:', currentFilters);
+  console.log('🔥 [QUERY KEY] Generated query key:', getNotesQueryKey(currentFilters));
+  console.log('🔥 [QUERY STATE] Query loading states:', { isLoading, isInitialLoading, isFetchingNextPage });
+  console.log('🔥 [RAW DATA] Pages count:', data?.pages?.length || 0);
+  console.log('🔥 [RAW DATA] First page data:', data?.pages?.[0] ? {
+    notesCount: data.pages[0].notes.length,
+    totalCount: data.pages[0].totalCount,
+    hasMore: data.pages[0].hasMore
+  } : 'No data');
+  console.log('🔥 [PROCESSED] Flattened notes count:', notes.length);
+  console.log('🔥 [PROCESSED] Final total count:', totalCount);
+  console.log('🔥 [PROCESSED] Notes subjects (first 5):', notes.slice(0, 5).map(n => ({ 
+    id: n.id, 
+    title: n.title, 
+    subject: n.subject 
+  })));
+  console.log('🔥 [UI STATE] hasActiveFilters:', hasActiveFilters);
+  console.log('🔥 [UI STATE] activeFilterCount:', activeFilterCount);
+  console.log('🔥 ================================================');
 
   const clearFilters = useCallback(() => {
     console.log('🧹 [SIMPLE NOTES] Clearing all filters');
@@ -265,36 +277,12 @@ export const useSimpleNotes = () => {
     onSuccess: (newNote) => {
       console.log('🚀 [SIMPLE NOTES] Adding note to infinite query cache');
       
-      // Update infinite query cache
-      queryClient.setQueriesData(
-        { queryKey: ['notes'], exact: false },
-        (oldData: any) => {
-          if (!oldData?.pages) {
-            return {
-              pages: [{ notes: [newNote], totalCount: 1, hasMore: false }],
-              pageParams: [0]
-            };
-          }
-          
-          // Add to first page
-          const updatedPages = [...oldData.pages];
-          if (updatedPages[0]) {
-            updatedPages[0] = {
-              ...updatedPages[0],
-              notes: [newNote, ...updatedPages[0].notes],
-              totalCount: updatedPages[0].totalCount + 1
-            };
-          }
-          
-          return {
-            ...oldData,
-            pages: updatedPages
-          };
-        }
-      );
-
-      // Invalidate to refresh data
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
+      // ✅ FIXED: Clear cache and trigger refetch instead of complex cache updates
+      console.log('🚀 [SIMPLE NOTES] Note created, clearing cache and refetching');
+      queryClient.removeQueries({ queryKey: ['notes'], exact: false });
+      
+      // The query will automatically refetch due to the new query key
+      refetch();
       
       console.log('✅ [SIMPLE NOTES] Infinite query cache updated');
       toast.success('Note created successfully');
@@ -328,28 +316,10 @@ export const useSimpleNotes = () => {
       return data;
     },
     onSuccess: (_, { id, updates }) => {
-      // Update infinite query cache
-      queryClient.setQueriesData(
-        { queryKey: ['notes'], exact: false },
-        (oldData: any) => {
-          if (!oldData?.pages) return oldData;
-          
-          const updatedPages = oldData.pages.map((page: any) => ({
-            ...page,
-            notes: page.notes.map((note: Note) =>
-              note.id === id ? { ...note, ...updates } : note
-            )
-          }));
-          
-          return {
-            ...oldData,
-            pages: updatedPages
-          };
-        }
-      );
-
-      // Invalidate to ensure all views are updated
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
+      // ✅ FIXED: Clear cache and trigger refetch for updates
+      console.log('🔄 [SIMPLE NOTES] Note updated, clearing cache and refetching');
+      queryClient.removeQueries({ queryKey: ['notes'], exact: false });
+      refetch();
       
       toast.success('Note updated successfully');
     },
@@ -403,8 +373,8 @@ export const useSimpleNotes = () => {
         }
       );
 
-      // Invalidate all notes queries
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
+      // ✅ Clear all notes queries
+      queryClient.removeQueries({ queryKey: ['notes'], exact: false });
 
       return { previousData };
     },
@@ -464,33 +434,41 @@ export const useSimpleNotes = () => {
   const currentPage = data?.pages?.length || 1;
   const setCurrentPage = useCallback(() => {}, []); // Deprecated for infinite scroll
 
-  // Enhanced setters with debugging
+  // ✅ FIXED: Enhanced setters with proper cache invalidation
   const updateSelectedSubject = useCallback((subject: string) => {
     console.log('🔄 [SIMPLE NOTES] Subject filter changing:', { from: selectedSubject, to: subject });
+    console.log('🔄 [SIMPLE NOTES] Previous query key:', getNotesQueryKey(currentFilters));
+    
     setSelectedSubject(subject);
     
-    // Immediately invalidate all queries to force refetch with new filter
-    queryClient.invalidateQueries({ queryKey: ['notes'] });
-    console.log('🔄 [SIMPLE NOTES] Invalidated queries due to subject change');
-  }, [selectedSubject, queryClient]);
+    // ✅ Remove ALL existing notes queries from cache immediately
+    queryClient.removeQueries({ queryKey: ['notes'], exact: false });
+    console.log('🗑️ [SIMPLE NOTES] Removed all notes queries from cache');
+    
+    // The new query will be triggered automatically by React Query when the queryKey changes
+  }, [selectedSubject, queryClient, currentFilters]);
 
   const updateSearchTerm = useCallback((term: string) => {
     console.log('🔍 [SIMPLE NOTES] Search term changing:', { from: searchTerm, to: term });
+    console.log('🔍 [SIMPLE NOTES] Previous query key:', getNotesQueryKey(currentFilters));
+    
     setSearchTerm(term);
     
-    // Invalidate queries when search changes
-    queryClient.invalidateQueries({ queryKey: ['notes'] });
-    console.log('🔍 [SIMPLE NOTES] Invalidated queries due to search change');
-  }, [searchTerm, queryClient]);
+    // ✅ Remove ALL existing notes queries from cache immediately  
+    queryClient.removeQueries({ queryKey: ['notes'], exact: false });
+    console.log('🗑️ [SIMPLE NOTES] Removed all notes queries from cache');
+  }, [searchTerm, queryClient, currentFilters]);
 
   const updateSortType = useCallback((sort: string) => {
     console.log('🔀 [SIMPLE NOTES] Sort changing:', { from: sortType, to: sort });
+    console.log('🔀 [SIMPLE NOTES] Previous query key:', getNotesQueryKey(currentFilters));
+    
     setSortType(sort);
     
-    // Invalidate queries when sort changes
-    queryClient.invalidateQueries({ queryKey: ['notes'] });
-    console.log('🔀 [SIMPLE NOTES] Invalidated queries due to sort change');
-  }, [sortType, queryClient]);
+    // ✅ Remove ALL existing notes queries from cache immediately
+    queryClient.removeQueries({ queryKey: ['notes'], exact: false });
+    console.log('🗑️ [SIMPLE NOTES] Removed all notes queries from cache');
+  }, [sortType, queryClient, currentFilters]);
 
   return {
     // Data

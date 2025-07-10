@@ -89,11 +89,13 @@ export const UniversalFilters: React.FC<UniversalFiltersProps> = memo(({
   }, [onSearchChange]);
 
   const handleSubjectChange = useCallback((value: string) => {
-    console.log('📚 [UNIVERSAL FILTERS] Subject changing from:', subject, 'to:', value);
-    console.log('📚 [UNIVERSAL FILTERS] Available subjects:', subjects.map(s => s.name));
-    console.log('📚 [UNIVERSAL FILTERS] onSubjectChange function:', typeof onSubjectChange);
+    console.log('🎯 [UNIVERSAL FILTERS] ===== SUBJECT CHANGE STARTED =====');
+    console.log('🎯 [UNIVERSAL FILTERS] Subject changing from:', subject, 'to:', value);
+    console.log('🎯 [UNIVERSAL FILTERS] Available subjects:', subjects.map(s => s.name));
+    console.log('🎯 [UNIVERSAL FILTERS] onSubjectChange function type:', typeof onSubjectChange);
+    console.log('🎯 [UNIVERSAL FILTERS] Calling onSubjectChange...');
     onSubjectChange(value);
-    console.log('📚 [UNIVERSAL FILTERS] Subject change handler called');
+    console.log('🎯 [UNIVERSAL FILTERS] ===== SUBJECT CHANGE COMPLETED =====');
   }, [onSubjectChange, subject, subjects]);
 
   const handleSortChange = useCallback((value: string) => {
