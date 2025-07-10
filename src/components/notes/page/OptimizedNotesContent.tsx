@@ -38,22 +38,6 @@ export const OptimizedNotesContent = ({ viewMode, onCreateNote, onImportNote }: 
     refetch
   } = useServerSideNotes();
 
-  console.log('🚀 [OPTIMIZED NOTES CONTENT] Component is rendering! Data:', {
-    notesLength: notes.length,
-    selectedSubject,
-    totalCount,
-    loading,
-    isInitialLoading,
-    notesSummary: notes.map(n => ({ title: n.title, subject: n.subject }))
-  });
-
-  console.log('🚀 [OPTIMIZED NOTES CONTENT] CRITICAL DEBUG - About to render NotesContentGrid with:', {
-    notesLength: notes.length,
-    notesData: notes,
-    isPassingNotes: notes.length > 0,
-    componentShouldRender: true,
-    renderTimestamp: Date.now()
-  });
 
   // Virtualization control with memoized threshold - no UI toggle needed
   const virtualizationThreshold = useMemo(() => 50, []);
@@ -75,13 +59,6 @@ export const OptimizedNotesContent = ({ viewMode, onCreateNote, onImportNote }: 
     [searchTerm, selectedSubject]
   );
 
-  console.log('🚀 Virtualization Status:', { 
-    shouldVirtualize, 
-    noteCount: notes.length, 
-    threshold: virtualizationThreshold,
-    isInitialLoading,
-    loading
-  });
 
   return (
     <div className="space-y-6">

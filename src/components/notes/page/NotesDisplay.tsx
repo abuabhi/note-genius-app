@@ -4,10 +4,7 @@ import { NotePagination } from "@/components/notes/NotePagination";
 import { Note } from "@/types/note";
 import { LoadingState } from "./LoadingState";
 import { ErrorState } from "./ErrorState";
-import { EmptyNotesState } from "@/components/notes/EmptyNotesState";
-import { EmptySubjectState } from "./EmptySubjectState";
-import { WelcomeOnboarding } from "./WelcomeOnboarding";
-import { useState, useEffect } from "react";
+import { NotesEmptyStateRenderer } from "@/components/notes/empty-state/NotesEmptyStateRenderer";
 
 interface NotesDisplayProps {
   notes: Note[];
@@ -32,20 +29,6 @@ export const NotesDisplay = ({
   error,
   onRetry
 }: NotesDisplayProps) => {
-  const [showWelcome, setShowWelcome] = useState(false);
-
-  // Show welcome onboarding for first-time users
-  useEffect(() => {
-    const hasSeenWelcome = localStorage.getItem('notes-welcome-seen');
-    if (!hasSeenWelcome && notes.length === 0 && !loading && !error) {
-      setShowWelcome(true);
-    }
-  }, [notes.length, loading, error]);
-
-  const handleDismissWelcome = () => {
-    setShowWelcome(false);
-    localStorage.setItem('notes-welcome-seen', 'true');
-  };
 
   // Show error state if there's an error
   if (error) {
@@ -74,51 +57,19 @@ export const NotesDisplay = ({
     );
   }
   
-  // Show welcome onboarding for new users
-  if (showWelcome && notes.length === 0) {
-    return (
-      <div className="space-y-8">
-        <WelcomeOnboarding 
-          onCreateNote={onCreateNote}
-          onImportNote={onImportNote}
-          onDismiss={handleDismissWelcome}
-        />
-        <EmptyNotesState 
-          onCreateNote={onCreateNote}
-          onImportNote={onImportNote}
-          isFiltered={isFiltered}
-        />
-      </div>
-    );
-  }
-  
-  // Show empty state based on context
+  // Show empty state using unified renderer
   if (notes.length === 0) {
-    if (activeSubject && activeSubject !== 'all') {
-      return (
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-mint-50/50 to-blue-50/30 rounded-xl blur-xl"></div>
-          <div className="relative bg-white/70 backdrop-blur-sm rounded-xl border border-mint-100/50 shadow-lg">
-            <EmptySubjectState 
-              subjectName={activeSubject}
-              onCreateNote={onCreateNote}
-            />
-          </div>
-        </div>
-      );
-    }
-    
     return (
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-mint-50/50 to-blue-50/30 rounded-xl blur-xl"></div>
-        <div className="relative bg-white/70 backdrop-blur-sm rounded-xl border border-mint-100/50 shadow-lg">
-          <EmptyNotesState 
-            onCreateNote={onCreateNote}
-            onImportNote={onImportNote}
-            isFiltered={isFiltered}
-          />
-        </div>
-      </div>
+      <NotesEmptyStateRenderer
+        notes={notes}
+        loading={loading}
+        error={error}
+        hasActiveFilters={isFiltered}
+        selectedSubject={activeSubject || 'all'}
+        onCreateNote={onCreateNote}
+        onImportNote={onImportNote}
+        onRetry={onRetry}
+      />
     );
   }
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Note } from '@/types/note';
-import { EmptyNotesState } from '@/components/notes/EmptyNotesState';
+import { NotesEmptyStateRenderer } from '@/components/notes/empty-state/NotesEmptyStateRenderer';
 import { OptimizedNotesGrid } from './page/components/OptimizedNotesGrid';
 
 interface NotesGridProps {
@@ -40,11 +40,14 @@ export const NotesGrid = ({
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
       {notes.length === 0 ? (
-        <EmptyNotesState 
-          onCreateNote={onCreateNote} 
+        <NotesEmptyStateRenderer
+          notes={notes}
+          loading={loading}
+          error={null}
+          hasActiveFilters={hasActiveFilters}
+          selectedSubject={selectedSubject || 'all'}
+          onCreateNote={onCreateNote}
           onImportNote={onImportNote}
-          isFiltered={hasActiveFilters}
-          selectedSubject={selectedSubject}
         />
       ) : (
         <OptimizedNotesGrid
