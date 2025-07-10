@@ -1,9 +1,9 @@
-import React, { memo } from 'react';
+import React from 'react';
 import { UniversalFilters } from '@/components/shared/UniversalFilters';
 import { useServerSideNotes } from '@/hooks/useServerSideFilter';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
 
-export const SimplifiedNotesFilters = memo(() => {
+export const SimplifiedNotesFilters = () => {
   console.log('🎯 [SIMPLIFIED NOTES FILTERS] Component rendering');
   
   const { 
@@ -75,6 +75,4 @@ export const SimplifiedNotesFilters = memo(() => {
       />
     </div>
   );
-});
-
-SimplifiedNotesFilters.displayName = 'SimplifiedNotesFilters';
+};

@@ -1,5 +1,5 @@
 
-import React, { memo, useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Note } from '@/types/note';
 import { ViewMode } from '@/hooks/useViewPreferences';
 import { NoteCard } from '@/components/notes/card/NoteCard';
@@ -18,7 +18,7 @@ interface OptimizedNotesGridProps {
   debugMode?: boolean;
 }
 
-export const OptimizedNotesGrid = memo(({
+export const OptimizedNotesGrid = ({
   notes,
   viewMode,
   onUpdateNote,
@@ -168,6 +168,4 @@ export const OptimizedNotesGrid = memo(({
       )}
     </div>
   );
-});
-
-OptimizedNotesGrid.displayName = 'OptimizedNotesGrid';
+};
