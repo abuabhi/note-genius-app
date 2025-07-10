@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
@@ -97,27 +97,40 @@ export const useServerSideFilter = (entityType: EntityType) => {
   // Debounce search to avoid excessive API calls
   const debouncedSearch = useDebounce(searchTerm, 300);
 
-  // Create filter params
-  const filterParams: FilterParams = {
+  // Create filter params using useMemo to ensure stable reference and proper React Query reactivity
+  const filterParams = useMemo((): FilterParams => ({
     search: debouncedSearch,
     subject: selectedSubject,
     sort: sortType,
     showArchived,
     page: currentPage,
     pageSize: 20
-  };
+  }), [debouncedSearch, selectedSubject, sortType, showArchived, currentPage]);
 
-  // Generate query key
-  const queryKey = getServerFilterQueryKey(entityType, filterParams);
+  // Generate query key using useMemo to ensure it updates when filterParams change
+  const queryKey = useMemo(() => {
+    const key = getServerFilterQueryKey(entityType, filterParams);
+    console.log('🔑 [QUERY KEY] Generated new key:', key);
+    return key;
+  }, [entityType, filterParams]);
 
   // Main query using React Query
   const query = useQuery({
     queryKey,
     queryFn: () => callServerFilter(entityType, filterParams),
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 0, // Force immediate refetch when query key changes
     gcTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
   });
+
+  // Invalidate queries when filter params change to ensure immediate refetch
+  useEffect(() => {
+    console.log('🔄 [FILTER CHANGE] Filter params changed, invalidating cache:', filterParams);
+    queryClient.invalidateQueries({ 
+      queryKey: ['server-filter', entityType],
+      exact: false 
+    });
+  }, [filterParams, queryClient, entityType]);
 
   // Reset page when filters change
   const resetPage = useCallback(() => {
