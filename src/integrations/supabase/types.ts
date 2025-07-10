@@ -3823,6 +3823,40 @@ export type Database = {
         Args: { announcement_uuid: string }
         Returns: boolean
       }
+      filter_user_flashcard_sets: {
+        Args: {
+          p_user_id: string
+          p_search_term?: string
+          p_subject_name?: string
+          p_sort_by?: string
+          p_page_num?: number
+          p_page_size?: number
+        }
+        Returns: Json
+      }
+      filter_user_notes: {
+        Args: {
+          p_user_id: string
+          p_search_term?: string
+          p_subject_name?: string
+          p_show_archived?: boolean
+          p_sort_by?: string
+          p_page_num?: number
+          p_page_size?: number
+        }
+        Returns: Json
+      }
+      filter_user_quizzes: {
+        Args: {
+          p_user_id: string
+          p_search_term?: string
+          p_subject_name?: string
+          p_sort_by?: string
+          p_page_num?: number
+          p_page_size?: number
+        }
+        Returns: Json
+      }
       force_delete_note: {
         Args: { note_id: string }
         Returns: boolean

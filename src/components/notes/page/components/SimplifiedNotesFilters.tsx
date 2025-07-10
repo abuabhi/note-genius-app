@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { UniversalFilters } from '@/components/shared/UniversalFilters';
-import { useSimpleNotes } from '@/hooks/useSimpleNotes';
+import { useServerSideNotes } from '@/hooks/useServerSideFilter';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
 
 export const SimplifiedNotesFilters = memo(() => {
@@ -18,7 +18,7 @@ export const SimplifiedNotesFilters = memo(() => {
     clearFilters,
     loading,
     totalCount
-  } = useSimpleNotes();
+  } = useServerSideNotes();
 
   console.log('🎯 [SIMPLIFIED NOTES FILTERS] Current state:', {
     searchTerm,

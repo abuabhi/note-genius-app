@@ -5,8 +5,8 @@ import { EmptyNotesState } from '@/components/notes/EmptyNotesState';
 import { useVirtualizationMetrics } from '@/hooks/notes/useVirtualizationMetrics';
 import { Note } from '@/types/note';
 
-// Use the simple notes hook instead of complex contexts
-import { useSimpleNotes } from '@/hooks/useSimpleNotes';
+// Use the server-side notes hook for optimized filtering
+import { useServerSideNotes } from '@/hooks/useServerSideFilter';
 
 // New smaller components
 import { NotesErrorHandler } from './components/NotesErrorHandler';
@@ -22,7 +22,7 @@ interface OptimizedNotesContentProps {
 }
 
 export const OptimizedNotesContent = React.memo(({ viewMode, onCreateNote, onImportNote }: OptimizedNotesContentProps) => {
-  // Use the simple notes hook for clean, direct data access
+  // Use the server-side notes hook for optimized filtering
   const {
     notes,
     totalCount,
@@ -36,7 +36,7 @@ export const OptimizedNotesContent = React.memo(({ viewMode, onCreateNote, onImp
     deleteNote,
     error,
     refetch
-  } = useSimpleNotes();
+  } = useServerSideNotes();
 
   // Virtualization control with memoized threshold - no UI toggle needed
   const virtualizationThreshold = useMemo(() => 50, []);
