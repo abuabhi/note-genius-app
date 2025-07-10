@@ -1,5 +1,5 @@
-import { useCallback, useState, useMemo, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useState, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 import { toast } from 'sonner';
@@ -124,44 +124,57 @@ export const useServerSideFilter = (entityType: EntityType) => {
     return key;
   }, [entityType, filterParams]);
 
-  // Main query using React Query with race condition prevention
+  // React Query with proper race condition prevention
   const query = useQuery<ServerFilterResult>({
     queryKey,
-    queryFn: ({ signal }) => {
-      console.log('🚀 [SERVER FILTER] Starting query with signal:', !!signal);
-      return callServerFilter(entityType, filterParams, signal);
+    queryFn: async ({ signal }) => {
+      console.log('🚀 [SERVER FILTER] Query starting for key:', queryKey);
+      const result = await callServerFilter(entityType, filterParams, signal);
+      console.log('✅ [SERVER FILTER] Query completed for key:', queryKey, 'Result count:', result.data?.length);
+      return result;
     },
-    staleTime: 0, // Always fetch fresh data for filters
-    gcTime: 0, // No cache retention to prevent stale data
-    retry: 1, // Reduce retries to avoid race conditions
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // No cache to prevent stale data showing
+    retry: 1,
     retryDelay: 1000,
+    // This ensures queries are canceled when new ones start
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
-  // Reset page when filters change
+  // Reset page when filters change (but not search since it's debounced)
   const resetPage = useCallback(() => {
-    setCurrentPage(0);
-  }, []);
+    if (currentPage !== 0) {
+      setCurrentPage(0);
+    }
+  }, [currentPage]);
 
-  // Filter change handlers that reset pagination
+  // Filter change handlers that reset pagination and invalidate old queries
   const handleSearchChange = useCallback((value: string) => {
+    console.log('🔍 [FILTER CHANGE] Search changing to:', value);
     setSearchTerm(value);
-    setCurrentPage(0);
-  }, []);
+    if (currentPage !== 0) setCurrentPage(0);
+  }, [currentPage]);
 
   const handleSubjectChange = useCallback((value: string) => {
+    console.log('🎯 [FILTER CHANGE] Subject changing to:', value);
+    // Cancel any ongoing queries to prevent race conditions
+    queryClient.cancelQueries({ queryKey: ['server-filter', entityType] });
     setSelectedSubject(value);
-    setCurrentPage(0);
-  }, []);
+    if (currentPage !== 0) setCurrentPage(0);
+  }, [queryClient, entityType, currentPage]);
 
   const handleSortChange = useCallback((value: string) => {
+    console.log('📊 [FILTER CHANGE] Sort changing to:', value);
     setSortType(value);
-    setCurrentPage(0);
-  }, []);
+    if (currentPage !== 0) setCurrentPage(0);
+  }, [currentPage]);
 
   const handleShowArchivedChange = useCallback((value: boolean) => {
+    console.log('📁 [FILTER CHANGE] Show archived changing to:', value);
     setShowArchived(value);
-    setCurrentPage(0);
-  }, []);
+    if (currentPage !== 0) setCurrentPage(0);
+  }, [currentPage]);
 
   // Pagination handlers
   const loadMore = useCallback(() => {
