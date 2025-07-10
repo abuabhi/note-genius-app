@@ -1,18 +1,16 @@
 
 import { Button } from "@/components/ui/button";
-import { FileText, Plus, Scan, Upload, Sparkles } from "lucide-react";
+import { FileText, Plus, Import, Sparkles } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 
 interface EmptyNotesStateProps {
   onCreateNote?: () => void;
-  onScanNote?: () => void;
   onImportNote?: () => void;
   isFiltered?: boolean;
 }
 
 export const EmptyNotesState = ({ 
   onCreateNote, 
-  onScanNote, 
   onImportNote,
   isFiltered = false 
 }: EmptyNotesStateProps) => {
@@ -64,19 +62,11 @@ export const EmptyNotesState = ({
             </Button>
             <Button 
               variant="outline" 
-              onClick={onScanNote}
-              className="border-mint-200 text-mint-700 hover:bg-mint-50 hover:border-mint-300 transition-all duration-200 px-6 py-3 rounded-xl"
-            >
-              <Scan className="h-4 w-4 mr-2" />
-              Scan Document
-            </Button>
-            <Button 
-              variant="outline" 
               onClick={onImportNote}
               className="border-mint-200 text-mint-700 hover:bg-mint-50 hover:border-mint-300 transition-all duration-200 px-6 py-3 rounded-xl"
             >
-              <Upload className="h-4 w-4 mr-2" />
-              Import File
+              <Import className="h-4 w-4 mr-2" />
+              Import
             </Button>
           </div>
         }

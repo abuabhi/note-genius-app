@@ -30,7 +30,11 @@ export const NotesContentGrid = memo(({
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/20 shadow-lg shadow-mint-500/5 p-6">
       {notes.length === 0 ? (
-        <EmptyNotesState onCreateNote={() => {}} isFiltered={false} />
+        <EmptyNotesState 
+          onCreateNote={() => {}} 
+          onImportNote={() => {}}
+          isFiltered={false} 
+        />
       ) : (
         <OptimizedNotesGrid
           notes={notes}

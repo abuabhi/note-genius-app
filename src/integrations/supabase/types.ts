@@ -3942,7 +3942,7 @@ export type Database = {
         | "Grade 12"
         | "Undergraduate"
         | "Graduate"
-        | "PhD"
+        | "Post Graduate"
       user_tier: "SCHOLAR" | "GRADUATE" | "MASTER" | "DEAN"
     }
     CompositeTypes: {
@@ -4082,7 +4082,7 @@ export const Constants = {
         "Grade 12",
         "Undergraduate",
         "Graduate",
-        "PhD",
+        "Post Graduate",
       ],
       user_tier: ["SCHOLAR", "GRADUATE", "MASTER", "DEAN"],
     },

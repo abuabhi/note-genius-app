@@ -16,7 +16,6 @@ interface NotesDisplayProps {
   isFiltered?: boolean;
   activeSubject?: string;
   onCreateNote?: () => void;
-  onScanNote?: () => void;
   onImportNote?: () => void;
   error?: string | null;
   onRetry?: () => void;
@@ -29,7 +28,6 @@ export const NotesDisplay = ({
   isFiltered = false,
   activeSubject,
   onCreateNote,
-  onScanNote,
   onImportNote,
   error,
   onRetry
@@ -82,13 +80,11 @@ export const NotesDisplay = ({
       <div className="space-y-8">
         <WelcomeOnboarding 
           onCreateNote={onCreateNote}
-          onScanNote={onScanNote}
           onImportNote={onImportNote}
           onDismiss={handleDismissWelcome}
         />
         <EmptyNotesState 
           onCreateNote={onCreateNote}
-          onScanNote={onScanNote}
           onImportNote={onImportNote}
           isFiltered={isFiltered}
         />
@@ -118,7 +114,6 @@ export const NotesDisplay = ({
         <div className="relative bg-white/70 backdrop-blur-sm rounded-xl border border-mint-100/50 shadow-lg">
           <EmptyNotesState 
             onCreateNote={onCreateNote}
-            onScanNote={onScanNote}
             onImportNote={onImportNote}
             isFiltered={isFiltered}
           />
