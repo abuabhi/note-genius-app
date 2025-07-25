@@ -70,12 +70,13 @@ export const EmptyStateProvider = ({
     setHasSeenWelcome(seen);
     
     // Show welcome if user hasn't seen it and conditions are met
-    if (!seen && notes.length === 0 && !loading && !error) {
+    // Only show welcome when there are no active filters and viewing all subjects
+    if (!seen && notes.length === 0 && !loading && !error && !hasActiveFilters && selectedSubject === 'all') {
       setShowWelcome(true);
     } else {
       setShowWelcome(false);
     }
-  }, [notes.length, loading, error]);
+  }, [notes.length, loading, error, hasActiveFilters, selectedSubject]);
 
   const dismissWelcome = () => {
     setShowWelcome(false);
