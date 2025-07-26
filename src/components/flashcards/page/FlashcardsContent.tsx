@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useFlashcards } from '@/contexts/FlashcardContext';
 import FlashcardSetGrid from '@/components/flashcards/components/FlashcardSetGrid';
 import { LoadingState } from '@/components/notes/page/LoadingState';
@@ -17,11 +17,28 @@ export const FlashcardsContent = () => {
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
   const { 
     flashcardSets, 
-    loading
+    loading,
+    deleteFlashcardSet,
+    fetchFlashcardSets
   } = useFlashcards();
+  
+  const [deletingSet, setDeletingSet] = useState<string | null>(null);
 
   const handleFiltersChange = (newFilters: typeof filters) => {
     setFilters(newFilters);
+  };
+
+  const handleDeleteSet = async (setId: string) => {
+    setDeletingSet(setId);
+    try {
+      await deleteFlashcardSet(setId);
+      console.log('Set deleted successfully, refreshing list...');
+      await fetchFlashcardSets();
+    } catch (error) {
+      console.error("Error deleting flashcard set:", error);
+    } finally {
+      setDeletingSet(null);
+    }
   };
 
   const hasActiveFilters = Boolean(
@@ -94,8 +111,8 @@ export const FlashcardsContent = () => {
       <FlashcardSetGrid
         sets={flashcardSets}
         setProgressData={{}}
-        deletingSet={null}
-        onDeleteSet={() => {}}
+        deletingSet={deletingSet}
+        onDeleteSet={handleDeleteSet}
         hasInitiallyLoaded={true}
         searchQuery={filters.search || ""}
         subjectFilter={filters.subject !== 'all' ? filters.subject : undefined}
