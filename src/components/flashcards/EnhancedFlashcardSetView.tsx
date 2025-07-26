@@ -330,11 +330,6 @@ const EnhancedFlashcardSetView = () => {
       
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/flashcards")}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Sets
-        </Button>
-        
         <div className="flex-1">
           <h1 className="text-3xl font-bold text-mint-900">
             {currentSet?.name || "Flashcard Set"}
@@ -345,7 +340,11 @@ const EnhancedFlashcardSetView = () => {
         </div>
 
         <div className="flex gap-2">
-          <Button asChild>
+          <Button 
+            asChild 
+            disabled={setStats.totalCards === 0}
+            className={setStats.totalCards === 0 ? "opacity-50 cursor-not-allowed" : ""}
+          >
             <Link to={`/flashcards/study/${setId}`}>
               <Play className="h-4 w-4 mr-2" />
               Study Flashcards
