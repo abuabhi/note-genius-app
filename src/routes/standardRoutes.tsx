@@ -6,6 +6,7 @@ import SidebarLayout from '@/components/layout/SidebarLayout';
 // Lazy load components for better performance
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
+const FlashcardSetPage = lazy(() => import('@/pages/FlashcardSetPage'));
 const CreateFlashcardSetPage = lazy(() => import('@/pages/CreateFlashcardSetPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
 const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
@@ -40,6 +41,10 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/flashcards/create',
     element: <SidebarLayout><CreateFlashcardSetPage /></SidebarLayout>
+  },
+  {
+    path: '/flashcards/:id',
+    element: <SidebarLayout><FlashcardSetPage /></SidebarLayout>
   },
   {
     path: '/flashcards/*',
