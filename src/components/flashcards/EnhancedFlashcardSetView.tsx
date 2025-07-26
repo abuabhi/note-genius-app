@@ -352,7 +352,7 @@ const EnhancedFlashcardSetView = () => {
           </Button>
           
           <Button variant="outline" asChild>
-            <Link to={`/flashcards/create?setId=${setId}`}>
+            <Link to={`/flashcards/${setId}/create`}>
               <Plus className="h-4 w-4 mr-2" />
               Add Card
             </Link>
@@ -481,7 +481,7 @@ const EnhancedFlashcardSetView = () => {
             <h3 className="text-xl font-semibold text-mint-900 mb-2">No flashcards yet</h3>
             <p className="text-mint-700 mb-6">Add your first flashcard to start studying!</p>
             <Button asChild>
-              <Link to={`/flashcards/create?setId=${setId}`}>
+              <Link to={`/flashcards/${setId}/create`}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create First Card
               </Link>
