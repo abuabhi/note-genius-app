@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '@/components/layout/Layout';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import CreateFlashcardSet from '@/components/flashcards/CreateFlashcardSet';
 import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
@@ -23,24 +22,22 @@ const CreateFlashcardSetPage = () => {
   ];
 
   return (
-    <Layout>
-      <FlashcardProvider>
-        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-          <StandardPageHeader
-            title="Create Your First Flashcard Set"
-            description="Start building your study collection! Create organized flashcard sets to help you master any subject."
-            icon={<BookOpen className="h-6 w-6 text-white" />}
-            breadcrumbs={breadcrumbs}
-          />
-          
-          <div className="container mx-auto p-6">
-            <div className="max-w-2xl mx-auto">
-              <CreateFlashcardSet onSuccess={handleSuccess} />
-            </div>
+    <FlashcardProvider>
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <StandardPageHeader
+          title="Create Your First Flashcard Set"
+          description="Start building your study collection! Create organized flashcard sets to help you master any subject."
+          icon={<BookOpen className="h-6 w-6 text-white" />}
+          breadcrumbs={breadcrumbs}
+        />
+        
+        <div className="container mx-auto p-6">
+          <div className="max-w-2xl mx-auto">
+            <CreateFlashcardSet onSuccess={handleSuccess} />
           </div>
         </div>
-      </FlashcardProvider>
-    </Layout>
+      </div>
+    </FlashcardProvider>
   );
 };
 
