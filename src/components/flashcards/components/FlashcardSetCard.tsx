@@ -135,17 +135,38 @@ const FlashcardSetCard = ({
       </CardContent>
 
       <CardFooter className="pt-0 flex gap-2">
-        {/* Primary Study Button - Fixed the route to correct study path */}
-        <Button 
-          asChild 
-          className="flex-1 bg-gradient-to-r from-mint-500 to-blue-500 hover:from-mint-600 hover:to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-          onClick={handleStudyClick}
-        >
-          <Link to={`/flashcards/study/${set.id}`}>
-            <Play className="h-4 w-4 mr-2" />
-            Study Now
-          </Link>
-        </Button>
+        {/* Primary Action - Study or Manage based on card count */}
+        {cardCount > 0 ? (
+          <Button 
+            asChild 
+            className="flex-1 bg-gradient-to-r from-mint-500 to-blue-500 hover:from-mint-600 hover:to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+            onClick={handleStudyClick}
+          >
+            <Link to={`/flashcards/study/${set.id}`}>
+              <Play className="h-4 w-4 mr-2" />
+              Study Now
+            </Link>
+          </Button>
+        ) : (
+          <Button 
+            asChild 
+            className="flex-1 bg-gradient-to-r from-mint-500 to-blue-500 hover:from-mint-600 hover:to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            <Link to={`/flashcards/${set.id}`}>
+              <BookOpen className="h-4 w-4 mr-2" />
+              Manage Cards
+            </Link>
+          </Button>
+        )}
+
+        {/* Secondary Action - View/Manage for sets with cards */}
+        {cardCount > 0 && (
+          <Button variant="outline" size="sm" asChild>
+            <Link to={`/flashcards/${set.id}`}>
+              <BookOpen className="h-4 w-4" />
+            </Link>
+          </Button>
+        )}
 
         {/* Delete Button */}
         <AlertDialog>
