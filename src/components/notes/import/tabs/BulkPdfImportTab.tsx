@@ -1,10 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Trash2, Upload, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { FileText, Trash2, Upload, CheckCircle, AlertCircle, Loader2, Clock, X, RotateCcw } from 'lucide-react';
 import { SubjectSelector } from '../components/SubjectSelector';
 import { processSelectedDocument } from '../importUtils';
+import { useRequestDebounce } from '@/hooks/performance/useRequestDebounce';
+import { useBackgroundProcessor } from '@/hooks/performance/useBackgroundProcessor';
+import { toast } from '@/hooks/use-toast';
 
 interface BulkPdfImportTabProps {
   onSaveNote: (note: any) => Promise<boolean>;
@@ -12,14 +16,29 @@ interface BulkPdfImportTabProps {
 
 interface FileStatus {
   file: File;
-  status: 'pending' | 'processing' | 'success' | 'error';
+  status: 'pending' | 'processing' | 'success' | 'error' | 'warning' | 'timeout' | 'cancelled';
   subject: string;
   error?: string;
+  startTime?: number;
+  elapsedTime?: number;
+  progress?: number;
+  abortController?: AbortController;
+  retryCount?: number;
 }
 
 export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
   const [fileStatuses, setFileStatuses] = useState<FileStatus[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingCount, setProcessingCount] = useState(0);
+  const [concurrentProcessing, setConcurrentProcessing] = useState(2);
+  const timerRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
+  
+  const { debouncedCallback: debouncedProcessFile } = useRequestDebounce(processSelectedDocument, 1000);
+  const { addJob, registerWorker } = useBackgroundProcessor();
+
+  const TIMEOUT_WARNING = 60000; // 1 minute
+  const TIMEOUT_LIMIT = 180000; // 3 minutes
+  const MAX_RETRIES = 2;
 
   const handleFilesSelected = (files: FileList | null) => {
     if (files) {
@@ -37,10 +56,78 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
     setFileStatuses(prev => prev.filter((_, i) => i !== index));
   };
 
-  const updateFileStatus = (index: number, status: FileStatus['status'], error?: string) => {
+  const updateFileStatus = useCallback((index: number, status: FileStatus['status'], error?: string, additional?: Partial<FileStatus>) => {
     setFileStatuses(prev => prev.map((item, i) => 
-      i === index ? { ...item, status, error } : item
+      i === index ? { 
+        ...item, 
+        status, 
+        error,
+        elapsedTime: item.startTime ? Date.now() - item.startTime : 0,
+        ...additional 
+      } : item
     ));
+  }, []);
+
+  const startTimer = (index: number) => {
+    const startTime = Date.now();
+    updateFileStatus(index, 'processing', undefined, { startTime, abortController: new AbortController() });
+    
+    // Warning timer
+    const warningTimer = setTimeout(() => {
+      updateFileStatus(index, 'warning', 'Taking longer than expected...');
+      toast({
+        title: "Processing taking longer than expected",
+        description: `File "${fileStatuses[index]?.file.name}" is still processing...`,
+        variant: "default"
+      });
+    }, TIMEOUT_WARNING);
+    
+    // Timeout timer
+    const timeoutTimer = setTimeout(() => {
+      const controller = fileStatuses[index]?.abortController;
+      if (controller) {
+        controller.abort();
+      }
+      updateFileStatus(index, 'timeout', 'Processing timed out after 3 minutes');
+      clearTimer(index);
+      setProcessingCount(prev => prev - 1);
+    }, TIMEOUT_LIMIT);
+    
+    timerRef.current.set(index, warningTimer);
+    timerRef.current.set(index + 10000, timeoutTimer); // Offset to avoid collision
+  };
+
+  const clearTimer = (index: number) => {
+    const warningTimer = timerRef.current.get(index);
+    const timeoutTimer = timerRef.current.get(index + 10000);
+    if (warningTimer) clearTimeout(warningTimer);
+    if (timeoutTimer) clearTimeout(timeoutTimer);
+    timerRef.current.delete(index);
+    timerRef.current.delete(index + 10000);
+  };
+
+  const cancelFile = (index: number) => {
+    const fileStatus = fileStatuses[index];
+    if (fileStatus?.abortController) {
+      fileStatus.abortController.abort();
+    }
+    updateFileStatus(index, 'cancelled', 'Processing cancelled by user');
+    clearTimer(index);
+    setProcessingCount(prev => prev - 1);
+  };
+
+  const retryFile = async (index: number) => {
+    const fileStatus = fileStatuses[index];
+    if (!fileStatus || (fileStatus.retryCount || 0) >= MAX_RETRIES) {
+      toast({
+        title: "Maximum retries reached",
+        description: "This file has reached the maximum number of retry attempts.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    await processFile(index, (fileStatus.retryCount || 0) + 1);
   };
 
   const updateFileSubject = (index: number, subject: string) => {
@@ -49,16 +136,45 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
     ));
   };
 
-  const processFiles = async () => {
-    setIsProcessing(true);
+  const processFile = async (index: number, retryCount = 0) => {
+    const fileStatus = fileStatuses[index];
+    if (!fileStatus) return;
+
+    startTimer(index);
+    setProcessingCount(prev => prev + 1);
     
     try {
-      for (let i = 0; i < fileStatuses.length; i++) {
-        const fileStatus = fileStatuses[i];
-        updateFileStatus(i, 'processing');
-        
+      const controller = new AbortController();
+      updateFileStatus(index, 'processing', undefined, { 
+        retryCount,
+        abortController: controller,
+        progress: 0 
+      });
+
+      // Create timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Processing timeout')), TIMEOUT_LIMIT);
+      });
+
+      // Create processing promise with progress simulation
+      const processingPromise = (async () => {
+        // Simulate progress updates
+        const progressInterval = setInterval(() => {
+          setFileStatuses(prev => prev.map((item, i) => 
+            i === index && item.status === 'processing' 
+              ? { ...item, progress: Math.min((item.progress || 0) + Math.random() * 15, 85) }
+              : item
+          ));
+        }, 2000);
+
         try {
-          const result = await processSelectedDocument(fileStatus.file, fileStatus.file.name.split('.').pop()?.toLowerCase() || 'pdf');
+          const result = await processSelectedDocument(
+            fileStatus.file, 
+            fileStatus.file.name.split('.').pop()?.toLowerCase() || 'pdf'
+          );
+          
+          clearInterval(progressInterval);
+          updateFileStatus(index, 'processing', undefined, { progress: 100 });
           
           const note = {
             title: result.title || fileStatus.file.name.replace('.pdf', ''),
@@ -69,33 +185,133 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
             sourceType: "import"
           };
           
-          await onSaveNote(note);
-          updateFileStatus(i, 'success');
+          const success = await onSaveNote(note);
+          if (success) {
+            updateFileStatus(index, 'success');
+            clearTimer(index);
+          } else {
+            throw new Error('Failed to save note');
+          }
         } catch (error) {
-          console.error(`Error processing PDF ${fileStatus.file.name}:`, error);
-          updateFileStatus(i, 'error', error instanceof Error ? error.message : 'Unknown error');
+          clearInterval(progressInterval);
+          throw error;
         }
+      })();
+
+      // Race between processing and timeout
+      await Promise.race([processingPromise, timeoutPromise]);
+    } catch (error) {
+      console.error(`Error processing PDF ${fileStatus.file.name}:`, error);
+      
+      if (error instanceof Error) {
+        if (error.message === 'Processing timeout') {
+          updateFileStatus(index, 'timeout', 'Processing timed out after 3 minutes');
+        } else if (error.name === 'AbortError') {
+          updateFileStatus(index, 'cancelled', 'Processing was cancelled');
+        } else {
+          const errorMessage = error.message || 'Unknown error occurred';
+          updateFileStatus(index, 'error', errorMessage);
+        }
+      } else {
+        updateFileStatus(index, 'error', 'Unknown error occurred');
       }
       
-      // Clear successfully processed files
-      setFileStatuses(prev => prev.filter(item => item.status === 'error'));
+      clearTimer(index);
+    } finally {
+      setProcessingCount(prev => prev - 1);
+    }
+  };
+
+  const processFiles = async () => {
+    setIsProcessing(true);
+    
+    try {
+      const pendingFiles = fileStatuses
+        .map((_, index) => index)
+        .filter(index => ['pending', 'error', 'timeout', 'cancelled'].includes(fileStatuses[index].status));
+      
+      // Process files in batches based on concurrent processing limit
+      const processBatch = async (batch: number[]) => {
+        await Promise.allSettled(batch.map(index => processFile(index)));
+      };
+      
+      // Split into batches
+      for (let i = 0; i < pendingFiles.length; i += concurrentProcessing) {
+        const batch = pendingFiles.slice(i, i + concurrentProcessing);
+        await processBatch(batch);
+      }
+      
+      // Show completion summary
+      const completed = fileStatuses.filter(f => f.status === 'success').length;
+      const failed = fileStatuses.filter(f => ['error', 'timeout', 'cancelled'].includes(f.status)).length;
+      
+      toast({
+        title: "Bulk processing completed",
+        description: `${completed} files processed successfully, ${failed} failed.`,
+        variant: completed > 0 ? "default" : "destructive"
+      });
+      
     } catch (error) {
       console.error("Error processing PDFs:", error);
+      toast({
+        title: "Processing failed",
+        description: "An error occurred during bulk processing.",
+        variant: "destructive"
+      });
     } finally {
       setIsProcessing(false);
+      setProcessingCount(0);
     }
+  };
+
+  const clearSuccessfulFiles = () => {
+    setFileStatuses(prev => prev.filter(item => item.status !== 'success'));
   };
 
   const getStatusIcon = (status: FileStatus['status']) => {
     switch (status) {
       case 'processing':
-        return <Loader2 className="h-3 w-3 text-blue-500 animate-spin" />;
+        return <Loader2 className="h-3 w-3 text-primary animate-spin" />;
+      case 'warning':
+        return <Clock className="h-3 w-3 text-warning animate-pulse" />;
       case 'success':
-        return <CheckCircle className="h-3 w-3 text-green-500" />;
+        return <CheckCircle className="h-3 w-3 text-success" />;
       case 'error':
-        return <AlertCircle className="h-3 w-3 text-red-500" />;
+        return <AlertCircle className="h-3 w-3 text-destructive" />;
+      case 'timeout':
+        return <Clock className="h-3 w-3 text-destructive" />;
+      case 'cancelled':
+        return <X className="h-3 w-3 text-muted-foreground" />;
       default:
-        return <div className="h-3 w-3 rounded-full bg-gray-300" />;
+        return <div className="h-3 w-3 rounded-full bg-muted" />;
+    }
+  };
+
+  const getStatusText = (fileStatus: FileStatus) => {
+    const elapsed = fileStatus.elapsedTime ? Math.floor(fileStatus.elapsedTime / 1000) : 0;
+    
+    switch (fileStatus.status) {
+      case 'processing':
+        return (
+          <div className="text-xs space-y-1">
+            <div className="text-primary font-medium">Processing ({elapsed}s)</div>
+            {fileStatus.progress !== undefined && (
+              <Progress value={fileStatus.progress} className="h-1" />
+            )}
+          </div>
+        );
+      case 'warning':
+        return <span className="text-xs text-warning font-medium">Slow ({elapsed}s)</span>;
+      case 'success':
+        return <span className="text-xs text-success font-medium">Completed</span>;
+      case 'timeout':
+        return <span className="text-xs text-destructive font-medium">Timeout</span>;
+      case 'cancelled':
+        return <span className="text-xs text-muted-foreground font-medium">Cancelled</span>;
+      case 'error':
+        return <span className="text-xs text-destructive font-medium">Failed</span>;
+      default:
+        return <span className="text-xs text-muted-foreground">Ready</span>;
     }
   };
 
@@ -133,23 +349,33 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
       ) : (
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-mint-50 to-mint-100 rounded-lg border border-mint-200">
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border border-primary/20">
             <div>
-              <h3 className="text-lg font-semibold text-mint-800">
+              <h3 className="text-lg font-semibold text-primary">
                 Selected Files ({fileStatuses.length})
               </h3>
-              <p className="text-sm text-mint-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Configure subjects for each PDF before processing
+                {processingCount > 0 && ` • Processing ${processingCount} files`}
               </p>
             </div>
-            <Button
-              onClick={() => setFileStatuses([])}
-              variant="outline"
-              size="sm"
-              className="border-mint-300 text-mint-700 hover:bg-mint-50"
-            >
-              Clear All
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={clearSuccessfulFiles}
+                variant="outline"
+                size="sm"
+                disabled={!fileStatuses.some(f => f.status === 'success')}
+              >
+                Clear Completed
+              </Button>
+              <Button
+                onClick={() => setFileStatuses([])}
+                variant="outline"
+                size="sm"
+              >
+                Clear All
+              </Button>
+            </div>
           </div>
           
           <div className="space-y-1">
@@ -188,56 +414,92 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
                   </div>
                 </div>
 
-                {/* Status Text */}
-                <div className="w-20 text-right">
-                  {fileStatus.status === 'processing' && (
-                    <span className="text-xs text-blue-600 font-medium">Processing</span>
-                  )}
-                  {fileStatus.status === 'success' && (
-                    <span className="text-xs text-green-600 font-medium">Completed</span>
-                  )}
-                  {fileStatus.status === 'pending' && (
-                    <span className="text-xs text-muted-foreground">Ready</span>
-                  )}
-                  {fileStatus.status === 'error' && (
-                    <span className="text-xs text-destructive font-medium">Failed</span>
-                  )}
+                {/* Status Text & Actions */}
+                <div className="w-32 text-right space-y-1">
+                  {getStatusText(fileStatus)}
                 </div>
 
-                {/* Remove Button */}
-                <Button
-                  onClick={() => removeFile(index)}
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive text-muted-foreground flex-shrink-0"
-                  disabled={fileStatus.status === 'processing'}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                {/* Action Buttons */}
+                <div className="flex gap-1 flex-shrink-0">
+                  {fileStatus.status === 'processing' && (
+                    <Button
+                      onClick={() => cancelFile(index)}
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                  
+                  {(['error', 'timeout', 'cancelled'].includes(fileStatus.status)) && (
+                    <Button
+                      onClick={() => retryFile(index)}
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 hover:bg-primary/10 hover:text-primary text-muted-foreground"
+                      disabled={(fileStatus.retryCount || 0) >= MAX_RETRIES}
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                    </Button>
+                  )}
+                  
+                  <Button
+                    onClick={() => removeFile(index)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
+                    disabled={fileStatus.status === 'processing'}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
           
-          {/* Process Button */}
-          <div className="flex justify-center pt-4">
-            <Button
-              onClick={processFiles}
-              disabled={isProcessing || fileStatuses.some(f => !f.subject.trim())}
-              className="w-full max-w-md bg-mint-500 hover:bg-mint-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-              size="lg"
-            >
-              {isProcessing ? (
-                <div className="flex items-center gap-3">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Processing {fileStatuses.filter(f => f.status === 'processing').length} of {fileStatuses.length} PDFs...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Process {fileStatuses.length} PDF{fileStatuses.length > 1 ? 's' : ''}
-                </div>
-              )}
-            </Button>
+          {/* Process Controls */}
+          <div className="space-y-4 pt-4">
+            {/* Concurrent Processing Setting */}
+            <div className="flex items-center justify-center gap-4 p-3 bg-muted/30 rounded-lg">
+              <span className="text-sm text-muted-foreground">Concurrent processing:</span>
+              <div className="flex gap-1">
+                {[1, 2, 3].map(num => (
+                  <Button
+                    key={num}
+                    onClick={() => setConcurrentProcessing(num)}
+                    variant={concurrentProcessing === num ? "default" : "outline"}
+                    size="sm"
+                    className="w-8 h-8 p-0"
+                    disabled={isProcessing}
+                  >
+                    {num}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Process Button */}
+            <div className="flex justify-center">
+              <Button
+                onClick={processFiles}
+                disabled={isProcessing || fileStatuses.some(f => !f.subject.trim())}
+                className="w-full max-w-md bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
+                size="lg"
+              >
+                {isProcessing ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                    Processing {processingCount} of {fileStatuses.length} PDFs...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Process {fileStatuses.filter(f => ['pending', 'error', 'timeout', 'cancelled'].includes(f.status)).length} PDF{fileStatuses.length > 1 ? 's' : ''}
+                  </div>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )}
