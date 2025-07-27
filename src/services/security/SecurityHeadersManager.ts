@@ -36,18 +36,30 @@ class SecurityHeadersManager {
 
   private generateCSP(allowedOrigins: string[]): string {
     const origins = allowedOrigins.join(' ');
+    const isDev = config.isDevelopment;
+    
+    // SECURITY FIX: Remove unsafe-inline and unsafe-eval in production
+    const scriptSrc = isDev 
+      ? `script-src ${origins} 'unsafe-inline' 'unsafe-eval'` // Development only
+      : `script-src ${origins} 'strict-dynamic'`; // Production
+    
+    const styleSrc = isDev
+      ? `style-src ${origins} 'unsafe-inline'` // Development only  
+      : `style-src ${origins}`;
     
     return [
       `default-src ${origins}`,
-      `script-src ${origins} 'unsafe-inline' 'unsafe-eval'`, // Relaxed for development
-      `style-src ${origins} 'unsafe-inline'`,
+      scriptSrc,
+      styleSrc,
       `img-src ${origins} data: blob:`,
       `font-src ${origins} data:`,
       `connect-src ${origins} https://*.supabase.co wss://*.supabase.co`,
       `frame-src 'none'`,
       `object-src 'none'`,
       `base-uri 'self'`,
-      `form-action 'self'`
+      `form-action 'self'`,
+      `upgrade-insecure-requests`,
+      `block-all-mixed-content`
     ].join('; ');
   }
 

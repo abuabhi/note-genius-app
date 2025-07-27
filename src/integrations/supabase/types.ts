@@ -3954,6 +3954,10 @@ export type Database = {
         Args: { referred_user_id: string; referral_code_used: string }
         Returns: boolean
       }
+      update_user_tier: {
+        Args: { target_user_id: string; new_tier: string; reason?: string }
+        Returns: boolean
+      }
       validate_coupon: {
         Args: { coupon_code_param: string }
         Returns: Json

@@ -157,11 +157,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signUp = async (email: string, password: string, metadata = {}) => {
+    // SECURITY FIX: Always include emailRedirectTo to prevent auth issues
+    const redirectUrl = `${window.location.origin}/`;
+    
     return await supabase.auth.signUp({
       email,
       password,
       options: { 
-        data: metadata
+        data: metadata,
+        emailRedirectTo: redirectUrl
       }
     });
   };

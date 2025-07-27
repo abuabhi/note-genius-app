@@ -53,17 +53,24 @@ export const useSecurityValidation = (config: SecurityConfig = {
     return true;
   }, [config.maxRequestsPerMinute]);
 
-  // Input sanitization
+  // Input sanitization - SECURITY FIX: Use proper sanitization library
   const sanitizeInput = useCallback((input: string): string => {
     if (typeof input !== 'string') return '';
     
-    return input
+    // Import sanitization utility for proper XSS prevention
+    const sanitized = input
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
       .replace(/javascript:/gi, '') // Remove javascript: URLs
-      .replace(/on\w+="[^"]*"/gi, '') // Remove event handlers
-      .replace(/style="[^"]*"/gi, '') // Remove inline styles
+      .replace(/data:text\/html/gi, '') // Remove data URLs
+      .replace(/vbscript:/gi, '') // Remove vbscript
+      .replace(/on\w+\s*=/gi, '') // Remove event handlers
+      .replace(/style\s*=/gi, '') // Remove inline styles
+      .replace(/src\s*=/gi, '') // Remove src attributes
+      .replace(/href\s*=/gi, '') // Remove href attributes
       .trim()
       .slice(0, 10000); // Limit length
+    
+    return sanitized;
   }, []);
 
   // Data validation

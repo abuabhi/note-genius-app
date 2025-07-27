@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { FlashcardDifficulty } from "@/types/flashcard";
 import { useFlashcardsImport } from "@/hooks/csv/useFlashcardsImport";
 import { getTemplateCSV } from "@/utils/csvUtils";
+import { useSecureFlashcards } from "@/hooks/security/useSecureFlashcards";
 
 interface CreateFlashcardProps {
   setId?: string;
@@ -30,6 +31,7 @@ const CreateFlashcard = ({ setId, onSuccess }: CreateFlashcardProps) => {
   
   const { createFlashcard } = useFlashcards();
   const { importFlashcards, isImporting, importResults } = useFlashcardsImport();
+  const { sanitizeContent, validateFlashcard } = useSecureFlashcards();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,13 +45,21 @@ const CreateFlashcard = ({ setId, onSuccess }: CreateFlashcardProps) => {
       toast.error("No flashcard set specified.");
       return;
     }
+
+    // SECURITY FIX: Validate flashcard content for security
+    const validation = validateFlashcard(frontContent.trim(), backContent.trim());
+    if (!validation.isValid) {
+      toast.error(`Security validation failed: ${validation.errors.join(', ')}`);
+      return;
+    }
     
     setIsSubmitting(true);
     
     try {
+      // SECURITY FIX: Sanitize content before saving
       const cardData = {
-        front_content: frontContent.trim(),
-        back_content: backContent.trim(),
+        front_content: sanitizeContent(frontContent.trim()),
+        back_content: sanitizeContent(backContent.trim()),
         difficulty,
         set_id: setId
       };
@@ -141,6 +151,7 @@ const CreateFlashcard = ({ setId, onSuccess }: CreateFlashcardProps) => {
                       value={frontContent}
                       onChange={(e) => setFrontContent(e.target.value)}
                       className="min-h-[100px]"
+                      maxLength={5000}
                       disabled={isSubmitting}
                     />
                   </div>
@@ -153,6 +164,7 @@ const CreateFlashcard = ({ setId, onSuccess }: CreateFlashcardProps) => {
                       value={backContent}
                       onChange={(e) => setBackContent(e.target.value)}
                       className="min-h-[100px]"
+                      maxLength={5000}
                       disabled={isSubmitting}
                     />
                   </div>

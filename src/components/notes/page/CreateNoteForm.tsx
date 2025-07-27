@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Note } from '@/types/note';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useSecureNotes } from '@/hooks/security/useSecureNotes';
+import { toast } from 'sonner';
 
 interface CreateNoteFormProps {
   onSave: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -20,6 +22,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   const [selectedSubject, setSelectedSubject] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
+  const { sanitizeNoteContent, sanitizeNoteText, validateNote } = useSecureNotes();
 
   // Initialize form with existing data when editing
   useEffect(() => {
@@ -43,19 +46,30 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
       hasContent: !!content.trim()
     });
 
+    // SECURITY FIX: Comprehensive validation with security checks
+    const validation = validateNote(title.trim(), description.trim(), content.trim());
+    if (!validation.isValid) {
+      console.log('❌ [CREATE FORM] Security validation failed:', validation.errors);
+      toast.error(`Security validation failed: ${validation.errors.join(', ')}`);
+      return;
+    }
+
     // Enhanced validation - prevent empty subject default behavior
     if (!title.trim()) {
       console.log('❌ [CREATE FORM] Validation failed: Empty title');
+      toast.error('Title is required');
       return;
     }
     
     if (!selectedSubject || selectedSubject.trim() === '') {
       console.log('❌ [CREATE FORM] Validation failed: No subject selected');
+      toast.error('Please select a subject');
       return;
     }
     
     if (!content.trim()) {
       console.log('❌ [CREATE FORM] Validation failed: Empty content');
+      toast.error('Content is required');
       return;
     }
 
@@ -71,12 +85,13 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
         userSubjectsCount: userSubjects.length
       });
       
+      // SECURITY FIX: Sanitize all input data before saving
       const noteData: Omit<Note, 'id'> = {
-        title: title.trim(),
-        description: description.trim(),
-        content: content.trim(),
+        title: sanitizeNoteText(title.trim()),
+        description: sanitizeNoteText(description.trim()),
+        content: sanitizeNoteContent(content.trim()),
         date: initialData?.date || new Date().toISOString().split('T')[0],
-        subject: selectedSubject,
+        subject: sanitizeNoteText(selectedSubject),
         subject_id: selectedSubjectObj?.id || null,
         sourceType: initialData?.sourceType || 'manual',
         archived: initialData?.archived || false,
@@ -114,6 +129,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Enter note title..."
+          maxLength={200}
           required
         />
       </div>
@@ -157,6 +173,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Brief description..."
+          maxLength={500}
         />
       </div>
 
@@ -167,6 +184,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Enter your note content..."
+          maxLength={50000}
           rows={6}
           required
         />
