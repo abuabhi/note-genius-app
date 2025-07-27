@@ -3823,6 +3823,10 @@ export type Database = {
         Args: { announcement_uuid: string }
         Returns: boolean
       }
+      exec_sql: {
+        Args: { sql: string }
+        Returns: undefined
+      }
       filter_user_flashcard_sets: {
         Args: {
           p_user_id: string
