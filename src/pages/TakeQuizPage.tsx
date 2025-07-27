@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useQuizDetails, useSubmitQuizResult } from "@/hooks/quiz";
 import { QuizTakingCard } from "@/components/quiz/QuizTaking/QuizTakingCard";
@@ -72,40 +71,36 @@ const TakeQuizPage = () => {
   
   if (quizState === 'in-progress' && quiz.questions) {
     return (
-      <Layout>
-        <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
-          <div className="container mx-auto p-6">
-            <div className="mb-6">
-              <QuizTakingBreadcrumb quizTitle={quiz.title} />
-            </div>
-            <QuizTakingCard
-              questions={quiz.questions as any}
-              onQuizComplete={handleQuizComplete}
-            />
+      <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
+        <div className="container mx-auto p-6">
+          <div className="mb-6">
+            <QuizTakingBreadcrumb quizTitle={quiz.title} />
           </div>
+          <QuizTakingCard
+            questions={quiz.questions as any}
+            onQuizComplete={handleQuizComplete}
+          />
         </div>
-      </Layout>
+      </div>
     );
   }
   
   if (quizState === 'completed' && quizResults) {
     return (
-      <Layout>
-        <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
-          <div className="container mx-auto p-6">
-            <div className="mb-6">
-              <QuizTakingBreadcrumb quizTitle={quiz.title} />
-            </div>
-            <QuizResults
-              quiz={quiz as any}
-              score={quizResults.score}
-              totalQuestions={quizResults.totalQuestions}
-              duration={quizResults.duration}
-              onRetry={restartQuiz}
-            />
+      <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
+        <div className="container mx-auto p-6">
+          <div className="mb-6">
+            <QuizTakingBreadcrumb quizTitle={quiz.title} />
           </div>
+          <QuizResults
+            quiz={quiz as any}
+            score={quizResults.score}
+            totalQuestions={quizResults.totalQuestions}
+            duration={quizResults.duration}
+            onRetry={restartQuiz}
+          />
         </div>
-      </Layout>
+      </div>
     );
   }
   

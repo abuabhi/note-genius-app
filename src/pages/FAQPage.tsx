@@ -1,6 +1,4 @@
 
-import Layout from "@/components/layout/Layout";
-
 const FAQPage = () => {
   const faqs = [
     {
@@ -145,64 +143,62 @@ const FAQPage = () => {
   ];
 
   return (
-    <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-        <div className="container mx-auto px-6 py-12">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Frequently Asked Questions
-              </h1>
-              <p className="text-xl text-gray-600">
-                Find answers to common questions about using PrepGenie
-              </p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      <div className="container mx-auto px-6 py-12">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Frequently Asked Questions
+            </h1>
+            <p className="text-xl text-gray-600">
+              Find answers to common questions about using PrepGenie
+            </p>
+          </div>
 
-            <div className="space-y-8">
-              {categories.map((category) => {
-                const categoryFaqs = faqs.filter(faq => faq.category === category);
-                if (categoryFaqs.length === 0) return null;
-                
-                return (
-                  <div key={category} className="bg-white rounded-lg shadow-md p-6">
-                    <h2 className="text-2xl font-semibold text-mint-700 mb-6 border-b border-mint-200 pb-2">
-                      {category}
-                    </h2>
-                    <div className="space-y-6">
-                      {categoryFaqs.map((faq) => (
-                        <div key={faq.id} className="border-l-4 border-mint-300 pl-4">
-                          <h3 className="text-lg font-medium text-gray-900 mb-2">
-                            {faq.question}
-                          </h3>
-                          <p className="text-gray-600 leading-relaxed">
-                            {faq.answer}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+          <div className="space-y-8">
+            {categories.map((category) => {
+              const categoryFaqs = faqs.filter(faq => faq.category === category);
+              if (categoryFaqs.length === 0) return null;
+              
+              return (
+                <div key={category} className="bg-white rounded-lg shadow-md p-6">
+                  <h2 className="text-2xl font-semibold text-mint-700 mb-6 border-b border-mint-200 pb-2">
+                    {category}
+                  </h2>
+                  <div className="space-y-6">
+                    {categoryFaqs.map((faq) => (
+                      <div key={faq.id} className="border-l-4 border-mint-300 pl-4">
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          {faq.question}
+                        </h3>
+                        <p className="text-gray-600 leading-relaxed">
+                          {faq.answer}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
+          </div>
 
-            <div className="text-center mt-12 bg-white rounded-lg shadow-md p-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                Still have questions?
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Can't find what you're looking for? We're here to help!
-              </p>
-              <a 
-                href="/contact" 
-                className="inline-block bg-mint-600 text-white px-6 py-3 rounded-lg hover:bg-mint-700 transition-colors"
-              >
-                Contact Support
-              </a>
-            </div>
+          <div className="text-center mt-12 bg-white rounded-lg shadow-md p-8">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+              Still have questions?
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Can't find what you're looking for? We're here to help!
+            </p>
+            <a 
+              href="/contact" 
+              className="inline-block bg-mint-600 text-white px-6 py-3 rounded-lg hover:bg-mint-700 transition-colors"
+            >
+              Contact Support
+            </a>
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 
