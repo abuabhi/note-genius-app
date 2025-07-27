@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/auth";
 import { itemVariants } from "./motion";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { TierStatusCard } from "./TierStatusCard";
+import { TierDropdown } from "./TierDropdown";
 
 interface LogoutSectionProps {
   isCollapsed: boolean;
@@ -38,8 +38,8 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
 
   return (
     <div className="flex flex-col space-y-3">
-      {/* Tier Status Card */}
-      <TierStatusCard isCollapsed={isCollapsed} />
+      {/* Tier Dropdown */}
+      <TierDropdown isCollapsed={isCollapsed} />
 
       {/* User Menu */}
       <div className="px-3">
