@@ -58,7 +58,7 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
         updateFileStatus(i, 'processing');
         
         try {
-          const result = await processSelectedDocument(fileStatus.file, 'application/pdf');
+          const result = await processSelectedDocument(fileStatus.file, fileStatus.file.name.split('.').pop()?.toLowerCase() || 'pdf');
           
           const note = {
             title: result.title || fileStatus.file.name.replace('.pdf', ''),
