@@ -48,32 +48,53 @@ serve(async (req) => {
       throw new Error('Invalid YouTube URL format');
     }
 
-    // Use synchronous Apify API with correct actor ID format (tilde instead of slash)
+    // Use correct Apify API with actor ID format (tilde instead of slash)
     const actorId = 'matthewjames~youtube-transcript-scraper-and-formatter';
     
     console.log('Starting Apify transcript extraction actor:', actorId);
     
-    // Use synchronous endpoint to avoid polling complexity
-    const syncResponse = await fetch(`https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items`, {
+    // Use standard runs endpoint with synchronous execution (waits up to 300 seconds)
+    const runResponse = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs?waitForFinish=300`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apifyApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        startUrls: [{ url: youtubeUrl }],
+        videoUrls: [{ url: youtubeUrl }], // Actor expects videoUrls, not startUrls
         proxyConfiguration: { useApifyProxy: true },
-        timeout: 300000, // 5 minutes timeout
       }),
     });
 
-    if (!syncResponse.ok) {
-      const errorText = await syncResponse.text();
-      console.error('Apify synchronous run error:', errorText);
-      throw new Error(`Failed to run Apify actor: ${syncResponse.status} ${syncResponse.statusText}. Details: ${errorText}`);
+    if (!runResponse.ok) {
+      const errorText = await runResponse.text();
+      console.error('Apify run error:', errorText);
+      throw new Error(`Failed to run Apify actor: ${runResponse.status} ${runResponse.statusText}. Details: ${errorText}`);
     }
 
-    const apifyResults = await syncResponse.json();
+    const runResult = await runResponse.json();
+    console.log('Actor run completed, fetching dataset...');
+
+    // Get the dataset items from the completed run
+    const datasetId = runResult.data.defaultDatasetId;
+    if (!datasetId) {
+      throw new Error('No dataset ID returned from Apify actor run');
+    }
+
+    const datasetResponse = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apifyApiKey}`,
+      },
+    });
+
+    if (!datasetResponse.ok) {
+      const errorText = await datasetResponse.text();
+      console.error('Dataset fetch error:', errorText);
+      throw new Error(`Failed to fetch dataset: ${datasetResponse.status} ${datasetResponse.statusText}. Details: ${errorText}`);
+    }
+
+    const apifyResults = await datasetResponse.json();
     console.log('Transcript extraction completed, processing results...');
 
     if (!Array.isArray(apifyResults) || apifyResults.length === 0) {
