@@ -36,7 +36,7 @@ verify_jwt = true
 [functions.youtube-transcription]
 verify_jwt = false
 
-[functions.extract-youtube-audio]
+[functions.youtube-transcript-extraction]
 verify_jwt = false
 
 [analytics]

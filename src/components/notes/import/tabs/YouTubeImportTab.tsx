@@ -74,76 +74,57 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     try {
       setTranscriptionState({
         status: 'processing',
-        message: 'Extracting audio from YouTube with Apify...'
+        message: 'Extracting transcript from YouTube...'
       });
 
-      // Step 1: Extract audio URL using Apify
-      const audioResponse = await supabase.functions.invoke('extract-youtube-audio', {
+      // Extract transcript directly using Apify
+      const transcriptResponse = await supabase.functions.invoke('youtube-transcript-extraction', {
         body: {
-          youtubeUrls: [{ url: youtubeUrl.trim() }],
-          format: 'mp3'
+          youtubeUrl: youtubeUrl.trim(),
+          enhanceWithGladia: true
         }
       });
 
-      if (audioResponse.error) {
-        throw new Error(`Audio extraction failed: ${audioResponse.error.message}`);
+      if (transcriptResponse.error) {
+        throw new Error(`Transcript extraction failed: ${transcriptResponse.error.message}`);
       }
 
-      const audioData = audioResponse.data;
-      if (!audioData?.success || !audioData?.results?.length) {
-        throw new Error('No audio data returned from Apify actor');
+      const transcriptData = transcriptResponse.data;
+      if (!transcriptData?.success || !transcriptData?.result) {
+        throw new Error('No transcript data returned from extraction');
       }
 
-      const audioResult = audioData.results[0];
-      const audioUrl = audioResult.audioUrl;
+      const result = transcriptData.result;
       
-      if (!audioUrl) {
-        throw new Error('No audio URL found in extraction response');
-      }
-
-      setTranscriptionState({
-        status: 'processing',
-        message: 'Transcribing audio with Gladia AI...'
-      });
-
-      // Step 2: Transcribe with Gladia
-      const { data, error } = await supabase.functions.invoke('youtube-transcription', {
-        body: { 
-          audioUrl: audioUrl,
-          videoId: videoId,
-          title: audioResult.title || `YouTube Video ${videoId}`,
-          language: 'english'
-        }
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Failed to transcribe audio');
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || 'Transcription failed');
+      if (!result.transcript) {
+        throw new Error('No transcript text found in response');
       }
 
       // Process completed response
       setTranscriptionState({
         status: 'completed',
-        message: '🎉 Transcription completed!',
-        videoTitle: data.metadata?.title || audioResult.title,
-        transcript: data.transcription,
+        message: '🎉 Transcript extraction completed!',
+        videoTitle: result.title,
+        transcript: result.transcript,
         videoMetadata: {
-          videoId: videoId,
-          title: data.metadata?.title || audioResult.title,
-          audioUrl: audioUrl,
-          confidence: data.metadata?.confidence,
-          language: data.metadata?.language
+          videoId: result.videoId,
+          title: result.title,
+          duration: result.duration,
+          thumbnail: result.thumbnail,
+          enhanced: result.enhanced
         }
       });
 
-      setNoteTitle(data.metadata?.title || audioResult.title || 'YouTube Video Transcript');
+      setNoteTitle(result.title || 'YouTube Video Transcript');
       setNoteContent(formatTranscriptContent({
-        videoTitle: data.metadata?.title || audioResult.title,
-        transcript: data.transcription,
-        videoMetadata: data.metadata
+        videoTitle: result.title,
+        transcript: result.transcript,
+        videoMetadata: {
+          videoId: result.videoId,
+          title: result.title,
+          duration: result.duration,
+          enhanced: result.enhanced
+        }
       }));
 
     } catch (error) {
@@ -185,8 +166,11 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     if (data.videoMetadata?.confidence) {
       content += `**Confidence:** ${Math.round(data.videoMetadata.confidence * 100)}%\n`;
     }
-    content += `**Transcribed:** ${new Date().toLocaleDateString()}\n`;
-    content += `**Source:** Apify + Gladia AI\n\n`;
+    content += `**Extracted:** ${new Date().toLocaleDateString()}\n`;
+    if (data.videoMetadata?.enhanced) {
+      content += `**Enhanced:** Yes (Gladia AI)\n`;
+    }
+    content += `**Source:** Apify Direct Transcript\n\n`;
     
     // Full transcript
     if (data.transcript) {
@@ -298,10 +282,10 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
               <div className="flex items-center gap-2 mb-3">
                 <Video className="h-5 w-5 text-red-500" />
                 <div>
-                  <h4 className="font-medium text-gray-900">YouTube Transcription</h4>
-                  <p className="text-xs text-gray-600 mt-1">
-                    Powered by Apify + Gladia AI - High-quality transcription
-                  </p>
+                   <h4 className="font-medium text-gray-900">YouTube Transcription</h4>
+                   <p className="text-xs text-gray-600 mt-1">
+                     Direct transcript extraction with optional AI enhancement
+                   </p>
                 </div>
               </div>
               

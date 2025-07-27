@@ -10,27 +10,22 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface TranscriptionResult {
   success: boolean;
-  transcription?: string;
-  metadata?: {
-    videoId: string | null;
-    title: string | null;
-    audioUrl: string;
-    language: string;
-    confidence: number | null;
-    segments: Array<{
-      text: string;
-      start: number;
-      end: number;
-    }> | null;
-    timestamp: string;
+  result?: {
+    transcript: string;
+    videoId: string;
+    title: string;
+    duration?: number;
+    thumbnail?: string;
+    enhanced?: boolean;
   };
+  timestamp?: string;
   error?: string;
 }
 
 export const YouTubeTranscription = () => {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [currentStep, setCurrentStep] = useState<'idle' | 'fetching-audio' | 'transcribing' | 'complete'>('idle');
+  const [currentStep, setCurrentStep] = useState<'idle' | 'extracting' | 'complete'>('idle');
   const [result, setResult] = useState<TranscriptionResult | null>(null);
 
   const extractVideoId = (url: string): string | null => {
@@ -67,67 +62,37 @@ export const YouTubeTranscription = () => {
     }
 
     setIsProcessing(true);
-    setCurrentStep('fetching-audio');
+    setCurrentStep('extracting');
     setResult(null);
 
     try {
-      // Step 1: Call Apify actor to get audio URL
-      console.log('Step 1: Calling Apify actor to extract audio...');
+      // Extract transcript directly from YouTube
+      console.log('Extracting transcript from YouTube...');
       
-      const apifyResponse = await supabase.functions.invoke('extract-youtube-audio', {
+      const transcriptResponse = await supabase.functions.invoke('youtube-transcript-extraction', {
         body: {
-          youtubeUrls: [{ url: youtubeUrl }],
-          format: 'mp3'
+          youtubeUrl: youtubeUrl,
+          enhanceWithGladia: true
         }
       });
 
-      if (apifyResponse.error) {
-        throw new Error(`Apify extraction failed: ${apifyResponse.error.message}`);
+      if (transcriptResponse.error) {
+        throw new Error(`Transcript extraction failed: ${transcriptResponse.error.message}`);
       }
 
-      const apifyData = apifyResponse.data;
-      if (!apifyData?.success || !apifyData?.results?.length) {
-        throw new Error('No audio data returned from Apify actor');
-      }
-
-      const audioResult = apifyData.results[0];
-      const audioUrl = audioResult.audioUrl;
-      
-      if (!audioUrl) {
-        throw new Error('No audio URL found in Apify response');
-      }
-
-      console.log('Audio extraction successful, audio URL obtained');
-
-      // Step 2: Call our Supabase Edge Function for transcription
-      setCurrentStep('transcribing');
-      console.log('Step 2: Calling Supabase Edge Function for transcription...');
-      
-      const { data, error } = await supabase.functions.invoke('youtube-transcription', {
-        body: {
-          audioUrl: audioUrl,
-          videoId: videoId,
-          title: audioResult.title || `YouTube Video ${videoId}`,
-          language: 'english'
-        }
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Failed to transcribe audio');
+      const data = transcriptResponse.data;
+      if (!data?.success || !data?.result) {
+        throw new Error('No transcript data returned');
       }
 
       setResult(data as TranscriptionResult);
       setCurrentStep('complete');
 
-      if (data.success) {
-        toast({
-          title: "Transcription Complete",
-          description: "YouTube video has been successfully transcribed!",
-          variant: "default"
-        });
-      } else {
-        throw new Error(data.error || 'Transcription failed');
-      }
+      toast({
+        title: "Transcription Complete",
+        description: "YouTube video transcript has been successfully extracted!",
+        variant: "default"
+      });
 
     } catch (error) {
       console.error('Transcription error:', error);
@@ -151,9 +116,7 @@ export const YouTubeTranscription = () => {
 
   const getStepIcon = (step: string) => {
     switch (step) {
-      case 'fetching-audio':
-        return <Youtube className="h-4 w-4" />;
-      case 'transcribing':
+      case 'extracting':
         return <FileText className="h-4 w-4" />;
       case 'complete':
         return <CheckCircle className="h-4 w-4" />;
@@ -164,14 +127,12 @@ export const YouTubeTranscription = () => {
 
   const getStepText = (step: string) => {
     switch (step) {
-      case 'fetching-audio':
-        return 'Extracting audio from YouTube...';
-      case 'transcribing':
-        return 'Transcribing with Gladia...';
+      case 'extracting':
+        return 'Extracting transcript from YouTube...';
       case 'complete':
-        return 'Transcription complete!';
+        return 'Transcript extraction complete!';
       default:
-        return 'Ready to transcribe';
+        return 'Ready to extract transcript';
     }
   };
 
@@ -236,60 +197,36 @@ export const YouTubeTranscription = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {result.success && result.transcription ? (
+            {result.success && result.result ? (
               <div className="space-y-4">
                 {/* Metadata */}
-                {result.metadata && (
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    {result.metadata.title && (
-                      <div>
-                        <span className="font-medium">Title:</span> {result.metadata.title}
-                      </div>
-                    )}
-                    {result.metadata.videoId && (
-                      <div>
-                        <span className="font-medium">Video ID:</span> {result.metadata.videoId}
-                      </div>
-                    )}
-                    <div>
-                      <span className="font-medium">Language:</span> {result.metadata.language}
-                    </div>
-                    {result.metadata.confidence && (
-                      <div>
-                        <span className="font-medium">Confidence:</span> {Math.round(result.metadata.confidence * 100)}%
-                      </div>
-                    )}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Title:</span> {result.result.title}
                   </div>
-                )}
+                  <div>
+                    <span className="font-medium">Video ID:</span> {result.result.videoId}
+                  </div>
+                  {result.result.duration && (
+                    <div>
+                      <span className="font-medium">Duration:</span> {Math.floor(result.result.duration / 60)}:{(result.result.duration % 60).toString().padStart(2, '0')}
+                    </div>
+                  )}
+                  <div>
+                    <span className="font-medium">Enhanced:</span> {result.result.enhanced ? 'Yes (Gladia AI)' : 'No'}
+                  </div>
+                </div>
 
                 {/* Transcription Text */}
                 <div>
-                  <label className="text-sm font-medium">Transcription:</label>
+                  <label className="text-sm font-medium">Transcript:</label>
                   <Textarea
-                    value={result.transcription}
+                    value={result.result.transcript}
                     readOnly
                     className="mt-1 min-h-32"
-                    placeholder="Transcription will appear here..."
+                    placeholder="Transcript will appear here..."
                   />
                 </div>
-
-                {/* Segments (if available) */}
-                {result.metadata?.segments && result.metadata.segments.length > 0 && (
-                  <div>
-                    <label className="text-sm font-medium">Timestamped Segments:</label>
-                    <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
-                      {result.metadata.segments.map((segment, index) => (
-                        <div key={index} className="p-2 bg-muted rounded text-sm">
-                          <div className="text-xs text-muted-foreground mb-1">
-                            {Math.floor(segment.start / 60)}:{(segment.start % 60).toFixed(1).padStart(4, '0')} - 
-                            {Math.floor(segment.end / 60)}:{(segment.end % 60).toFixed(1).padStart(4, '0')}
-                          </div>
-                          <div>{segment.text}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="text-destructive">
@@ -311,18 +248,18 @@ export const YouTubeTranscription = () => {
         <CardContent className="text-sm space-y-2 text-muted-foreground">
           <div className="flex items-center gap-2">
             <Badge variant="default">✅ Complete</Badge>
-            <span>Apify API integration with transcriptdl/transcript-downloader-youtube-audio-scraper</span>
+            <span>Apify API integration with matthewjames/youtube-transcript-scraper-and-formatter</span>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="default">✅ Complete</Badge>
-            <span>Supabase Edge Functions for audio extraction and transcription</span>
+            <span>Direct transcript extraction (no audio processing required)</span>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="default">✅ Complete</Badge>
-            <span>Gladia API integration for high-quality transcription</span>
+            <span>Optional Gladia AI enhancement for better quality</span>
           </div>
           <p className="text-xs pt-2 border-t text-green-600">
-            🚀 Full workflow is ready! Enter any YouTube URL above to start transcribing.
+            🚀 Much faster workflow! Enter any YouTube URL above to extract the transcript directly.
           </p>
         </CardContent>
       </Card>
