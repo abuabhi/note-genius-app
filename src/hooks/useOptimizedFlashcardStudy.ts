@@ -40,32 +40,37 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
       try {
         // Query flashcards through the junction table relationship
         const result: any = await (supabase as any)
-          .from('flashcards')
+          .from('flashcard_set_cards')
           .select(`
-            *,
-            flashcard_set_cards!inner(
-              set_id,
-              position
+            flashcards (
+              id,
+              front_content,
+              back_content,
+              difficulty,
+              last_reviewed_at,
+              created_at
             )
           `)
-          .eq('flashcard_set_cards.set_id', setId)
-          .order('flashcard_set_cards.position');
+          .eq('set_id', setId)
+          .order('position');
 
         if (result.error) {
           throw result.error;
         }
 
-        // Transform data
-        const transformedCards = (result.data || []).map((card: any) => ({
-          id: card.id,
-          front_content: card.front_content || '',
-          back_content: card.back_content || '',
-          front: card.front_content || '',
-          back: card.back_content || '',
-          difficulty: card.difficulty || 1,
-          set_id: card.set_id,
-          last_reviewed: card.last_reviewed_at
-        }));
+        // Transform data - extract flashcards from junction table results
+        const transformedCards = (result.data || []).map((item: any) => {
+          const card = item.flashcards;
+          return {
+            id: card.id,
+            front_content: card.front_content || '',
+            back_content: card.back_content || '',
+            front: card.front_content || '',
+            back: card.back_content || '',
+            difficulty: card.difficulty || 1,
+            last_reviewed: card.last_reviewed_at
+          };
+        });
 
         setFlashcards(transformedCards);
       } catch (err) {
