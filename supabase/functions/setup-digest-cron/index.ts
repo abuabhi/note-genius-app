@@ -34,7 +34,7 @@ serve(async (req) => {
       );
     `
 
-    const { data, error } = await supabase.rpc('exec_sql', { sql: cronQuery })
+    const { error } = await supabase.rpc('exec_sql', { sql: cronQuery })
 
     if (error) {
       throw error
