@@ -20,9 +20,9 @@ const QuizQuestionSchema = z.object({
 export const quizFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  countryId: z.string().min(1, "Country is required"),
+  countryId: z.string().optional(),
   educationSystem: z.string().optional(),
-  subjectId: z.string().min(1, "Subject is required"), // Changed from categoryId to subjectId
+  subjectId: z.string().optional(),
   gradeId: z.string().optional(),
   sectionId: z.string().optional(),
   isPublic: z.boolean().default(false),
