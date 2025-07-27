@@ -152,74 +152,69 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
             </Button>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-1">
             {fileStatuses.map((fileStatus, index) => (
-              <Card key={index} className="overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
-                    {/* File Icon & Status */}
-                    <div className="flex-shrink-0">
-                      <div className="relative">
-                        <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center border border-red-100">
-                          <FileText className="h-6 w-6 text-red-600" />
-                        </div>
-                        {/* Status indicator */}
-                        <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-white border-2 border-white flex items-center justify-center">
-                          {getStatusIcon(fileStatus.status)}
-                        </div>
-                      </div>
-                    </div>
+              <div key={index} className="flex items-center gap-4 p-3 border border-border rounded-lg hover:bg-accent/50 transition-colors">
+                {/* File Icon & Status */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <FileText className="h-4 w-4 text-red-500" />
+                  {getStatusIcon(fileStatus.status)}
+                </div>
 
-                    {/* File Info */}
-                    <div className="flex-1 min-w-0 space-y-3">
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900 truncate">
-                          {fileStatus.file.name}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-gray-500">
-                            {(fileStatus.file.size / 1024 / 1024).toFixed(1)} MB
-                          </span>
-                          {fileStatus.status === 'processing' && (
-                            <span className="text-xs text-blue-600 font-medium">Processing...</span>
-                          )}
-                          {fileStatus.status === 'success' && (
-                            <span className="text-xs text-green-600 font-medium">✓ Completed</span>
-                          )}
-                          {fileStatus.status === 'error' && (
-                            <span className="text-xs text-red-600 font-medium">
-                              Error: {fileStatus.error}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Subject Selector */}
-                      <div className="space-y-1">
-                        <SubjectSelector
-                          value={fileStatus.subject}
-                          onValueChange={(subject) => updateFileSubject(index, subject)}
-                          required
-                          className="max-w-xs"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Remove Button */}
-                    <div className="flex-shrink-0">
-                      <Button
-                        onClick={() => removeFile(index)}
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 text-gray-400"
-                        disabled={fileStatus.status === 'processing'}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                {/* File Name */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground truncate">
+                      {fileStatus.file.name}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {(fileStatus.file.size / 1024 / 1024).toFixed(1)} MB
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
+                  {fileStatus.status === 'error' && fileStatus.error && (
+                    <p className="text-xs text-destructive mt-1">{fileStatus.error}</p>
+                  )}
+                </div>
+
+                {/* Subject Selector */}
+                <div className="w-48">
+                  <div className="space-y-0">
+                    <SubjectSelector
+                      value={fileStatus.subject}
+                      onValueChange={(subject) => updateFileSubject(index, subject)}
+                      required
+                      className="w-full [&>div]:space-y-0 [&_label]:hidden"
+                    />
+                  </div>
+                </div>
+
+                {/* Status Text */}
+                <div className="w-20 text-right">
+                  {fileStatus.status === 'processing' && (
+                    <span className="text-xs text-blue-600 font-medium">Processing</span>
+                  )}
+                  {fileStatus.status === 'success' && (
+                    <span className="text-xs text-green-600 font-medium">Completed</span>
+                  )}
+                  {fileStatus.status === 'pending' && (
+                    <span className="text-xs text-muted-foreground">Ready</span>
+                  )}
+                  {fileStatus.status === 'error' && (
+                    <span className="text-xs text-destructive font-medium">Failed</span>
+                  )}
+                </div>
+
+                {/* Remove Button */}
+                <Button
+                  onClick={() => removeFile(index)}
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive text-muted-foreground flex-shrink-0"
+                  disabled={fileStatus.status === 'processing'}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
             ))}
           </div>
           
