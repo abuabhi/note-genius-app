@@ -8,7 +8,7 @@ import { FileText, Sparkles, CheckCircle, Upload, ArrowRight } from 'lucide-reac
 import { useImportState } from '../useImportState';
 import { FileDropZone } from './components/FileDropZone';
 import { SubjectSelector } from '../components/SubjectSelector';
-import { ImportTestButton } from '../components/ImportTestButton';
+
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -60,11 +60,10 @@ export const FileImportTab = ({ onSaveNote, onClose }: FileImportTabProps) => {
       const note = {
         title: editableTitle,
         content: processedText,
-        subject_id: selectedSubject,
-        is_shared: false,
-        is_favorite: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        date: new Date().toISOString(),
+        subject: selectedSubject,
+        description: `Imported document: ${editableTitle}`,
+        sourceType: "import"
       };
 
       const success = await onSaveNote(note);
@@ -91,12 +90,7 @@ export const FileImportTab = ({ onSaveNote, onClose }: FileImportTabProps) => {
   return (
     <div className="space-y-4">
       {!selectedFile && !processedText && (
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <ImportTestButton />
-          </div>
-          <FileDropZone onFileSelected={handleFileSelected} />
-        </div>
+        <FileDropZone onFileSelected={handleFileSelected} />
       )}
 
       {selectedFile && !processedText && (
