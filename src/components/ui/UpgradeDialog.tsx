@@ -108,71 +108,64 @@ export const UpgradeDialog: React.FC<UpgradeDialogProps> = ({
 
         {/* Benefits Section */}
         <div className="p-6">
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-mint-600" />
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-mint-600" />
               What you'll unlock:
             </h3>
-            <div className="grid gap-3">
+            <div className="grid gap-2 md:grid-cols-2">
               {info.benefits.map((benefit, index) => (
-                <div key={index} className="flex items-start gap-3 p-3 bg-mint-50 rounded-lg">
-                  <div className="w-8 h-8 bg-mint-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <benefit.icon className="h-4 w-4 text-mint-600" />
+                <div key={index} className="flex items-center gap-2 p-2 bg-mint-50 rounded-lg">
+                  <div className="w-6 h-6 bg-mint-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <benefit.icon className="h-3 w-3 text-mint-600" />
                   </div>
-                  <div>
-                    <div className="font-medium text-gray-900">{benefit.text}</div>
-                    <div className="text-sm text-gray-600">{benefit.desc}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 text-sm leading-tight">{benefit.text}</div>
+                    <div className="text-xs text-gray-600 leading-tight">{benefit.desc}</div>
                   </div>
-                  <Check className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                  <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Social Proof */}
-          <div className="bg-gradient-to-r from-gray-50 to-mint-50 rounded-lg p-4 mb-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 mb-2">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
-                ))}
+          {/* Combined Social Proof & Pricing */}
+          <div className="bg-gradient-to-r from-gray-50 to-mint-50 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-1 mb-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-3 w-3 text-yellow-400 fill-current" />
+                  ))}
+                  <span className="text-xs text-gray-600 ml-1">10,000+ students</span>
+                </div>
+                <p className="text-xs text-gray-600">
+                  "AI features helped me ace my exams!" - Sarah M.
+                </p>
               </div>
-              <p className="text-sm text-gray-700 font-medium">
-                Join 10,000+ students who've transformed their learning
-              </p>
-              <p className="text-xs text-gray-600 mt-1">
-                "PrepGenie's AI features helped me ace my exams!" - Sarah M.
-              </p>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-gray-900">
+                  {info.price}
+                  <span className="text-sm font-normal text-gray-600">/mo</span>
+                </div>
+                <p className="text-xs text-gray-600">Less than a coffee ☕</p>
+              </div>
             </div>
           </div>
 
-          {/* Pricing & CTA */}
-          <div className="space-y-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-gray-900">
-                {info.price}
-                <span className="text-base font-normal text-gray-600">/month</span>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">
-                Less than a coffee per day ☕
-              </p>
-            </div>
+          {/* CTA Section */}
+          <div className="space-y-3">
+            <Button 
+              onClick={handleUpgrade}
+              className="w-full bg-gradient-to-r from-mint-600 to-emerald-600 hover:from-mint-700 hover:to-emerald-700 text-white font-medium py-3"
+            >
+              Unlock {info.name} Features
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
 
-            <div className="flex gap-3">
-              <Button 
-                onClick={handleUpgrade}
-                className="flex-1 bg-gradient-to-r from-mint-600 to-emerald-600 hover:from-mint-700 hover:to-emerald-700 text-white font-medium py-3"
-              >
-                Unlock {info.name} Features
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-
-            <div className="text-center">
-              <p className="text-xs text-gray-500">
-                ✓ 30-day money-back guarantee • ✓ Cancel anytime • ✓ Instant access
-              </p>
-            </div>
+            <p className="text-xs text-gray-500 text-center">
+              ✓ 30-day money-back guarantee • ✓ Cancel anytime • ✓ Instant access
+            </p>
           </div>
         </div>
       </DialogContent>
