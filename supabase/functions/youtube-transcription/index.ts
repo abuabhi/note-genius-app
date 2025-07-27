@@ -39,7 +39,7 @@ serve(async (req) => {
     const gladiaResponse = await fetch('https://api.gladia.io/audio/text/audio-transcription/', {
       method: 'POST',
       headers: {
-        'x-gladia-key': gladiaApiKey,
+        'Authorization': `Bearer ${gladiaApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
