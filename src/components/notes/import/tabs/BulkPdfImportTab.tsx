@@ -13,18 +13,22 @@ interface BulkPdfImportTabProps {
 interface FileStatus {
   file: File;
   status: 'pending' | 'processing' | 'success' | 'error';
+  subject: string;
   error?: string;
 }
 
 export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
   const [fileStatuses, setFileStatuses] = useState<FileStatus[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState<string>("PDF Imports");
 
   const handleFilesSelected = (files: FileList | null) => {
     if (files) {
       const pdfFiles = Array.from(files).filter(file => file.type === 'application/pdf');
-      const newFileStatuses = pdfFiles.map(file => ({ file, status: 'pending' as const }));
+      const newFileStatuses = pdfFiles.map(file => ({ 
+        file, 
+        status: 'pending' as const,
+        subject: "PDF Imports"
+      }));
       setFileStatuses(prev => [...prev, ...newFileStatuses]);
     }
   };
@@ -36,6 +40,12 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
   const updateFileStatus = (index: number, status: FileStatus['status'], error?: string) => {
     setFileStatuses(prev => prev.map((item, i) => 
       i === index ? { ...item, status, error } : item
+    ));
+  };
+
+  const updateFileSubject = (index: number, subject: string) => {
+    setFileStatuses(prev => prev.map((item, i) => 
+      i === index ? { ...item, subject } : item
     ));
   };
 
@@ -54,7 +64,7 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
             title: result.title || fileStatus.file.name.replace('.pdf', ''),
             content: result.text,
             date: new Date().toISOString(),
-            subject: selectedSubject,
+            subject: fileStatus.subject,
             description: `Bulk imported PDF: ${fileStatus.file.name}`,
             sourceType: "import"
           };
@@ -131,39 +141,44 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
             </Button>
           </div>
           
-          <SubjectSelector
-            value={selectedSubject}
-            onValueChange={setSelectedSubject}
-            required
-          />
-          
-          <div className="max-h-40 overflow-y-auto space-y-2">
+          <div className="max-h-60 overflow-y-auto space-y-2">
             {fileStatuses.map((fileStatus, index) => (
               <div 
                 key={index} 
-                className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200"
+                className="p-3 bg-white rounded-lg border border-gray-200 space-y-3"
               >
-                <div className="p-1.5 bg-red-50 rounded-md">
-                  {getStatusIcon(fileStatus.status)}
+                <div className="flex items-center gap-3">
+                  <div className="p-1.5 bg-red-50 rounded-md">
+                    {getStatusIcon(fileStatus.status)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{fileStatus.file.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {(fileStatus.file.size / 1024 / 1024).toFixed(1)} MB
+                      {fileStatus.status === 'processing' && ' - Processing...'}
+                      {fileStatus.status === 'success' && ' - Completed'}
+                      {fileStatus.status === 'error' && fileStatus.error && ` - Error: ${fileStatus.error}`}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => removeFile(index)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                    disabled={fileStatus.status === 'processing'}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{fileStatus.file.name}</p>
-                  <p className="text-xs text-gray-500">
-                    {(fileStatus.file.size / 1024 / 1024).toFixed(1)} MB
-                    {fileStatus.status === 'processing' && ' - Processing...'}
-                    {fileStatus.status === 'success' && ' - Completed'}
-                    {fileStatus.status === 'error' && fileStatus.error && ` - Error: ${fileStatus.error}`}
-                  </p>
+                
+                <div className="pl-8">
+                  <SubjectSelector
+                    value={fileStatus.subject}
+                    onValueChange={(subject) => updateFileSubject(index, subject)}
+                    required
+                    className="max-w-xs"
+                  />
                 </div>
-                <Button
-                  onClick={() => removeFile(index)}
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
-                  disabled={fileStatus.status === 'processing'}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
               </div>
             ))}
           </div>
