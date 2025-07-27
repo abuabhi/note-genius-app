@@ -87,23 +87,35 @@ export const UpgradeDialog: React.FC<UpgradeDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden">
         {/* Hero Section */}
-        <div className={`bg-gradient-to-r ${info.color} text-white p-6 text-center`}>
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <TierIcon className="h-6 w-6" />
+        <div className={`bg-gradient-to-r ${info.color} text-white p-4 relative overflow-hidden`}>
+          {/* Premium background pattern */}
+          <div className="absolute inset-0 bg-white/5 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_50%)]"></div>
+          
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm border border-white/20">
+                <TierIcon className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <DialogTitle className="text-xl font-bold text-white leading-tight">
+                  Unlock {info.name}
+                </DialogTitle>
+                <DialogDescription className="text-white/80 text-sm">
+                  {info.tagline}
+                </DialogDescription>
+              </div>
+            </div>
+            
+            <div className="text-right">
+              <div className="text-2xl font-bold text-white leading-none">
+                {info.price}
+                <span className="text-sm font-normal text-white/80">/mo</span>
+              </div>
+              <Badge className="bg-white/20 text-white border-white/30 text-xs mt-1">
+                Popular
+              </Badge>
             </div>
           </div>
-          <DialogHeader className="text-center text-white space-y-2">
-            <DialogTitle className="text-2xl font-bold text-white">
-              Unlock {info.name} Features
-            </DialogTitle>
-            <DialogDescription className="text-white/90 text-base">
-              {info.tagline}
-            </DialogDescription>
-          </DialogHeader>
-          <Badge className="bg-white/20 text-white border-white/30 mt-2">
-            Most Popular Choice
-          </Badge>
         </div>
 
         {/* Benefits Section */}
