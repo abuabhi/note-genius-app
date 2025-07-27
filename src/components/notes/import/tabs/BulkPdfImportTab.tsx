@@ -2,45 +2,73 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Trash2, Upload } from 'lucide-react';
+import { FileText, Trash2, Upload, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { SubjectSelector } from '../components/SubjectSelector';
+import { processSelectedDocument } from '../importUtils';
 
 interface BulkPdfImportTabProps {
   onSaveNote: (note: any) => Promise<boolean>;
 }
 
+interface FileStatus {
+  file: File;
+  status: 'pending' | 'processing' | 'success' | 'error';
+  error?: string;
+}
+
 export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [fileStatuses, setFileStatuses] = useState<FileStatus[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<string>("PDF Imports");
 
   const handleFilesSelected = (files: FileList | null) => {
     if (files) {
       const pdfFiles = Array.from(files).filter(file => file.type === 'application/pdf');
-      setSelectedFiles(prev => [...prev, ...pdfFiles]);
+      const newFileStatuses = pdfFiles.map(file => ({ file, status: 'pending' as const }));
+      setFileStatuses(prev => [...prev, ...newFileStatuses]);
     }
   };
 
   const removeFile = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setFileStatuses(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateFileStatus = (index: number, status: FileStatus['status'], error?: string) => {
+    setFileStatuses(prev => prev.map((item, i) => 
+      i === index ? { ...item, status, error } : item
+    ));
   };
 
   const processFiles = async () => {
     setIsProcessing(true);
     
     try {
-      for (const file of selectedFiles) {
-        const note = {
-          title: file.name.replace('.pdf', ''),
-          content: `Content extracted from ${file.name}`,
-          date: new Date().toISOString(),
-          subject: selectedSubject,
-          description: `Bulk imported PDF: ${file.name}`,
-          sourceType: "import"
-        };
-        await onSaveNote(note);
+      for (let i = 0; i < fileStatuses.length; i++) {
+        const fileStatus = fileStatuses[i];
+        updateFileStatus(i, 'processing');
+        
+        try {
+          const result = await processSelectedDocument(fileStatus.file, 'application/pdf');
+          
+          const note = {
+            title: result.title || fileStatus.file.name.replace('.pdf', ''),
+            content: result.text,
+            date: new Date().toISOString(),
+            subject: selectedSubject,
+            description: `Bulk imported PDF: ${fileStatus.file.name}`,
+            sourceType: "import"
+          };
+          
+          await onSaveNote(note);
+          updateFileStatus(i, 'success');
+        } catch (error) {
+          console.error(`Error processing PDF ${fileStatus.file.name}:`, error);
+          updateFileStatus(i, 'error', error instanceof Error ? error.message : 'Unknown error');
+        }
       }
-      setSelectedFiles([]);
+      
+      // Clear successfully processed files
+      setFileStatuses(prev => prev.filter(item => item.status === 'error'));
     } catch (error) {
       console.error("Error processing PDFs:", error);
     } finally {
@@ -48,9 +76,22 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
     }
   };
 
+  const getStatusIcon = (status: FileStatus['status']) => {
+    switch (status) {
+      case 'processing':
+        return <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />;
+      case 'success':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'error':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return <FileText className="h-4 w-4 text-red-600" />;
+    }
+  };
+
   return (
     <div className="space-y-4">
-      {selectedFiles.length === 0 ? (
+      {fileStatuses.length === 0 ? (
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-mint-400 transition-colors bg-gray-50">
           <div className="space-y-3">
             <div className="mx-auto w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -79,9 +120,9 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
       ) : (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-sm font-medium text-gray-900">Selected Files ({selectedFiles.length})</h3>
+            <h3 className="text-sm font-medium text-gray-900">Selected Files ({fileStatuses.length})</h3>
             <Button
-              onClick={() => setSelectedFiles([])}
+              onClick={() => setFileStatuses([])}
               variant="outline"
               size="sm"
               className="h-8 px-3 text-xs"
@@ -97,18 +138,21 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
           />
           
           <div className="max-h-40 overflow-y-auto space-y-2">
-            {selectedFiles.map((file, index) => (
+            {fileStatuses.map((fileStatus, index) => (
               <div 
                 key={index} 
                 className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200"
               >
                 <div className="p-1.5 bg-red-50 rounded-md">
-                  <FileText className="h-4 w-4 text-red-600" />
+                  {getStatusIcon(fileStatus.status)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                  <p className="text-sm font-medium text-gray-900 truncate">{fileStatus.file.name}</p>
                   <p className="text-xs text-gray-500">
-                    {(file.size / 1024 / 1024).toFixed(1)} MB
+                    {(fileStatus.file.size / 1024 / 1024).toFixed(1)} MB
+                    {fileStatus.status === 'processing' && ' - Processing...'}
+                    {fileStatus.status === 'success' && ' - Completed'}
+                    {fileStatus.status === 'error' && fileStatus.error && ` - Error: ${fileStatus.error}`}
                   </p>
                 </div>
                 <Button
@@ -116,6 +160,7 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                  disabled={fileStatus.status === 'processing'}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
@@ -134,7 +179,7 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
                 Processing PDFs...
               </div>
             ) : (
-              `Process ${selectedFiles.length} PDF${selectedFiles.length > 1 ? 's' : ''}`
+              `Process ${fileStatuses.length} PDF${fileStatuses.length > 1 ? 's' : ''}`
             )}
           </Button>
         </div>
