@@ -34,18 +34,48 @@ serve(async (req) => {
 
     console.log('🎬 Starting Gladia.io YouTube transcription for:', youtubeUrl);
 
-    // Call Gladia.io API for transcription
-    console.log('📤 Sending request to Gladia.io API...');
+    // Download audio using yt-dlp
+    console.log('📥 Downloading audio from YouTube...');
+    const audioPath = "/tmp/audio.mp3";
+
+    const ytDlpProcess = new Deno.Command("/usr/bin/yt-dlp", {
+      args: [
+        "-x",
+        "--audio-format",
+        "mp3",
+        "-o",
+        audioPath,
+        youtubeUrl.trim(),
+      ],
+      stdout: "piped",
+      stderr: "piped",
+    });
+
+    const { code, stdout, stderr } = await ytDlpProcess.output();
+
+    if (code !== 0) {
+      const stderrText = new TextDecoder().decode(stderr);
+      console.error('❌ yt-dlp failed:', stderrText);
+      throw new Error(`Failed to download audio: ${stderrText}`);
+    }
+
+    console.log('✅ Audio downloaded successfully');
+
+    // Read the downloaded audio file
+    const audioData = await Deno.readFile(audioPath);
+    console.log('📄 Audio file size:', audioData.length, 'bytes');
+
+    // Call Gladia.io API for transcription with audio file
+    console.log('📤 Sending audio to Gladia.io API...');
+    const formData = new FormData();
+    formData.append("audio", new Blob([audioData], { type: "audio/mpeg" }), "audio.mp3");
+
     const gladiaResponse = await fetch('https://api.gladia.io/audio/text/audio-transcription/', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${gladiaApiKey}`,
-        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        audio_url: youtubeUrl.trim(),
-        language: 'auto'
-      })
+      body: formData
     });
 
     if (!gladiaResponse.ok) {
@@ -61,7 +91,7 @@ serve(async (req) => {
     console.log('✅ Gladia.io API response:', gladiaData);
 
     // Extract transcription data from Gladia.io response
-    const transcript = gladiaData.prediction || gladiaData.transcription || '';
+    const transcript = gladiaData.prediction || gladiaData.transcription || gladiaData.text || '';
     const videoTitle = gladiaData.metadata?.title || 'YouTube Video';
     const videoMetadata = {
       title: videoTitle,
@@ -69,6 +99,13 @@ serve(async (req) => {
       language: gladiaData.language,
       confidence: gladiaData.confidence
     };
+
+    // Clean up the temporary file
+    try {
+      await Deno.remove(audioPath);
+    } catch (cleanupError) {
+      console.warn('⚠️ Failed to clean up temporary file:', cleanupError);
+    }
 
     console.log('🎉 Transcription completed successfully');
     return new Response(JSON.stringify({
