@@ -42,9 +42,10 @@ serve(async (req) => {
     // Call Apify actor: transcriptdl/transcript-downloader-youtube-audio-scraper
     const actorId = 'transcriptdl/transcript-downloader-youtube-audio-scraper';
     
-    console.log('Calling Apify actor:', actorId);
+    console.log('Starting Apify actor run:', actorId);
     
-    const apifyResponse = await fetch(`https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items`, {
+    // Start the actor run
+    const runResponse = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apifyApiKey}`,
@@ -57,13 +58,30 @@ serve(async (req) => {
       }),
     });
 
-    if (!apifyResponse.ok) {
-      const errorText = await apifyResponse.text();
-      console.error('Apify API error:', errorText);
-      throw new Error(`Apify API error: ${apifyResponse.status} ${apifyResponse.statusText}. Details: ${errorText}`);
+    if (!runResponse.ok) {
+      const errorText = await runResponse.text();
+      console.error('Apify run start error:', errorText);
+      throw new Error(`Failed to start Apify actor: ${runResponse.status} ${runResponse.statusText}. Details: ${errorText}`);
     }
 
-    const apifyResults = await apifyResponse.json();
+    const runData = await runResponse.json();
+    console.log('Actor run started with ID:', runData.data.id);
+
+    // Wait for the run to complete and get dataset items
+    const waitResponse = await fetch(`https://api.apify.com/v2/actor-runs/${runData.data.id}/dataset-items`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apifyApiKey}`,
+      },
+    });
+
+    if (!waitResponse.ok) {
+      const errorText = await waitResponse.text();
+      console.error('Apify dataset fetch error:', errorText);
+      throw new Error(`Failed to fetch Apify results: ${waitResponse.status} ${waitResponse.statusText}. Details: ${errorText}`);
+    }
+
+    const apifyResults = await waitResponse.json();
     console.log('Apify actor completed, processing results...');
 
     if (!Array.isArray(apifyResults) || apifyResults.length === 0) {
