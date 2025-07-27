@@ -154,6 +154,7 @@ serve(async (req) => {
     
     // Check for various transcript field names
     const transcriptFields = [
+      'plain', // Primary field used by matthewjames~youtube-transcript-scraper-and-formatter
       'transcript', 
       'text', 
       'fullTranscript', 
