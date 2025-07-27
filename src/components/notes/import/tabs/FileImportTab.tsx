@@ -22,11 +22,6 @@ export const FileImportTab = ({ onSaveNote, onClose }: FileImportTabProps) => {
   const [selectedSubject, setSelectedSubject] = useState<string>("Imports");
   const [editableTitle, setEditableTitle] = useState<string>("");
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  
-  // Debug: Monitor when dialog state changes
-  React.useEffect(() => {
-    console.log("showSuccessDialog changed to:", showSuccessDialog);
-  }, [showSuccessDialog]);
   const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
   
@@ -71,14 +66,10 @@ export const FileImportTab = ({ onSaveNote, onClose }: FileImportTabProps) => {
         sourceType: "import"
       };
 
-      console.log("About to call onSaveNote");
       const success = await onSaveNote(note);
-      console.log("onSaveNote returned:", success);
       if (success) {
         toast.success("Note imported successfully!");
-        console.log("Setting success dialog to true");
         setShowSuccessDialog(true);
-        console.log("Success dialog state set to:", true);
       }
     } finally {
       setIsSaving(false);
@@ -86,13 +77,11 @@ export const FileImportTab = ({ onSaveNote, onClose }: FileImportTabProps) => {
   };
 
   const handleImportMore = () => {
-    console.log("handleImportMore called - closing dialog");
     setShowSuccessDialog(false);
     clearFiles();
   };
 
   const handleFinish = () => {
-    console.log("handleFinish called - closing dialog and navigating");
     setShowSuccessDialog(false);
     onClose?.();
     navigate("/notes");
