@@ -24,8 +24,6 @@ const RemindersPage = lazy(() => import('@/pages/RemindersPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
 const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
-const CollaborationPage = lazy(() => import('@/pages/CollaborationPage'));
-const ChatPage = lazy(() => import('@/pages/ChatPage'));
 const HelpPage = lazy(() => import('@/pages/HelpPage'));
 const FAQPage = lazy(() => import('@/pages/FAQPage'));
 const StudyPlannerPage = lazy(() => import('@/pages/StudyPlannerPage'));
@@ -140,14 +138,6 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/referrals',
     element: <SidebarLayout><ReferralsPage /></SidebarLayout>
-  },
-  {
-    path: '/collaboration',
-    element: <SidebarLayout><CollaborationPage /></SidebarLayout>
-  },
-  {
-    path: '/chat/*',
-    element: <SidebarLayout><ChatPage /></SidebarLayout>
   },
   {
     path: '/help',

@@ -18,14 +18,14 @@ export interface TierLimit {
   note_enrichment_limit_per_month: number | null;
   max_cards_per_set: number;
   max_ai_flashcard_generations_per_month: number;
-  max_collaborations: number;
+  
   ai_features_enabled: boolean;
   ai_flashcard_generation: boolean;
   note_enrichment_enabled: boolean;
   ocr_enabled: boolean;
-  collaboration_enabled: boolean;
+  
   priority_support: boolean;
-  chat_enabled: boolean;
+  
 }
 
 export const TierLimitsManagement = () => {
@@ -60,14 +60,14 @@ export const TierLimitsManagement = () => {
           note_enrichment_limit_per_month: updatedLimit.note_enrichment_limit_per_month,
           max_cards_per_set: updatedLimit.max_cards_per_set,
           max_ai_flashcard_generations_per_month: updatedLimit.max_ai_flashcard_generations_per_month,
-          max_collaborations: updatedLimit.max_collaborations,
+          
           ai_features_enabled: updatedLimit.ai_features_enabled,
           ai_flashcard_generation: updatedLimit.ai_flashcard_generation,
           note_enrichment_enabled: updatedLimit.note_enrichment_enabled,
           ocr_enabled: updatedLimit.ocr_enabled,
-          collaboration_enabled: updatedLimit.collaboration_enabled,
+          
           priority_support: updatedLimit.priority_support,
-          chat_enabled: updatedLimit.chat_enabled,
+          
         })
         .eq('tier', updatedLimit.tier);
 

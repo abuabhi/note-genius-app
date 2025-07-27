@@ -391,14 +391,6 @@ export const MergedSubscriptionCard = () => {
                   <span className="text-gray-700 text-xs">OCR Scanning</span>
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  {tierLimits.collaboration_enabled ? (
-                    <Check className="h-3 w-3 text-emerald-500" />
-                  ) : (
-                    <X className="h-3 w-3 text-gray-400" />
-                  )}
-                  <span className="text-gray-700 text-xs">Collaboration</span>
-                </div>
                 
                 <div className="flex items-center space-x-2">
                   {tierLimits.priority_support ? (

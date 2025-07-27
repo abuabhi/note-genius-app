@@ -340,23 +340,6 @@ export const SubscriptionLimitsCard = () => {
                 <span className="text-sm">OCR Scanning</span>
               </div>
               
-              <div className="flex items-center space-x-2">
-                {tierLimits.collaboration_enabled ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <X className="h-4 w-4 text-red-500" />
-                )}
-                <span className="text-sm">Collaboration</span>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                {tierLimits.chat_enabled ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <X className="h-4 w-4 text-red-500" />
-                )}
-                <span className="text-sm">Chat Features</span>
-              </div>
               
               <div className="flex items-center space-x-2">
                 {tierLimits.priority_support ? (

@@ -17,7 +17,6 @@ export const tierFeatures = {
     calendarIntegration: true,
     advancedAnalytics: true,
     smartScheduling: true,
-    collaborativeFeatures: true,
     unlimitedSets: true,
     smartQuizGeneration: true,
     personalizedLearningPath: true,
@@ -37,7 +36,6 @@ export const tierFeatures = {
     calendarIntegration: true,
     advancedAnalytics: true,
     smartScheduling: true,
-    collaborativeFeatures: true,
     unlimitedSets: true,
     smartQuizGeneration: true,
     personalizedLearningPath: true,
@@ -57,7 +55,6 @@ export const tierFeatures = {
     quizExplanations: true,
     advancedAnalytics: true,
     smartScheduling: true,
-    collaborativeFeatures: true,
     unlimitedSets: true,
     smartQuizGeneration: true,
     personalizedLearningPath: true,
@@ -73,7 +70,7 @@ export const tierFeatures = {
     exportImport: true,
     calendarIntegration: true,
     smartScheduling: true,
-    collaborativeFeatures: true,
+    
     unlimitedSets: true,
     basicQuizzes: true,
     basicProgress: true,
@@ -96,5 +93,5 @@ export const isPremiumTier = (tier: UserTier | undefined): boolean => {
 };
 
 export const isCollaborationEnabled = (tier: UserTier | undefined): boolean => {
-  return true; // Collaboration enabled for all
+  return false; // Collaboration feature removed
 };

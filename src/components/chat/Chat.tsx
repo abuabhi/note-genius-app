@@ -22,8 +22,7 @@ export const Chat = () => {
     if (!loading && tierLimits) {
       // Check if the user has chat features enabled or is DEAN tier
       setIsFeatureEnabled(
-        (tierLimits.chat_enabled !== undefined ? tierLimits.chat_enabled : false) || 
-        tierLimits.collaboration_enabled || 
+        false ||
         userProfile?.user_tier === UserTier.DEAN
       );
     }

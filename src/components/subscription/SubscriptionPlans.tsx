@@ -38,7 +38,7 @@ const plans: Plan[] = [
       { text: '50 AI enrichments/month', included: true },
       { text: '50 AI flashcard generations/month', included: true },
       { text: '500MB storage', included: true },
-      { text: '5 collaborations', included: true },
+      
       { text: 'AI features enabled', included: true },
       { text: 'OCR enabled', included: true },
     ],
@@ -58,7 +58,7 @@ const plans: Plan[] = [
       { text: '200 AI enrichments/month', included: true },
       { text: '200 AI flashcard generations/month', included: true },
       { text: '2GB storage', included: true },
-      { text: '15 collaborations', included: true },
+      
       { text: 'All AI features', included: true },
       { text: 'Priority support', included: true },
     ],

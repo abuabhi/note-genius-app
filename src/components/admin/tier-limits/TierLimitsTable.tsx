@@ -48,10 +48,10 @@ export const TierLimitsTable = ({ tierLimits, onEditTier }: TierLimitsTableProps
             <TableHead>Storage (MB)</TableHead>
             <TableHead>AI Enrichments/Month</TableHead>
             <TableHead>AI Generations/Month</TableHead>
-            <TableHead>Collaborations</TableHead>
+            
             <TableHead>AI Features</TableHead>
             <TableHead>OCR</TableHead>
-            <TableHead>Chat</TableHead>
+            
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -69,7 +69,7 @@ export const TierLimitsTable = ({ tierLimits, onEditTier }: TierLimitsTableProps
               <TableCell>{formatValue(limit.max_storage_mb)}</TableCell>
               <TableCell>{formatValue(limit.note_enrichment_limit_per_month)}</TableCell>
               <TableCell>{formatValue(limit.max_ai_flashcard_generations_per_month)}</TableCell>
-              <TableCell>{formatValue(limit.max_collaborations)}</TableCell>
+              
               <TableCell>
                 {limit.ai_features_enabled ? (
                   <Check className="h-4 w-4 text-green-500" />
@@ -79,13 +79,6 @@ export const TierLimitsTable = ({ tierLimits, onEditTier }: TierLimitsTableProps
               </TableCell>
               <TableCell>
                 {limit.ocr_enabled ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <X className="h-4 w-4 text-red-500" />
-                )}
-              </TableCell>
-              <TableCell>
-                {limit.chat_enabled ? (
                   <Check className="h-4 w-4 text-green-500" />
                 ) : (
                   <X className="h-4 w-4 text-red-500" />

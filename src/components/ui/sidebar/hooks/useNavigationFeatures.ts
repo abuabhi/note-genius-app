@@ -2,9 +2,9 @@
 // Simplified navigation features hook - all features are now permanently visible
 export const useNavigationFeatures = () => {
   // All features are now permanently visible
-  const isChatVisible = true;
-  const isCollaborationVisible = true;
-  const isConnectionsVisible = true;
+  const isChatVisible = false;
+  const isCollaborationVisible = false;
+  const isConnectionsVisible = false;
   const isStudySessionsVisible = true;
   const isTodosVisible = true;
   const isProgressVisible = true;
@@ -13,7 +13,7 @@ export const useNavigationFeatures = () => {
   const isQuizzesVisible = true;
   
   // All communication, study, and planning items are visible
-  const isAnyCommunicationItemVisible = true;
+  const isAnyCommunicationItemVisible = false;
   const isAnyStudyItemVisible = true;
   const isAnyPlanningItemVisible = true;
 

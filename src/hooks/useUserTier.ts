@@ -24,9 +24,9 @@ export interface TierLimits {
   ai_flashcard_generation: boolean;
   note_enrichment_enabled: boolean;
   ocr_enabled: boolean;
-  collaboration_enabled: boolean;
+  
   priority_support: boolean;
-  chat_enabled: boolean;
+  
 }
 
 // Legacy interface for backward compatibility

@@ -13,7 +13,7 @@ const CollaborationHub = () => {
   const [activeTab, setActiveTab] = useState("study-groups");
   
   // Show limited features for SCHOLAR tier
-  const isCollaborationEnabled = tierLimits?.collaboration_enabled || false;
+  const isCollaborationEnabled = false;
 
   if (loading) {
     return (

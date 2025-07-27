@@ -36,14 +36,14 @@ const tierLimitSchema = z.object({
   note_enrichment_limit_per_month: z.number().int().min(-1).nullable(),
   max_cards_per_set: z.number().int().min(-1),
   max_ai_flashcard_generations_per_month: z.number().int().min(-1),
-  max_collaborations: z.number().int().min(-1),
+  
   ai_features_enabled: z.boolean(),
   ai_flashcard_generation: z.boolean(),
   note_enrichment_enabled: z.boolean(),
   ocr_enabled: z.boolean(),
-  collaboration_enabled: z.boolean(),
+  
   priority_support: z.boolean(),
-  chat_enabled: z.boolean(),
+  
 });
 
 type TierLimitFormData = z.infer<typeof tierLimitSchema>;
@@ -73,14 +73,14 @@ export const EditTierLimitDialog = ({
       note_enrichment_limit_per_month: 0,
       max_cards_per_set: 0,
       max_ai_flashcard_generations_per_month: 0,
-      max_collaborations: 0,
+      
       ai_features_enabled: false,
       ai_flashcard_generation: false,
       note_enrichment_enabled: false,
       ocr_enabled: false,
-      collaboration_enabled: false,
+      
       priority_support: false,
-      chat_enabled: false,
+      
     },
   });
 
@@ -238,24 +238,6 @@ export const EditTierLimitDialog = ({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="max_collaborations"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Max Collaborations</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      />
-                    </FormControl>
-                    <FormDescription>-1 for unlimited</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
 
             <div className="space-y-4">
@@ -325,37 +307,6 @@ export const EditTierLimitDialog = ({
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="collaboration_enabled"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel>Collaboration</FormLabel>
-                        <FormDescription>Team collaboration features</FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="chat_enabled"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel>Chat</FormLabel>
-                        <FormDescription>In-app messaging</FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
 
                 <FormField
                   control={form.control}
