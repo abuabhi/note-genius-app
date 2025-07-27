@@ -6,8 +6,8 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 2 * 60 * 1000, // 2 minutes - notes don't change that frequently
-      gcTime: 5 * 60 * 1000, // 5 minutes - keep in cache longer for better UX
+      staleTime: 30 * 1000, // 30 seconds - more responsive for navigation
+      gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache longer for better UX
       retry: (failureCount, error) => {
         // Don't retry on authentication errors
         if (error?.message?.includes('auth') || error?.message?.includes('unauthorized')) {

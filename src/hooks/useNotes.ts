@@ -31,15 +31,16 @@ export const useNotes = () => {
   const [sortType, setSortType] = useState('newest');
   const [showArchived, setShowArchived] = useState(false);
   
-  // Query key for caching
+  // Simplified query key for better caching
   const queryKey = useMemo(() => [
     'notes',
     user?.id,
-    searchTerm,
-    selectedSubject,
-    sortType,
-    showArchived
-  ], [user?.id, searchTerm, selectedSubject, sortType, showArchived]);
+    // Only include filters in key if they're active to improve cache hits
+    searchTerm || null,
+    selectedSubject !== 'all' ? selectedSubject : null,
+    sortType !== 'newest' ? sortType : null,
+    showArchived || null
+  ].filter(Boolean), [user?.id, searchTerm, selectedSubject, sortType, showArchived]);
 
   // Fetch notes with server-side filtering
   const { data: queryResult, isLoading, error, refetch } = useQuery({
@@ -70,7 +71,9 @@ export const useNotes = () => {
       return response;
     },
     enabled: !!user?.id,
-    staleTime: 30000, // 30 seconds
+    staleTime: 5000, // 5 seconds - much more responsive for navigation
+    gcTime: 30000, // Keep in cache for 30 seconds for back navigation
+    refetchOnMount: 'always', // Always refetch when mounting to ensure fresh data
   });
 
   // Extract data from query result
@@ -111,7 +114,11 @@ export const useNotes = () => {
       return mapDbToNote(data);
     },
     onSuccess: (newNote) => {
-      queryClient.invalidateQueries({ queryKey: ['notes', user?.id] });
+      // More targeted invalidation for better performance
+      queryClient.invalidateQueries({ 
+        queryKey: ['notes'],
+        exact: false 
+      });
       toast.success('Note created successfully');
     },
     onError: (error) => {
@@ -146,7 +153,11 @@ export const useNotes = () => {
       return mapDbToNote(data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes', user?.id] });
+      // More targeted invalidation for better performance
+      queryClient.invalidateQueries({ 
+        queryKey: ['notes'],
+        exact: false 
+      });
       toast.success('Note updated successfully');
     },
     onError: (error) => {
@@ -166,7 +177,11 @@ export const useNotes = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes', user?.id] });
+      // More targeted invalidation for better performance
+      queryClient.invalidateQueries({ 
+        queryKey: ['notes'],
+        exact: false 
+      });
       toast.success('Note deleted successfully');
     },
     onError: (error) => {
