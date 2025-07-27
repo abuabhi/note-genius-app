@@ -88,14 +88,17 @@ serve(async (req) => {
       const price = await stripe.prices.retrieve(priceId);
       const amount = price.unit_amount || 0;
       
-      // Convert from cents and determine tier based on AUD pricing
+      // Convert from cents and determine tier based on correct pricing
       const amountInDollars = amount / 100;
-      if (amountInDollars >= 1999 || amountInDollars >= 2499) { // Annual Master or Monthly Master
+      logStep("Processing price amount", { priceId, amount, amountInDollars });
+      
+      // Fix tier detection logic - Graduate is $14.99, Master is $24.99+
+      if (amountInDollars >= 24.99) { // Master tier
         subscriptionTier = "MASTER";
-      } else if (amountInDollars >= 1199 || amountInDollars >= 1499) { // Annual Graduate or Monthly Graduate
+      } else if (amountInDollars >= 14.99) { // Graduate tier
         subscriptionTier = "GRADUATE";
       } else {
-        subscriptionTier = "SCHOLAR"; // Default fallback
+        subscriptionTier = "SCHOLAR"; // Default fallback for unknown pricing
       }
       
       logStep("Determined subscription tier", { priceId, amount, amountInDollars, subscriptionTier });
