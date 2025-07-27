@@ -17,9 +17,18 @@ serve(async (req) => {
   }
 
   try {
-    const { youtubeUrl } = await req.json();
+    console.log('🔍 Function started, checking environment variables...');
+    console.log('SUPABASE_URL:', supabaseUrl ? 'present' : 'missing');
+    console.log('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'present' : 'missing');
+    console.log('GLADIA_API_KEY:', gladiaApiKey ? 'present' : 'missing');
+
+    const requestBody = await req.json();
+    console.log('📥 Request body:', requestBody);
+    
+    const { youtubeUrl } = requestBody;
     
     if (!youtubeUrl) {
+      console.error('❌ YouTube URL is missing');
       throw new Error('YouTube URL is required');
     }
 
