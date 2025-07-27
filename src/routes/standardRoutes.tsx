@@ -9,6 +9,7 @@ const FlashcardsPage = lazy(() => import('@/pages/FlashcardsPage'));
 const FlashcardSetPage = lazy(() => import('@/pages/FlashcardSetPage'));
 const CreateFlashcardSetPage = lazy(() => import('@/pages/CreateFlashcardSetPage'));
 const CreateFlashcardPage = lazy(() => import('@/pages/CreateFlashcardPage'));
+const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
 const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
@@ -46,6 +47,10 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/flashcards/:setId/create',
     element: <SidebarLayout><CreateFlashcardPage /></SidebarLayout>
+  },
+  {
+    path: '/flashcards/study/:id',
+    element: <SidebarLayout><FlashcardStudyPage /></SidebarLayout>
   },
   {
     path: '/flashcards/:id',

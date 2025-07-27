@@ -55,7 +55,7 @@ export const FlashcardSetActionsMenu = ({
   };
 
   const handleStudy = () => {
-    navigate(`/flashcards/${set.id}/study`);
+    navigate(`/flashcards/study/${set.id}`);
   };
 
   const handleTogglePin = () => {

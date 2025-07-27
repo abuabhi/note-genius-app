@@ -34,7 +34,7 @@ export const FlashcardSetListCard = ({
   const navigate = useNavigate();
   
   const handleStudySet = () => {
-    navigate(`/flashcards/${set.id}/study`);
+    navigate(`/flashcards/study/${set.id}`);
   };
 
   const handleSetClick = () => {
