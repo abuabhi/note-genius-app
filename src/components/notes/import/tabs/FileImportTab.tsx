@@ -210,7 +210,7 @@ export const FileImportTab = ({ onSaveNote, onClose }: FileImportTabProps) => {
         </Card>
       )}
 
-      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+      <Dialog open={showSuccessDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
