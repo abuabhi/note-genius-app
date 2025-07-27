@@ -2,7 +2,6 @@ import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
-import { PREDEFINED_SUBJECTS } from "@/types/subject";
 
 interface SubjectSelectorProps {
   value: string;
@@ -19,11 +18,8 @@ export const SubjectSelector = ({
 }: SubjectSelectorProps) => {
   const { subjects, isLoading } = useUserSubjects();
 
-  // Combine predefined subjects with user-created subjects
-  const allSubjects = [
-    ...PREDEFINED_SUBJECTS,
-    ...subjects.map(s => s.name).filter(name => !PREDEFINED_SUBJECTS.includes(name as any))
-  ];
+  // Only show user's selected subjects from onboarding
+  const userSubjects = subjects.map(s => s.name);
 
   return (
     <div className={`space-y-2 ${className}`}>
@@ -35,7 +31,7 @@ export const SubjectSelector = ({
           <SelectValue placeholder={isLoading ? "Loading subjects..." : "Select a subject"} />
         </SelectTrigger>
         <SelectContent>
-          {allSubjects.map((subject) => (
+          {userSubjects.map((subject) => (
             <SelectItem key={subject} value={subject}>
               {subject}
             </SelectItem>

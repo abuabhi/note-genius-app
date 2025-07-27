@@ -120,9 +120,9 @@ export const FileImportTab = ({ onSaveNote }: FileImportTabProps) => {
           <ProcessedContent 
             title={documentTitle}
             content={processedText}
-            onSave={async () => {
+            onSave={async (finalTitle: string) => {
               const note = {
-                title: documentTitle,
+                title: finalTitle,
                 content: processedText,
                 date: new Date().toISOString(),
                 subject: selectedSubject,
