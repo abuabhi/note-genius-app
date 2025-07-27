@@ -101,9 +101,51 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
     );
   }
 
+  // Get current tier display info
+  const getCurrentTierDisplay = () => {
+    switch (userTier) {
+      case UserTier.SCHOLAR:
+        return { name: 'Scholar', icon: Brain, color: 'text-gray-600', bgColor: 'bg-gray-100' };
+      case UserTier.GRADUATE:
+        return { name: 'Graduate', icon: Crown, color: 'text-mint-600', bgColor: 'bg-mint-100' };
+      case UserTier.MASTER:
+        return { name: 'Master', icon: Zap, color: 'text-purple-600', bgColor: 'bg-purple-100' };
+      case UserTier.DEAN:
+        return { name: 'Dean', icon: Sparkles, color: 'text-amber-600', bgColor: 'bg-amber-100' };
+      default:
+        return { name: 'Scholar', icon: Brain, color: 'text-gray-600', bgColor: 'bg-gray-100' };
+    }
+  };
+
+  const currentTierDisplay = getCurrentTierDisplay();
+
   return (
     <div className="flex flex-col p-2 space-y-2">
-      {/* Upgrade Suggestion - Always show for Scholar tier */}
+      {/* Current Tier Display */}
+      {!isCollapsed && (
+        <div className="bg-white border border-gray-200/50 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <div className={`w-6 h-6 ${currentTierDisplay.bgColor} rounded-full flex items-center justify-center`}>
+              <currentTierDisplay.icon className={`h-3 w-3 ${currentTierDisplay.color}`} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-gray-900">Current Plan</p>
+              <p className={`text-xs font-medium ${currentTierDisplay.color}`}>{currentTierDisplay.name}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Compact tier display for collapsed sidebar */}
+      {isCollapsed && (
+        <div className="flex justify-center">
+          <div className={`w-8 h-8 ${currentTierDisplay.bgColor} rounded-full flex items-center justify-center`}>
+            <currentTierDisplay.icon className={`h-4 w-4 ${currentTierDisplay.color}`} />
+          </div>
+        </div>
+      )}
+
+      {/* Upgrade Suggestion - Only show if user can upgrade */}
       {upgradeSuggestion && !isCollapsed && (
         <div 
           className="bg-gradient-to-r from-mint-50 to-emerald-50 border border-mint-200/50 rounded-lg p-3 cursor-pointer hover:from-mint-100 hover:to-emerald-100 transition-all"
@@ -139,13 +181,6 @@ export const LogoutSection = ({ isCollapsed }: LogoutSectionProps) => {
           >
             <ArrowUp className="h-2 w-2" />
           </Badge>
-        </div>
-      )}
-
-      {/* Debug info - only in development */}
-      {process.env.NODE_ENV === 'development' && !isCollapsed && (
-        <div className="text-xs text-gray-500 p-1 bg-gray-50 rounded">
-          Tier: {userTier} | Suggestion: {upgradeSuggestion ? 'Yes' : 'No'}
         </div>
       )}
 

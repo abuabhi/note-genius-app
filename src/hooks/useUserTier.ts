@@ -72,6 +72,7 @@ export const useUserTier = () => {
   const { user } = useAuth();
   const [userTier, setUserTier] = useState<UserTier>(UserTier.SCHOLAR);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Fetch user tier from profile - DEAN tier is permanent and doesn't require subscription
   useEffect(() => {
@@ -140,7 +141,7 @@ export const useUserTier = () => {
     };
 
     fetchUserTier();
-  }, [user]);
+  }, [user, refreshKey]);
 
   // Fetch tier limits from database
   const { data: databaseTierLimits, isLoading: tierLimitsLoading } = useQuery({
@@ -166,11 +167,17 @@ export const useUserTier = () => {
   // Check if user is on a premium tier
   const isUserPremium = userTier !== UserTier.SCHOLAR;
 
+  // Manual refresh function
+  const refreshTier = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
   return { 
     userTier, 
     tierLimits: databaseTierLimits, // New database-driven limits
     legacyTierLimits: tierLimits, // Keep legacy for backward compatibility
     isLoading: isLoading || tierLimitsLoading, 
-    isUserPremium 
+    isUserPremium,
+    refreshTier
   };
 };

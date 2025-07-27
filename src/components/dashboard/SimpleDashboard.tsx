@@ -4,21 +4,33 @@ import { useAuth } from '@/contexts/auth';
 import { DashboardDebugger } from '@/components/debug/DashboardDebugger';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
+import { useUserTier } from '@/hooks/useUserTier';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 
 export const SimpleDashboard = memo(() => {
   console.log('🏠 [SIMPLE DASHBOARD] Component rendering');
   
   const { user, loading } = useAuth();
   const [searchParams] = useSearchParams();
+  const { refreshTier } = useUserTier();
+  const { checkSubscriptionStatus } = useSubscription();
 
-  // Check for payment success and show toast
+  // Check for payment success and refresh tier data
   useEffect(() => {
     if (searchParams.get('payment') === 'success') {
       toast.success('Payment successful! Welcome to your new plan!', {
         duration: 5000,
       });
+      
+      // Refresh both subscription and tier data after successful payment
+      const refreshData = async () => {
+        await checkSubscriptionStatus();
+        refreshTier();
+      };
+      
+      refreshData();
     }
-  }, [searchParams]);
+  }, [searchParams, checkSubscriptionStatus, refreshTier]);
   
   console.log('🏠 [SIMPLE DASHBOARD] Auth state:', { 
     userId: user?.id, 
