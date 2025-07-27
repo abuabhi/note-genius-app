@@ -67,21 +67,55 @@ serve(async (req) => {
     const runData = await runResponse.json();
     console.log('Actor run started with ID:', runData.data.id);
 
-    // Wait for the run to complete and get dataset items
-    const waitResponse = await fetch(`https://api.apify.com/v2/actor-runs/${runData.data.id}/dataset-items`, {
+    // Poll for run completion with timeout
+    const runId = runData.data.id;
+    const maxWaitTime = 300000; // 5 minutes
+    const pollInterval = 5000; // 5 seconds
+    const startTime = Date.now();
+    
+    let runStatus = 'RUNNING';
+    console.log('Waiting for actor run to complete...');
+    
+    while (runStatus === 'RUNNING' && (Date.now() - startTime) < maxWaitTime) {
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      
+      const statusResponse = await fetch(`https://api.apify.com/v2/actor-runs/${runId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apifyApiKey}`,
+        },
+      });
+      
+      if (!statusResponse.ok) {
+        throw new Error(`Failed to check run status: ${statusResponse.status}`);
+      }
+      
+      const statusData = await statusResponse.json();
+      runStatus = statusData.data.status;
+      console.log(`Run status: ${runStatus}`);
+    }
+    
+    if (runStatus !== 'SUCCEEDED') {
+      throw new Error(`Actor run failed or timed out. Final status: ${runStatus}`);
+    }
+    
+    console.log('Actor run completed successfully, fetching results...');
+    
+    // Now fetch the dataset items
+    const datasetResponse = await fetch(`https://api.apify.com/v2/actor-runs/${runId}/dataset-items`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${apifyApiKey}`,
       },
     });
 
-    if (!waitResponse.ok) {
-      const errorText = await waitResponse.text();
+    if (!datasetResponse.ok) {
+      const errorText = await datasetResponse.text();
       console.error('Apify dataset fetch error:', errorText);
-      throw new Error(`Failed to fetch Apify results: ${waitResponse.status} ${waitResponse.statusText}. Details: ${errorText}`);
+      throw new Error(`Failed to fetch Apify results: ${datasetResponse.status} ${datasetResponse.statusText}. Details: ${errorText}`);
     }
 
-    const apifyResults = await waitResponse.json();
+    const apifyResults = await datasetResponse.json();
     console.log('Apify actor completed, processing results...');
 
     if (!Array.isArray(apifyResults) || apifyResults.length === 0) {
