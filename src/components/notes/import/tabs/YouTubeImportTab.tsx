@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     status: 'idle',
     message: ''
   });
+  const saveNoteRef = useRef<HTMLDivElement>(null);
 
   const isValidYouTubeUrl = (url: string) => {
     const regex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}/;
@@ -126,6 +127,14 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
           enhanced: result.enhanced
         }
       }));
+
+      // Auto-scroll to save section
+      setTimeout(() => {
+        saveNoteRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+      }, 500);
 
     } catch (error) {
       console.error('Transcription error:', error);
@@ -255,7 +264,12 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
         <Alert className="mt-4 border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            <p className="font-medium">{message}</p>
+            <div className="space-y-2">
+              <p className="font-medium">{message}</p>
+              <p className="text-sm">
+                ✅ Ready to save! Scroll down to customize and save your note.
+              </p>
+            </div>
           </AlertDescription>
         </Alert>
       );
@@ -272,9 +286,11 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Left Column - Input and Controls */}
-      <div className="space-y-6">
+    <div className="space-y-6">
+      {/* Top Section - Input and Controls */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column - URL Input */}
+        <div className="space-y-6">
         {/* URL Input Section */}
         <Card>
           <CardContent className="p-4">
@@ -324,62 +340,10 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
           </CardContent>
         </Card>
 
-        {/* Note Preview Section */}
-        {transcriptionState.status === 'completed' && (
-          <Card>
-            <CardContent className="p-4">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <FileText className="h-5 w-5 text-mint-500" />
-                  <h4 className="font-medium text-gray-900">Save as Note</h4>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="note-title">Note Title</Label>
-                    <Input
-                      id="note-title"
-                      value={noteTitle}
-                      onChange={(e) => setNoteTitle(e.target.value)}
-                      placeholder="Enter note title"
-                    />
-                  </div>
-                  
-                  <SubjectSelector
-                    value={selectedSubject}
-                    onValueChange={setSelectedSubject}
-                    required
-                  />
-                  
-                  <div>
-                    <Label htmlFor="note-content">Note Content</Label>
-                    <Textarea
-                      id="note-content"
-                      value={noteContent}
-                      onChange={(e) => setNoteContent(e.target.value)}
-                      placeholder="Note content will appear here..."
-                      rows={6}
-                      className="resize-vertical"
-                    />
-                  </div>
-                  
-                  <Button
-                    onClick={handleSaveNote}
-                    disabled={!noteTitle.trim() || !noteContent.trim()}
-                    className="w-full bg-mint-600 hover:bg-mint-700"
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
-                    Save YouTube Note
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+        </div>
 
-      {/* Right Column - Video Preview */}
-      <div className="space-y-6">
+        {/* Right Column - Video Preview */}
+        <div className="space-y-6">
         {youtubeUrl && isValidYouTubeUrl(youtubeUrl) && (
           <Card className="sticky top-4">
             <CardContent className="p-4">
@@ -413,7 +377,96 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
             </CardContent>
           </Card>
         )}
+        </div>
       </div>
+
+      {/* Bottom Section - Save Note (Full Width for Better Visibility) */}
+      {transcriptionState.status === 'completed' && (
+        <div ref={saveNoteRef} className="border-t-2 border-mint-200 pt-6">
+          <Card className="ring-2 ring-mint-200 ring-opacity-50 shadow-lg">
+            <CardContent className="p-6">
+              <div className="space-y-6">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-gradient-to-r from-mint-500 to-mint-600 rounded-full flex items-center justify-center">
+                      <FileText className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">Save Your YouTube Note</h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Customize the note details and save to your collection
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="note-title" className="text-base font-medium">Note Title</Label>
+                      <Input
+                        id="note-title"
+                        value={noteTitle}
+                        onChange={(e) => setNoteTitle(e.target.value)}
+                        placeholder="Enter note title"
+                        className="mt-1 text-base"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label className="text-base font-medium">Subject</Label>
+                      <div className="mt-1">
+                        <SubjectSelector
+                          value={selectedSubject}
+                          onValueChange={setSelectedSubject}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="note-content" className="text-base font-medium">Note Content Preview</Label>
+                    <Textarea
+                      id="note-content"
+                      value={noteContent}
+                      onChange={(e) => setNoteContent(e.target.value)}
+                      placeholder="Note content will appear here..."
+                      rows={6}
+                      className="mt-1 resize-vertical text-sm"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
+                  <Button
+                    onClick={handleSaveNote}
+                    disabled={!noteTitle.trim() || !noteContent.trim()}
+                    className="flex-1 h-12 text-base font-semibold bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 shadow-lg"
+                    size="lg"
+                  >
+                    <FileText className="mr-2 h-5 w-5" />
+                    Save YouTube Note
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setTranscriptionState({ status: 'idle', message: '' });
+                      setYoutubeUrl('');
+                      setNoteTitle('');
+                      setNoteContent('');
+                    }}
+                    className="sm:w-auto w-full h-12 text-base"
+                  >
+                    Start Over
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
