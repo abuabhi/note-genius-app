@@ -163,23 +163,24 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
   const formatTranscriptContent = (data: any) => {
     let content = '';
     
-    // Video metadata
-    content += `# ${data.videoTitle}\n\n`;
-    content += `**YouTube URL:** ${youtubeUrl}\n`;
-    if (data.videoMetadata?.videoId) {
-      content += `**Video ID:** ${data.videoMetadata.videoId}\n`;
-    }
+    // YouTube URL as clickable link
+    content += `**YouTube URL:** [YouTube Video](${youtubeUrl})\n\n`;
+    
+    // Optional metadata (language and confidence if available)
     if (data.videoMetadata?.language) {
       content += `**Language:** ${data.videoMetadata.language}\n`;
     }
     if (data.videoMetadata?.confidence) {
       content += `**Confidence:** ${Math.round(data.videoMetadata.confidence * 100)}%\n`;
     }
-    content += `**Extracted:** ${new Date().toLocaleDateString()}\n`;
     if (data.videoMetadata?.enhanced) {
       content += `**Enhanced:** Yes (Gladia AI)\n`;
     }
-    content += `**Source:** Apify Direct Transcript\n\n`;
+    
+    // Add spacing before transcript if we have metadata
+    if (data.videoMetadata?.language || data.videoMetadata?.confidence || data.videoMetadata?.enhanced) {
+      content += '\n';
+    }
     
     // Full transcript
     if (data.transcript) {
