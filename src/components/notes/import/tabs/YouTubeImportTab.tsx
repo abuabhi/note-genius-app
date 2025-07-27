@@ -17,15 +17,12 @@ interface YouTubeImportTabProps {
 
 interface TranscriptionState {
   status: 'idle' | 'processing' | 'completed' | 'error';
-  progress: number;
   message: string;
-  requestId?: string;
   videoTitle?: string;
   transcript?: string;
   summary?: string;
   videoMetadata?: any;
   error?: string;
-  errorType?: string;
 }
 
 export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
@@ -34,7 +31,6 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
   const [noteContent, setNoteContent] = useState('');
   const [transcriptionState, setTranscriptionState] = useState<TranscriptionState>({
     status: 'idle',
-    progress: 0,
     message: ''
   });
 
@@ -43,78 +39,11 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     return regex.test(url);
   };
 
-  // Polling function for async processing
-  const pollTranscriptionStatus = async (requestId: string) => {
-    const maxAttempts = 30; // 5 minutes at 10-second intervals
-    let attempts = 0;
-
-    const poll = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('youtube-transcription-status', {
-          body: { requestId }
-        });
-
-        if (error) throw error;
-
-        console.log('📊 Polling response:', data);
-
-        if (data.processingStatus === 'completed' && data.transcript) {
-          // Processing completed
-          setTranscriptionState({
-            status: 'completed',
-            progress: 100,
-            message: '🎉 Transcription completed successfully!',
-            videoTitle: data.videoTitle,
-            transcript: data.transcript,
-            summary: data.summary,
-            videoMetadata: data.videoMetadata
-          });
-
-          // Auto-populate note fields
-          setNoteTitle(data.videoTitle || 'YouTube Video Transcript');
-          setNoteContent(formatTranscriptContent(data));
-
-        } else if (data.processingStatus === 'processing') {
-          // Still processing - update progress
-          const progressPercent = Math.min(20 + (attempts * 2), 90);
-          setTranscriptionState(prev => ({
-            ...prev,
-            progress: progressPercent,
-            message: `Processing video... (${Math.floor(attempts / 6) + 1} minute${Math.floor(attempts / 6) === 0 ? '' : 's'} elapsed)`
-          }));
-
-          // Continue polling
-          attempts++;
-          if (attempts < maxAttempts) {
-            setTimeout(poll, 10000); // Poll every 10 seconds
-          } else {
-            throw new Error('Processing timed out. Please try again with a shorter video.');
-          }
-        } else if (data.processingStatus === 'error') {
-          throw new Error(data.error || 'Processing failed');
-        }
-
-      } catch (error) {
-        console.error('Polling error:', error);
-        setTranscriptionState({
-          status: 'error',
-          progress: 0,
-          message: error.message || 'Failed to check processing status',
-          error: error.message,
-          errorType: 'polling_failed'
-        });
-      }
-    };
-
-    // Start polling
-    setTimeout(poll, 5000); // First poll after 5 seconds
-  };
 
   const handleTranscribe = async () => {
     if (!youtubeUrl.trim()) {
       setTranscriptionState({
         status: 'error',
-        progress: 0,
         message: 'Please enter a YouTube URL',
         error: 'YouTube URL is required'
       });
@@ -124,7 +53,6 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     if (!isValidYouTubeUrl(youtubeUrl)) {
       setTranscriptionState({
         status: 'error',
-        progress: 0,
         message: 'Please enter a valid YouTube URL',
         error: 'Invalid YouTube URL format'
       });
@@ -134,15 +62,12 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     try {
       setTranscriptionState({
         status: 'processing',
-        progress: 10,
-        message: 'Starting transcription process...'
+        message: 'Processing video with n8n...'
       });
 
       const { data, error } = await supabase.functions.invoke('youtube-transcription', {
         body: { 
-          youtubeUrl: youtubeUrl.trim(),
-          userId: 'user-id', // Get from auth context
-          noteTitle: noteTitle || undefined
+          youtubeUrl: youtubeUrl.trim()
         }
       });
 
@@ -154,43 +79,26 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
         throw new Error(data.error || 'Transcription failed');
       }
 
-      if (data.processingStatus === 'completed') {
-        // Immediate completion (fast processing)
-        setTranscriptionState({
-          status: 'completed',
-          progress: 100,
-          message: '🎉 Transcription completed!',
-          videoTitle: data.videoTitle,
-          transcript: data.transcript,
-          summary: data.summary,
-          videoMetadata: data.videoMetadata
-        });
+      // Process completed response
+      setTranscriptionState({
+        status: 'completed',
+        message: '🎉 Transcription completed!',
+        videoTitle: data.videoTitle,
+        transcript: data.transcript,
+        summary: data.summary,
+        videoMetadata: data.videoMetadata
+      });
 
-        setNoteTitle(data.videoTitle || 'YouTube Video Transcript');
-        setNoteContent(formatTranscriptContent(data));
-
-      } else if (data.processingStatus === 'processing') {
-        // Async processing started
-        setTranscriptionState({
-          status: 'processing',
-          progress: 20,
-          message: 'Your video is being processed... This will take 1-5 minutes.',
-          requestId: data.requestId
-        });
-
-        // Start polling for results
-        pollTranscriptionStatus(data.requestId);
-      }
+      setNoteTitle(data.videoTitle || 'YouTube Video Transcript');
+      setNoteContent(formatTranscriptContent(data));
 
     } catch (error) {
       console.error('Transcription error:', error);
       
       setTranscriptionState({
         status: 'error',
-        progress: 0,
         message: error.message || 'Transcription failed',
-        error: error.message,
-        errorType: 'transcription_failed'
+        error: error.message
       });
     }
   };
@@ -250,7 +158,6 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
       setNoteContent('');
       setTranscriptionState({
         status: 'idle',
-        progress: 0,
         message: ''
       });
     }
@@ -259,13 +166,12 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
   const handleRetry = () => {
     setTranscriptionState({
       status: 'idle',
-      progress: 0,
       message: ''
     });
   };
 
   const renderStatus = () => {
-    const { status, progress, message, error, errorType } = transcriptionState;
+    const { status, message, error } = transcriptionState;
 
     if (status === 'idle') return null;
 
@@ -311,16 +217,6 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
           <Loader2 className="h-5 w-5 animate-spin text-mint-600" />
           <span className="font-medium">{message}</span>
         </div>
-        <div className="space-y-2">
-          <Progress value={progress} className="w-full h-2" />
-          <div className="flex justify-between text-xs text-gray-500">
-            <span>Processing...</span>
-            <span>{progress}%</span>
-          </div>
-        </div>
-        <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-          💡 Processing will take 1-5 minutes. You can continue using the app while we work on your video!
-        </div>
       </div>
     );
   };
@@ -336,7 +232,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
               <div>
                 <h4 className="font-medium text-gray-900">YouTube Transcription via n8n</h4>
                 <p className="text-xs text-gray-600 mt-1">
-                  Powered by your custom n8n workflow - asynchronous processing (1-5 minutes)
+                  Powered by your custom n8n workflow - instant processing
                 </p>
               </div>
             </div>

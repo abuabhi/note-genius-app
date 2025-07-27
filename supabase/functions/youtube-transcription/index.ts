@@ -11,7 +11,7 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 // n8n webhook URL for YouTube transcription
-const N8N_WEBHOOK_URL = 'https://n8n.srv538007.hstgr.cloud/webhook-test/sWcYmc7znvGIs5Vo/youtube%20webhook/youtube-transcribe';
+const N8N_WEBHOOK_URL = 'https://n8n.srv538007.hstgr.cloud/webhook-test/0375cb75-a695-4b17-88ba-80d5bf7f2c96';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -19,7 +19,7 @@ serve(async (req) => {
   }
 
   try {
-    const { youtubeUrl, userId, noteTitle } = await req.json();
+    const { youtubeUrl } = await req.json();
     
     if (!youtubeUrl) {
       throw new Error('YouTube URL is required');
@@ -27,10 +27,7 @@ serve(async (req) => {
 
     console.log('🎬 Starting n8n YouTube transcription for:', youtubeUrl);
 
-    // Generate unique request ID for tracking
-    const requestId = crypto.randomUUID();
-
-    // Call n8n webhook for asynchronous processing
+    // Call n8n webhook for synchronous processing
     console.log('📤 Sending request to n8n webhook...');
     const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
@@ -38,10 +35,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        youtubeUrl: youtubeUrl.trim(),
-        userId: userId,
-        requestId: requestId,
-        noteTitle: noteTitle
+        url: youtubeUrl.trim()
       })
     });
 
@@ -54,38 +48,21 @@ serve(async (req) => {
     const n8nData = await n8nResponse.json();
     console.log('✅ n8n webhook response:', n8nData);
 
-    // Check if n8n returned the data immediately (fast processing)
-    // or if we need to poll for results (async processing)
-    if (n8nData.success && n8nData.transcript) {
-      // Immediate response - return the data
-      console.log('🎉 Immediate transcription response from n8n');
+    // Process synchronous response from n8n
+    if (n8nData.success) {
+      console.log('🎉 Transcription completed successfully');
       return new Response(JSON.stringify({
         success: true,
-        requestId,
         videoTitle: n8nData.videoTitle || 'YouTube Video',
-        transcript: n8nData.transcript,
+        transcript: n8nData.transcript || '',
         summary: n8nData.summary || '',
         videoMetadata: n8nData.videoMetadata || {},
-        processingTime: 0, // Immediate
         processingStatus: 'completed'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
-    } else if (n8nData.processing) {
-      // Async processing started - return processing status
-      console.log('⏳ Async processing started - will take 1-5 minutes');
-      return new Response(JSON.stringify({
-        success: true,
-        requestId,
-        processingStatus: 'processing',
-        estimatedTime: '1-5 minutes',
-        message: 'Your video is being processed. This may take 1-5 minutes depending on video length.',
-        pollUrl: `/functions/v1/youtube-transcription-status?requestId=${requestId}`
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
     } else {
-      throw new Error('Unexpected response from n8n service');
+      throw new Error(n8nData.error || 'Transcription failed');
     }
 
   } catch (error) {
