@@ -38,12 +38,18 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
       setError(null);
       
       try {
-        // Use explicit any typing to avoid complex inference
+        // Query flashcards through the junction table relationship
         const result: any = await (supabase as any)
           .from('flashcards')
-          .select('*')
-          .eq('set_id', setId)
-          .order('created_at');
+          .select(`
+            *,
+            flashcard_set_cards!inner(
+              set_id,
+              position
+            )
+          `)
+          .eq('flashcard_set_cards.set_id', setId)
+          .order('flashcard_set_cards.position');
 
         if (result.error) {
           throw result.error;
