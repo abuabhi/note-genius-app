@@ -96,17 +96,73 @@ serve(async (req) => {
 
     const apifyResults = await datasetResponse.json();
     console.log('Transcript extraction completed, processing results...');
+    
+    // Log the complete response for debugging
+    console.log('Full Apify response:', JSON.stringify(apifyResults, null, 2));
 
     if (!Array.isArray(apifyResults) || apifyResults.length === 0) {
       throw new Error('No transcript results returned from Apify actor');
     }
 
-    // Process the first result
+    // Process the first result with comprehensive field checking
     const result = apifyResults[0];
-    let rawTranscript = result.transcript || result.text || result.fullTranscript;
+    console.log('Processing result structure:', JSON.stringify(result, null, 2));
     
-    if (!rawTranscript) {
-      throw new Error('No transcript text found in the results');
+    // Try multiple possible transcript field names and formats
+    let rawTranscript = null;
+    
+    // Check for various transcript field names
+    const transcriptFields = [
+      'transcript', 
+      'text', 
+      'fullTranscript', 
+      'transcription',
+      'content',
+      'subtitles',
+      'captions'
+    ];
+    
+    for (const field of transcriptFields) {
+      if (result[field]) {
+        rawTranscript = result[field];
+        console.log(`Found transcript in field: ${field}`);
+        break;
+      }
+    }
+    
+    // If no direct field, check nested structures
+    if (!rawTranscript && result.data) {
+      console.log('Checking nested data structure...');
+      for (const field of transcriptFields) {
+        if (result.data[field]) {
+          rawTranscript = result.data[field];
+          console.log(`Found transcript in data.${field}`);
+          break;
+        }
+      }
+    }
+    
+    // Handle array of transcript segments
+    if (!rawTranscript && result.segments && Array.isArray(result.segments)) {
+      console.log('Found transcript segments, combining...');
+      rawTranscript = result.segments
+        .map(segment => segment.text || segment.content || segment.transcript)
+        .filter(Boolean)
+        .join(' ');
+    }
+    
+    // Handle structured transcript with timestamps
+    if (!rawTranscript && result.transcriptSegments && Array.isArray(result.transcriptSegments)) {
+      console.log('Found transcript segments with timestamps, combining...');
+      rawTranscript = result.transcriptSegments
+        .map(segment => segment.text || segment.content)
+        .filter(Boolean)
+        .join(' ');
+    }
+    
+    if (!rawTranscript || rawTranscript.trim().length === 0) {
+      console.error('Available fields in result:', Object.keys(result));
+      throw new Error(`No transcript text found in any expected fields. Available fields: ${Object.keys(result).join(', ')}`);
     }
 
     console.log('Raw transcript extracted successfully');
