@@ -1,20 +1,29 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Sparkles } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { FileText, Sparkles, CheckCircle, Upload, ArrowRight } from 'lucide-react';
 import { useImportState } from '../useImportState';
 import { FileDropZone } from './components/FileDropZone';
-import { ProcessedContent } from './components/ProcessedContent';
 import { SubjectSelector } from '../components/SubjectSelector';
 import { ImportTestButton } from '../components/ImportTestButton';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface FileImportTabProps {
   onSaveNote: (note: any) => Promise<boolean>;
   isPremiumUser?: boolean;
+  onClose?: () => void;
 }
 
-export const FileImportTab = ({ onSaveNote }: FileImportTabProps) => {
+export const FileImportTab = ({ onSaveNote, onClose }: FileImportTabProps) => {
   const [selectedSubject, setSelectedSubject] = useState<string>("Imports");
+  const [editableTitle, setEditableTitle] = useState<string>("");
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const navigate = useNavigate();
   
   const {
     selectedFile,
@@ -27,9 +36,56 @@ export const FileImportTab = ({ onSaveNote }: FileImportTabProps) => {
     setProcessedText
   } = useImportState(onSaveNote);
 
+  // Update editable title when document title changes
+  React.useEffect(() => {
+    if (documentTitle && !editableTitle) {
+      setEditableTitle(documentTitle);
+    }
+  }, [documentTitle, editableTitle]);
+
   const clearFiles = () => {
     setSelectedFile(null);
     setProcessedText(null);
+    setEditableTitle("");
+  };
+
+  const handleSave = async () => {
+    if (!editableTitle.trim()) {
+      toast.error("Please enter a title for your note");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const note = {
+        title: editableTitle,
+        content: processedText,
+        subject_id: selectedSubject,
+        is_shared: false,
+        is_favorite: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const success = await onSaveNote(note);
+      if (success) {
+        toast.success("Note imported successfully!");
+        setShowSuccessDialog(true);
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleImportMore = () => {
+    setShowSuccessDialog(false);
+    clearFiles();
+  };
+
+  const handleFinish = () => {
+    setShowSuccessDialog(false);
+    onClose?.();
+    navigate("/notes");
   };
 
   return (
@@ -110,34 +166,82 @@ export const FileImportTab = ({ onSaveNote }: FileImportTabProps) => {
       )}
 
       {processedText && (
-        <div className="space-y-4">
-          <SubjectSelector
-            value={selectedSubject}
-            onValueChange={setSelectedSubject}
-            required
-          />
-          
-          <ProcessedContent 
-            title={documentTitle}
-            content={processedText}
-            onSave={async (finalTitle: string) => {
-              const note = {
-                title: finalTitle,
-                content: processedText,
-                date: new Date().toISOString(),
-                subject: selectedSubject,
-                description: `Imported from file`,
-                sourceType: "import"
-              };
-              const success = await onSaveNote(note);
-              if (success) {
-                clearFiles();
-              }
-            }}
-            onBack={clearFiles}
-          />
-        </div>
+        <Card className="bg-mint-50 border border-mint-200">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <CheckCircle className="h-5 w-5 text-mint-600" />
+                <h3 className="text-lg font-medium text-mint-800">Content Extracted Successfully!</h3>
+              </div>
+
+              <SubjectSelector
+                value={selectedSubject}
+                onValueChange={setSelectedSubject}
+                required
+              />
+
+              <div>
+                <Label htmlFor="note-title" className="font-medium text-mint-800">
+                  Note Title
+                </Label>
+                <Input
+                  id="note-title"
+                  value={editableTitle}
+                  onChange={(e) => setEditableTitle(e.target.value)}
+                  placeholder="Enter a title for your note"
+                  className="bg-white border-mint-200 mt-1"
+                />
+                <p className="text-xs text-mint-600 mt-1">You can change this title later</p>
+              </div>
+
+              <Button 
+                onClick={handleSave}
+                disabled={!editableTitle.trim() || isSaving}
+                className="w-full bg-mint-500 hover:bg-mint-600 text-white"
+              >
+                {isSaving ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Saving...
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Save Note
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
+
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 bg-mint-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-mint-600" />
+              </div>
+              <div>
+                <DialogTitle className="text-mint-800">Note Imported Successfully!</DialogTitle>
+                <DialogDescription className="text-mint-600">
+                  Your note has been saved and is ready to use.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="flex flex-col gap-3 mt-4">
+            <Button onClick={handleImportMore} variant="outline" className="w-full">
+              Import Another File
+            </Button>
+            <Button onClick={handleFinish} className="w-full bg-mint-500 hover:bg-mint-600 text-white">
+              Go to Notes <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
