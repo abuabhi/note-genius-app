@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, Trash2, Upload } from 'lucide-react';
+import { SubjectSelector } from '../components/SubjectSelector';
 
 interface BulkPdfImportTabProps {
   onSaveNote: (note: any) => Promise<boolean>;
@@ -11,6 +12,7 @@ interface BulkPdfImportTabProps {
 export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState<string>("PDF Imports");
 
   const handleFilesSelected = (files: FileList | null) => {
     if (files) {
@@ -32,7 +34,7 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
           title: file.name.replace('.pdf', ''),
           content: `Content extracted from ${file.name}`,
           date: new Date().toISOString(),
-          subject: "PDF Imports",
+          subject: selectedSubject,
           description: `Bulk imported PDF: ${file.name}`,
           sourceType: "import"
         };
@@ -87,6 +89,12 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
               Clear All
             </Button>
           </div>
+          
+          <SubjectSelector
+            value={selectedSubject}
+            onValueChange={setSelectedSubject}
+            required
+          />
           
           <div className="max-h-40 overflow-y-auto space-y-2">
             {selectedFiles.map((file, index) => (

@@ -5,6 +5,8 @@ import { FileText, Sparkles } from 'lucide-react';
 import { useImportState } from '../useImportState';
 import { FileDropZone } from './components/FileDropZone';
 import { ProcessedContent } from './components/ProcessedContent';
+import { SubjectSelector } from '../components/SubjectSelector';
+import { ImportTestButton } from '../components/ImportTestButton';
 
 interface FileImportTabProps {
   onSaveNote: (note: any) => Promise<boolean>;
@@ -12,6 +14,8 @@ interface FileImportTabProps {
 }
 
 export const FileImportTab = ({ onSaveNote }: FileImportTabProps) => {
+  const [selectedSubject, setSelectedSubject] = useState<string>("Imports");
+  
   const {
     selectedFile,
     processedText,
@@ -31,7 +35,12 @@ export const FileImportTab = ({ onSaveNote }: FileImportTabProps) => {
   return (
     <div className="space-y-4">
       {!selectedFile && !processedText && (
-        <FileDropZone onFileSelected={handleFileSelected} />
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <ImportTestButton />
+          </div>
+          <FileDropZone onFileSelected={handleFileSelected} />
+        </div>
       )}
 
       {selectedFile && !processedText && (
@@ -101,25 +110,33 @@ export const FileImportTab = ({ onSaveNote }: FileImportTabProps) => {
       )}
 
       {processedText && (
-        <ProcessedContent 
-          title={documentTitle}
-          content={processedText}
-          onSave={async () => {
-            const note = {
-              title: documentTitle,
-              content: processedText,
-              date: new Date().toISOString(),
-              subject: "Imports", // Changed from category to subject
-              description: `Imported from file`,
-              sourceType: "import"
-            };
-            const success = await onSaveNote(note);
-            if (success) {
-              clearFiles();
-            }
-          }}
-          onBack={clearFiles}
-        />
+        <div className="space-y-4">
+          <SubjectSelector
+            value={selectedSubject}
+            onValueChange={setSelectedSubject}
+            required
+          />
+          
+          <ProcessedContent 
+            title={documentTitle}
+            content={processedText}
+            onSave={async () => {
+              const note = {
+                title: documentTitle,
+                content: processedText,
+                date: new Date().toISOString(),
+                subject: selectedSubject,
+                description: `Imported from file`,
+                sourceType: "import"
+              };
+              const success = await onSaveNote(note);
+              if (success) {
+                clearFiles();
+              }
+            }}
+            onBack={clearFiles}
+          />
+        </div>
       )}
     </div>
   );

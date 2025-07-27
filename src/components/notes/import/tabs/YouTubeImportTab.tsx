@@ -10,6 +10,7 @@ import { Loader2, Video, FileText, Play, CheckCircle, AlertCircle, RefreshCw } f
 import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 import { YouTubeVideoPlayer } from '../../display/YouTubeVideoPlayer';
+import { SubjectSelector } from '../components/SubjectSelector';
 
 interface YouTubeImportTabProps {
   onImport: (noteData: Omit<Note, 'id'>) => Promise<boolean>;
@@ -29,6 +30,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState<string>("YouTube Videos");
   const [transcriptionState, setTranscriptionState] = useState<TranscriptionState>({
     status: 'idle',
     message: ''
@@ -141,7 +143,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
       content: noteContent,
       description: transcriptionState.summary || 'YouTube video transcript',
       date: new Date().toISOString(),
-      subject: 'YouTube Videos',
+      subject: selectedSubject,
       sourceType: 'youtube',
       video_url: youtubeUrl,
       video_metadata: transcriptionState.videoMetadata || {},
@@ -156,6 +158,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
       setYoutubeUrl('');
       setNoteTitle('');
       setNoteContent('');
+      setSelectedSubject("YouTube Videos");
       setTranscriptionState({
         status: 'idle',
         message: ''
@@ -294,6 +297,12 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
                       placeholder="Enter note title"
                     />
                   </div>
+                  
+                  <SubjectSelector
+                    value={selectedSubject}
+                    onValueChange={setSelectedSubject}
+                    required
+                  />
                   
                   <div>
                     <Label htmlFor="note-content">Note Content</Label>

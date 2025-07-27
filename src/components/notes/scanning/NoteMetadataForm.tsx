@@ -1,6 +1,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { SubjectSelector } from "../import/components/SubjectSelector";
 
 interface NoteMetadataFormProps {
   title: string;
@@ -43,16 +44,11 @@ export const NoteMetadataForm = ({
         />
       </div>
       
-      <div>
-        <label className="text-sm font-medium">Subject</label>
-        <Input 
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          placeholder="Subject (e.g., Mathematics, Science, History)"
-          className="mt-1"
-          disabled={isDisabled}
-        />
-      </div>
+      <SubjectSelector
+        value={subject}
+        onValueChange={setSubject}
+        required
+      />
     </div>
   );
 };
