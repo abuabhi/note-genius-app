@@ -55,7 +55,6 @@ export const DialogManager = ({
     try {
       const result = await onImportNote(note);
       if (result) {
-        setIsImportDialogOpen(false);
         return true;
       }
       return false;
