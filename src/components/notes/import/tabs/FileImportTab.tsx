@@ -21,7 +21,6 @@ interface FileImportTabProps {
 export const FileImportTab = ({ onSaveNote, onClose }: FileImportTabProps) => {
   const [selectedSubject, setSelectedSubject] = useState<string>("Imports");
   const [editableTitle, setEditableTitle] = useState<string>("");
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
   
@@ -69,22 +68,12 @@ export const FileImportTab = ({ onSaveNote, onClose }: FileImportTabProps) => {
       const success = await onSaveNote(note);
       if (success) {
         toast.success("Note imported successfully!");
-        setShowSuccessDialog(true);
+        onClose?.();
+        navigate("/notes");
       }
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleImportMore = () => {
-    setShowSuccessDialog(false);
-    clearFiles();
-  };
-
-  const handleFinish = () => {
-    setShowSuccessDialog(false);
-    onClose?.();
-    navigate("/notes");
   };
 
   return (
@@ -210,32 +199,6 @@ export const FileImportTab = ({ onSaveNote, onClose }: FileImportTabProps) => {
         </Card>
       )}
 
-      <Dialog open={showSuccessDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-mint-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-mint-600" />
-              </div>
-              <div>
-                <DialogTitle className="text-mint-800">Note Imported Successfully!</DialogTitle>
-                <DialogDescription className="text-mint-600">
-                  Your note has been saved and is ready to use.
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-          
-          <div className="flex flex-col gap-3 mt-4">
-            <Button onClick={handleImportMore} variant="outline" className="w-full">
-              Import Another File
-            </Button>
-            <Button onClick={handleFinish} className="w-full bg-mint-500 hover:bg-mint-600 text-white">
-              Go to Notes <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
