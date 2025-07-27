@@ -3407,11 +3407,8 @@ export type Database = {
         Row: {
           ai_features_enabled: boolean
           ai_flashcard_generation: boolean | null
-          chat_enabled: boolean
-          collaboration_enabled: boolean
           max_ai_flashcard_generations_per_month: number | null
           max_cards_per_set: number | null
-          max_collaborations: number | null
           max_flashcard_sets: number | null
           max_notes: number
           max_storage_mb: number
@@ -3424,11 +3421,8 @@ export type Database = {
         Insert: {
           ai_features_enabled?: boolean
           ai_flashcard_generation?: boolean | null
-          chat_enabled?: boolean
-          collaboration_enabled?: boolean
           max_ai_flashcard_generations_per_month?: number | null
           max_cards_per_set?: number | null
-          max_collaborations?: number | null
           max_flashcard_sets?: number | null
           max_notes: number
           max_storage_mb: number
@@ -3441,11 +3435,8 @@ export type Database = {
         Update: {
           ai_features_enabled?: boolean
           ai_flashcard_generation?: boolean | null
-          chat_enabled?: boolean
-          collaboration_enabled?: boolean
           max_ai_flashcard_generations_per_month?: number | null
           max_cards_per_set?: number | null
-          max_collaborations?: number | null
           max_flashcard_sets?: number | null
           max_notes?: number
           max_storage_mb?: number
