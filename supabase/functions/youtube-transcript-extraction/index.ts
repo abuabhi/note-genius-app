@@ -53,8 +53,8 @@ serve(async (req) => {
     
     console.log('Starting Apify transcript extraction actor:', actorId);
     
-    // Use standard runs endpoint with synchronous execution (waits up to 300 seconds)
-    const runResponse = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs?waitForFinish=300`, {
+    // Start asynchronous actor run (without waitForFinish)
+    const runResponse = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apifyApiKey}`,
@@ -73,13 +73,54 @@ serve(async (req) => {
     }
 
     const runResult = await runResponse.json();
-    console.log('Actor run completed, fetching dataset...');
+    const runId = runResult.data.id;
+    console.log(`Actor run started with ID: ${runId}`);
 
-    // Get the dataset items from the completed run
-    const datasetId = runResult.data.defaultDatasetId;
-    if (!datasetId) {
-      throw new Error('No dataset ID returned from Apify actor run');
+    // Poll for completion with timeout (5 minutes max)
+    const maxWaitTime = 5 * 60 * 1000; // 5 minutes
+    const pollInterval = 5000; // 5 seconds
+    const startTime = Date.now();
+    
+    let runStatus = 'RUNNING';
+    let datasetId = null;
+    
+    while (runStatus === 'RUNNING' && (Date.now() - startTime) < maxWaitTime) {
+      console.log(`Checking run status... (${Math.floor((Date.now() - startTime) / 1000)}s elapsed)`);
+      
+      const statusResponse = await fetch(`https://api.apify.com/v2/actor-runs/${runId}`, {
+        headers: {
+          'Authorization': `Bearer ${apifyApiKey}`,
+        },
+      });
+      
+      if (!statusResponse.ok) {
+        throw new Error(`Failed to check run status: ${statusResponse.status}`);
+      }
+      
+      const statusResult = await statusResponse.json();
+      runStatus = statusResult.data.status;
+      datasetId = statusResult.data.defaultDatasetId;
+      
+      console.log(`Run status: ${runStatus}`);
+      
+      if (runStatus === 'RUNNING') {
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+      }
     }
+    
+    if (runStatus === 'RUNNING') {
+      throw new Error('Actor run timed out after 5 minutes');
+    }
+    
+    if (runStatus !== 'SUCCEEDED') {
+      throw new Error(`Actor run failed with status: ${runStatus}`);
+    }
+    
+    if (!datasetId) {
+      throw new Error('No dataset ID returned from completed actor run');
+    }
+    
+    console.log('Actor run completed successfully, fetching dataset...');
 
     const datasetResponse = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items`, {
       method: 'GET',
