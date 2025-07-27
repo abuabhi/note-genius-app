@@ -19,7 +19,7 @@ export interface TierLimits {
   note_enrichment_limit_per_month: number | null;
   max_cards_per_set: number;
   max_ai_flashcard_generations_per_month: number;
-  max_collaborations: number;
+  
   ai_features_enabled: boolean;
   ai_flashcard_generation: boolean;
   note_enrichment_enabled: boolean;
@@ -38,7 +38,6 @@ export const tierLimits = {
     aiNotesEnrichment: 10,
     aiFlashcardGeneration: 10,
     storageSize: 100,
-    collaborations: 1
   },
   [UserTier.GRADUATE]: {
     notes: 100,
@@ -47,7 +46,7 @@ export const tierLimits = {
     aiNotesEnrichment: 50,
     aiFlashcardGeneration: 50,
     storageSize: 500,
-    collaborations: 5
+    
   },
   [UserTier.MASTER]: {
     notes: 250,
@@ -56,7 +55,7 @@ export const tierLimits = {
     aiNotesEnrichment: 200,
     aiFlashcardGeneration: 200,
     storageSize: 2048,
-    collaborations: 15
+    
   },
   [UserTier.DEAN]: {
     notes: -1,
@@ -65,7 +64,7 @@ export const tierLimits = {
     aiNotesEnrichment: -1,
     aiFlashcardGeneration: -1,
     storageSize: 10240,
-    collaborations: -1
+    
   }
 };
 

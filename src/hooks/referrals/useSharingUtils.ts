@@ -24,7 +24,7 @@ export const useSharingUtils = () => {
 ✅ AI-powered flashcard generation that adapts to my learning patterns
 ✅ Intelligent note organization with automated insights
 ✅ Comprehensive progress analytics and goal tracking
-✅ Seamless collaboration features for group study sessions
+✅ Advanced export & import capabilities for flexible learning
 
 📊 The impact on my academic performance has been remarkable - improved efficiency, better retention, and higher grades.
 
@@ -47,7 +47,7 @@ Perfect for students, professionals, and lifelong learners seeking to optimize t
 ✨ AI flashcards that adapt to YOU
 📝 Smart note organization
 📊 Progress tracking that motivates
-🤝 Collaborative study features
+📁 Export & import study materials
 
 📈 My grades have never been better!
 

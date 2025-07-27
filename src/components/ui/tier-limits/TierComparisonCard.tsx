@@ -42,7 +42,7 @@ export const TierComparisonCard: React.FC<TierComparisonCardProps> = ({
         notes: 10,
         flashcardSets: 5,
         aiGenerations: 0,
-        collaboration: false,
+        exportImport: false,
         analytics: false,
         support: 'Community'
       }
@@ -58,7 +58,7 @@ export const TierComparisonCard: React.FC<TierComparisonCardProps> = ({
         notes: 100,
         flashcardSets: 25,
         aiGenerations: 50,
-        collaboration: true,
+        exportImport: true,
         analytics: true,
         support: 'Priority'
       }
@@ -73,7 +73,7 @@ export const TierComparisonCard: React.FC<TierComparisonCardProps> = ({
         notes: 250,
         flashcardSets: 50,
         aiGenerations: 200,
-        collaboration: true,
+        exportImport: true,
         analytics: true,
         support: 'Premium'
       }
@@ -88,7 +88,7 @@ export const TierComparisonCard: React.FC<TierComparisonCardProps> = ({
         notes: 'Unlimited',
         flashcardSets: 'Unlimited',
         aiGenerations: 'Unlimited',
-        collaboration: true,
+        exportImport: true,
         analytics: true,
         support: 'White-glove'
       }
@@ -99,7 +99,7 @@ export const TierComparisonCard: React.FC<TierComparisonCardProps> = ({
     { key: 'notes', label: 'Notes' },
     { key: 'flashcardSets', label: 'Flashcard Sets' },
     { key: 'aiGenerations', label: 'AI Generations/mo' },
-    { key: 'collaboration', label: 'Collaboration' },
+    { key: 'exportImport', label: 'Export & Import' },
     { key: 'analytics', label: 'Advanced Analytics' },
     { key: 'support', label: 'Support Level' }
   ];

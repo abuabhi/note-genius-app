@@ -20,7 +20,7 @@ export interface TierLimits {
   note_enrichment_limit_per_month: number | null;
   max_cards_per_set: number;
   max_ai_flashcard_generations_per_month: number;
-  max_collaborations: number;
+  
   ai_features_enabled: boolean;
   ai_flashcard_generation: boolean;
   note_enrichment_enabled: boolean;

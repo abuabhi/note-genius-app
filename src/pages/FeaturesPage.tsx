@@ -138,7 +138,7 @@ const expandedFeatures = [
   {
     name: "Achievement System",
     description: "Stay motivated with comprehensive achievement badges, progress streaks, and milestone celebrations.",
-    longDescription: "Maintain motivation through our comprehensive gamification system. Earn badges for various achievements like study streaks, mastery milestones, collaboration contributions, and improvement metrics. The system celebrates your progress with personalized celebrations and provides clear pathways to unlock new achievements.",
+    longDescription: "Maintain motivation through our comprehensive gamification system. Earn badges for various achievements like study streaks, mastery milestones, content contributions, and improvement metrics. The system celebrates your progress with personalized celebrations and provides clear pathways to unlock new achievements.",
     icon: Award,
     highlight: "Motivational",
     color: "from-yellow-400 to-yellow-600",

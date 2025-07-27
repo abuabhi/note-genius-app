@@ -422,10 +422,10 @@ export const helpContent: HelpContent[] = [
 - Study session data
 - Progress analytics data
 
-**Sharing & Collaboration:**
+**Export & Organization:**
 - Share individual notes or sets
-- Export for team collaboration
-- Generate study group materials
+- Export for offline study
+- Generate study materials
 - Create printable study guides
 
 **Best Practices:**

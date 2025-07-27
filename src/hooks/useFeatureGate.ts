@@ -109,8 +109,8 @@ export const FeatureGates = {
     feature: 'Priority Support',
     requiredTier: UserTier.MASTER
   },
-  UNLIMITED_COLLABORATIONS: {
-    feature: 'Unlimited Collaborations',
+  ADVANCED_TEMPLATES: {
+    feature: 'Advanced Templates',
     requiredTier: UserTier.MASTER
   }
 } as const;

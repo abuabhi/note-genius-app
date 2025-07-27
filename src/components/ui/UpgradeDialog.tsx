@@ -50,7 +50,7 @@ export const UpgradeDialog: React.FC<UpgradeDialogProps> = ({
         { icon: Zap, text: 'AI Flashcard Generation', desc: '50 generations/month' },
         { icon: Upload, text: '10x More Storage', desc: '500MB vs 100MB' },
         { icon: Star, text: '10x More Notes', desc: '100 notes vs 10 notes' },
-        { icon: Users, text: 'Collaboration', desc: 'Share with 5 people' },
+        { icon: Upload, text: 'Export & Import', desc: 'CSV, PDF, DOCX formats' },
         { icon: Sparkles, text: 'OCR Scanning', desc: 'Turn images into notes' }
       ]
     },
@@ -65,7 +65,7 @@ export const UpgradeDialog: React.FC<UpgradeDialogProps> = ({
         { icon: Zap, text: 'Unlimited AI Flashcards', desc: '200 generations/month' },
         { icon: Upload, text: 'Massive Storage', desc: '2GB storage space' },
         { icon: Star, text: '25x More Notes', desc: '250 notes capacity' },
-        { icon: Users, text: 'Team Collaboration', desc: 'Share with 15 people' },
+        { icon: Sparkles, text: 'Advanced Templates', desc: 'Custom study layouts' },
         { icon: Sparkles, text: 'Priority Support', desc: 'Get help faster' }
       ]
     }

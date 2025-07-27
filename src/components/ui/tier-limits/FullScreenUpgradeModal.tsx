@@ -79,7 +79,7 @@ export const FullScreenUpgradeModal: React.FC<FullScreenUpgradeModalProps> = ({
           '250 Notes (vs 100)',
           '50 Flashcard Sets (vs 25)',
           '200 AI Generations/month',
-          'Unlimited Collaborations',
+          'Advanced Templates',
           'Custom Templates',
           'Export to Multiple Formats'
         ]

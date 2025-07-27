@@ -147,7 +147,7 @@ const ReferralSharingSectionContent = () => {
 ✅ AI-powered flashcard generation that adapts to my learning patterns
 ✅ Intelligent note organization with automated insights
 ✅ Comprehensive progress analytics and goal tracking
-✅ Seamless collaboration features for group study sessions
+✅ Advanced export & import capabilities for flexible learning
 
 📊 The impact on my academic performance has been remarkable - improved efficiency, better retention, and higher grades.
 
