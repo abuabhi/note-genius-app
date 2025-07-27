@@ -166,6 +166,8 @@ export const EnhancementDisplayPanel = ({
           <ContentMetadata 
             content={content}
             enhancementType={enhancementType}
+            sourceType={note.sourceType}
+            videoUrl={note.video_url}
           />
           
           {/* Main content */}

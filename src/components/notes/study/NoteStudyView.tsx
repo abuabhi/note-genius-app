@@ -10,6 +10,7 @@ import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { useNoteEnhancementRetry } from "./hooks/useNoteEnhancementRetry";
 import { UserSubject } from "@/types/subject";
 import { EnhancementDebugger } from "@/components/debug/EnhancementDebugger";
+import { useYouTubeContentMigration } from "@/hooks/useYouTubeContentMigration";
 
 interface NoteStudyViewProps {
   note: Note;
@@ -65,6 +66,9 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     handleRetryEnhancement,
     isEnhancing
   } = useNoteEnhancementRetry(note, forceRefresh);
+
+  // Auto-migrate YouTube content if needed
+  useYouTubeContentMigration(note);
 
   // Handle enhancement
   const handleEnhanceContent = async (enhancementType: string) => {

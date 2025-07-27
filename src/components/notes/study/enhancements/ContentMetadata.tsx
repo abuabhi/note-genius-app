@@ -1,16 +1,20 @@
 
-import { Clock, FileText, Sparkles } from "lucide-react";
+import { Clock, FileText, Sparkles, Youtube } from "lucide-react";
 
 interface ContentMetadataProps {
   content: string;
   enhancementType?: string;
   className?: string;
+  sourceType?: string;
+  videoUrl?: string;
 }
 
 export const ContentMetadata = ({
   content,
   enhancementType,
-  className = ""
+  className = "",
+  sourceType,
+  videoUrl
 }: ContentMetadataProps) => {
   const calculateStats = (text: string) => {
     const words = text.trim().split(/\s+/).filter(word => word.length > 0).length;
@@ -67,8 +71,19 @@ export const ContentMetadata = ({
         <span>{stats.readingTime} min read</span>
       </div>
       
-      <div className="text-xs text-gray-500">
-        {stats.characters.toLocaleString()} characters
+      <div className="flex items-center gap-1 text-xs text-gray-500">
+        <span>{stats.characters.toLocaleString()} characters</span>
+        {sourceType === 'youtube' && videoUrl && (
+          <a
+            href={videoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-red-500 hover:text-red-600 transition-colors"
+            title="Open YouTube video"
+          >
+            <Youtube className="h-3 w-3" />
+          </a>
+        )}
       </div>
     </div>
   );
