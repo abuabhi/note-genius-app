@@ -61,20 +61,63 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
       return;
     }
 
+    const videoId = extractVideoId(youtubeUrl);
+    if (!videoId) {
+      setTranscriptionState({
+        status: 'error',
+        message: 'Could not extract video ID from URL',
+        error: 'Invalid YouTube URL format'
+      });
+      return;
+    }
+
     try {
       setTranscriptionState({
         status: 'processing',
-        message: 'Processing video with n8n...'
+        message: 'Extracting audio from YouTube with Apify...'
       });
 
+      // Step 1: Extract audio URL using Apify
+      const audioResponse = await supabase.functions.invoke('extract-youtube-audio', {
+        body: {
+          youtubeUrls: [{ url: youtubeUrl.trim() }],
+          format: 'mp3'
+        }
+      });
+
+      if (audioResponse.error) {
+        throw new Error(`Audio extraction failed: ${audioResponse.error.message}`);
+      }
+
+      const audioData = audioResponse.data;
+      if (!audioData?.success || !audioData?.results?.length) {
+        throw new Error('No audio data returned from Apify actor');
+      }
+
+      const audioResult = audioData.results[0];
+      const audioUrl = audioResult.audioUrl;
+      
+      if (!audioUrl) {
+        throw new Error('No audio URL found in extraction response');
+      }
+
+      setTranscriptionState({
+        status: 'processing',
+        message: 'Transcribing audio with Gladia AI...'
+      });
+
+      // Step 2: Transcribe with Gladia
       const { data, error } = await supabase.functions.invoke('youtube-transcription', {
         body: { 
-          youtubeUrl: youtubeUrl.trim()
+          audioUrl: audioUrl,
+          videoId: videoId,
+          title: audioResult.title || `YouTube Video ${videoId}`,
+          language: 'english'
         }
       });
 
       if (error) {
-        throw new Error(error.message || 'Failed to start transcription');
+        throw new Error(error.message || 'Failed to transcribe audio');
       }
 
       if (!data.success) {
@@ -85,14 +128,23 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
       setTranscriptionState({
         status: 'completed',
         message: '🎉 Transcription completed!',
-        videoTitle: data.videoTitle,
-        transcript: data.transcript,
-        summary: data.summary,
-        videoMetadata: data.videoMetadata
+        videoTitle: data.metadata?.title || audioResult.title,
+        transcript: data.transcription,
+        videoMetadata: {
+          videoId: videoId,
+          title: data.metadata?.title || audioResult.title,
+          audioUrl: audioUrl,
+          confidence: data.metadata?.confidence,
+          language: data.metadata?.language
+        }
       });
 
-      setNoteTitle(data.videoTitle || 'YouTube Video Transcript');
-      setNoteContent(formatTranscriptContent(data));
+      setNoteTitle(data.metadata?.title || audioResult.title || 'YouTube Video Transcript');
+      setNoteContent(formatTranscriptContent({
+        videoTitle: data.metadata?.title || audioResult.title,
+        transcript: data.transcription,
+        videoMetadata: data.metadata
+      }));
 
     } catch (error) {
       console.error('Transcription error:', error);
@@ -105,28 +157,40 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     }
   };
 
+  const extractVideoId = (url: string): string | null => {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+      /youtube\.com\/watch\?.*v=([^&\n?#]+)/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
+  };
+
   const formatTranscriptContent = (data: any) => {
     let content = '';
     
     // Video metadata
     content += `# ${data.videoTitle}\n\n`;
     content += `**YouTube URL:** ${youtubeUrl}\n`;
-    if (data.videoMetadata?.channel) {
-      content += `**Channel:** ${data.videoMetadata.channel}\n`;
+    if (data.videoMetadata?.videoId) {
+      content += `**Video ID:** ${data.videoMetadata.videoId}\n`;
     }
-    if (data.videoMetadata?.duration) {
-      content += `**Duration:** ${Math.round(data.videoMetadata.duration / 60)} minutes\n`;
+    if (data.videoMetadata?.language) {
+      content += `**Language:** ${data.videoMetadata.language}\n`;
     }
-    content += `**Transcribed:** ${new Date().toLocaleDateString()}\n\n`;
-    
-    // AI-generated summary (already available from n8n)
-    if (data.summary) {
-      content += `## 📋 Summary\n${data.summary}\n\n`;
+    if (data.videoMetadata?.confidence) {
+      content += `**Confidence:** ${Math.round(data.videoMetadata.confidence * 100)}%\n`;
     }
+    content += `**Transcribed:** ${new Date().toLocaleDateString()}\n`;
+    content += `**Source:** Apify + Gladia AI\n\n`;
     
     // Full transcript
     if (data.transcript) {
-      content += `## 📝 Transcript\n\n${data.transcript}`;
+      content += `## 📝 Full Transcript\n\n${data.transcript}`;
     }
     
     return content;
@@ -141,14 +205,13 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
     const noteData: Omit<Note, 'id'> = {
       title: noteTitle,
       content: noteContent,
-      description: transcriptionState.summary || 'YouTube video transcript',
+      description: `YouTube video transcript: ${transcriptionState.videoTitle}`,
       date: new Date().toISOString(),
       subject: selectedSubject,
       sourceType: 'youtube',
       video_url: youtubeUrl,
       video_metadata: transcriptionState.videoMetadata || {},
-      summary: transcriptionState.summary,
-      summary_status: transcriptionState.summary ? 'completed' : 'pending'
+      summary_status: 'completed'
     };
 
     const success = await onImport(noteData);
@@ -235,9 +298,9 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
               <div className="flex items-center gap-2 mb-3">
                 <Video className="h-5 w-5 text-red-500" />
                 <div>
-                  <h4 className="font-medium text-gray-900">YouTube Transcription via n8n</h4>
+                  <h4 className="font-medium text-gray-900">YouTube Transcription</h4>
                   <p className="text-xs text-gray-600 mt-1">
-                    Powered by your custom n8n workflow - instant processing
+                    Powered by Apify + Gladia AI - High-quality transcription
                   </p>
                 </div>
               </div>
@@ -267,7 +330,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
                 ) : (
                   <>
                     <Play className="mr-2 h-4 w-4" />
-                    Start n8n Transcription
+                    Start Transcription
                   </>
                 )}
               </Button>

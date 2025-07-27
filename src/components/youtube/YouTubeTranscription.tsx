@@ -71,49 +71,43 @@ export const YouTubeTranscription = () => {
     setResult(null);
 
     try {
-      // Step 1: Call Apify to get audio URL
-      // Note: You'll need to implement your Apify API key and actor call here
-      // This is a placeholder for the Apify integration
-      console.log('Step 1: Calling Apify actor to get audio URL...');
+      // Step 1: Call Apify actor to get audio URL
+      console.log('Step 1: Calling Apify actor to extract audio...');
       
-      // For demonstration, I'm showing the structure you would use:
-      // const apifyResponse = await fetch('https://api.apify.com/v2/acts/transcriptdl~transcript-downloader-youtube-audio-scraper/run-sync-get-dataset-items', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer YOUR_APIFY_TOKEN`,
-      //     'Content-Type': 'application/json'
-      //   },
-      //   body: JSON.stringify({
-      //     youtubeUrls: [{ url: youtubeUrl }],
-      //     format: 'mp3'
-      //   })
-      // });
-
-      // For now, we'll simulate this step and show how to call the Supabase function
-      // In real implementation, you would extract the audioUrl from Apify response
-      
-      toast({
-        title: "Apify Integration Required",
-        description: "Please implement Apify actor call to get audioUrl. See console for example code.",
-        variant: "default"
+      const apifyResponse = await supabase.functions.invoke('extract-youtube-audio', {
+        body: {
+          youtubeUrls: [{ url: youtubeUrl }],
+          format: 'mp3'
+        }
       });
 
-      // Example of what the audioUrl would look like from Apify:
-      // const apifyResult = await apifyResponse.json();
-      // const audioUrl = apifyResult[0]?.audioUrl;
+      if (apifyResponse.error) {
+        throw new Error(`Apify extraction failed: ${apifyResponse.error.message}`);
+      }
 
-      // For demonstration, let's simulate having an audioUrl:
+      const apifyData = apifyResponse.data;
+      if (!apifyData?.success || !apifyData?.results?.length) {
+        throw new Error('No audio data returned from Apify actor');
+      }
+
+      const audioResult = apifyData.results[0];
+      const audioUrl = audioResult.audioUrl;
+      
+      if (!audioUrl) {
+        throw new Error('No audio URL found in Apify response');
+      }
+
+      console.log('Audio extraction successful, audio URL obtained');
+
+      // Step 2: Call our Supabase Edge Function for transcription
       setCurrentStep('transcribing');
-
-      // Step 2: Call our Supabase Edge Function with the audio URL
       console.log('Step 2: Calling Supabase Edge Function for transcription...');
       
-      // This is where you would use the real audioUrl from Apify
       const { data, error } = await supabase.functions.invoke('youtube-transcription', {
         body: {
-          // audioUrl: audioUrl, // This would come from Apify
+          audioUrl: audioUrl,
           videoId: videoId,
-          title: `YouTube Video ${videoId}`, // You can get this from Apify too
+          title: audioResult.title || `YouTube Video ${videoId}`,
           language: 'english'
         }
       });
@@ -306,27 +300,29 @@ export const YouTubeTranscription = () => {
         </Card>
       )}
 
-      {/* Instructions */}
+      {/* Status */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Implementation Notes</CardTitle>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-green-500" />
+            Integration Status
+          </CardTitle>
         </CardHeader>
         <CardContent className="text-sm space-y-2 text-muted-foreground">
-          <p>
-            <strong>Step 1:</strong> Implement Apify API call to <code>transcriptdl/transcript-downloader-youtube-audio-scraper</code>
-          </p>
-          <p>
-            <strong>Step 2:</strong> Extract <code>audioUrl</code> from Apify response
-          </p>
-          <p>
-            <strong>Step 3:</strong> Pass <code>audioUrl</code> to the Supabase Edge Function
-          </p>
-          <p>
-            <strong>Step 4:</strong> Edge Function forwards audio to Gladia for transcription
-          </p>
-          <p className="text-xs pt-2 border-t">
-            The Supabase Edge Function is ready and deployed. You need to implement the Apify integration 
-            to complete the full workflow.
+          <div className="flex items-center gap-2">
+            <Badge variant="default">✅ Complete</Badge>
+            <span>Apify API integration with transcriptdl/transcript-downloader-youtube-audio-scraper</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="default">✅ Complete</Badge>
+            <span>Supabase Edge Functions for audio extraction and transcription</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="default">✅ Complete</Badge>
+            <span>Gladia API integration for high-quality transcription</span>
+          </div>
+          <p className="text-xs pt-2 border-t text-green-600">
+            🚀 Full workflow is ready! Enter any YouTube URL above to start transcribing.
           </p>
         </CardContent>
       </Card>
