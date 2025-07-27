@@ -32,7 +32,7 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
           title: file.name.replace('.pdf', ''),
           content: `Content extracted from ${file.name}`,
           date: new Date().toISOString(),
-          category: "PDF Imports",
+          subject: "PDF Imports",
           description: `Bulk imported PDF: ${file.name}`,
           sourceType: "import"
         };
