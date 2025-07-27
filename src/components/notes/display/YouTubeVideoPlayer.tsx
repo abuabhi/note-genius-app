@@ -28,13 +28,13 @@ export const YouTubeVideoPlayer = ({ videoUrl, title = "YouTube Video", classNam
 
   return (
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden ${className}`}>
-      <div className="aspect-video">
+      <div className="aspect-video w-full">
         <iframe
           src={embedUrl}
           title={title}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
-          className="w-full h-full"
+          className="w-full h-full border-0"
         />
       </div>
     </div>

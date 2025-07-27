@@ -222,117 +222,142 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* URL Input Section */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Video className="h-5 w-5 text-red-500" />
-              <div>
-                <h4 className="font-medium text-gray-900">YouTube Transcription via n8n</h4>
-                <p className="text-xs text-gray-600 mt-1">
-                  Powered by your custom n8n workflow - instant processing
-                </p>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="youtube-url">YouTube URL</Label>
-              <Input
-                id="youtube-url"
-                value={youtubeUrl}
-                onChange={(e) => setYoutubeUrl(e.target.value)}
-                placeholder="https://www.youtube.com/watch?v=..."
-                disabled={transcriptionState.status === 'processing'}
-              />
-            </div>
-            
-            <Button
-              onClick={handleTranscribe}
-              disabled={!youtubeUrl.trim() || transcriptionState.status === 'processing'}
-              className="w-full bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800"
-              size="lg"
-            >
-              {transcriptionState.status === 'processing' ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Play className="mr-2 h-4 w-4" />
-                  Start n8n Transcription
-                </>
-              )}
-            </Button>
-            
-            {renderStatus()}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Video Preview */}
-      {youtubeUrl && isValidYouTubeUrl(youtubeUrl) && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="space-y-3">
-              <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                <Video className="h-4 w-4 text-red-500" />
-                Video Preview
-              </h4>
-              <YouTubeVideoPlayer videoUrl={youtubeUrl} />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Note Preview Section */}
-      {transcriptionState.status === 'completed' && (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Left Column - Input and Controls */}
+      <div className="space-y-6">
+        {/* URL Input Section */}
         <Card>
           <CardContent className="p-4">
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-3">
-                <FileText className="h-5 w-5 text-mint-500" />
-                <h4 className="font-medium text-gray-900">Save as Note</h4>
+                <Video className="h-5 w-5 text-red-500" />
+                <div>
+                  <h4 className="font-medium text-gray-900">YouTube Transcription via n8n</h4>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Powered by your custom n8n workflow - instant processing
+                  </p>
+                </div>
               </div>
               
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="note-title">Note Title</Label>
-                  <Input
-                    id="note-title"
-                    value={noteTitle}
-                    onChange={(e) => setNoteTitle(e.target.value)}
-                    placeholder="Enter note title"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="note-content">Note Content</Label>
-                  <Textarea
-                    id="note-content"
-                    value={noteContent}
-                    onChange={(e) => setNoteContent(e.target.value)}
-                    placeholder="Note content will appear here..."
-                    rows={8}
-                    className="resize-vertical"
-                  />
-                </div>
-                
-                <Button
-                  onClick={handleSaveNote}
-                  disabled={!noteTitle.trim() || !noteContent.trim()}
-                  className="w-full bg-mint-600 hover:bg-mint-700"
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Save YouTube Note
-                </Button>
+              <div className="space-y-2">
+                <Label htmlFor="youtube-url">YouTube URL</Label>
+                <Input
+                  id="youtube-url"
+                  value={youtubeUrl}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  disabled={transcriptionState.status === 'processing'}
+                />
               </div>
+              
+              <Button
+                onClick={handleTranscribe}
+                disabled={!youtubeUrl.trim() || transcriptionState.status === 'processing'}
+                className="w-full bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800"
+                size="lg"
+              >
+                {transcriptionState.status === 'processing' ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Play className="mr-2 h-4 w-4" />
+                    Start n8n Transcription
+                  </>
+                )}
+              </Button>
+              
+              {renderStatus()}
             </div>
           </CardContent>
         </Card>
-      )}
+
+        {/* Note Preview Section */}
+        {transcriptionState.status === 'completed' && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <FileText className="h-5 w-5 text-mint-500" />
+                  <h4 className="font-medium text-gray-900">Save as Note</h4>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="note-title">Note Title</Label>
+                    <Input
+                      id="note-title"
+                      value={noteTitle}
+                      onChange={(e) => setNoteTitle(e.target.value)}
+                      placeholder="Enter note title"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="note-content">Note Content</Label>
+                    <Textarea
+                      id="note-content"
+                      value={noteContent}
+                      onChange={(e) => setNoteContent(e.target.value)}
+                      placeholder="Note content will appear here..."
+                      rows={6}
+                      className="resize-vertical"
+                    />
+                  </div>
+                  
+                  <Button
+                    onClick={handleSaveNote}
+                    disabled={!noteTitle.trim() || !noteContent.trim()}
+                    className="w-full bg-mint-600 hover:bg-mint-700"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Save YouTube Note
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Right Column - Video Preview */}
+      <div className="space-y-6">
+        {youtubeUrl && isValidYouTubeUrl(youtubeUrl) && (
+          <Card className="sticky top-4">
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                  <Video className="h-4 w-4 text-red-500" />
+                  Video Preview
+                </h4>
+                <div className="w-full">
+                  <YouTubeVideoPlayer videoUrl={youtubeUrl} className="w-full" />
+                </div>
+                
+                {/* Video Metadata */}
+                {transcriptionState.videoMetadata && (
+                  <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                    <h5 className="font-medium text-sm text-gray-700 mb-2">Video Info</h5>
+                    <div className="space-y-1 text-xs text-gray-600">
+                      {transcriptionState.videoTitle && (
+                        <p><span className="font-medium">Title:</span> {transcriptionState.videoTitle}</p>
+                      )}
+                      {transcriptionState.videoMetadata.duration && (
+                        <p><span className="font-medium">Duration:</span> {Math.round(transcriptionState.videoMetadata.duration / 60)} minutes</p>
+                      )}
+                      {transcriptionState.videoMetadata.channel && (
+                        <p><span className="font-medium">Channel:</span> {transcriptionState.videoMetadata.channel}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };

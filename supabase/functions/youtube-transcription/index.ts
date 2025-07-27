@@ -11,6 +11,7 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 // n8n webhook URL for YouTube transcription
+// Note: Make sure this webhook is active in your n8n instance
 const N8N_WEBHOOK_URL = 'https://n8n.srv538007.hstgr.cloud/webhook-test/0375cb75-a695-4b17-88ba-80d5bf7f2c96';
 
 serve(async (req) => {
@@ -42,6 +43,13 @@ serve(async (req) => {
     if (!n8nResponse.ok) {
       const errorText = await n8nResponse.text();
       console.error('❌ n8n webhook failed:', errorText);
+      console.error('Response status:', n8nResponse.status);
+      console.error('Response headers:', Object.fromEntries(n8nResponse.headers.entries()));
+      
+      if (n8nResponse.status === 404) {
+        throw new Error('n8n webhook not found - please check if your workflow is activated and the webhook URL is correct');
+      }
+      
       throw new Error(`n8n service error: ${n8nResponse.status} - ${errorText}`);
     }
 
@@ -72,9 +80,12 @@ serve(async (req) => {
     let userMessage = error.message;
     let errorType = 'unknown';
     
-    if (error.message.includes('n8n service error')) {
+    if (error.message.includes('webhook not found')) {
+      errorType = 'webhook_inactive';
+      userMessage = 'The n8n workflow is not active. Please activate your YouTube transcription workflow in n8n and try again.';
+    } else if (error.message.includes('n8n service error')) {
       errorType = 'service_unavailable';
-      userMessage = 'The transcription service is temporarily unavailable. Please try again in a few minutes.';
+      userMessage = 'The transcription service is temporarily unavailable. Please check your n8n workflow and try again.';
     } else if (error.message.includes('YouTube URL is required')) {
       errorType = 'invalid_input';
       userMessage = 'Please provide a valid YouTube URL.';
