@@ -1,12 +1,24 @@
 
-import React, { memo, useCallback, useMemo } from 'react';
+import React, { memo, useCallback, useMemo, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { DashboardDebugger } from '@/components/debug/DashboardDebugger';
+import { toast } from 'sonner';
+import { useSearchParams } from 'react-router-dom';
 
 export const SimpleDashboard = memo(() => {
   console.log('🏠 [SIMPLE DASHBOARD] Component rendering');
   
   const { user, loading } = useAuth();
+  const [searchParams] = useSearchParams();
+
+  // Check for payment success and show toast
+  useEffect(() => {
+    if (searchParams.get('payment') === 'success') {
+      toast.success('Payment successful! Welcome to your new plan!', {
+        duration: 5000,
+      });
+    }
+  }, [searchParams]);
   
   console.log('🏠 [SIMPLE DASHBOARD] Auth state:', { 
     userId: user?.id, 

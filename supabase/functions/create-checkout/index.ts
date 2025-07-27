@@ -146,7 +146,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: lineItems,
       mode: "subscription",
-      success_url: `${origin}/settings?tab=subscription&success=true`,
+      success_url: `${origin}/dashboard?payment=success`,
       cancel_url: `${origin}/settings?tab=subscription&cancelled=true`,
       metadata: {
         user_id: user.id,
