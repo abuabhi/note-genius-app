@@ -21,8 +21,8 @@ const callEnrichmentAPIWithRetry = async (
   enhancementType: EnhancementFunction,
   attempt: number = 1
 ): Promise<string> => {
-  const maxRetries = 1; // Reduced retries for faster response
-  const timeout = 55000; // 55 seconds to stay under 60s limit
+  const maxRetries = 2; // Increased retries for better reliability
+  const timeout = 50000; // 50 seconds timeout with buffer
   
   console.log(`🚀 Enhancement attempt ${attempt}/${maxRetries + 1}: ${enhancementType} for note ${note.id.substring(0, 8)}`);
   
@@ -34,7 +34,7 @@ const callEnrichmentAPIWithRetry = async (
       controller.abort();
     }, timeout);
     
-    console.log('🔄 Calling enrich-note function...');
+    console.log(`🔄 Calling enrich-note function (attempt ${attempt}/${maxRetries + 1})...`);
     
     const { data, error } = await supabase.functions.invoke('enrich-note', {
       body: {
@@ -42,6 +42,9 @@ const callEnrichmentAPIWithRetry = async (
         noteTitle: note.title || 'Untitled Note',
         noteContent: note.content,
         enhancementType
+      },
+      headers: {
+        'Content-Type': 'application/json'
       }
     });
     

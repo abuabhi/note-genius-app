@@ -109,18 +109,11 @@ export const useEnrichmentProcessor = () => {
       // Update status to generating
       await updateNoteStatus(noteId, enhancementType, 'generating');
       
-      // Add timeout wrapper for the API call
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Enhancement request timed out after 60 seconds')), 60000);
-      });
-      
-      const apiPromise = callEnrichmentAPI(
+      // Call the enhancement API directly - timeout is handled in apiService
+      const result = await callEnrichmentAPI(
         { id: noteId, content, title },
         enhancementType
       );
-      
-      // Race between API call and timeout
-      const result = await Promise.race([apiPromise, timeoutPromise]) as string;
       
       // Save the content to database
       await saveEnhancedContent(noteId, enhancementType, result);
