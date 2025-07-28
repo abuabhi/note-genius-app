@@ -10,3 +10,4 @@ export * from './useNoteEnrichment';
 export * from './usageStats';
 export * from './enhancementHelpers';
 export * from './useEnrichmentProcessor';
+export * from './healthCheck';
