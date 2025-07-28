@@ -73,17 +73,6 @@ export const ContentMetadata = ({
       
       <div className="flex items-center gap-1 text-xs text-gray-500">
         <span>{stats.characters.toLocaleString()} characters</span>
-        {sourceType === 'youtube' && videoUrl && (
-          <a
-            href={videoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-red-500 hover:text-red-600 transition-colors"
-            title="Open YouTube video"
-          >
-            <Youtube className="h-3 w-3" />
-          </a>
-        )}
       </div>
     </div>
   );

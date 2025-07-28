@@ -7,39 +7,43 @@ export const cleanYouTubeContent = (content: string): string => {
   // Split content into lines
   const lines = content.split('\n');
   const cleanedLines: string[] = [];
-  let skipNextLine = false;
+  let inMetadataSection = false;
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     
-    // Skip if we're in a skip state
-    if (skipNextLine) {
-      skipNextLine = false;
-      continue;
-    }
-    
     // Skip YouTube video title (starts with # YouTube Video)
     if (line.match(/^#\s*YouTube\s*Video\s*/i)) {
+      inMetadataSection = true;
       continue;
     }
     
-    // Skip metadata lines
-    if (line.match(/^(YouTube URL|Video ID|Extracted|Source):/i)) {
-      continue;
-    }
-    
-    // Skip empty lines that follow metadata
-    if (line === '' && cleanedLines.length === 0) {
+    // Skip all metadata lines more aggressively
+    if (line.match(/^(YouTube URL|Video ID|Extracted|Source|Channel|Duration|Views|Title):/i)) {
+      inMetadataSection = true;
       continue;
     }
     
     // Skip horizontal rules (---)
     if (line.match(/^-{3,}$/)) {
+      inMetadataSection = true;
       continue;
     }
     
+    // Skip empty lines in metadata section
+    if (inMetadataSection && line === '') {
+      continue;
+    }
+    
+    // If we encounter actual content, stop being in metadata section
+    if (line !== '' && !line.match(/^(YouTube URL|Video ID|Extracted|Source|Channel|Duration|Views|Title):/i) && !line.match(/^#\s*YouTube\s*Video\s*/i) && !line.match(/^-{3,}$/)) {
+      inMetadataSection = false;
+    }
+    
     // Add the line if it's not metadata
-    cleanedLines.push(lines[i]);
+    if (!inMetadataSection) {
+      cleanedLines.push(lines[i]);
+    }
   }
   
   // Remove leading empty lines
