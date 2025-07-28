@@ -52,7 +52,7 @@ export const useOptimizedRealtimeSync = (initialNote: Note) => {
           summary_status: data.summary_status as any,
           key_points: data.key_points,
           markdown_content: data.markdown_content,
-          improved_content: data.improved_content
+          questions_content: data.questions_content
         };
 
         setCurrentNote(syncedNote);

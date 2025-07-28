@@ -25,9 +25,9 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
         markdown_content: noteData.markdown_content,
         markdown_content_generated_at: noteData.markdown_content_generated_at,
         markdown_content_status: noteData.markdown_content_status, // Only set if explicitly provided
-        improved_content: noteData.improved_content,
-        improved_content_generated_at: noteData.improved_content_generated_at,
-        improved_content_status: noteData.improved_content_status, // Only set if explicitly provided
+        questions_content: noteData.questions_content,
+        questions_generated_at: noteData.questions_generated_at,
+        questions_status: noteData.questions_status, // Only set if explicitly provided
         enriched_content: noteData.enriched_content,
         enriched_content_generated_at: noteData.enriched_content_generated_at,
         enriched_status: noteData.enriched_status, // Only set if explicitly provided
@@ -61,9 +61,9 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
       markdown_content: noteInsertData.markdown_content,
       markdown_content_generated_at: noteInsertData.markdown_content_generated_at,
       markdown_content_status: noteInsertData.markdown_content_status as 'pending' | 'generating' | 'completed' | 'failed',
-      improved_content: noteInsertData.improved_content,
-      improved_content_generated_at: noteInsertData.improved_content_generated_at,
-      improved_content_status: noteInsertData.improved_content_status as 'pending' | 'generating' | 'completed' | 'failed',
+      questions_content: noteInsertData.questions_content,
+      questions_generated_at: noteInsertData.questions_generated_at,
+      questions_status: noteInsertData.questions_status as 'pending' | 'generating' | 'completed' | 'failed',
       enriched_content: noteInsertData.enriched_content,
       enriched_content_generated_at: noteInsertData.enriched_content_generated_at,
       enriched_status: noteInsertData.enriched_status as 'pending' | 'generating' | 'completed' | 'failed',
@@ -121,7 +121,7 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
     enhancementFields: {
       summary: updatedNote.summary?.substring(0, 50) || 'none',
       key_points: updatedNote.key_points?.substring(0, 50) || 'none',
-      improved_content: updatedNote.improved_content?.substring(0, 50) || 'none',
+      questions_content: updatedNote.questions_content?.substring(0, 50) || 'none',
       markdown_content: updatedNote.markdown_content?.substring(0, 50) || 'none',
       enriched_content: updatedNote.enriched_content?.substring(0, 50) || 'none'
     }
@@ -152,9 +152,9 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
   if (updatedNote.markdown_content_generated_at !== undefined) noteUpdateData.markdown_content_generated_at = updatedNote.markdown_content_generated_at;
   if (updatedNote.markdown_content_status !== undefined) noteUpdateData.markdown_content_status = updatedNote.markdown_content_status;
   
-  if (updatedNote.improved_content !== undefined) noteUpdateData.improved_content = updatedNote.improved_content;
-  if (updatedNote.improved_content_generated_at !== undefined) noteUpdateData.improved_content_generated_at = updatedNote.improved_content_generated_at;
-  if (updatedNote.improved_content_status !== undefined) noteUpdateData.improved_content_status = updatedNote.improved_content_status;
+  if (updatedNote.questions_content !== undefined) noteUpdateData.questions_content = updatedNote.questions_content;
+  if (updatedNote.questions_generated_at !== undefined) noteUpdateData.questions_generated_at = updatedNote.questions_generated_at;
+  if (updatedNote.questions_status !== undefined) noteUpdateData.questions_status = updatedNote.questions_status;
 
   // Enriched content fields
   if (updatedNote.enriched_content !== undefined) noteUpdateData.enriched_content = updatedNote.enriched_content;
@@ -167,7 +167,7 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
     enhancementData: {
       summary: noteUpdateData.summary?.substring(0, 50) || 'none',
       key_points: noteUpdateData.key_points?.substring(0, 50) || 'none',
-      improved_content: noteUpdateData.improved_content?.substring(0, 50) || 'none',
+      questions_content: noteUpdateData.questions_content?.substring(0, 50) || 'none',
       markdown_content: noteUpdateData.markdown_content?.substring(0, 50) || 'none',
       enriched_content: noteUpdateData.enriched_content?.substring(0, 50) || 'none'
     }

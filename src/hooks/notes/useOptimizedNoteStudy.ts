@@ -82,9 +82,9 @@ export const useOptimizedNoteStudy = (noteId: string): OptimizedNoteStudyResult 
           markdown_content_status: (data.markdown_content_status as 'pending' | 'generating' | 'completed' | 'failed') || 'completed',
           markdown_content_generated_at: data.markdown_content_generated_at,
           
-          improved_content: data.improved_content,
-          improved_content_status: (data.improved_content_status as 'pending' | 'generating' | 'completed' | 'failed') || 'completed',
-          improved_content_generated_at: data.improved_content_generated_at,
+          questions_content: data.questions_content,
+          questions_status: (data.questions_status as 'pending' | 'generating' | 'completed' | 'failed') || 'completed',
+          questions_generated_at: data.questions_generated_at,
           
           enriched_content: data.enriched_content,
           enriched_status: (data.enriched_status as 'pending' | 'generating' | 'completed' | 'failed') || 'completed',

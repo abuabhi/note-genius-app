@@ -8,14 +8,14 @@ export const useEnhancementState = (noteId: string) => {
     hasSummary: boolean;
     hasKeyPoints: boolean;
     hasMarkdown: boolean;
-    hasImprovedClarity: boolean;
+    hasQuestions: boolean;
     hasEnrichedContent: boolean;
     isLoading: boolean;
   }>({
     hasSummary: false,
     hasKeyPoints: false,
     hasMarkdown: false,
-    hasImprovedClarity: false,
+    hasQuestions: false,
     hasEnrichedContent: false,
     isLoading: true
   });
@@ -41,7 +41,7 @@ export const useEnhancementState = (noteId: string) => {
       hasSummary: hasSummaryContent,
       hasKeyPoints: validateContent(note.key_points),
       hasMarkdown: validateContent(note.markdown_content),
-      hasImprovedClarity: validateContent(note.improved_content, 20), // Higher threshold for improved content
+      hasQuestions: validateContent(note.questions_content, 20), // Higher threshold for questions content
       hasEnrichedContent: hasEnrichedContent,
       isLoading: false
     };
@@ -55,7 +55,7 @@ export const useEnhancementState = (noteId: string) => {
         summary: note.summary?.length || 0,
         key_points: note.key_points?.length || 0,
         markdown_content: note.markdown_content?.length || 0,
-        improved_content: note.improved_content?.length || 0,
+        questions_content: note.questions_content?.length || 0,
         enriched_content: note.enriched_content?.length || 0
       },
       summaryValidation: {
@@ -81,7 +81,7 @@ export const useEnhancementState = (noteId: string) => {
     try {
       const { data, error } = await supabase
         .from('notes')
-        .select('summary, summary_status, key_points, markdown_content, improved_content, enriched_content, enriched_status, summary_generated_at, key_points_generated_at, markdown_content_generated_at, improved_content_generated_at, enriched_content_generated_at')
+        .select('summary, summary_status, key_points, markdown_content, questions_content, questions_status, enriched_content, enriched_status, summary_generated_at, key_points_generated_at, markdown_content_generated_at, questions_generated_at, enriched_content_generated_at')
         .eq('id', noteId)
         .single();
 
@@ -97,13 +97,14 @@ export const useEnhancementState = (noteId: string) => {
           summary_status: data.summary_status as 'pending' | 'generating' | 'completed' | 'failed',
           key_points: data.key_points,
           markdown_content: data.markdown_content,
-          improved_content: data.improved_content,
+          questions_content: data.questions_content,
+          questions_status: data.questions_status as 'pending' | 'generating' | 'completed' | 'failed',
           enriched_content: data.enriched_content,
           enriched_status: data.enriched_status as 'pending' | 'generating' | 'completed' | 'failed',
           summary_generated_at: data.summary_generated_at,
           key_points_generated_at: data.key_points_generated_at,
           markdown_content_generated_at: data.markdown_content_generated_at,
-          improved_content_generated_at: data.improved_content_generated_at,
+          questions_generated_at: data.questions_generated_at,
           enriched_content_generated_at: data.enriched_content_generated_at
         };
         

@@ -114,8 +114,8 @@ export const useNoteOperations = (
                 ...note, 
                 ...updatedNote,
                 // Ensure enhancement fields are properly merged
-                improved_content: updatedNote.improved_content !== undefined ? updatedNote.improved_content : note.improved_content,
-                improved_content_generated_at: updatedNote.improved_content_generated_at !== undefined ? updatedNote.improved_content_generated_at : note.improved_content_generated_at,
+                questions_content: updatedNote.questions_content !== undefined ? updatedNote.questions_content : note.questions_content,
+                questions_generated_at: updatedNote.questions_generated_at !== undefined ? updatedNote.questions_generated_at : note.questions_generated_at,
                 summary: updatedNote.summary !== undefined ? updatedNote.summary : note.summary,
                 summary_generated_at: updatedNote.summary_generated_at !== undefined ? updatedNote.summary_generated_at : note.summary_generated_at,
                 key_points: updatedNote.key_points !== undefined ? updatedNote.key_points : note.key_points,
@@ -126,9 +126,9 @@ export const useNoteOperations = (
               
               console.log("🎯 Note state updated:", {
                 id,
-                hasImprovedContent: !!updatedNoteData.improved_content,
-                improvedContentLength: updatedNoteData.improved_content?.length || 0,
-                improvedContentGenerated: updatedNoteData.improved_content_generated_at,
+                hasQuestionsContent: !!updatedNoteData.questions_content,
+                questionsContentLength: updatedNoteData.questions_content?.length || 0,
+                questionsContentGenerated: updatedNoteData.questions_generated_at,
                 updatedFields: Object.keys(updatedNote)
               });
               
