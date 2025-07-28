@@ -113,6 +113,7 @@ export const EnhancementSelector = ({
   });
 
   // Define all enhancement options - ALWAYS show all tabs with proper status tracking
+  // ORDER: Original, Original++, Summary, Key Points, Enriched Notes, Top 10 Questions
   const enhancementOptions: EnhancementOption[] = [
     {
       id: 'original',
@@ -149,15 +150,6 @@ export const EnhancementSelector = ({
       hasError: hasKeyPointsError
     },
     {
-      id: 'questions',
-      label: 'Top 10 Questions',
-      icon: HelpCircle,
-      description: 'Study questions and answers',
-      hasContent: hasQuestions,
-      isGenerating: showQuestionsProcessing,
-      hasError: hasQuestionsError
-    },
-    {
       id: 'enriched',
       label: 'Enriched Note',
       icon: Flame,
@@ -165,6 +157,15 @@ export const EnhancementSelector = ({
       hasContent: hasEnrichedContent,
       isGenerating: showEnrichedProcessing,
       hasError: hasEnrichedError
+    },
+    {
+      id: 'questions',
+      label: 'Top 10 Questions',
+      icon: HelpCircle,
+      description: 'Study questions and answers',
+      hasContent: hasQuestions,
+      isGenerating: showQuestionsProcessing,
+      hasError: hasQuestionsError
     }
   ];
 
