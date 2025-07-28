@@ -103,20 +103,37 @@ export const useEnrichmentProcessor = () => {
     title?: string
   ): Promise<EnrichmentResult> => {
     console.log("🚀 Starting enhancement processing:", enhancementType);
+    console.log(`📝 Note content length: ${content?.length || 0} characters`);
+    console.log(`📊 Enhancement details:`, { noteId, enhancementType, title });
     setIsLoading(true);
     
     try {
+      // Validate inputs
+      if (!content || content.trim() === '') {
+        throw new Error('No content to enhance');
+      }
+      
+      console.log("📊 Updating status to generating...");
       // Update status to generating
       await updateNoteStatus(noteId, enhancementType, 'generating');
+      console.log("✅ Status updated to generating");
       
+      console.log("🔗 Calling enhancement API...");
       // Call the enhancement API directly - timeout is handled in apiService
       const result = await callEnrichmentAPI(
         { id: noteId, content, title },
         enhancementType
       );
+      console.log(`✅ API call completed, result length: ${result?.length || 0}`);
       
+      if (!result || result.trim() === '') {
+        throw new Error('Empty response from enhancement API');
+      }
+      
+      console.log("💾 Saving enhanced content...");
       // Save the content to database
       await saveEnhancedContent(noteId, enhancementType, result);
+      console.log("✅ Content saved successfully");
       
       console.log("✅ Enhancement completed successfully");
       return { success: true, content: result };
@@ -125,9 +142,11 @@ export const useEnrichmentProcessor = () => {
       console.error("❌ Enhancement processing failed:", error);
       logErrorWithContext(error, "Enhancement processing", { noteId, enhancementType });
       
-      // Update status to failed
+      // Update status to failed with detailed error logging
       try {
+        console.log("⚠️ Updating status to failed...");
         await updateNoteStatus(noteId, enhancementType, 'failed');
+        console.log("✅ Status updated to failed");
       } catch (statusError) {
         console.error("❌ Failed to update status to failed:", statusError);
         logErrorWithContext(statusError, "Failed to update status to failed", { noteId, enhancementType });
