@@ -111,7 +111,19 @@ serve(async (req) => {
     console.log(`📝 [${requestId}] Parsing request body...`);
     let requestBody: EnrichmentRequestBody;
     try {
-      requestBody = await req.json();
+      const rawBody = await req.text();
+      console.log(`📋 [${requestId}] Raw body received:`, {
+        length: rawBody.length,
+        preview: rawBody.substring(0, 200) + (rawBody.length > 200 ? '...' : ''),
+        isEmpty: rawBody.length === 0,
+        isContentTypeJSON: req.headers.get('content-type')?.includes('application/json')
+      });
+      
+      if (!rawBody || rawBody.trim() === '') {
+        throw new Error('Request body is empty');
+      }
+      
+      requestBody = JSON.parse(rawBody);
       console.log(`✅ [${requestId}] Request body parsed:`, {
         noteId: requestBody.noteId?.substring(0, 8) + '...',
         enhancementType: requestBody.enhancementType,
