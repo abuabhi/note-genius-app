@@ -125,13 +125,23 @@ export const EnhancementDisplayPanel = ({
 
   // Handle explicit retry calls with proper error handling
   const handleExplicitRetry = async (enhancementType: string) => {
-    console.log("🚀 Enhancement generation requested for:", enhancementType);
+    console.log("🔥 ENHANCEMENT DISPLAY PANEL EXPLICIT RETRY:", {
+      enhancementType,
+      hasOnRetryEnhancement: !!onRetryEnhancement,
+      noteId: note.id,
+      contentType
+    });
+    
     if (onRetryEnhancement) {
       try {
+        console.log("🚀 CALLING onRetryEnhancement from DisplayPanel");
         await onRetryEnhancement(enhancementType);
+        console.log("✅ onRetryEnhancement completed in DisplayPanel");
       } catch (error) {
-        console.error("❌ Enhancement generation failed:", error);
+        console.error("❌ Error in explicit retry from DisplayPanel:", error);
       }
+    } else {
+      console.error("❌ NO onRetryEnhancement function provided to DisplayPanel!");
     }
   };
 

@@ -103,11 +103,24 @@ export const EnhancementContent = ({
               onClick={async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log("🚀 USER INITIATED GENERATION:", enhancementType);
+                console.log("🔥 BUTTON CLICKED - USER INITIATED GENERATION:", {
+                  enhancementType,
+                  hasOnRetry: !!onRetry,
+                  noteId,
+                  contentType
+                });
+                
+                if (!onRetry) {
+                  console.error("❌ NO onRetry function provided to button!");
+                  return;
+                }
+                
                 try {
+                  console.log("🚀 CALLING onRetry from button...");
                   await onRetry(enhancementType);
+                  console.log("✅ onRetry completed from button");
                 } catch (error) {
-                  console.error("❌ Error during enhancement generation:", error);
+                  console.error("❌ Error during enhancement generation from button:", error);
                 }
               }}
               className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"

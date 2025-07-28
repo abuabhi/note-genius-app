@@ -143,7 +143,16 @@ export const useNoteEnrichment = (note?: Note) => {
     enhancementType: EnhancementFunction,
     title: string = ""
   ): Promise<EnhancementResult> => {
+    console.log("🔥 ENRICH NOTE CALLED:", {
+      noteId,
+      contentLength: content.length,
+      enhancementType,
+      title,
+      hasProcessEnhancementWithStatus: !!processEnhancementWithStatus
+    });
+    
     if (!content) {
+      console.error("❌ NO CONTENT TO ENHANCE");
       setError('No content to enhance');
       return { success: false, content: '', error: 'No content to enhance' };
     }
