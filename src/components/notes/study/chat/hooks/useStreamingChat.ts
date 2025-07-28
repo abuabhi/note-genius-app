@@ -30,7 +30,7 @@ export const useStreamingChat = (note: Note) => {
         enhancedContent: {
           summary: note.summary,
           keyPoints: note.key_points,
-          improvedContent: note.improved_content,
+          questionsContent: note.questions_content,
           enrichedContent: note.enriched_content
         }
       };

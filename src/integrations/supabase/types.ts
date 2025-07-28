@@ -1742,6 +1742,9 @@ export type Database = {
           markdown_content_generated_at: string | null
           markdown_content_status: string | null
           pinned: boolean | null
+          questions_content: string | null
+          questions_generated_at: string | null
+          questions_status: string | null
           source_type: string
           subject: string
           subject_id: string | null
@@ -1774,6 +1777,9 @@ export type Database = {
           markdown_content_generated_at?: string | null
           markdown_content_status?: string | null
           pinned?: boolean | null
+          questions_content?: string | null
+          questions_generated_at?: string | null
+          questions_status?: string | null
           source_type?: string
           subject?: string
           subject_id?: string | null
@@ -1806,6 +1812,9 @@ export type Database = {
           markdown_content_generated_at?: string | null
           markdown_content_status?: string | null
           pinned?: boolean | null
+          questions_content?: string | null
+          questions_generated_at?: string | null
+          questions_status?: string | null
           source_type?: string
           subject?: string
           subject_id?: string | null

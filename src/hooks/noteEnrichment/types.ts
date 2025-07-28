@@ -3,7 +3,7 @@ export type EnhancementFunction =
   | 'summarize' 
   | 'extract-key-points' 
   | 'create-flashcards' 
-  | 'improve-clarity' 
+  | 'generate-questions' 
   | 'convert-to-markdown'
   | 'enrich-note';
 
@@ -11,7 +11,7 @@ export type EnhancementType =
   | 'summary'
   | 'keyPoints'
   | 'flashcards'
-  | 'improved'
+  | 'questions'
   | 'markdown'
   | 'enriched';
 

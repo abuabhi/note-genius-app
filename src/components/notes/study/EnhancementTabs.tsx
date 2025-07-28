@@ -49,7 +49,7 @@ export const EnhancementTabs = ({ note, fontSize, textAlign }: EnhancementTabsPr
       
       <TabsContent value="improved" className="mt-4">
         <UnifiedContentRenderer
-          content={note.improved_content || 'No improved content available'}
+          content={note.questions_content || 'No questions available'}
           fontSize={fontSize}
           textAlign={textAlign}
           isMarkdown={true}

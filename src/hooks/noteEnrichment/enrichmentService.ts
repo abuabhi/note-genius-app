@@ -52,7 +52,7 @@ export const improveClarity = async (note: {
   content?: string;
   category?: string;
 }): Promise<string> => {
-  return enrichNote(note, 'improve-clarity');
+  return enrichNote(note, 'generate-questions');
 };
 
 /**

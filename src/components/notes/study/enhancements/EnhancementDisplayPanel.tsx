@@ -37,8 +37,8 @@ export const EnhancementDisplayPanel = ({
         return note.summary_status === 'generating';
       case 'keyPoints':
         return note.key_points_status === 'generating';
-      case 'improved':
-        return note.improved_content_status === 'generating';
+      case 'questions':
+        return note.questions_status === 'generating';
       case 'markdown':
         return note.markdown_content_status === 'generating';
       case 'enriched':
@@ -57,7 +57,7 @@ export const EnhancementDisplayPanel = ({
     const mappings = {
       'summary': 'summarize',
       'keyPoints': 'extract-key-points', 
-      'improved': 'improve-clarity',
+      'questions': 'generate-questions',
       'markdown': 'convert-to-markdown',
       'enriched': 'enrich-note',
       'original': 'original'
@@ -82,8 +82,8 @@ export const EnhancementDisplayPanel = ({
         case 'keyPoints': 
           content = note.key_points || '';
           break;
-        case 'improved': 
-          content = note.improved_content || '';
+        case 'questions': 
+          content = note.questions_content || '';
           break;
         case 'markdown': 
           content = note.markdown_content || '';
@@ -114,7 +114,7 @@ export const EnhancementDisplayPanel = ({
     const titles = {
       'summary': 'Summary',
       'keyPoints': 'Key Points',
-      'improved': 'Improved Clarity',
+      'questions': 'Top 10 Questions',
       'markdown': 'Markdown',
       'enriched': 'Enriched Note',
       'original': 'Original Content'

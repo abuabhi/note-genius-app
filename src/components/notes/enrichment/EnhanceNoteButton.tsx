@@ -42,7 +42,7 @@ export const EnhanceNoteButton = ({
     
     try {
       // Use a default enhancement function since we're not using the selectedEnrichment anymore
-      const enhancementType: EnhancementFunction = "improve-clarity";
+      const enhancementType: EnhancementFunction = "generate-questions";
       const result = await enrichNote(
         noteId, 
         noteContent, 

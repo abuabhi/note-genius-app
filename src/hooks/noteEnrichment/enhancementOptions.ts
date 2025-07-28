@@ -26,13 +26,13 @@ export const enhancementOptions: EnhancementOption[] = [
     replaceContent: false
   },
   {
-    id: 'improve-clarity',
-    value: 'improve-clarity',
-    title: 'Improve Clarity',
-    description: 'Enhance readability and structure while preserving meaning',
-    icon: '✨',
-    prompt: 'Please improve the clarity and readability of this note content while preserving all the original meaning and information.',
-    outputType: 'improved',
+    id: 'generate-questions',
+    value: 'generate-questions',
+    title: 'Top 10 Questions',
+    description: 'Generate 10 comprehensive study questions and answers',
+    icon: '❓',
+    prompt: 'Generate exactly 10 comprehensive questions and detailed answers based on this content. Questions should cover key concepts, applications, and deeper understanding. Include a mix of factual, conceptual, and analytical questions. Format as: "**Q1:** Question text\n**A1:** Detailed answer\n\n" for each question. Ensure questions are study-friendly and promote learning with different difficulty levels (basic, intermediate, advanced).',
+    outputType: 'questions',
     replaceContent: false
   },
   {

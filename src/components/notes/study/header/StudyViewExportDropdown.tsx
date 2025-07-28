@@ -57,7 +57,7 @@ export const StudyViewExportDropdown = ({ note }: StudyViewExportDropdownProps) 
       type: 'improved',
       label: 'Improved Content',
       icon: Sparkles,
-      available: Boolean(note.improved_content)
+      available: Boolean(note.questions_content)
     },
     {
       type: 'markdown',

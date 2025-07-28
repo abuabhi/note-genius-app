@@ -1,5 +1,5 @@
 
-import { FileText, Target, List, Sparkles, Code } from "lucide-react";
+import { FileText, Target, List, Sparkles, Code, HelpCircle } from "lucide-react";
 import { EnhancementContentType } from "../EnhancementSelector";
 
 export interface ContentInfo {
@@ -36,11 +36,11 @@ export const getContentInfo = (contentType: EnhancementContentType): ContentInfo
         color: "text-mint-600",
         isMarkdown: true
       };
-    case 'improved':
+    case 'questions':
       return {
-        title: "Improved Clarity",
-        icon: Sparkles,
-        description: "Enhanced readability version",
+        title: "Top 10 Questions",
+        icon: HelpCircle,
+        description: "Study questions and answers",
         color: "text-mint-600",
         isMarkdown: true
       };
@@ -70,8 +70,8 @@ export const getEnhancementTypeFromContent = (contentType: EnhancementContentTyp
       return 'summarize';
     case 'keyPoints':
       return 'extract-key-points';
-    case 'improved':
-      return 'improve-clarity';
+    case 'questions':
+      return 'generate-questions';
     case 'markdown':
       return 'convert-to-markdown';
     default:

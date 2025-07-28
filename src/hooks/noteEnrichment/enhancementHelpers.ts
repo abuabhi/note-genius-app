@@ -41,12 +41,12 @@ export const updateNoteWithEnhancement = async (
         };
         break;
         
-      case 'improve-clarity':
+      case 'generate-questions':
         updateData = {
-          improved_content: enhancedContent,
-          improved_content_generated_at: now,
-          improved_content_status: 'completed',
-          enhancement_type: 'clarity'
+          questions_content: enhancedContent,
+          questions_generated_at: now,
+          questions_status: 'completed',
+          enhancement_type: 'questions'
         };
         break;
         
@@ -108,8 +108,8 @@ export const resetEnhancementStatus = async (
       case 'convert-to-markdown':
         updateData = { markdown_content_status: 'pending' };
         break;
-      case 'improve-clarity':
-        updateData = { improved_content_status: 'pending' };
+      case 'generate-questions':
+        updateData = { questions_status: 'pending' };
         break;
       case 'enrich-note':
         updateData = { enriched_status: 'pending' };
@@ -152,8 +152,8 @@ export const setEnhancementGenerating = async (
       case 'convert-to-markdown':
         updateData = { markdown_content_status: 'generating' };
         break;
-      case 'improve-clarity':
-        updateData = { improved_content_status: 'generating' };
+      case 'generate-questions':
+        updateData = { questions_status: 'generating' };
         break;
       case 'enrich-note':
         updateData = { enriched_status: 'generating' };
@@ -196,8 +196,8 @@ export const setEnhancementFailed = async (
       case 'convert-to-markdown':
         updateData = { markdown_content_status: 'failed' };
         break;
-      case 'improve-clarity':
-        updateData = { improved_content_status: 'failed' };
+      case 'generate-questions':
+        updateData = { questions_status: 'failed' };
         break;
       case 'enrich-note':
         updateData = { enriched_status: 'failed' };

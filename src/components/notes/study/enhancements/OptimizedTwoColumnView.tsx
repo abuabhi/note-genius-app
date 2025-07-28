@@ -62,7 +62,7 @@ export const OptimizedTwoColumnView = ({
         // Force switch to the newly generated content tab for immediate feedback
         if (enhancementType === 'summarize') setActiveContentType('summary');
         else if (enhancementType === 'extract-key-points') setActiveContentType('keyPoints');
-        else if (enhancementType === 'improve-clarity') setActiveContentType('improved');
+        else if (enhancementType === 'generate-questions') setActiveContentType('questions');
         else if (enhancementType === 'convert-to-markdown') setActiveContentType('markdown');
         else if (enhancementType === 'enrich-note') setActiveContentType('enriched');
         

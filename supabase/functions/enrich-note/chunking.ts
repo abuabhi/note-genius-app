@@ -128,8 +128,8 @@ function combineEnhancedChunks(chunks: string[], enhancementType: EnhancementFun
     case 'extract-key-points':
       return combineForKeyPoints(chunks);
     
-    case 'improve-clarity':
-      return combineForImprovedClarity(chunks);
+    case 'generate-questions':
+      return combineForQuestions(chunks);
     
     case 'convert-to-markdown':
       return combineForMarkdown(chunks);
@@ -193,10 +193,31 @@ function combineForKeyPoints(chunks: string[]): string {
 }
 
 /**
- * Combine improved clarity chunks maintaining original structure
+ * Combine questions chunks into a unified Q&A format
  */
-function combineForImprovedClarity(chunks: string[]): string {
-  return chunks.join('\n\n');
+function combineForQuestions(chunks: string[]): string {
+  let combinedQuestions = '# Top 10 Questions\n\n';
+  let questionCounter = 1;
+  const allQuestions: string[] = [];
+  
+  // Extract questions from all chunks
+  chunks.forEach((chunk) => {
+    const qaPairs = chunk.match(/\*\*Q\d+:\*\*.*?\n\*\*A\d+:\*\*.*?(?=\n\*\*Q\d+:\*\*|\n\n|$)/gs) || [];
+    allQuestions.push(...qaPairs);
+  });
+  
+  // Take the first 10 questions and renumber them
+  const finalQuestions = allQuestions.slice(0, 10);
+  
+  finalQuestions.forEach((qa, index) => {
+    // Remove old numbering and add new numbering
+    const cleanQA = qa.replace(/\*\*Q\d+:\*\*/g, `**Q${questionCounter}:**`)
+                     .replace(/\*\*A\d+:\*\*/g, `**A${questionCounter}:**`);
+    combinedQuestions += `${cleanQA}\n\n`;
+    questionCounter++;
+  });
+  
+  return combinedQuestions.trim();
 }
 
 /**

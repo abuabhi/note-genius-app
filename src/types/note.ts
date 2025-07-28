@@ -56,9 +56,9 @@ export interface Note {
   markdown_content_status?: 'pending' | 'generating' | 'completed' | 'failed';
   markdown_content_generated_at?: string;
   
-  improved_content?: string;
-  improved_content_status?: 'pending' | 'generating' | 'completed' | 'failed';
-  improved_content_generated_at?: string;
+  questions_content?: string;
+  questions_status?: 'pending' | 'generating' | 'completed' | 'failed';
+  questions_generated_at?: string;
   
   enriched_content?: string;
   enriched_status?: 'pending' | 'generating' | 'completed' | 'failed';

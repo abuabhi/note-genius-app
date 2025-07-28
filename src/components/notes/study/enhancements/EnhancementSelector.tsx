@@ -1,9 +1,9 @@
 
-import { CheckCircle, AlertCircle, Loader2, FileText, List, Sparkles, Code, Target, Flame } from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2, FileText, List, Sparkles, Code, Target, Flame, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Note } from "@/types/note";
 
-export type EnhancementContentType = 'original' | 'summary' | 'keyPoints' | 'markdown' | 'improved' | 'enriched';
+export type EnhancementContentType = 'original' | 'summary' | 'keyPoints' | 'markdown' | 'questions' | 'enriched';
 
 interface EnhancementOption {
   id: EnhancementContentType;
@@ -47,10 +47,10 @@ export const EnhancementSelector = ({
     note.markdown_content.trim().length > 10
   );
   
-  const hasImprovedClarity = Boolean(
-    note.improved_content && 
-    typeof note.improved_content === 'string' && 
-    note.improved_content.trim().length > 20
+  const hasQuestions = Boolean(
+    note.questions_content && 
+    typeof note.questions_content === 'string' && 
+    note.questions_content.trim().length > 20
   );
 
   const hasEnrichedContent = Boolean(
@@ -76,10 +76,10 @@ export const EnhancementSelector = ({
   const hasMarkdownError = markdownStatus === 'failed';
   const showMarkdownProcessing = Boolean(isGeneratingMarkdown && !hasMarkdown);
 
-  const improvedStatus = note.improved_content_status;
-  const isGeneratingImproved = improvedStatus === 'generating'; // ONLY show progress when actively generating
-  const hasImprovedError = improvedStatus === 'failed';
-  const showImprovedProcessing = Boolean(isGeneratingImproved && !hasImprovedClarity);
+  const questionsStatus = note.questions_status;
+  const isGeneratingQuestions = questionsStatus === 'generating'; // ONLY show progress when actively generating
+  const hasQuestionsError = questionsStatus === 'failed';
+  const showQuestionsProcessing = Boolean(isGeneratingQuestions && !hasQuestions);
 
   const enrichedStatus = note.enriched_status;
   const isGeneratingEnriched = enrichedStatus === 'generating'; // ONLY show progress when actively generating
@@ -92,21 +92,21 @@ export const EnhancementSelector = ({
       summary: hasSummary,
       keyPoints: hasKeyPoints,
       markdown: hasMarkdown,
-      improvedClarity: hasImprovedClarity,
+      questions: hasQuestions,
       enriched: hasEnrichedContent
     },
     statuses: {
       summaryStatus,
       keyPointsStatus,
       markdownStatus,
-      improvedStatus,
+      questionsStatus,
       enrichedStatus
     },
     isGenerating: {
       summary: isGeneratingSummary,
       keyPoints: isGeneratingKeyPoints,
       markdown: isGeneratingMarkdown,
-      improved: isGeneratingImproved,
+      questions: isGeneratingQuestions,
       enriched: isGeneratingEnriched
     },
     activeTab: activeContentType
@@ -149,13 +149,13 @@ export const EnhancementSelector = ({
       hasError: hasKeyPointsError
     },
     {
-      id: 'improved',
-      label: 'Improved Clarity',
-      icon: Sparkles,
-      description: 'Enhanced notes version',
-      hasContent: hasImprovedClarity,
-      isGenerating: showImprovedProcessing,
-      hasError: hasImprovedError
+      id: 'questions',
+      label: 'Top 10 Questions',
+      icon: HelpCircle,
+      description: 'Study questions and answers',
+      hasContent: hasQuestions,
+      isGenerating: showQuestionsProcessing,
+      hasError: hasQuestionsError
     },
     {
       id: 'enriched',

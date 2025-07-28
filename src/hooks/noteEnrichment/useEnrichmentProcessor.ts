@@ -17,7 +17,7 @@ export const useEnrichmentProcessor = () => {
     const mappings: Record<string, string> = {
       'summarize': 'summary_status',
       'extract-key-points': 'key_points_status', 
-      'improve-clarity': 'improved_content_status',
+      'generate-questions': 'questions_status',
       'convert-to-markdown': 'markdown_content_status',
       'enrich-note': 'enriched_status'
     };
@@ -76,7 +76,7 @@ export const useEnrichmentProcessor = () => {
     const mappings: Record<string, string> = {
       'summarize': 'summary',
       'extract-key-points': 'key_points', 
-      'improve-clarity': 'improved_content',
+      'generate-questions': 'questions_content',
       'convert-to-markdown': 'markdown_content',
       'enrich-note': 'enriched_content'
     };
@@ -88,7 +88,7 @@ export const useEnrichmentProcessor = () => {
     const mappings: Record<string, string> = {
       'summarize': 'summary_generated_at',
       'extract-key-points': 'key_points_generated_at', 
-      'improve-clarity': 'improved_content_generated_at',
+      'generate-questions': 'questions_generated_at',
       'convert-to-markdown': 'markdown_content_generated_at',
       'enrich-note': 'enriched_content_generated_at'
     };

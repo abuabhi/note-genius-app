@@ -45,8 +45,8 @@ export const ContentMetadata = ({
         return 'Summary';
       case 'extract-key-points':
         return 'Key Points';
-      case 'improve-clarity':
-        return 'Improved Content';
+      case 'generate-questions':
+        return 'Top 10 Questions';
       case 'convert-to-markdown':
         return 'Formatted Content';
       default:

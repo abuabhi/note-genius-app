@@ -30,7 +30,7 @@ class ExportService {
       case 'keyPoints':
         return note.key_points || '';
       case 'improved':
-        return note.improved_content || '';
+        return note.questions_content || '';
       case 'markdown':
         return note.markdown_content || '';
       default:

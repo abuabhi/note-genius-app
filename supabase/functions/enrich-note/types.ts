@@ -2,7 +2,7 @@
 export type EnhancementFunction = 
   | 'summarize' 
   | 'extract-key-points' 
-  | 'improve-clarity' 
+  | 'generate-questions' 
   | 'convert-to-markdown'
   | 'enrich-note';
 

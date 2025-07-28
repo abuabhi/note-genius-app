@@ -94,7 +94,7 @@ export const useOptimizedStudySync = (initialNote: Note): OptimizedStudySyncResu
             summary_status: (payload.new.summary_status as 'pending' | 'generating' | 'completed' | 'failed') || 'completed',
             key_points_status: (payload.new.key_points_status as 'pending' | 'generating' | 'completed' | 'failed') || 'completed',
             markdown_content_status: (payload.new.markdown_content_status as 'pending' | 'generating' | 'completed' | 'failed') || 'completed',
-            improved_content_status: (payload.new.improved_content_status as 'pending' | 'generating' | 'completed' | 'failed') || 'completed',
+            questions_status: (payload.new.questions_status as 'pending' | 'generating' | 'completed' | 'failed') || 'completed',
             enriched_status: (payload.new.enriched_status as 'pending' | 'generating' | 'completed' | 'failed') || 'completed'
           };
           
