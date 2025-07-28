@@ -136,9 +136,6 @@ export const callEnrichmentAPI = async (
     throw new Error('No content to enhance');
   }
   
-  if (note.content.length > 50000) {
-    throw new Error('Content too long. Please use shorter text (max 50,000 characters).');
-  }
-  
+  // No character limit - let the edge function handle chunking for large content
   return callEnrichmentAPIWithRetry(note, enhancementType, 1);
 };

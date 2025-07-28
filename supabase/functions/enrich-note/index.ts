@@ -5,6 +5,7 @@ import { corsHeaders, createCorsResponse } from './cors.ts';
 import { authenticateUser } from './auth.ts';
 import { callOpenAI } from './openai.ts';
 import { createPrompt } from './prompts.ts';
+import { processLargeContent } from './chunking.ts';
 import type { EnrichmentRequestBody, ErrorResponse, EnhancementFunction, TokenUsage } from './types.ts';
 
 // Get environment variables
@@ -110,17 +111,26 @@ serve(async (req) => {
       );
     }
     
-    // Construct prompt and call OpenAI
-    const prompt = createPrompt(enhancementType, noteTitle, noteContent);
-    console.log("Calling OpenAI API with enhancement type:", enhancementType);
+    // Handle large content with chunking
+    console.log(`Content length: ${noteContent.length} characters`);
     
     let enhancedContent: string;
     let tokenUsage;
     
     try {
-      const openAIResult = await callOpenAI(prompt, openaiApiKey, controller.signal);
-      enhancedContent = openAIResult.enhancedContent;
-      tokenUsage = openAIResult.tokenUsage;
+      if (noteContent.length > 30000) {
+        console.log("Large content detected, using chunking approach");
+        const result = await processLargeContent(noteContent, enhancementType, noteTitle, openaiApiKey, controller.signal);
+        enhancedContent = result.enhancedContent;
+        tokenUsage = result.tokenUsage;
+      } else {
+        console.log("Standard content size, processing normally");
+        const prompt = createPrompt(enhancementType, noteTitle, noteContent);
+        const openAIResult = await callOpenAI(prompt, openaiApiKey, controller.signal);
+        enhancedContent = openAIResult.enhancedContent;
+        tokenUsage = openAIResult.tokenUsage;
+      }
+      
       console.log("Enhancement successful. Content length:", enhancedContent.length);
       clearTimeout(timeoutId);
     } catch (openAIError) {

@@ -21,7 +21,7 @@ export const callOpenAI = async (prompt: string, apiKey: string, signal?: AbortS
           }
         ],
         temperature: 0.3, // Lower temperature for consistency
-        max_tokens: 1200, // Reduced for faster response
+        max_tokens: 4000, // Increased for better quality output
         stream: false
       }),
     });
