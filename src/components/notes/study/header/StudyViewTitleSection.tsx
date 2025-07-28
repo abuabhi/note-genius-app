@@ -85,10 +85,10 @@ export const StudyViewTitleSection = ({
               href={note.video_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors shadow-sm"
               title="Watch YouTube video"
             >
-              <Youtube className="h-5 w-5" />
+              <Youtube className="h-4 w-4" />
               Watch Video
             </a>
           )}
