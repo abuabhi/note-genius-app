@@ -17,7 +17,10 @@ export const useYouTubeContentMigration = (note: Note | null) => {
     // Check if content needs migration (contains old format)
     const needsMigration = note.content.includes('# YouTube Video') || 
                           note.content.includes('YouTube URL:') ||
-                          note.content.includes('Video ID:');
+                          note.content.includes('**YouTube URL:**') ||
+                          note.content.includes('Video ID:') ||
+                          note.content.includes('**Video ID:**') ||
+                          note.content.includes('## 📝 Full Transcript');
 
     if (!needsMigration) {
       return;

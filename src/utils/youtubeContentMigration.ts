@@ -18,8 +18,14 @@ export const cleanYouTubeContent = (content: string): string => {
       continue;
     }
     
-    // Skip all metadata lines more aggressively
-    if (line.match(/^(YouTube URL|Video ID|Extracted|Source|Channel|Duration|Views|Title):/i)) {
+    // Skip transcript header (## 📝 Full Transcript)
+    if (line.match(/^##\s*📝\s*Full\s*Transcript/i)) {
+      inMetadataSection = false; // This marks end of metadata, start of content
+      continue;
+    }
+    
+    // Skip all metadata lines - both plain and bold markdown format
+    if (line.match(/^(\*\*)?(YouTube URL|Video ID|Extracted|Source|Channel|Duration|Views|Title)(\*\*)?:/i)) {
       inMetadataSection = true;
       continue;
     }
@@ -36,7 +42,11 @@ export const cleanYouTubeContent = (content: string): string => {
     }
     
     // If we encounter actual content, stop being in metadata section
-    if (line !== '' && !line.match(/^(YouTube URL|Video ID|Extracted|Source|Channel|Duration|Views|Title):/i) && !line.match(/^#\s*YouTube\s*Video\s*/i) && !line.match(/^-{3,}$/)) {
+    if (line !== '' && 
+        !line.match(/^(\*\*)?(YouTube URL|Video ID|Extracted|Source|Channel|Duration|Views|Title)(\*\*)?:/i) && 
+        !line.match(/^#\s*YouTube\s*Video\s*/i) && 
+        !line.match(/^##\s*📝\s*Full\s*Transcript/i) &&
+        !line.match(/^-{3,}$/)) {
       inMetadataSection = false;
     }
     
