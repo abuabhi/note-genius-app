@@ -69,13 +69,21 @@ export const useStuckEnhancementDetection = (noteId: string) => {
       if (Object.keys(updates).length > 0) {
         const { error: updateError } = await supabase
           .from('notes')
-          .update(updates)
+          .update({
+            ...updates,
+            updated_at: new Date().toISOString() // Force cache invalidation
+          })
           .eq('id', noteId);
 
         if (updateError) {
           console.error('❌ Error resetting stuck statuses:', updateError);
         } else {
           console.log(`✅ Reset ${Object.keys(updates).length} stuck enhancement statuses:`, Object.keys(updates));
+          
+          // Force page reload to clear all cached state
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
         }
       } else {
         console.log('✅ No stuck enhancement statuses found');
