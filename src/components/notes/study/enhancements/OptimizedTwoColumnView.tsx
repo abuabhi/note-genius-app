@@ -15,6 +15,7 @@ interface OptimizedTwoColumnViewProps {
   setActiveContentType: (type: EnhancementContentType) => void;
   onRetryEnhancement?: (enhancementType: string) => Promise<void>;
   isEditOperation?: boolean;
+  processingStage?: string;
 }
 
 export const OptimizedTwoColumnView = ({
@@ -24,7 +25,8 @@ export const OptimizedTwoColumnView = ({
   activeContentType,
   setActiveContentType,
   onRetryEnhancement,
-  isEditOperation = false
+  isEditOperation = false,
+  processingStage
 }: OptimizedTwoColumnViewProps) => {
   const { refreshNotes } = useOptimizedNotes();
   const { resetStuckEnhancements } = useStuckEnhancementDetection(note.id);
@@ -65,6 +67,7 @@ export const OptimizedTwoColumnView = ({
           isLoading={false}
           onRetryEnhancement={onRetryEnhancement}
           className="h-full"
+          processingStage={processingStage}
         />
       </div>
     </div>

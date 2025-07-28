@@ -16,6 +16,7 @@ interface EnhancementDisplayPanelProps {
   onCancelEnhancement?: () => void;
   enhancedContents?: Record<string, string>;
   className?: string;
+  processingStage?: string;
 }
 
 export const EnhancementDisplayPanel = ({
@@ -27,7 +28,8 @@ export const EnhancementDisplayPanel = ({
   onRetryEnhancement,
   onCancelEnhancement,
   enhancedContents = {},
-  className = ""
+  className = "",
+  processingStage
 }: EnhancementDisplayPanelProps) => {
   
   // Check generating status for enhancement types (only 'generating', not 'pending')
@@ -165,7 +167,10 @@ export const EnhancementDisplayPanel = ({
       {/* Show loading state when processing */}
       {(isLoading || isContentGenerating) && (
         <div className="flex-1 flex items-center justify-center p-8">
-          <LoadingAnimations enhancementType={enhancementType} />
+          <LoadingAnimations 
+            enhancementType={enhancementType} 
+            processingStage={processingStage}
+          />
         </div>
       )}
       

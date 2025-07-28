@@ -7,12 +7,14 @@ interface LoadingAnimationsProps {
   enhancementType?: string;
   message?: string;
   className?: string;
+  processingStage?: string;
 }
 
 export const LoadingAnimations = ({
   enhancementType = "",
   message = "Processing...",
-  className
+  className,
+  processingStage = ""
 }: LoadingAnimationsProps) => {
   const [progress, setProgress] = useState(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
@@ -194,6 +196,13 @@ export const LoadingAnimations = ({
             <Clock className="h-4 w-4" />
             <span className="text-sm">{getEstimatedTime()}</span>
           </div>
+          
+          {/* Processing Stage */}
+          {processingStage && (
+            <div className="text-sm text-mint-700 font-medium">
+              {processingStage}
+            </div>
+          )}
           
           {/* Time Elapsed */}
           <div className="text-xs text-mint-600/80">

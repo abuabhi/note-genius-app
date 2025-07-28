@@ -59,7 +59,8 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     currentUsage,
     monthlyLimit,
     hasReachedLimit,
-    enrichNote
+    enrichNote,
+    processingStage
   } = useNoteEnrichment(note);
 
   const {
@@ -133,6 +134,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           activeContentType={activeContentType}
           onActiveContentTypeChange={setActiveContentType}
           isEditOperation={isEnhancing}
+          processingStage={processingStage}
         />
       </div>
     </div>
