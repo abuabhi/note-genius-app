@@ -213,6 +213,58 @@ Requirements:
 
 Output only the fully formatted Markdown version of the original note.`;
 
+    case 'generate-questions':
+      return `${baseContext}
+Do not include or repeat the note title in the output.
+
+**YOUR MISSION**: Generate exactly **10 comprehensive study questions with detailed answers** based on this note content.
+
+**📋 FORMATTING REQUIREMENTS:**
+- Start with: \`# Top 10 Study Questions\`
+- Format each Q&A pair as: \`## Q1: [Question]\` followed by \`**A1:** [Answer]\`
+- Continue with Q2/A2, Q3/A3, etc. through Q10/A10
+- Use proper Markdown formatting throughout
+- Add blank lines between each Q&A pair for readability
+
+**🎯 QUESTION STRATEGY:**
+Create questions that cover:
+- **Core concepts** and main ideas (Questions 1-3)
+- **Important details** and specifics (Questions 4-6) 
+- **Application** and real-world connections (Questions 7-8)
+- **Analysis** and critical thinking (Questions 9-10)
+
+**✅ QUESTION QUALITY STANDARDS:**
+- Questions should be **clear, specific, and answerable** from the note content
+- Answers should be **comprehensive but concise** (2-4 sentences each)
+- Mix different question types: definition, explanation, comparison, application
+- Ensure questions test **deep understanding**, not just memorization
+- Use **bold** for key terms in answers
+
+**📐 EXACT FORMAT EXAMPLE:**
+
+\`\`\`markdown
+# Top 10 Study Questions
+
+## Q1: What is the primary function of photosynthesis in plants?
+
+**A1:** Photosynthesis is the process by which plants convert **light energy** into **chemical energy** (glucose) using carbon dioxide and water. This process is essential for plant survival and produces oxygen as a byproduct, supporting most life on Earth.
+
+## Q2: What are the two main stages of photosynthesis?
+
+**A2:** The two main stages are the **light-dependent reactions** (occurring in thylakoids) and the **light-independent reactions** or **Calvin cycle** (occurring in the stroma). The first stage captures light energy, while the second stage uses that energy to produce glucose.
+
+[Continue through Q10...]
+\`\`\`
+
+**⚠️ CRITICAL REQUIREMENTS:**
+- Generate exactly 10 questions (Q1-Q10)
+- Each question must have a detailed answer
+- Use the exact numbering format shown (Q1, A1, Q2, A2, etc.)
+- Cover the full range of content complexity
+- Ensure answers are accurate and based only on the note content
+
+Return only the formatted Q&A content - no explanations or additional notes.`;
+
     case 'enrich-note':
       return `${baseContext}
 Do not include or repeat the note title in the output.
