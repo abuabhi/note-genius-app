@@ -5,10 +5,9 @@ import { Note } from '@/types/note';
 import { supabase } from '@/integrations/supabase/client';
 import { enhancementOptions, getEnhancementDetails } from './enhancementOptions';
 import { EnhancementFunction, EnhancementResult } from './types';
-import { enrichNote as enrichNoteService } from './enrichmentService';
 import { useUserTier } from '../useUserTier';
 import { useEnrichmentUsageStats } from './useEnrichmentUsageStats';
-import { updateNoteWithEnhancement } from './enhancementHelpers';
+import { useEnrichmentProcessor } from './useEnrichmentProcessor';
 import { useConcurrencyManager } from '../performance/useConcurrencyManager';
 import { useEnhancementCache } from '../performance/useEnhancementCache';
 
@@ -33,6 +32,9 @@ export const useNoteEnrichment = (note?: Note) => {
     hasReachedLimit,
     fetchUsageStats 
   } = useEnrichmentUsageStats();
+  
+  // Use the proper status management processor
+  const { processEnhancement: processEnhancementWithStatus, isLoading: processorLoading } = useEnrichmentProcessor();
   
   const { executeRequest, getConcurrencyStats } = useConcurrencyManager();
   const { 
@@ -61,7 +63,7 @@ export const useNoteEnrichment = (note?: Note) => {
       return { success: false, content: '', error };
     }
     
-    // FIXED: Check if user has reached their monthly limit with proper unlimited handling
+    // Check if user has reached their monthly limit
     if (hasReachedLimit()) {
       const error = 'You have reached your monthly limit for note enhancements';
       setError(error);
@@ -93,37 +95,37 @@ export const useNoteEnrichment = (note?: Note) => {
         }
       }
 
-      // Execute with concurrency management
-      const enhanced = await executeRequest(
-        () => enrichNoteService({
-          id: note.id,
-          title: note.title,
-          content: note.content,
-          category: note.subject
-        }, enhancementType),
-        {
-          priority: 'high',
-          requestType: 'enhancement'
-        }
+      // Use proper status management with useEnrichmentProcessor
+      const result = await processEnhancementWithStatus(
+        note.id,
+        note.content,
+        enhancementType,
+        note.title
       );
       
-      // Cache the result if applicable
-      if (shouldCache(note.content)) {
-        setCachedEnhancement(note.content, enhancementType, enhanced);
+      if (result.success) {
+        // Cache the result if applicable
+        if (shouldCache(note.content)) {
+          setCachedEnhancement(note.content, enhancementType, result.content);
+        }
+        
+        setEnhancedContent(result.content);
+        setIsLoading(false);
+        
+        // Get the enhancement details
+        const enhancementDetails = getEnhancementDetails(enhancementType);
+        
+        return { 
+          success: true, 
+          content: result.content, 
+          error: '',
+          enhancementType: enhancementDetails?.outputType 
+        };
+      } else {
+        setError(result.error || 'Enhancement failed');
+        setIsLoading(false);
+        return { success: false, content: '', error: result.error || 'Enhancement failed' };
       }
-      
-      setEnhancedContent(enhanced);
-      setIsLoading(false);
-      
-      // Get the enhancement details
-      const enhancementDetails = getEnhancementDetails(enhancementType);
-      
-      return { 
-        success: true, 
-        content: enhanced, 
-        error: '',
-        enhancementType: enhancementDetails?.outputType 
-      };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(errorMessage);
@@ -132,9 +134,9 @@ export const useNoteEnrichment = (note?: Note) => {
     } finally {
       setIsProcessing(false);
     }
-  }, [note, hasReachedLimit]);
+  }, [note, hasReachedLimit, processEnhancementWithStatus]);
 
-  // Direct note enrichment implementation
+  // Direct note enrichment implementation - NOW USES PROPER STATUS MANAGEMENT
   const enrichNote = useCallback(async (
     noteId: string, 
     content: string, 
@@ -146,7 +148,7 @@ export const useNoteEnrichment = (note?: Note) => {
       return { success: false, content: '', error: 'No content to enhance' };
     }
     
-    // FIXED: Check if user has reached their monthly limit with debug logging
+    // Check if user has reached their monthly limit
     const limitReached = hasReachedLimit();
     console.log("🔍 Enhancement limit check:", { 
       currentUsage, 
@@ -184,47 +186,40 @@ export const useNoteEnrichment = (note?: Note) => {
         }
       }
 
-      // Execute with concurrency management and user identification
-      const enhanced = await executeRequest(
-        () => enrichNoteService({
-          id: noteId,
-          title: title,
-          content: content
-        }, enhancementType),
-        {
-          priority: 'high',
-          requestType: 'enhancement'
-        }
+      console.log(`🚀 Starting enhancement ${enhancementType} for note ${noteId}`);
+      
+      // Use proper status management with useEnrichmentProcessor
+      const result = await processEnhancementWithStatus(
+        noteId,
+        content,
+        enhancementType,
+        title
       );
       
-      // Cache the result if applicable
-      if (shouldCache(content)) {
-        setCachedEnhancement(content, enhancementType, enhanced);
-      }
-      
-      setEnhancedContent(enhanced);
-      
-      // Get the enhancement details
-      const enhancementDetails = getEnhancementDetails(enhancementType);
-      
-      // Store enrichment in the database
-      try {
-        const success = await updateNoteWithEnhancement(noteId, enhanced, enhancementType);
-        
-        if (success) {
-          toast.success(`${enhancementDetails?.title || 'Enhancement'} generated successfully`);
+      if (result.success) {
+        // Cache the result if applicable
+        if (shouldCache(content)) {
+          setCachedEnhancement(content, enhancementType, result.content);
         }
-      } catch (dbError) {
-        console.error('Error updating note with enhancement:', dbError);
-        // Even if db update fails, we can still return the enhanced content
+        
+        setEnhancedContent(result.content);
+        
+        // Get the enhancement details
+        const enhancementDetails = getEnhancementDetails(enhancementType);
+        
+        toast.success(`${enhancementDetails?.title || 'Enhancement'} generated successfully`);
+        
+        return { 
+          success: true, 
+          content: result.content, 
+          error: '',
+          enhancementType: enhancementDetails?.outputType
+        };
+      } else {
+        setError(result.error || 'Enhancement failed');
+        toast.error("Failed to enhance note");
+        return { success: false, content: '', error: result.error || 'Enhancement failed' };
       }
-      
-      return { 
-        success: true, 
-        content: enhanced, 
-        error: '',
-        enhancementType: enhancementDetails?.outputType
-      };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(errorMessage);
@@ -235,7 +230,7 @@ export const useNoteEnrichment = (note?: Note) => {
       // Refresh usage stats after operation completes
       await fetchUsageStats();
     }
-  }, [hasReachedLimit, fetchUsageStats, currentUsage, monthlyLimit, userTier]);
+  }, [hasReachedLimit, fetchUsageStats, currentUsage, monthlyLimit, userTier, processEnhancementWithStatus]);
 
   return {
     isProcessing,
