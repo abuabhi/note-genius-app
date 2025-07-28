@@ -63,8 +63,6 @@ export const StudyViewTitleSection = ({
   }).format(new Date(note.date)) : '';
 
   console.log(`StudyViewTitleSection - Note: ${note?.title}, Subject ID: ${note?.subject_id}, Subject Name: ${subjectName}`);
-  console.log('StudyViewTitleSection - sourceType:', note?.sourceType, 'video_url:', note?.video_url);
-  console.log('StudyViewTitleSection - Full note object:', note);
 
   if (isEditing) {
     return (
