@@ -60,8 +60,8 @@ const environments: Record<string, EnvironmentConfig> = {
       enableCacheMonitor: true,
     },
     api: {
-      timeout: 10000,
-      retryAttempts: 2,
+      timeout: 15000,
+      retryAttempts: 3,
       baseDelay: 1000,
     },
     cache: {
@@ -106,8 +106,8 @@ const environments: Record<string, EnvironmentConfig> = {
       enableCacheMonitor: false,
     },
     api: {
-      timeout: 20000,
-      retryAttempts: 3,
+      timeout: 30000,
+      retryAttempts: 5,
       baseDelay: 2000,
     },
     cache: {

@@ -9,6 +9,8 @@ import { enrichNote as enrichNoteService } from './enrichmentService';
 import { useUserTier } from '../useUserTier';
 import { useEnrichmentUsageStats } from './useEnrichmentUsageStats';
 import { updateNoteWithEnhancement } from './enhancementHelpers';
+import { useConcurrencyManager } from '../performance/useConcurrencyManager';
+import { useEnhancementCache } from '../performance/useEnhancementCache';
 
 /**
  * Hook for managing note enrichment functionality
@@ -19,6 +21,9 @@ export const useNoteEnrichment = (note?: Note) => {
   const [enhancedContent, setEnhancedContent] = useState('');
   const [error, setError] = useState('');
   const [selectedEnhancement, setSelectedEnhancement] = useState<EnhancementFunction | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [currentChunk, setCurrentChunk] = useState(0);
+  const [totalChunks, setTotalChunks] = useState(0);
   
   const { userTier, isLoading: tierLoading } = useUserTier();
   const { 
@@ -28,6 +33,14 @@ export const useNoteEnrichment = (note?: Note) => {
     hasReachedLimit,
     fetchUsageStats 
   } = useEnrichmentUsageStats();
+  
+  const { executeRequest, getConcurrencyStats } = useConcurrencyManager();
+  const { 
+    getCachedEnhancement, 
+    setCachedEnhancement, 
+    shouldCache,
+    getCacheStats 
+  } = useEnhancementCache();
 
   const initialize = useCallback(() => {
     setIsProcessing(false);
@@ -35,6 +48,9 @@ export const useNoteEnrichment = (note?: Note) => {
     setError('');
     setEnhancedContent('');
     setSelectedEnhancement(null);
+    setProgress(0);
+    setCurrentChunk(0);
+    setTotalChunks(0);
   }, []);
 
   // Process enhancement and determine how to apply it
@@ -59,13 +75,42 @@ export const useNoteEnrichment = (note?: Note) => {
     setSelectedEnhancement(enhancementType);
 
     try {
-      // Call the real enrichment API
-      const enhanced = await enrichNoteService({
-        id: note.id,
-        title: note.title,
-        content: note.content,
-        category: note.subject
-      }, enhancementType);
+      // Check cache first
+      if (shouldCache(note.content)) {
+        const cached = getCachedEnhancement(note.content, enhancementType);
+        if (cached) {
+          setEnhancedContent(cached);
+          setIsLoading(false);
+          toast.success('Enhancement loaded from cache');
+          
+          const enhancementDetails = getEnhancementDetails(enhancementType);
+          return { 
+            success: true, 
+            content: cached, 
+            error: '',
+            enhancementType: enhancementDetails?.outputType 
+          };
+        }
+      }
+
+      // Execute with concurrency management
+      const enhanced = await executeRequest(
+        () => enrichNoteService({
+          id: note.id,
+          title: note.title,
+          content: note.content,
+          category: note.subject
+        }, enhancementType),
+        {
+          priority: 'high',
+          requestType: 'enhancement'
+        }
+      );
+      
+      // Cache the result if applicable
+      if (shouldCache(note.content)) {
+        setCachedEnhancement(note.content, enhancementType, enhanced);
+      }
       
       setEnhancedContent(enhanced);
       setIsLoading(false);
@@ -122,12 +167,40 @@ export const useNoteEnrichment = (note?: Note) => {
     setSelectedEnhancement(enhancementType);
 
     try {
-      // Call the enrichment service
-      const enhanced = await enrichNoteService({
-        id: noteId,
-        title: title,
-        content: content
-      }, enhancementType);
+      // Check cache first
+      if (shouldCache(content)) {
+        const cached = getCachedEnhancement(content, enhancementType);
+        if (cached) {
+          setEnhancedContent(cached);
+          toast.success('Enhancement loaded from cache');
+          
+          const enhancementDetails = getEnhancementDetails(enhancementType);
+          return { 
+            success: true, 
+            content: cached, 
+            error: '',
+            enhancementType: enhancementDetails?.outputType 
+          };
+        }
+      }
+
+      // Execute with concurrency management and user identification
+      const enhanced = await executeRequest(
+        () => enrichNoteService({
+          id: noteId,
+          title: title,
+          content: content
+        }, enhancementType),
+        {
+          priority: 'high',
+          requestType: 'enhancement'
+        }
+      );
+      
+      // Cache the result if applicable
+      if (shouldCache(content)) {
+        setCachedEnhancement(content, enhancementType, enhanced);
+      }
       
       setEnhancedContent(enhanced);
       
@@ -180,7 +253,14 @@ export const useNoteEnrichment = (note?: Note) => {
     selectedEnhancement,
     setSelectedEnhancement,
     hasReachedLimit,
-    getEnhancementDetails
+    getEnhancementDetails,
+    // Progress tracking for chunked operations
+    progress,
+    currentChunk,
+    totalChunks,
+    // Performance monitoring
+    getConcurrencyStats,
+    getCacheStats
   };
 };
 

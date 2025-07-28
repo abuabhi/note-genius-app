@@ -6,6 +6,7 @@ import { authenticateUser } from './auth.ts';
 import { callOpenAI } from './openai.ts';
 import { createPrompt } from './prompts.ts';
 import { processLargeContent } from './chunking.ts';
+import { checkRateLimit, cleanupRateLimitStore, getRateLimitStatus } from './rate-limiter.ts';
 import type { EnrichmentRequestBody, ErrorResponse, EnhancementFunction, TokenUsage } from './types.ts';
 
 // Get environment variables
@@ -22,9 +23,13 @@ serve(async (req) => {
     timestamp: new Date().toISOString()
   });
   
-  // Set timeout to 45 seconds (before the 60s client timeout)
+  // Set timeout to 50 seconds (optimized for concurrent processing)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 45000);
+  const timeoutId = setTimeout(() => controller.abort(), 50000);
+  
+  // Add request tracking
+  const requestId = crypto.randomUUID();
+  console.log(`📊 [${requestId}] Request started at ${new Date().toISOString()}`);
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -59,29 +64,35 @@ serve(async (req) => {
     }
     
     // Authenticate user
-    let userId: string;
-    try {
-      userId = await authenticateUser(
-        req.headers.get('Authorization'),
-        supabaseUrl,
-        supabaseAnonKey
-      );
-      console.log("User authenticated:", userId);
-    } catch (authError) {
-      console.error('❌ Authentication error:', authError);
-      console.error('🔍 Auth details:', {
-        hasAuthHeader: !!req.headers.get('Authorization'),
-        authHeaderLength: req.headers.get('Authorization')?.length || 0,
-        errorMessage: authError.message
-      });
+    const userResult = await authenticateUser(req.headers.get('Authorization'), supabaseUrl, supabaseAnonKey);
+    
+    if (!userResult.success) {
+      clearTimeout(timeoutId);
+      console.error('❌ Authentication failed:', userResult.error);
+      return createCorsResponse({ error: userResult.error }, { status: 401 });
+    }
+
+    const { user, userTier } = userResult;
+    
+    // Check rate limiting
+    const rateLimitResult = checkRateLimit(user!.id, userTier);
+    if (!rateLimitResult.allowed) {
+      clearTimeout(timeoutId);
+      console.warn(`⚠️ Rate limit exceeded for user ${user!.id}:`, rateLimitResult.message);
       return createCorsResponse(
         { 
-          error: `Authentication failed: ${authError.message}`,
-          details: 'Please check your authentication token'
-        } as ErrorResponse,
-        401
+          error: rateLimitResult.message || 'Rate limit exceeded',
+          remaining: rateLimitResult.remaining,
+          resetTime: rateLimitResult.resetTime
+        }, 
+        { status: 429 }
       );
     }
+    
+    console.log(`✅ Rate limit check passed for user ${user!.id}:`, {
+      remaining: rateLimitResult.remaining,
+      resetTime: new Date(rateLimitResult.resetTime).toISOString()
+    });
     
     // Parse request body
     let requestBody: EnrichmentRequestBody;
@@ -156,15 +167,39 @@ serve(async (req) => {
       );
     }
     
-    // Return the enhanced content
+    // Add response headers for rate limiting info
+    const responseHeaders = {
+      ...corsHeaders,
+      'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+      'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+      'X-Request-ID': requestId
+    };
+
     const duration = Date.now() - startTime;
-    console.log(`✅ Enhancement completed successfully in ${duration}ms`);
-    return createCorsResponse({ 
-      enhancedContent,
+    console.log("✅ Request completed successfully", {
+      requestId,
+      userId: user!.id,
       enhancementType,
+      processingTime: duration,
       tokenUsage,
-      processingTime: duration
+      wasLargeContent: noteContent.length > 30000,
+      rateLimitRemaining: rateLimitResult.remaining
     });
+
+    // Trigger cleanup occasionally (5% chance)
+    if (Math.random() < 0.05) {
+      setTimeout(() => cleanupRateLimitStore(), 0);
+    }
+
+    return createCorsResponse({
+      enhancedContent,
+      tokenUsage,
+      processingTime: duration,
+      rateLimitInfo: {
+        remaining: rateLimitResult.remaining,
+        resetTime: rateLimitResult.resetTime
+      }
+    }, { headers: responseHeaders });
     
   } catch (error) {
     const duration = Date.now() - startTime;
