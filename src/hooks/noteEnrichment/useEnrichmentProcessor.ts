@@ -107,6 +107,18 @@ export const useEnrichmentProcessor = () => {
     console.log(`📊 Enhancement details:`, { noteId, enhancementType, title });
     setIsLoading(true);
     
+    // Set up timeout protection to prevent stuck states
+    const PROCESSING_TIMEOUT = 60000; // 60 seconds
+    const timeoutId = setTimeout(async () => {
+      console.error(`⏰ Enhancement processing timeout after ${PROCESSING_TIMEOUT/1000}s, marking as failed`);
+      try {
+        await updateNoteStatus(noteId, enhancementType, 'failed');
+      } catch (error) {
+        console.error('❌ Failed to update status to failed on timeout:', error);
+      }
+      setIsLoading(false);
+    }, PROCESSING_TIMEOUT);
+    
     try {
       // Validate inputs
       if (!content || content.trim() === '') {
@@ -161,6 +173,7 @@ export const useEnrichmentProcessor = () => {
         error: errorInfo.message
       };
     } finally {
+      clearTimeout(timeoutId);
       setIsLoading(false);
     }
   };

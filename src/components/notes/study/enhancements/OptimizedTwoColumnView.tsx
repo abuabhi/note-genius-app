@@ -6,6 +6,7 @@ import { EnhancementSelector, EnhancementContentType } from "./EnhancementSelect
 import { EnhancementDisplayPanel } from "./EnhancementDisplayPanel";
 import { useEnrichmentProcessor } from "@/hooks/noteEnrichment/useEnrichmentProcessor";
 import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
+import { useStuckEnhancementDetection } from "@/hooks/useStuckEnhancementDetection";
 import { extractErrorMessage, logErrorWithContext } from "@/utils/errorUtils";
 
 interface OptimizedTwoColumnViewProps {
@@ -30,12 +31,14 @@ export const OptimizedTwoColumnView = ({
   const [enhancedContents, setEnhancedContents] = useState<Record<string, string>>({});
   const { isLoading, processEnhancement } = useEnrichmentProcessor();
   const { refreshNotes } = useOptimizedNotes();
+  const { resetStuckEnhancements } = useStuckEnhancementDetection(note.id);
 
-  // Force refresh the note data when component mounts to get latest content
+  // Force refresh the note data when component mounts and reset any stuck states
   useEffect(() => {
-    console.log("🔄 Refreshing note data to get latest enhancements");
+    console.log("🔄 Refreshing note data and checking for stuck enhancements");
+    resetStuckEnhancements();
     refreshNotes();
-  }, [refreshNotes]);
+  }, [refreshNotes, resetStuckEnhancements]);
 
   const handleRetryEnhancement = async (enhancementType: string) => {
     console.log("🚀 BUTTON CLICKED - Starting enhancement generation:", enhancementType);
