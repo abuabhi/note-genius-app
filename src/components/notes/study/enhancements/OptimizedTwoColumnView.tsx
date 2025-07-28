@@ -38,15 +38,26 @@ export const OptimizedTwoColumnView = ({
   }, [refreshNotes]);
 
   const handleRetryEnhancement = async (enhancementType: string) => {
-    console.log("🚀 Starting enhancement generation:", enhancementType);
+    console.log("🚀 BUTTON CLICKED - Starting enhancement generation:", enhancementType);
+    console.log("🔧 Process Enhancement Function Check:", typeof processEnhancement);
+    console.log("🔧 Note Content Check:", { noteId: note.id, hasContent: !!note.content, contentLength: note.content?.length });
     
     try {
+      console.log("📞 CALLING processEnhancement with:", {
+        noteId: note.id,
+        content: note.content?.substring(0, 100) + '...',
+        enhancementType,
+        title: note.title
+      });
+      
       const result = await processEnhancement(
         note.id,
         note.content || '',
         enhancementType as any,
         note.title
       );
+      
+      console.log("📩 Enhancement result received:", result);
       
       if (result.success) {
         // Store content in local state for immediate UI updates
@@ -76,6 +87,7 @@ export const OptimizedTwoColumnView = ({
         }));
       }
     } catch (error) {
+      console.error("💥 CRITICAL ERROR in handleRetryEnhancement:", error);
       logErrorWithContext(error, "Enhancement processing", { enhancementType, noteId: note.id });
       const errorInfo = extractErrorMessage(error);
       setEnhancedContents(prev => ({
@@ -112,7 +124,7 @@ export const OptimizedTwoColumnView = ({
           contentType={activeContentType}
           fontSize={fontSize}
           textAlign={textAlign}
-          isLoading={isLoading}
+          isLoading={false}
           onRetryEnhancement={handleRetryEnhancement}
           enhancedContents={enhancedContents}
           className="h-full"
