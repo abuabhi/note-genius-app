@@ -16,7 +16,7 @@ interface EnhancementContentProps {
   enhancementType?: string;
   noteId: string;
   contentType: string;
-  onRetry?: (enhancementType: string) => void;
+  onRetry?: (enhancementType: string) => Promise<void>;
   onCancel?: () => void;
 }
 
@@ -100,11 +100,15 @@ export const EnhancementContent = ({
           {onRetry && (
             <Button 
               size="lg" 
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log("🚀 USER INITIATED GENERATION:", enhancementType);
-                onRetry(enhancementType);
+                try {
+                  await onRetry(enhancementType);
+                } catch (error) {
+                  console.error("❌ Error during enhancement generation:", error);
+                }
               }}
               className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
             >
