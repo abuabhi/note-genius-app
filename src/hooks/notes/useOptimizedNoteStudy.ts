@@ -59,11 +59,15 @@ export const useOptimizedNoteStudy = (noteId: string): OptimizedNoteStudyResult 
           content: data.content || data.description || '',
           date: data.date ? new Date(data.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
           subject: data.user_subjects?.name || data.subject || 'Uncategorized',
-          sourceType: (data.source_type as 'manual' | 'scan' | 'import') || 'manual',
+          sourceType: (data.source_type as 'manual' | 'scan' | 'import' | 'youtube') || 'manual',
           archived: data.archived || false,
           pinned: data.pinned || false,
           subject_id: data.subject_id,
           tags: data.note_tags?.map(nt => nt.tags).filter(Boolean) || [],
+          
+          // YouTube-specific fields
+          video_url: data.video_url,
+          video_metadata: data.video_metadata as Note['video_metadata'],
           
           // All enhancement fields with proper status handling
           summary: data.summary,
