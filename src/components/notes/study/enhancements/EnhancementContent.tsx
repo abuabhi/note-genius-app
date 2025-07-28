@@ -101,16 +101,27 @@ export const EnhancementContent = ({
             <Button 
               size="lg" 
               onClick={(e) => {
+                console.log("🔥 BUTTON CLICK DETECTED!");
+                console.log("🔥 Enhancement Type:", enhancementType);
+                console.log("🔥 OnRetry Function:", typeof onRetry);
                 e.preventDefault();
                 e.stopPropagation();
                 console.log("🚀 USER INITIATED GENERATION:", enhancementType);
-                onRetry(enhancementType);
+                if (onRetry) {
+                  console.log("🔥 CALLING onRetry function...");
+                  onRetry(enhancementType);
+                } else {
+                  console.error("🔥 onRetry function is missing!");
+                }
               }}
               className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
             >
               <Sparkles className="mr-3 h-5 w-5" /> 
               Generate {safeTitle}
             </Button>
+          )}
+          {!onRetry && (
+            <p className="text-red-500 text-sm">⚠️ onRetry function not provided</p>
           )}
         </div>
       </div>
