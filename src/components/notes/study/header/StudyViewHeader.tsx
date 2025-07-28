@@ -11,6 +11,7 @@ import { StudyViewTitleSection } from "./StudyViewTitleSection";
 import { StudyViewEnhancementDropdown } from "./StudyViewEnhancementDropdown";
 import { StudyViewExportDropdown } from "./StudyViewExportDropdown";
 import { StudyViewConversionDropdown } from "./StudyViewConversionDropdown";
+import { StudyViewYouTubeButton } from "./StudyViewYouTubeButton";
 
 
 interface StudyViewHeaderProps {
@@ -99,6 +100,10 @@ export const StudyViewHeader = ({
               />
               
               <StudyViewExportDropdown note={note} />
+              
+              {note.sourceType === 'youtube' && note.video_url && (
+                <StudyViewYouTubeButton videoUrl={note.video_url} />
+              )}
             </>
           )}
 

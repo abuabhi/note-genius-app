@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { NoteTagList } from "../../details/NoteTagList";
 import { useUserSubjects } from "@/hooks/useUserSubjects";
-import { Calendar, Tag, Youtube } from "lucide-react";
+import { Calendar, Tag } from "lucide-react";
 import { getSubjectColorClasses } from "@/utils/subjectColors";
 
 interface StudyViewTitleSectionProps {
@@ -78,20 +78,8 @@ export const StudyViewTitleSection = ({
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
           <h1 className="text-2xl font-bold text-green-700 leading-tight">{note?.title}</h1>
-          {note?.sourceType === 'youtube' && note?.video_url && (
-            <a
-              href={note.video_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors shadow-sm"
-              title="Watch YouTube video"
-            >
-              <Youtube className="h-4 w-4" />
-              Watch Video
-            </a>
-          )}
         </div>
         
         <div className="flex items-center gap-4 text-sm">
