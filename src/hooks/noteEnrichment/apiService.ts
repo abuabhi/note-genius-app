@@ -21,66 +21,103 @@ const callEnrichmentAPIWithRetry = async (
   enhancementType: EnhancementFunction,
   attempt: number = 1
 ): Promise<string> => {
-  const maxRetries = 2; // Increased retries for better reliability
+  const maxRetries = 2;
   const timeout = 50000; // 50 seconds timeout with buffer
+  const requestId = crypto.randomUUID();
   
-  console.log(`🚀 Enhancement attempt ${attempt}/${maxRetries + 1}: ${enhancementType} for note ${note.id.substring(0, 8)}`);
+  console.log(`🚀 [${requestId}] Enhancement attempt ${attempt}/${maxRetries + 1}: ${enhancementType} for note ${note.id.substring(0, 8)}`);
+  console.log(`📋 [${requestId}] Request details:`, {
+    noteId: note.id.substring(0, 8),
+    enhancementType,
+    contentLength: note.content?.length || 0,
+    hasTitle: !!note.title,
+    attempt
+  });
   
   try {
-    // Call the edge function with timeout
+    // Validate content before sending
+    if (!note.content || note.content.trim() === '') {
+      throw new Error('No content to enhance');
+    }
+    
+    // Call the edge function with timeout and detailed logging
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      console.error(`❌ Enhancement request timed out after ${timeout/1000} seconds`);
+      console.error(`❌ [${requestId}] Enhancement request timed out after ${timeout/1000} seconds`);
       controller.abort();
     }, timeout);
     
-    console.log(`🔄 Calling enrich-note function (attempt ${attempt}/${maxRetries + 1})...`);
+    console.log(`🔄 [${requestId}] Calling enrich-note function (attempt ${attempt}/${maxRetries + 1})...`);
+    
+    const requestBody = {
+      noteId: note.id,
+      noteTitle: note.title || 'Untitled Note',
+      noteContent: note.content,
+      enhancementType
+    };
+    
+    console.log(`📤 [${requestId}] Sending request body:`, {
+      noteId: requestBody.noteId.substring(0, 8),
+      noteTitle: requestBody.noteTitle.substring(0, 50),
+      noteContentLength: requestBody.noteContent.length,
+      enhancementType: requestBody.enhancementType,
+      bodySize: JSON.stringify(requestBody).length
+    });
     
     const { data, error } = await supabase.functions.invoke('enrich-note', {
-      body: {
-        noteId: note.id,
-        noteTitle: note.title || 'Untitled Note',
-        noteContent: note.content,
-        enhancementType
-      },
+      body: requestBody,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-Request-ID': requestId
       }
     });
     
     clearTimeout(timeoutId);
+    
+    console.log(`📥 [${requestId}] Response received:`, {
+      hasData: !!data,
+      hasError: !!error,
+      dataKeys: data ? Object.keys(data) : [],
+      errorType: error ? typeof error : 'none'
+    });
     
     if (controller.signal.aborted) {
       throw new Error('Request timed out. Please try with shorter content.');
     }
     
     if (error) {
-      logErrorWithContext(error, 'Enhancement API Error', { noteId: note.id, enhancementType, attempt });
+      logErrorWithContext(error, 'Enhancement API Error', { noteId: note.id, enhancementType, attempt, requestId });
       
       // Extract clean error message using utility
       const errorInfo = extractErrorMessage(error);
-      console.error(`❌ Enhancement API error details:`, {
+      console.error(`❌ [${requestId}] Enhancement API error details:`, {
         errorMessage: errorInfo.message,
         errorCode: errorInfo.code,
         noteId: note.id.substring(0, 8),
         enhancementType,
-        attempt
+        attempt,
+        fullError: error
       });
       throw new Error(errorInfo.message);
     }
     
     if (!data?.enhancedContent) {
-      console.error(`❌ No enhanced content returned:`, { data, noteId: note.id.substring(0, 8), enhancementType });
+      console.error(`❌ [${requestId}] No enhanced content returned:`, { 
+        data: data ? JSON.stringify(data).substring(0, 200) : 'null', 
+        noteId: note.id.substring(0, 8), 
+        enhancementType 
+      });
       throw new Error('No enhanced content returned from AI service');
     }
     
-    console.log(`✅ Enhancement completed successfully:`, {
+    console.log(`✅ [${requestId}] Enhancement completed successfully:`, {
       noteId: note.id.substring(0, 8),
       enhancementType,
       contentLength: data.enhancedContent.length,
       tokenUsage: data.tokenUsage,
       processingTime: data.processingTime,
-      attempt
+      attempt,
+      requestId: data.requestId
     });
     
     // Track token usage if available
@@ -95,7 +132,7 @@ const callEnrichmentAPIWithRetry = async (
 
     return data.enhancedContent.trim();
   } catch (error) {
-    logErrorWithContext(error, `Enhancement attempt ${attempt} failed`, { noteId: note.id, enhancementType, attempt });
+    logErrorWithContext(error, `Enhancement attempt ${attempt} failed`, { noteId: note.id, enhancementType, attempt, requestId });
     
     // Check if we should retry for network/timeout errors only
     const errorInfo = extractErrorMessage(error);
@@ -110,18 +147,19 @@ const callEnrichmentAPIWithRetry = async (
       errorInfo.code === '504'
     );
     
-    console.log(`🔍 Error analysis:`, {
+    console.log(`🔍 [${requestId}] Error analysis:`, {
       noteId: note.id.substring(0, 8),
       enhancementType,
       attempt,
       isRetryable,
       errorMessage: errorInfo.message,
       errorCode: errorInfo.code,
-      willRetry: isRetryable && attempt <= maxRetries
+      willRetry: isRetryable && attempt <= maxRetries,
+      requestId
     });
     
     if (isRetryable && attempt <= maxRetries) {
-      console.log(`🔄 Retrying enhancement... (attempt ${attempt + 1}/${maxRetries + 1})`);
+      console.log(`🔄 [${requestId}] Retrying enhancement... (attempt ${attempt + 1}/${maxRetries + 1})`);
       await sleep(2000 * attempt); // Exponential backoff: 2s, 4s
       return callEnrichmentAPIWithRetry(note, enhancementType, attempt + 1);
     }
