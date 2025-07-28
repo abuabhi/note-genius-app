@@ -55,23 +55,39 @@ const callEnrichmentAPIWithRetry = async (
     }
     
     if (error) {
-      logErrorWithContext(error, 'Enhancement API Error', { noteId: note.id, enhancementType });
+      logErrorWithContext(error, 'Enhancement API Error', { noteId: note.id, enhancementType, attempt });
       
       // Extract clean error message using utility
       const errorInfo = extractErrorMessage(error);
+      console.error(`❌ Enhancement API error details:`, {
+        errorMessage: errorInfo.message,
+        errorCode: errorInfo.code,
+        noteId: note.id.substring(0, 8),
+        enhancementType,
+        attempt
+      });
       throw new Error(errorInfo.message);
     }
     
     if (!data?.enhancedContent) {
+      console.error(`❌ No enhanced content returned:`, { data, noteId: note.id.substring(0, 8), enhancementType });
       throw new Error('No enhanced content returned from AI service');
     }
     
-    console.log('✅ Enhancement completed:', data.enhancedContent.length, 'characters');
+    console.log(`✅ Enhancement completed successfully:`, {
+      noteId: note.id.substring(0, 8),
+      enhancementType,
+      contentLength: data.enhancedContent.length,
+      tokenUsage: data.tokenUsage,
+      processingTime: data.processingTime,
+      attempt
+    });
     
     // Track token usage if available
     if (data.tokenUsage) {
       try {
         await trackTokenUsage(note.id, data.tokenUsage);
+        console.log(`📊 Token usage tracked:`, data.tokenUsage);
       } catch (trackError) {
         console.warn('Token tracking failed:', trackError);
       }
@@ -79,7 +95,7 @@ const callEnrichmentAPIWithRetry = async (
 
     return data.enhancedContent.trim();
   } catch (error) {
-    logErrorWithContext(error, `Enhancement attempt ${attempt} failed`, { noteId: note.id, enhancementType });
+    logErrorWithContext(error, `Enhancement attempt ${attempt} failed`, { noteId: note.id, enhancementType, attempt });
     
     // Check if we should retry for network/timeout errors only
     const errorInfo = extractErrorMessage(error);
@@ -87,18 +103,30 @@ const callEnrichmentAPIWithRetry = async (
       errorInfo.message.includes('timeout') ||
       errorInfo.message.includes('network') ||
       errorInfo.message.includes('fetch') ||
+      errorInfo.message.includes('abort') ||
       errorInfo.code === '408' ||
       errorInfo.code === '502' ||
-      errorInfo.code === '503'
+      errorInfo.code === '503' ||
+      errorInfo.code === '504'
     );
+    
+    console.log(`🔍 Error analysis:`, {
+      noteId: note.id.substring(0, 8),
+      enhancementType,
+      attempt,
+      isRetryable,
+      errorMessage: errorInfo.message,
+      errorCode: errorInfo.code,
+      willRetry: isRetryable && attempt <= maxRetries
+    });
     
     if (isRetryable && attempt <= maxRetries) {
       console.log(`🔄 Retrying enhancement... (attempt ${attempt + 1}/${maxRetries + 1})`);
-      await sleep(2000); // Fixed 2 second wait
+      await sleep(2000 * attempt); // Exponential backoff: 2s, 4s
       return callEnrichmentAPIWithRetry(note, enhancementType, attempt + 1);
     }
     
-    // Use extracted error message
+    // Use extracted error message for better user experience
     throw new Error(errorInfo.message);
   }
 };
