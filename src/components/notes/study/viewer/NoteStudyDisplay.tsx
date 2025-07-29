@@ -14,6 +14,7 @@ interface NoteStudyDisplayProps {
   onActiveContentTypeChange: (type: string) => void;
   isEditOperation: boolean;
   processingStage?: string;
+  headerProcessingEnhancement?: string | null;
 }
 
 export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
@@ -24,7 +25,8 @@ export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
   onActiveContentTypeChange,
   handleGenerateEnhancement,
   isEditOperation,
-  processingStage
+  processingStage,
+  headerProcessingEnhancement
 }) => {
   // Convert activeContentType string to EnhancementContentType
   const contentType = activeContentType as EnhancementContentType;
@@ -45,6 +47,7 @@ export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
         onGenerateEnhancement={handleGenerateEnhancement}
         isEditOperation={isEditOperation}
         processingStage={processingStage}
+        headerProcessingEnhancement={headerProcessingEnhancement}
       />
     </div>
   );

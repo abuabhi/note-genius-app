@@ -17,6 +17,8 @@ interface NoteStudyViewProps {
 }
 
 export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
+  const [headerProcessingEnhancement, setHeaderProcessingEnhancement] = React.useState<string | null>(null);
+  
   const {
     fontSize,
     textAlign,
@@ -80,8 +82,15 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     }
   };
 
+  // Handle header enhancement with proper state management
+  const handleEnhancementFromHeader = (enhancementType: string) => {
+    setHeaderProcessingEnhancement(enhancementType);
+    // Enhancement completion will trigger page reload, so no need to clear state
+  };
+
   const handleEnhance = (enhancedContent: string) => {
-    handleEnhanceContent('improve');
+    // This is called from the old system, just refresh the page
+    window.location.reload();
   };
 
   return (
@@ -105,6 +114,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
         onSave={handleSaveContent}
         onTitleChange={handleTitleChange}
         onEnhance={handleEnhance}
+        onEnhancementProcessing={setHeaderProcessingEnhancement}
       />
       <div className="container mx-auto px-4 py-6">
         <NoteStudyViewContent
@@ -135,6 +145,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           onActiveContentTypeChange={setActiveContentType}
           isEditOperation={isEnhancing}
           processingStage={processingStage}
+          headerProcessingEnhancement={headerProcessingEnhancement}
         />
       </div>
     </div>

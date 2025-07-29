@@ -18,6 +18,7 @@ interface OptimizedTwoColumnViewProps {
   onGenerateEnhancement?: (enhancementType: string) => Promise<void>;
   isEditOperation?: boolean;
   processingStage?: string;
+  headerProcessingEnhancement?: string | null;
 }
 
 export const OptimizedTwoColumnView = ({
@@ -28,7 +29,8 @@ export const OptimizedTwoColumnView = ({
   setActiveContentType,
   onGenerateEnhancement,
   isEditOperation = false,
-  processingStage
+  processingStage,
+  headerProcessingEnhancement
 }: OptimizedTwoColumnViewProps) => {
   const { refreshNotes } = useOptimizedNotes();
   const { resetStuckEnhancements } = useStuckEnhancementDetection(note.id);
@@ -51,6 +53,7 @@ export const OptimizedTwoColumnView = ({
             activeContentType={activeContentType}
             setActiveContentType={setActiveContentType}
             className="h-full"
+            headerProcessingEnhancement={headerProcessingEnhancement}
           />
         </div>
 

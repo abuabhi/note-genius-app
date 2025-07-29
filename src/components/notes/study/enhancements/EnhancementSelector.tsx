@@ -21,13 +21,15 @@ interface EnhancementSelectorProps {
   activeContentType: EnhancementContentType;
   setActiveContentType: (type: EnhancementContentType) => void;
   className?: string;
+  headerProcessingEnhancement?: string | null;
 }
 
 export const EnhancementSelector = ({
   note,
   activeContentType,
   setActiveContentType,
-  className
+  className,
+  headerProcessingEnhancement
 }: EnhancementSelectorProps) => {
   // Check if content exists and is meaningful
   const hasSummary = Boolean(
@@ -63,27 +65,27 @@ export const EnhancementSelector = ({
   // FIXED: Only show processing when content is actually being generated (NOT pending)
   // For new notes, status fields are null/undefined and won't show processing
   const summaryStatus = note.summary_status;
-  const isGeneratingSummary = summaryStatus === 'generating'; // ONLY show progress when actively generating
+  const isGeneratingSummary = summaryStatus === 'generating' || headerProcessingEnhancement === 'summarize'; // Show progress for both individual and dropdown
   const hasSummaryError = summaryStatus === 'failed';
   const showSummaryProcessing = Boolean(isGeneratingSummary && !hasSummary);
 
   const keyPointsStatus = note.key_points_status;
-  const isGeneratingKeyPoints = keyPointsStatus === 'generating'; // ONLY show progress when actively generating
+  const isGeneratingKeyPoints = keyPointsStatus === 'generating' || headerProcessingEnhancement === 'extract-key-points'; // Show progress for both individual and dropdown
   const hasKeyPointsError = keyPointsStatus === 'failed';
   const showKeyPointsProcessing = Boolean(isGeneratingKeyPoints && !hasKeyPoints);
 
   const markdownStatus = note.markdown_content_status;
-  const isGeneratingMarkdown = markdownStatus === 'generating'; // ONLY show progress when actively generating
+  const isGeneratingMarkdown = markdownStatus === 'generating' || headerProcessingEnhancement === 'convert-to-markdown'; // Show progress for both individual and dropdown
   const hasMarkdownError = markdownStatus === 'failed';
   const showMarkdownProcessing = Boolean(isGeneratingMarkdown && !hasMarkdown);
 
   const questionsStatus = note.questions_status;
-  const isGeneratingQuestions = questionsStatus === 'generating'; // ONLY show progress when actively generating
+  const isGeneratingQuestions = questionsStatus === 'generating' || headerProcessingEnhancement === 'generate-questions'; // Show progress for both individual and dropdown
   const hasQuestionsError = questionsStatus === 'failed';
   const showQuestionsProcessing = Boolean(isGeneratingQuestions && !hasQuestions);
 
   const enrichedStatus = note.enriched_status;
-  const isGeneratingEnriched = enrichedStatus === 'generating'; // ONLY show progress when actively generating
+  const isGeneratingEnriched = enrichedStatus === 'generating' || headerProcessingEnhancement === 'enrich-note'; // Show progress for both individual and dropdown
   const hasEnrichedError = enrichedStatus === 'failed';
   const showEnrichedProcessing = Boolean(isGeneratingEnriched && !hasEnrichedContent);
 

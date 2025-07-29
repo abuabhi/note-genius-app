@@ -34,6 +34,7 @@ interface StudyViewHeaderProps {
   onSave: () => void;
   onTitleChange: (title: string) => void;
   onEnhance: (enhancedContent: string, enhancementType?: EnhancementFunction) => void;
+  onEnhancementProcessing?: (enhancementType: string | null) => void;
 }
 
 export const StudyViewHeader = ({
@@ -54,6 +55,7 @@ export const StudyViewHeader = ({
   onSave,
   onTitleChange,
   onEnhance,
+  onEnhancementProcessing,
 }: StudyViewHeaderProps) => {
   const [processingEnhancement, setProcessingEnhancement] = useState<EnhancementFunction | null>(null);
   const [testingOpenAI, setTestingOpenAI] = useState(false);
@@ -96,6 +98,7 @@ export const StudyViewHeader = ({
   // Handle enhancement selection with new simple function
   const handleEnhancementSelect = async (enhancement: EnhancementFunction) => {
     setProcessingEnhancement(enhancement);
+    onEnhancementProcessing?.(enhancement);
     
     try {
       const originalContent = note.content || note.description || "";
@@ -117,8 +120,9 @@ export const StudyViewHeader = ({
       }
 
       if (data.success) {
-        onEnhance(data.data, enhancement);
         toast.success(`${enhancementOptions.find(opt => opt.value === enhancement)?.title} completed successfully!`);
+        // Force page refresh to show updated content
+        window.location.reload();
       } else {
         toast.error(`Enhancement failed: ${data.error}`);
       }
@@ -127,6 +131,7 @@ export const StudyViewHeader = ({
       toast.error("Failed to enhance note");
     } finally {
       setProcessingEnhancement(null);
+      onEnhancementProcessing?.(null);
     }
   };
 

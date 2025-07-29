@@ -34,6 +34,7 @@ interface NoteStudyViewContentProps {
   onActiveContentTypeChange: (type: string) => void;
   isEditOperation: boolean;
   processingStage?: string;
+  headerProcessingEnhancement?: string | null;
 }
 
 export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
@@ -63,7 +64,8 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
   activeContentType,
   onActiveContentTypeChange,
   isEditOperation,
-  processingStage
+  processingStage,
+  headerProcessingEnhancement
 }) => {
   return (
     <div className="p-6">
@@ -92,6 +94,7 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
           onActiveContentTypeChange={onActiveContentTypeChange}
           isEditOperation={isEditOperation}
           processingStage={processingStage}
+          headerProcessingEnhancement={headerProcessingEnhancement}
         />
       )}
     </div>
