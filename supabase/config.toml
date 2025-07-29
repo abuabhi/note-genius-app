@@ -39,5 +39,8 @@ verify_jwt = false
 [functions.youtube-transcript-extraction]
 verify_jwt = false
 
+[functions.enrich-note]
+verify_jwt = true
+
 [analytics]
 enabled = false
