@@ -40,16 +40,7 @@ const callEnrichmentAPIWithRetry = async (
       throw new Error('No content to enhance');
     }
     
-    // Test connection first
-    console.log(`🏥 [${requestId}] Testing connection to edge function...`);
-    try {
-      const healthCheck = await supabase.functions.invoke('enrich-note/health', {
-        headers: { 'Content-Type': 'application/json' }
-      });
-      console.log(`✅ [${requestId}] Health check response:`, healthCheck);
-    } catch (healthError) {
-      console.error(`❌ [${requestId}] Health check failed:`, healthError);
-    }
+    // Removed problematic health check - proceeding directly to enhancement call
     
     // Call the edge function with timeout and detailed logging
     const controller = new AbortController();
