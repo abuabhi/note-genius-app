@@ -62,6 +62,7 @@ export const OptimizedTwoColumnView = ({
             fontSize={fontSize}
             textAlign={textAlign}
             isLoading={false}
+            isEnhancing={isEditOperation}
             onGenerateEnhancement={onGenerateEnhancement}
             className="h-full"
             processingStage={processingStage}

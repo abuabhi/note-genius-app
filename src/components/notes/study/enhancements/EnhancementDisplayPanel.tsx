@@ -14,6 +14,7 @@ interface EnhancementDisplayPanelProps {
   fontSize: number;
   textAlign: TextAlignType;
   isLoading?: boolean;
+  isEnhancing?: boolean; // Add local enhancing state
   onGenerateEnhancement?: (enhancementType: string) => Promise<void>;
   onCancelEnhancement?: () => void;
   enhancedContents?: Record<string, string>;
@@ -27,6 +28,7 @@ export const EnhancementDisplayPanel = ({
   fontSize,
   textAlign,
   isLoading = false,
+  isEnhancing = false,
   onGenerateEnhancement,
   onCancelEnhancement,
   enhancedContents = {},
@@ -69,6 +71,15 @@ export const EnhancementDisplayPanel = ({
     
     return mappings[contentType] || 'summarize';
   };
+  
+  // Check if this specific content type is being enhanced locally
+  const isEnhancingThisContent = isEnhancing && (
+    (contentType === 'enriched' && getEnhancementTypeForGenerate(contentType) === 'enrich-note') ||
+    (contentType === 'summary' && getEnhancementTypeForGenerate(contentType) === 'summarize') ||
+    (contentType === 'keyPoints' && getEnhancementTypeForGenerate(contentType) === 'extract-key-points') ||
+    (contentType === 'questions' && getEnhancementTypeForGenerate(contentType) === 'generate-questions') ||
+    (contentType === 'markdown' && getEnhancementTypeForGenerate(contentType) === 'convert-to-markdown')
+  );
 
   const getContentForType = (type: EnhancementContentType): string => {
     let content = '';
@@ -161,7 +172,7 @@ export const EnhancementDisplayPanel = ({
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {/* Show loading state when processing */}
-      {(isLoading || isContentGenerating) && (
+      {(isLoading || isContentGenerating || isEnhancingThisContent) && (
         <div className="flex-1 flex items-center justify-center p-8">
           <LoadingAnimations 
             enhancementType={enhancementType} 
@@ -171,7 +182,7 @@ export const EnhancementDisplayPanel = ({
       )}
       
       {/* Show content when not loading - with metadata header */}
-      {!isLoading && !isContentGenerating && content && (
+      {!isLoading && !isContentGenerating && !isEnhancingThisContent && content && (
         <div className="flex-1 overflow-auto">
           {/* Content metadata header */}
           <ContentMetadata 
@@ -196,7 +207,7 @@ export const EnhancementDisplayPanel = ({
       )}
 
       {/* Show empty state when no content and not loading - NEVER AUTO-GENERATE */}
-      {!isLoading && !isContentGenerating && !content && (
+      {!isLoading && !isContentGenerating && !isEnhancingThisContent && !content && (
         <div className="flex-1 overflow-auto">
           <EnhancementContent
             content=""
