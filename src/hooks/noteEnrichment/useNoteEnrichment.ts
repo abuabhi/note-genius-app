@@ -55,84 +55,6 @@ export const useNoteEnrichment = (note?: Note) => {
     setTotalChunks(0);
   }, []);
 
-  // Process enhancement and determine how to apply it
-  const processEnhancement = useCallback(async (enhancementType: EnhancementFunction): Promise<EnhancementResult> => {
-    if (!note?.content) {
-      const error = 'No content to enhance';
-      setError(error);
-      return { success: false, content: '', error };
-    }
-    
-    // Check if user has reached their monthly limit
-    if (hasReachedLimit()) {
-      const error = 'You have reached your monthly limit for note enhancements';
-      setError(error);
-      toast.error(error);
-      return { success: false, content: '', error };
-    }
-
-    setIsLoading(true);
-    setIsProcessing(true);
-    setError('');
-    setSelectedEnhancement(enhancementType);
-
-    try {
-      // Check cache first
-      if (shouldCache(note.content)) {
-        const cached = getCachedEnhancement(note.content, enhancementType);
-        if (cached) {
-          setEnhancedContent(cached);
-          setIsLoading(false);
-          toast.success('Enhancement loaded from cache');
-          
-          const enhancementDetails = getEnhancementDetails(enhancementType);
-          return { 
-            success: true, 
-            content: cached, 
-            error: '',
-            enhancementType: enhancementDetails?.outputType 
-          };
-        }
-      }
-
-      // Use direct API call (will be implemented by enrichNote function below)
-      setIsLoading(true);
-      setIsProcessing(true);
-      setError('');
-      setSelectedEnhancement(enhancementType);
-
-      // Call API directly
-      const result = await callEnrichmentAPI(
-        { id: note.id, content: note.content, title: note.title },
-        enhancementType
-      );
-
-      const enhancementResult = {
-        success: true,
-        content: result,
-        error: '',
-        enhancementType: getEnhancementDetails(enhancementType)?.outputType
-      };
-      
-      // Cache the result if applicable
-      if (shouldCache(note.content)) {
-        setCachedEnhancement(note.content, enhancementType, enhancementResult.content);
-      }
-      
-      setEnhancedContent(enhancementResult.content);
-      setIsLoading(false);
-      
-      return enhancementResult;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(errorMessage);
-      setIsLoading(false);
-      return { success: false, content: '', error: errorMessage };
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [note, hasReachedLimit]);
-
   // Helper functions for status management
   const updateNoteStatus = async (noteId: string, enhancementType: string, status: 'generating' | 'completed' | 'failed') => {
     const statusMappings: Record<string, string> = {
@@ -329,6 +251,17 @@ export const useNoteEnrichment = (note?: Note) => {
       await fetchUsageStats();
     }
   }, [hasReachedLimit, fetchUsageStats, currentUsage, monthlyLimit, userTier, shouldCache, getCachedEnhancement, setCachedEnhancement, getEnhancementDetails]);
+
+  // Simplified process enhancement - now just calls enrichNote
+  const processEnhancement = useCallback(async (enhancementType: EnhancementFunction): Promise<EnhancementResult> => {
+    if (!note?.content) {
+      const error = 'No content to enhance';
+      setError(error);
+      return { success: false, content: '', error };
+    }
+    
+    return await enrichNote(note.id, note.content, enhancementType, note.title);
+  }, [note, enrichNote]);
 
   return {
     isProcessing,

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
 import { updateNoteInDatabase } from '@/contexts/notes/operations';
 import { Note } from '@/types/note';
-import { generateNoteSummary } from '@/hooks/noteEnrichment/enrichmentService';
+import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
 import { toast } from 'sonner';
 
 interface NoteSummaryProps {
@@ -35,6 +35,8 @@ export const NoteSummary = ({
   const [error, setError] = useState<string | null>(null);
 
   // Handle the case where the component receives a note object
+  const { enrichNote } = useNoteEnrichment();
+
   const handleGenerateSummary = async () => {
     if (onGenerateSummary) {
       // Use the parent-provided generator function
@@ -51,7 +53,13 @@ export const NoteSummary = ({
       setSummaryState('generating');
       setError(null);
 
-      const summaryContent = await generateNoteSummary(note);
+      const result = await enrichNote(note.id, note.content || '', 'summarize', note.title);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to generate summary');
+      }
+
+      const summaryContent = result.content;
       
       // Update in database
       await updateNoteInDatabase(note.id, {

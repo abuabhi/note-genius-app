@@ -7,7 +7,7 @@ import { NoteStudyViewContent } from "./viewer/NoteStudyViewContent";
 import { useStudyViewState } from "./hooks/useStudyViewState";
 import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
-import { useNoteEnhancementRetry } from "./hooks/useNoteEnhancementRetry";
+import { useNoteEnhancementGenerate } from "./hooks/useNoteEnhancementGenerate";
 import { UserSubject } from "@/types/subject";
 import { EnhancementDebugger } from "@/components/debug/EnhancementDebugger";
 import { useYouTubeContentMigration } from "@/hooks/useYouTubeContentMigration";
@@ -64,9 +64,9 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
   } = useNoteEnrichment(note);
 
   const {
-    handleRetryEnhancement,
+    handleGenerateEnhancement,
     isEnhancing
-  } = useNoteEnhancementRetry(note, forceRefresh);
+  } = useNoteEnhancementGenerate(note, forceRefresh);
 
   // Auto-migrate YouTube content if needed
   useYouTubeContentMigration(note);
@@ -126,7 +126,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           toggleEditing={toggleEditing}
           handleEnhanceContent={handleEnhanceContent}
           setSelectedTags={setSelectedTags}
-          handleRetryEnhancement={handleRetryEnhancement}
+          handleGenerateEnhancement={handleGenerateEnhancement}
           hasReachedLimit={hasReachedLimit()}
           fetchUsageStats={() => {}}
           onNoteUpdate={onNoteUpdate}

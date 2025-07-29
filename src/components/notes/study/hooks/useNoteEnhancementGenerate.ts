@@ -5,14 +5,14 @@ import { toast } from "sonner";
 import { Note } from "@/types/note";
 
 /**
- * Hook for handling note enhancement retry functionality
+ * Hook for handling note enhancement generation functionality
  */
-export const useNoteEnhancementRetry = (currentNote: Note, forceRefresh: () => void) => {
+export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () => void) => {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const { enrichNote, hasReachedLimit } = useNoteEnrichment();
 
-  const handleRetryEnhancement = async (enhancementType: string): Promise<void> => {
-    console.log("🔄 RETRY ENHANCEMENT HOOK CALLED:", {
+  const handleGenerateEnhancement = async (enhancementType: string): Promise<void> => {
+    console.log("🔄 GENERATE ENHANCEMENT HOOK CALLED:", {
       enhancementType,
       noteId: currentNote.id,
       hasContent: !!currentNote.content,
@@ -50,14 +50,14 @@ export const useNoteEnhancementRetry = (currentNote: Note, forceRefresh: () => v
         console.log("✅ ENHANCEMENT SUCCESS - FORCING REFRESH");
         // Force immediate refresh
         forceRefresh();
-        toast.success("Enhancement regenerated successfully");
+        toast.success("Enhancement generated successfully");
       } else {
         console.error("❌ ENHANCEMENT FAILED:", result.error);
-        toast.error(result.error || "Failed to regenerate enhancement");
+        toast.error(result.error || "Failed to generate enhancement");
       }
     } catch (error) {
-      console.error("❌ CATCH: Error regenerating enhancement:", error);
-      toast.error("Failed to regenerate enhancement");
+      console.error("❌ CATCH: Error generating enhancement:", error);
+      toast.error("Failed to generate enhancement");
     } finally {
       console.log("🏁 SETTING ENHANCING STATE TO FALSE");
       setIsEnhancing(false);
@@ -65,7 +65,7 @@ export const useNoteEnhancementRetry = (currentNote: Note, forceRefresh: () => v
   };
 
   return {
-    handleRetryEnhancement,
+    handleGenerateEnhancement,
     isEnhancing
   };
 };

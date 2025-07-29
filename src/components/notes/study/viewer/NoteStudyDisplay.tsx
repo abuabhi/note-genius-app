@@ -9,7 +9,7 @@ interface NoteStudyDisplayProps {
   note: Note;
   fontSize: number;
   textAlign: TextAlignType;
-  handleRetryEnhancement: (enhancementType: string) => Promise<void>;
+  handleGenerateEnhancement: (enhancementType: string) => Promise<void>;
   activeContentType: string;
   onActiveContentTypeChange: (type: string) => void;
   isEditOperation: boolean;
@@ -22,7 +22,7 @@ export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
   textAlign,
   activeContentType,
   onActiveContentTypeChange,
-  handleRetryEnhancement,
+  handleGenerateEnhancement,
   isEditOperation,
   processingStage
 }) => {
@@ -42,7 +42,7 @@ export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
         textAlign={textAlign}
         activeContentType={contentType}
         setActiveContentType={handleActiveContentTypeChange}
-        onRetryEnhancement={handleRetryEnhancement}
+        onGenerateEnhancement={handleGenerateEnhancement}
         isEditOperation={isEditOperation}
         processingStage={processingStage}
       />

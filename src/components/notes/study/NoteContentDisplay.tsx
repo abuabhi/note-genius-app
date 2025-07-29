@@ -53,7 +53,7 @@ export const NoteContentDisplay = ({
         textAlign={textAlign}
         activeContentType={localActiveContentType}
         setActiveContentType={handleActiveContentTypeChange}
-        onRetryEnhancement={onRetryEnhancement}
+        onGenerateEnhancement={onRetryEnhancement}
         isEditOperation={isLoading}
       />
     </div>

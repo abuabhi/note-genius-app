@@ -13,7 +13,7 @@ interface OptimizedTwoColumnViewProps {
   textAlign: TextAlignType;
   activeContentType: EnhancementContentType;
   setActiveContentType: (type: EnhancementContentType) => void;
-  onRetryEnhancement?: (enhancementType: string) => Promise<void>;
+  onGenerateEnhancement?: (enhancementType: string) => Promise<void>;
   isEditOperation?: boolean;
   processingStage?: string;
 }
@@ -24,7 +24,7 @@ export const OptimizedTwoColumnView = ({
   textAlign,
   activeContentType,
   setActiveContentType,
-  onRetryEnhancement,
+  onGenerateEnhancement,
   isEditOperation = false,
   processingStage
 }: OptimizedTwoColumnViewProps) => {
@@ -42,7 +42,7 @@ export const OptimizedTwoColumnView = ({
     noteId: note.id,
     activeContentType,
     isEditOperation,
-    onRetryEnhancement: typeof onRetryEnhancement
+    onGenerateEnhancement: typeof onGenerateEnhancement
   });
 
   return (
@@ -65,7 +65,7 @@ export const OptimizedTwoColumnView = ({
           fontSize={fontSize}
           textAlign={textAlign}
           isLoading={false}
-          onRetryEnhancement={onRetryEnhancement}
+          onRetryEnhancement={onGenerateEnhancement}
           className="h-full"
           processingStage={processingStage}
         />
