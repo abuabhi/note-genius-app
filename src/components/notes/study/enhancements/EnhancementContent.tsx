@@ -101,13 +101,15 @@ export const EnhancementContent = ({
             <Button 
               size="lg" 
               onClick={async (e) => {
+                console.log("🔥🔥🔥 BUTTON CLICK EVENT FIRED - RAW CLICK DETECTED 🔥🔥🔥");
                 e.preventDefault();
                 e.stopPropagation();
                 console.log("🔥 BUTTON CLICKED - USER INITIATED GENERATION:", {
                   enhancementType,
                   hasOnGenerate: !!onGenerate,
                   noteId,
-                  contentType
+                  contentType,
+                  timestamp: new Date().toISOString()
                 });
                 
                 if (!onGenerate) {
@@ -124,11 +126,22 @@ export const EnhancementContent = ({
                 }
               }}
               className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+              data-testid="generate-enhancement-button"
+              style={{ pointerEvents: 'auto', zIndex: 10 }}
             >
               <Sparkles className="mr-3 h-5 w-5" /> 
               Generate {safeTitle}
             </Button>
           )}
+          
+          {/* DEBUG: Show button state */}
+          <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-gray-600">
+            <div>Debug Info:</div>
+            <div>• onGenerate: {onGenerate ? 'PROVIDED' : 'MISSING'}</div>
+            <div>• enhancementType: {enhancementType || 'MISSING'}</div>
+            <div>• noteId: {noteId || 'MISSING'}</div>
+            <div>• contentType: {contentType || 'MISSING'}</div>
+          </div>
         </div>
       </div>
     );
