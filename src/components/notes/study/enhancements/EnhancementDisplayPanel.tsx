@@ -127,12 +127,15 @@ export const EnhancementDisplayPanel = ({
 
   // Handle explicit generate calls with proper error handling
   const handleExplicitGenerate = async (enhancementType: string) => {
+    console.log("🔥🔥🔥 ENHANCEMENT DISPLAY PANEL - BUTTON CLICKED 🔥🔥🔥");
     console.log("🔥 ENHANCEMENT DISPLAY PANEL - UNIFIED GENERATE FLOW:", {
       enhancementType,
       hasOnGenerateEnhancement: !!onGenerateEnhancement,
       noteId: note.id,
       contentType,
-      callSource: 'EnhancementDisplayPanel.handleExplicitGenerate'
+      callSource: 'EnhancementDisplayPanel.handleExplicitGenerate',
+      onGenerateEnhancementType: typeof onGenerateEnhancement,
+      timestamp: new Date().toISOString()
     });
     
     if (onGenerateEnhancement) {
