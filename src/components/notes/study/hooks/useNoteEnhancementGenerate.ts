@@ -1,17 +1,16 @@
 
 import { useState, useEffect } from "react";
-import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { toast } from "sonner";
 import { Note } from "@/types/note";
 import { debugLogger } from "@/utils/debug/EnhancementDebugLogger";
 import { DEBUG_CONFIG } from "@/config/debug";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Hook for handling note enhancement generation functionality
  */
 export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () => void) => {
   const [isEnhancing, setIsEnhancing] = useState(false);
-  const { enrichNote, hasReachedLimit } = useNoteEnrichment();
 
   // CRITICAL FIX: Always reset enhancing state on mount/note change to prevent stuck states
   useEffect(() => {
@@ -25,15 +24,8 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
       enhancementType,
       noteId: currentNote.id,
       isEnhancing,
-      hasReachedLimit: hasReachedLimit(),
       callStack: 'useNoteEnhancementGenerate.handleGenerateEnhancement'
     });
-
-    if (hasReachedLimit()) {
-      debugLogger.logFlow("ENHANCEMENT_LIMIT_REACHED", { noteId: currentNote.id });
-      toast.error("Enhancement limit reached for this month");
-      return;
-    }
 
     if (isEnhancing) {
       debugLogger.logFlow("DUPLICATE_REQUEST_BLOCKED", { noteId: currentNote.id, enhancementType });
@@ -44,42 +36,45 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
     setIsEnhancing(true);
     
     try {
-      debugLogger.logFlow("CALLING_ENRICH_NOTE", {
+      debugLogger.logFlow("CALLING_SIMPLE_ENHANCE_NOTE", {
         noteId: currentNote.id,
         contentLength: currentNote.content?.length || 0,
         enhancementType,
         title: currentNote.title
       });
       
-      // Call the enrichment service with network logging
-      debugLogger.logNetworkCall('enrich-note', 'POST', { enhancementType, noteId: currentNote.id });
+      // Call the new simple-enhance-note edge function
+      debugLogger.logNetworkCall('simple-enhance-note', 'POST', { enhancementType, noteId: currentNote.id });
       
-      const result = await enrichNote(
-        currentNote.id,
-        currentNote.content || '',
-        enhancementType as any,
-        currentNote.title
-      );
+      const { data, error } = await supabase.functions.invoke('simple-enhance-note', {
+        body: {
+          noteId: currentNote.id,
+          content: currentNote.content || '',
+          enhancementType: enhancementType,
+          title: currentNote.title || ''
+        }
+      });
       
-      debugLogger.logFlow("ENRICHMENT_RESULT_RECEIVED", { 
-        success: result.success, 
-        error: result.error,
+      debugLogger.logFlow("SIMPLE_ENHANCE_RESULT_RECEIVED", { 
+        success: !error, 
+        error: error?.message,
         noteId: currentNote.id
       });
       
-      if (result.success) {
+      if (!error && data?.success) {
         debugLogger.logFlow("ENHANCEMENT_SUCCESS_FORCING_REFRESH", { noteId: currentNote.id });
         forceRefresh();
         toast.success("Enhancement generated successfully");
-        debugLogger.logNetworkCall('enrich-note', 'POST', { enhancementType }, 200);
+        debugLogger.logNetworkCall('simple-enhance-note', 'POST', { enhancementType }, 200);
       } else {
+        const errorMessage = error?.message || data?.error || "Failed to generate enhancement";
         debugLogger.logError("ENHANCEMENT_FAILED", { 
-          error: result.error, 
+          error: errorMessage, 
           noteId: currentNote.id, 
           enhancementType 
         });
-        toast.error(result.error || "Failed to generate enhancement");
-        debugLogger.logNetworkCall('enrich-note', 'POST', { enhancementType }, 400);
+        toast.error(errorMessage);
+        debugLogger.logNetworkCall('simple-enhance-note', 'POST', { enhancementType }, 400);
       }
     } catch (error) {
       debugLogger.logError("ENHANCEMENT_CATCH_ERROR", { 
@@ -88,7 +83,7 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
         enhancementType 
       });
       toast.error("Failed to generate enhancement");
-      debugLogger.logNetworkCall('enrich-note', 'POST', { enhancementType }, 500);
+      debugLogger.logNetworkCall('simple-enhance-note', 'POST', { enhancementType }, 500);
     } finally {
       debugLogger.logFlow("SETTING_ENHANCING_STATE_FALSE", { noteId: currentNote.id });
       setIsEnhancing(false);
