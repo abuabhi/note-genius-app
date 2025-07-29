@@ -129,6 +129,9 @@ export const EnhancementDisplayPanel = ({
 
   // Handle explicit generate calls with proper error handling
   const handleExplicitGenerate = async (enhancementType: string) => {
+    // BASIC CLICK DETECTION - ALWAYS LOG
+    console.log("🟡 BASIC CLICK DETECTED in EnhancementDisplayPanel");
+    
     if (DEBUG_CONFIG.ENHANCEMENT_FLOW) {
       debugLogger.log('GENERATE_CALL', `Enhancement requested for ${enhancementType}`, {
         hasHandler: !!onGenerateEnhancement,
@@ -138,15 +141,19 @@ export const EnhancementDisplayPanel = ({
     }
     
     if (onGenerateEnhancement) {
+      console.log("🟢 Calling onGenerateEnhancement with:", enhancementType);
       try {
         await onGenerateEnhancement(enhancementType);
+        console.log("✅ onGenerateEnhancement completed successfully");
         if (DEBUG_CONFIG.ENHANCEMENT_FLOW) {
           debugLogger.log('ENHANCEMENT_SUCCESS', `Enhancement completed for ${enhancementType}`);
         }
       } catch (error) {
+        console.error("❌ Enhancement generation failed:", error);
         debugLogger.logError('Enhancement generation failed', { enhancementType, error });
       }
     } else {
+      console.error("❌ NO onGenerateEnhancement function provided");
       debugLogger.logError('No enhancement handler provided to DisplayPanel');
     }
   };

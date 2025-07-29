@@ -88,6 +88,9 @@ export const EnhancementContent = ({
             <Button 
               size="lg" 
               onClick={async (e) => {
+                // BASIC CLICK DETECTION - ALWAYS LOG
+                console.log("🟡 BASIC CLICK DETECTED in EnhancementContent");
+                
                 if (DEBUG_CONFIG.ENHANCEMENT_FLOW) {
                   debugLogger.log('BUTTON_CLICK', `Generate button clicked for ${enhancementType}`);
                 }
@@ -96,16 +99,21 @@ export const EnhancementContent = ({
                 e.stopPropagation();
                 
                 if (!onGenerate) {
+                  console.error("❌ NO onGenerate function provided");
                   debugLogger.logError('No onGenerate function provided to button');
                   return;
                 }
                 
+                console.log("🟢 Calling onGenerate with:", enhancementType);
+                
                 try {
                   await onGenerate(enhancementType);
+                  console.log("✅ onGenerate completed successfully");
                   if (DEBUG_CONFIG.ENHANCEMENT_FLOW) {
                     debugLogger.log('ENHANCEMENT_SUCCESS', `Enhancement completed for ${enhancementType}`);
                   }
                 } catch (error) {
+                  console.error("❌ Enhancement generation failed:", error);
                   debugLogger.logError('Enhancement generation failed', { enhancementType, error });
                 }
               }}
