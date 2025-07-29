@@ -27,6 +27,13 @@ export const StudyViewEnhancementDropdown = ({
 
   const isProcessing = processingEnhancement !== null;
 
+  console.log("🔧 FIXED DROPDOWN - Processing state:", {
+    processingEnhancement,
+    isProcessing,
+    hasReachedLimit: hasReachedLimit(),
+    noteId: note.id
+  });
+
   if (hasReachedLimit()) {
     return (
       <Button variant="outline" size="sm" disabled>
@@ -50,7 +57,10 @@ export const StudyViewEnhancementDropdown = ({
         className="w-72 bg-white border border-gray-200 shadow-lg rounded-md z-50"
       >
         <DropdownMenuItem 
-          onClick={() => onEnhancementSelect('summarize')}
+          onClick={async () => {
+            console.log("🚀 DROPDOWN CLICK: summarize -> forwarding to onEnhancementSelect");
+            await onEnhancementSelect('summarize');
+          }}
           className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50"
         >
           <Sparkles className="mr-3 h-4 w-4 text-mint-600 mt-0.5 flex-shrink-0" />
@@ -63,7 +73,10 @@ export const StudyViewEnhancementDropdown = ({
         <DropdownMenuSeparator className="my-1 border-t border-gray-100" />
         
         <DropdownMenuItem 
-          onClick={() => onEnhancementSelect('extract-key-points')}
+          onClick={async () => {
+            console.log("🚀 DROPDOWN CLICK: extract-key-points -> forwarding to onEnhancementSelect");
+            await onEnhancementSelect('extract-key-points');
+          }}
           className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50"
         >
           <Sparkles className="mr-3 h-4 w-4 text-mint-600 mt-0.5 flex-shrink-0" />
@@ -76,7 +89,10 @@ export const StudyViewEnhancementDropdown = ({
         <DropdownMenuSeparator className="my-1 border-t border-gray-100" />
         
         <DropdownMenuItem 
-          onClick={() => onEnhancementSelect('generate-questions')}
+          onClick={async () => {
+            console.log("🚀 DROPDOWN CLICK: generate-questions -> forwarding to onEnhancementSelect");
+            await onEnhancementSelect('generate-questions');
+          }}
           className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50"
         >
           <HelpCircle className="mr-3 h-4 w-4 text-mint-600 mt-0.5 flex-shrink-0" />
@@ -89,7 +105,10 @@ export const StudyViewEnhancementDropdown = ({
         <DropdownMenuSeparator className="my-1 border-t border-gray-100" />
         
         <DropdownMenuItem 
-          onClick={() => onEnhancementSelect('convert-to-markdown')}
+          onClick={async () => {
+            console.log("🚀 DROPDOWN CLICK: convert-to-markdown -> forwarding to onEnhancementSelect");
+            await onEnhancementSelect('convert-to-markdown');
+          }}
           className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50"
         >
           <Sparkles className="mr-3 h-4 w-4 text-mint-600 mt-0.5 flex-shrink-0" />
@@ -102,7 +121,10 @@ export const StudyViewEnhancementDropdown = ({
         <DropdownMenuSeparator className="my-1 border-t border-gray-100" />
         
         <DropdownMenuItem 
-          onClick={() => onEnhancementSelect('enrich-note')}
+          onClick={async () => {
+            console.log("🚀 DROPDOWN CLICK: enrich-note -> forwarding to onEnhancementSelect");
+            await onEnhancementSelect('enrich-note');
+          }}
           className="flex items-start px-4 py-3 text-sm cursor-pointer hover:bg-mint-50 focus:bg-mint-50"
         >
           <Sparkles className="mr-3 h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />

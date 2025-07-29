@@ -127,23 +127,24 @@ export const EnhancementDisplayPanel = ({
 
   // Handle explicit generate calls with proper error handling
   const handleExplicitGenerate = async (enhancementType: string) => {
-    console.log("🔥 ENHANCEMENT DISPLAY PANEL EXPLICIT GENERATE:", {
+    console.log("🔥 ENHANCEMENT DISPLAY PANEL - UNIFIED GENERATE FLOW:", {
       enhancementType,
       hasOnGenerateEnhancement: !!onGenerateEnhancement,
       noteId: note.id,
-      contentType
+      contentType,
+      callSource: 'EnhancementDisplayPanel.handleExplicitGenerate'
     });
     
     if (onGenerateEnhancement) {
       try {
-        console.log("🚀 CALLING onGenerateEnhancement from DisplayPanel");
+        console.log("🚀 UNIFIED FLOW - CALLING onGenerateEnhancement from DisplayPanel");
         await onGenerateEnhancement(enhancementType);
-        console.log("✅ onGenerateEnhancement completed in DisplayPanel");
+        console.log("✅ UNIFIED FLOW - onGenerateEnhancement completed in DisplayPanel");
       } catch (error) {
-        console.error("❌ Error in explicit generate from DisplayPanel:", error);
+        console.error("❌ UNIFIED FLOW - Error in explicit generate from DisplayPanel:", error);
       }
     } else {
-      console.error("❌ NO onGenerateEnhancement function provided to DisplayPanel!");
+      console.error("❌ UNIFIED FLOW - NO onGenerateEnhancement function provided to DisplayPanel!");
     }
   };
 

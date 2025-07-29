@@ -101,32 +101,33 @@ export const EnhancementContent = ({
             <Button 
               size="lg" 
               onClick={async (e) => {
-                console.log("🔥🔥🔥 BUTTON CLICK EVENT FIRED - RAW CLICK DETECTED 🔥🔥🔥");
+                console.log("🔥🔥🔥 GENERATE BUTTON CLICKED IN ENHANCEMENT CONTENT 🔥🔥🔥");
                 e.preventDefault();
                 e.stopPropagation();
-                console.log("🔥 BUTTON CLICKED - USER INITIATED GENERATION:", {
+                console.log("🚀 ENHANCEMENT CONTENT BUTTON - Generation started:", {
                   enhancementType,
                   hasOnGenerate: !!onGenerate,
                   noteId,
                   contentType,
-                  timestamp: new Date().toISOString()
+                  timestamp: new Date().toISOString(),
+                  buttonLocation: 'EnhancementContent'
                 });
                 
                 if (!onGenerate) {
-                  console.error("❌ NO onGenerate function provided to button!");
+                  console.error("❌ NO onGenerate function provided to EnhancementContent button!");
                   return;
                 }
                 
                 try {
-                  console.log("🚀 CALLING onGenerate from button...");
+                  console.log("🚀 CALLING onGenerate from EnhancementContent button...");
                   await onGenerate(enhancementType);
-                  console.log("✅ onGenerate completed from button");
+                  console.log("✅ onGenerate completed from EnhancementContent button");
                 } catch (error) {
-                  console.error("❌ Error during enhancement generation from button:", error);
+                  console.error("❌ Error during enhancement generation from EnhancementContent button:", error);
                 }
               }}
               className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-              data-testid="generate-enhancement-button"
+              data-testid={`generate-${enhancementType}-button`}
               style={{ pointerEvents: 'auto', zIndex: 10 }}
             >
               <Sparkles className="mr-3 h-5 w-5" /> 
@@ -134,13 +135,15 @@ export const EnhancementContent = ({
             </Button>
           )}
           
-          {/* DEBUG: Show button state */}
-          <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-gray-600">
-            <div>Debug Info:</div>
-            <div>• onGenerate: {onGenerate ? 'PROVIDED' : 'MISSING'}</div>
-            <div>• enhancementType: {enhancementType || 'MISSING'}</div>
-            <div>• noteId: {noteId || 'MISSING'}</div>
-            <div>• contentType: {contentType || 'MISSING'}</div>
+          {/* DEBUG: Show comprehensive debug info */}
+          <div className="mt-4 p-3 bg-gray-100 rounded text-xs text-gray-600 border">
+            <div className="font-semibold mb-2">🔧 Enhanced Debug Info:</div>
+            <div>• onGenerate: {onGenerate ? '✅ PROVIDED' : '❌ MISSING'}</div>
+            <div>• enhancementType: {enhancementType || '❌ MISSING'}</div>
+            <div>• noteId: {noteId ? '✅ ' + noteId.substring(0, 8) + '...' : '❌ MISSING'}</div>
+            <div>• contentType: {contentType || '❌ MISSING'}</div>
+            <div>• title: {safeTitle}</div>
+            <div>• buttonTestId: generate-{enhancementType}-button</div>
           </div>
         </div>
       </div>

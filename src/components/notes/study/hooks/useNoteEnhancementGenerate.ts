@@ -11,29 +11,42 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
   const [isEnhancing, setIsEnhancing] = useState(false);
   const { enrichNote, hasReachedLimit } = useNoteEnrichment();
 
-  // CRITICAL FIX: Reset stuck enhancing state on mount/note change
+  // CRITICAL FIX: Always reset enhancing state on mount/note change to prevent stuck states
   useEffect(() => {
-    console.log("🔄 RESETTING STUCK ENHANCING STATE on mount/note change");
+    console.log("🔄 COMPREHENSIVE STATE RESET on mount/note change");
     setIsEnhancing(false);
   }, [currentNote.id]);
 
-  console.log("🔍 useNoteEnhancementGenerate STATE:", {
+  console.log("🔍 useNoteEnhancementGenerate COMPREHENSIVE STATE:", {
     noteId: currentNote.id,
     isEnhancing,
-    hasReachedLimit: hasReachedLimit()
+    hasReachedLimit: hasReachedLimit(),
+    enhancementStatuses: {
+      summary: currentNote.summary_status,
+      keyPoints: currentNote.key_points_status,
+      markdown: currentNote.markdown_content_status,
+      questions: currentNote.questions_status,
+      enriched: currentNote.enriched_status
+    }
   });
 
   const handleGenerateEnhancement = async (enhancementType: string): Promise<void> => {
-    console.log("🔄 GENERATE ENHANCEMENT HOOK CALLED:", {
+    console.log("🔥 UNIFIED ENHANCEMENT HANDLER CALLED:", {
       enhancementType,
       noteId: currentNote.id,
-      hasContent: !!currentNote.content,
-      noteTitle: currentNote.title
+      isEnhancing,
+      hasReachedLimit: hasReachedLimit(),
+      callStack: 'useNoteEnhancementGenerate.handleGenerateEnhancement'
     });
-    
+
     if (hasReachedLimit()) {
-      console.log("❌ ENHANCEMENT LIMIT REACHED");
-      toast.error("You have reached your monthly limit for note enhancements");
+      console.warn("⚠️ Enhancement limit reached");
+      toast.error("Enhancement limit reached for this month");
+      return;
+    }
+
+    if (isEnhancing) {
+      console.warn("⚠️ Already enhancing, skipping duplicate request");
       return;
     }
     
