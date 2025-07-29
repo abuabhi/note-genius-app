@@ -5,6 +5,7 @@ import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
 import { useUserTier } from "@/hooks/useUserTier";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EnhanceNoteButtonProps {
   noteId: string;
@@ -41,20 +42,32 @@ export const EnhanceNoteButton = ({
     }
     
     try {
-      // Use a default enhancement function since we're not using the selectedEnrichment anymore
-      const enhancementType: EnhancementFunction = "generate-questions";
-      const result = await enrichNote(
-        noteId, 
-        noteContent, 
-        enhancementType,
-        noteTitle || "Note" // Use provided title or default
-      );
+      console.log('🚀 Calling simple-enhance-note for generate-questions');
       
-      if (result.success) {
-        onEnhance(result.content);
+      const { data, error } = await supabase.functions.invoke('simple-enhance-note', {
+        body: { 
+          noteId,
+          content: noteContent, 
+          enhancementType: "generate-questions", 
+          title: noteTitle || "Note" 
+        }
+      });
+
+      if (error) {
+        console.error('❌ Enhancement error:', error);
+        toast.error(`Enhancement failed: ${error.message}`);
+        return;
+      }
+
+      if (data.success) {
+        onEnhance(data.data);
+        toast.success('Questions generated successfully!');
+      } else {
+        toast.error(`Enhancement failed: ${data.error}`);
       }
     } catch (error) {
       console.error("Error enhancing note:", error);
+      toast.error("Failed to enhance note");
     }
   };
 

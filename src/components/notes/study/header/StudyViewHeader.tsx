@@ -93,17 +93,34 @@ export const StudyViewHeader = ({
     }
   };
 
-  // Handle enhancement selection
+  // Handle enhancement selection with new simple function
   const handleEnhancementSelect = async (enhancement: EnhancementFunction) => {
     setProcessingEnhancement(enhancement);
     
     try {
       const originalContent = note.content || note.description || "";
-      const result = await enrichNote(note.id, originalContent, enhancement, note.title || "");
+      console.log(`🚀 Calling simple-enhance-note for ${enhancement}`);
       
-      if (result.success) {
-        onEnhance(result.content, enhancement);
+      const { data, error } = await supabase.functions.invoke('simple-enhance-note', {
+        body: { 
+          noteId: note.id,
+          content: originalContent, 
+          enhancementType: enhancement, 
+          title: note.title || "" 
+        }
+      });
+
+      if (error) {
+        console.error('❌ Enhancement error:', error);
+        toast.error(`Enhancement failed: ${error.message}`);
+        return;
+      }
+
+      if (data.success) {
+        onEnhance(data.data, enhancement);
         toast.success(`${enhancementOptions.find(opt => opt.value === enhancement)?.title} completed successfully!`);
+      } else {
+        toast.error(`Enhancement failed: ${data.error}`);
       }
     } catch (error) {
       console.error("Error enhancing note:", error);
