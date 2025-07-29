@@ -42,5 +42,8 @@ verify_jwt = false
 [functions.enrich-note]
 verify_jwt = true
 
+[functions.test-openai]
+verify_jwt = true
+
 [analytics]
 enabled = false

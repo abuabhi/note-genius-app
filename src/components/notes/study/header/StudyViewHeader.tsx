@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Note } from "@/types/note";
 import { StudyViewControls } from "../controls/StudyViewControls";
 import { TextAlignType } from "../hooks/useStudyViewState";
@@ -12,6 +13,7 @@ import { StudyViewEnhancementDropdown } from "./StudyViewEnhancementDropdown";
 import { StudyViewExportDropdown } from "./StudyViewExportDropdown";
 import { StudyViewConversionDropdown } from "./StudyViewConversionDropdown";
 import { StudyViewYouTubeButton } from "./StudyViewYouTubeButton";
+import { supabase } from "@/integrations/supabase/client";
 
 
 interface StudyViewHeaderProps {
@@ -54,7 +56,42 @@ export const StudyViewHeader = ({
   onEnhance,
 }: StudyViewHeaderProps) => {
   const [processingEnhancement, setProcessingEnhancement] = useState<EnhancementFunction | null>(null);
+  const [testingOpenAI, setTestingOpenAI] = useState(false);
   const { enrichNote, enhancementOptions } = useNoteEnrichment();
+
+  // Test OpenAI function
+  const testOpenAI = async () => {
+    setTestingOpenAI(true);
+    try {
+      const testText = note.content || note.description || "This is a test note content for OpenAI integration.";
+      
+      console.log('🧪 Testing OpenAI with text:', testText.substring(0, 100));
+      
+      const { data, error } = await supabase.functions.invoke('test-openai', {
+        body: { text: testText }
+      });
+
+      if (error) {
+        console.error('❌ Test OpenAI error:', error);
+        toast.error(`Test failed: ${error.message}`);
+        return;
+      }
+
+      console.log('✅ Test OpenAI success:', data);
+      
+      if (data.success) {
+        toast.success('✅ OpenAI test successful!');
+        alert(`OpenAI Test Result:\n\n${data.result}`);
+      } else {
+        toast.error(`Test failed: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('💥 Test OpenAI exception:', error);
+      toast.error('Test failed with exception');
+    } finally {
+      setTestingOpenAI(false);
+    }
+  };
 
   // Handle enhancement selection
   const handleEnhancementSelect = async (enhancement: EnhancementFunction) => {
@@ -91,6 +128,16 @@ export const StudyViewHeader = ({
         <div className="flex items-center gap-2">
           {!isEditing && (
             <>
+              <Button
+                onClick={testOpenAI}
+                disabled={testingOpenAI}
+                variant="outline"
+                size="sm"
+                className="bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
+              >
+                {testingOpenAI ? "Testing..." : "🧪 Test OpenAI"}
+              </Button>
+              
               <StudyViewConversionDropdown note={note} />
               
               <StudyViewEnhancementDropdown
