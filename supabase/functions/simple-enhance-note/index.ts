@@ -22,8 +22,8 @@ const enhancementPrompts = {
 };
 
 const dbFieldMapping = {
-  'summarize': 'summary_content',
-  'extract-key-points': 'key_points_content', 
+  'summarize': 'summary',
+  'extract-key-points': 'key_points', 
   'generate-questions': 'questions_content',
   'convert-to-markdown': 'markdown_content',
   'enrich-note': 'enriched_content'
