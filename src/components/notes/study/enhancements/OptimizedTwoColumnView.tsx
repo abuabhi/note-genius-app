@@ -7,6 +7,7 @@ import { EnhancementDisplayPanel } from "./EnhancementDisplayPanel";
 import { EnhancementFlowDebugger } from "../debug/EnhancementFlowDebugger";
 import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 import { useStuckEnhancementDetection } from "@/hooks/useStuckEnhancementDetection";
+import { debugLogger } from "@/utils/debug/EnhancementDebugLogger";
 
 interface OptimizedTwoColumnViewProps {
   note: Note;
@@ -34,12 +35,12 @@ export const OptimizedTwoColumnView = ({
 
   // Force refresh the note data when component mounts and reset any stuck states
   useEffect(() => {
-    console.log("🔄 Refreshing note data and checking for stuck enhancements");
+    debugLogger.logFlow("REFRESHING_NOTE_DATA", { noteId: note.id });
     resetStuckEnhancements();
     refreshNotes();
   }, [refreshNotes, resetStuckEnhancements]);
 
-  console.log("🎯 OptimizedTwoColumnView - Rendering with:", {
+  debugLogger.logState("OptimizedTwoColumnView", {
     noteId: note.id,
     activeContentType,
     isEditOperation,

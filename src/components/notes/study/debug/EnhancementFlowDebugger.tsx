@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Note } from "@/types/note";
+import { DEBUG_CONFIG } from "@/config/debug";
+import { debugLogger } from "@/utils/debug/EnhancementDebugLogger";
 
 interface EnhancementFlowDebuggerProps {
   note: Note;
@@ -16,6 +18,11 @@ export const EnhancementFlowDebugger = ({
 }: EnhancementFlowDebuggerProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [testResults, setTestResults] = useState<Record<string, string>>({});
+
+  // Don't render anything if debugging is disabled
+  if (!DEBUG_CONFIG.UI_DEBUGGER) {
+    return null;
+  }
 
   // Auto-show debugger if there are any issues
   useEffect(() => {
@@ -33,7 +40,7 @@ export const EnhancementFlowDebugger = ({
   }, [note]);
 
   const testEnhancementFlow = async (type: string) => {
-    console.log(`🧪 TESTING ENHANCEMENT FLOW: ${type}`);
+    debugLogger.logFlow(`TESTING_ENHANCEMENT_FLOW`, { type, noteId: note.id });
     setTestResults(prev => ({ ...prev, [type]: 'Testing...' }));
     
     try {
@@ -43,11 +50,14 @@ export const EnhancementFlowDebugger = ({
       
       await onGenerateEnhancement(type);
       setTestResults(prev => ({ ...prev, [type]: '✅ Success' }));
+      debugLogger.logFlow(`TEST_SUCCESS`, { type, noteId: note.id });
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       setTestResults(prev => ({ 
         ...prev, 
-        [type]: `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}` 
+        [type]: `❌ Error: ${errorMsg}` 
       }));
+      debugLogger.logError(`Test failed for ${type}`, { error: errorMsg, noteId: note.id });
     }
   };
 

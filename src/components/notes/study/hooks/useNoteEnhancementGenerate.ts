@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { toast } from "sonner";
 import { Note } from "@/types/note";
+import { debugLogger } from "@/utils/debug/EnhancementDebugLogger";
+import { DEBUG_CONFIG } from "@/config/debug";
 
 /**
  * Hook for handling note enhancement generation functionality
@@ -13,11 +15,12 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
 
   // CRITICAL FIX: Always reset enhancing state on mount/note change to prevent stuck states
   useEffect(() => {
-    console.log("🔄 COMPREHENSIVE STATE RESET on mount/note change");
+    debugLogger.logState("useNoteEnhancementGenerate", "STATE_RESET on mount/note change");
     setIsEnhancing(false);
   }, [currentNote.id]);
 
-  console.log("🔍 useNoteEnhancementGenerate COMPREHENSIVE STATE:", {
+  // Log comprehensive state (only when debugging enabled)
+  debugLogger.logState("useNoteEnhancementGenerate", {
     noteId: currentNote.id,
     isEnhancing,
     hasReachedLimit: hasReachedLimit(),
@@ -31,7 +34,7 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
   });
 
   const handleGenerateEnhancement = async (enhancementType: string): Promise<void> => {
-    console.log("🔥 UNIFIED ENHANCEMENT HANDLER CALLED:", {
+    debugLogger.logFlow("UNIFIED_ENHANCEMENT_HANDLER_CALLED", {
       enhancementType,
       noteId: currentNote.id,
       isEnhancing,
@@ -40,28 +43,30 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
     });
 
     if (hasReachedLimit()) {
-      console.warn("⚠️ Enhancement limit reached");
+      debugLogger.logFlow("ENHANCEMENT_LIMIT_REACHED", { noteId: currentNote.id });
       toast.error("Enhancement limit reached for this month");
       return;
     }
 
     if (isEnhancing) {
-      console.warn("⚠️ Already enhancing, skipping duplicate request");
+      debugLogger.logFlow("DUPLICATE_REQUEST_BLOCKED", { noteId: currentNote.id, enhancementType });
       return;
     }
     
-    console.log("🚀 SETTING ENHANCING STATE TO TRUE");
+    debugLogger.logFlow("SETTING_ENHANCING_STATE_TRUE", { noteId: currentNote.id, enhancementType });
     setIsEnhancing(true);
     
     try {
-      console.log("🔧 CALLING enrichNote with:", {
+      debugLogger.logFlow("CALLING_ENRICH_NOTE", {
         noteId: currentNote.id,
         contentLength: currentNote.content?.length || 0,
         enhancementType,
         title: currentNote.title
       });
       
-      // Call the enrichment service
+      // Call the enrichment service with network logging
+      debugLogger.logNetworkCall('enrich-note', 'POST', { enhancementType, noteId: currentNote.id });
+      
       const result = await enrichNote(
         currentNote.id,
         currentNote.content || '',
@@ -69,22 +74,36 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
         currentNote.title
       );
       
-      console.log("📋 ENRICHMENT RESULT:", result);
+      debugLogger.logFlow("ENRICHMENT_RESULT_RECEIVED", { 
+        success: result.success, 
+        error: result.error,
+        noteId: currentNote.id
+      });
       
       if (result.success) {
-        console.log("✅ ENHANCEMENT SUCCESS - FORCING REFRESH");
-        // Force immediate refresh
+        debugLogger.logFlow("ENHANCEMENT_SUCCESS_FORCING_REFRESH", { noteId: currentNote.id });
         forceRefresh();
         toast.success("Enhancement generated successfully");
+        debugLogger.logNetworkCall('enrich-note', 'POST', { enhancementType }, 200);
       } else {
-        console.error("❌ ENHANCEMENT FAILED:", result.error);
+        debugLogger.logError("ENHANCEMENT_FAILED", { 
+          error: result.error, 
+          noteId: currentNote.id, 
+          enhancementType 
+        });
         toast.error(result.error || "Failed to generate enhancement");
+        debugLogger.logNetworkCall('enrich-note', 'POST', { enhancementType }, 400);
       }
     } catch (error) {
-      console.error("❌ CATCH: Error generating enhancement:", error);
+      debugLogger.logError("ENHANCEMENT_CATCH_ERROR", { 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        noteId: currentNote.id,
+        enhancementType 
+      });
       toast.error("Failed to generate enhancement");
+      debugLogger.logNetworkCall('enrich-note', 'POST', { enhancementType }, 500);
     } finally {
-      console.log("🏁 SETTING ENHANCING STATE TO FALSE");
+      debugLogger.logFlow("SETTING_ENHANCING_STATE_FALSE", { noteId: currentNote.id });
       setIsEnhancing(false);
     }
   };

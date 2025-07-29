@@ -1,4 +1,7 @@
-// Enhancement Flow Tracker - Comprehensive debugging utility
+// Enhancement Flow Tracker - Now uses centralized debug logger
+import { debugLogger } from './debug/EnhancementDebugLogger';
+import { DEBUG_CONFIG } from '@/config/debug';
+
 export class EnhancementFlowTracker {
   private static instance: EnhancementFlowTracker;
   private flowLogs: Array<{ timestamp: Date, step: string, data: any }> = [];
@@ -11,6 +14,8 @@ export class EnhancementFlowTracker {
   }
 
   logStep(step: string, data: any) {
+    if (!DEBUG_CONFIG.FLOW_TRACKER) return;
+    
     const logEntry = {
       timestamp: new Date(),
       step,
@@ -24,7 +29,7 @@ export class EnhancementFlowTracker {
       this.flowLogs = this.flowLogs.slice(-50);
     }
 
-    console.log(`🔍 [FLOW TRACKER] ${step}:`, data);
+    debugLogger.logFlow(step, data);
   }
 
   getFlowSummary(): string {
