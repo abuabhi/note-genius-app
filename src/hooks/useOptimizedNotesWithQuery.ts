@@ -23,13 +23,7 @@ export const useOptimizedNotesWithQuery = (filterState?: {
   const showArchived = filterState?.showArchived ?? localShowArchived;
   const sortType = filterState?.sortType ?? localSortType;
   
-  console.log('🔍 [QUERY HOOK] Filter state received:', {
-    searchTerm,
-    selectedSubject, 
-    showArchived,
-    sortType,
-    fromExternal: !!filterState
-  });
+  // Query hook filter logging disabled for cleaner console
   
   // Pagination mode - can switch between regular and infinite
   const [paginationMode, setPaginationMode] = useState<'regular' | 'infinite'>('infinite');

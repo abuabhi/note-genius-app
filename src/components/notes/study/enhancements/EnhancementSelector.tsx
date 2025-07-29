@@ -2,6 +2,7 @@
 import { CheckCircle, AlertCircle, Loader2, FileText, List, Sparkles, Code, Target, Flame, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Note } from "@/types/note";
+import { debugLogger } from "@/utils/debug/EnhancementDebugLogger";
 
 export type EnhancementContentType = 'original' | 'summary' | 'keyPoints' | 'markdown' | 'questions' | 'enriched';
 
@@ -86,7 +87,7 @@ export const EnhancementSelector = ({
   const hasEnrichedError = enrichedStatus === 'failed';
   const showEnrichedProcessing = Boolean(isGeneratingEnriched && !hasEnrichedContent);
 
-  console.log("🔍 EnhancementSelector - FIXED Content availability check:", {
+  debugLogger.logState("EnhancementSelector", {
     noteId: note.id,
     hasContent: {
       summary: hasSummary,
@@ -169,7 +170,7 @@ export const EnhancementSelector = ({
     }
   ];
 
-  console.log("📋 EnhancementSelector - All tabs with FIXED status tracking:", {
+  debugLogger.logState("EnhancementSelector", {
     totalTabs: enhancementOptions.length,
     tabStates: enhancementOptions.map(opt => ({
       id: opt.id,

@@ -15,23 +15,10 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
 
   // CRITICAL FIX: Always reset enhancing state on mount/note change to prevent stuck states
   useEffect(() => {
-    debugLogger.logState("useNoteEnhancementGenerate", "STATE_RESET on mount/note change");
     setIsEnhancing(false);
   }, [currentNote.id]);
 
-  // Log comprehensive state (only when debugging enabled)
-  debugLogger.logState("useNoteEnhancementGenerate", {
-    noteId: currentNote.id,
-    isEnhancing,
-    hasReachedLimit: hasReachedLimit(),
-    enhancementStatuses: {
-      summary: currentNote.summary_status,
-      keyPoints: currentNote.key_points_status,
-      markdown: currentNote.markdown_content_status,
-      questions: currentNote.questions_status,
-      enriched: currentNote.enriched_status
-    }
-  });
+  // State logging disabled for cleaner console
 
   const handleGenerateEnhancement = async (enhancementType: string): Promise<void> => {
     debugLogger.logFlow("UNIFIED_ENHANCEMENT_HANDLER_CALLED", {

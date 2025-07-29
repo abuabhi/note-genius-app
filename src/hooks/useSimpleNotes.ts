@@ -23,7 +23,7 @@ const NOTES_PER_PAGE = 20;
 
 // Enhanced fetch function with search, subject filter, sorting, and pagination
 const fetchNotesPage = async ({ search, subject, sort, pageParam = 0 }: FetchNotesParams): Promise<{ notes: Note[]; totalCount: number; hasMore: boolean; nextCursor?: number }> => {
-  console.log('🔍 [SIMPLE NOTES] Fetching notes page:', { search, subject, sort, pageParam });
+  // Simple notes fetch logging disabled for cleaner console
 
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('User not authenticated');

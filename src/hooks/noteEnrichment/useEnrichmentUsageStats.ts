@@ -113,13 +113,11 @@ export const useEnrichmentUsageStats = () => {
   const hasReachedLimit = useCallback(() => {
     // FIXED: No limit if monthlyLimit is null (unlimited) - this is key for DEAN tier
     if (monthlyLimit === null) {
-      console.log("🚀 Unlimited tier - no limit reached");
       return false;
     }
     
     // Has reached limit if current usage >= monthly limit
     const limitReached = currentUsage >= monthlyLimit;
-    console.log("🔍 Limit check:", { currentUsage, monthlyLimit, limitReached });
     return limitReached;
   }, [currentUsage, monthlyLimit]);
 

@@ -29,7 +29,7 @@ export const fetchNotesFromSupabase = async (options: NotesQueryOptions = {}): P
 
   const offset = (page - 1) * pageSize;
 
-  console.log(`🔍 Fetching notes - Page: ${page}, Size: ${pageSize}, Subject: "${subject}"`);
+  // Notes fetch logging disabled for cleaner console
 
   try {
     // Build the base query with JOIN for subjects and minimal fields for performance

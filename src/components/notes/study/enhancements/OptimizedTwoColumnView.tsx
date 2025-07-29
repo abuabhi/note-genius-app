@@ -35,17 +35,11 @@ export const OptimizedTwoColumnView = ({
 
   // Force refresh the note data when component mounts and reset any stuck states
   useEffect(() => {
-    debugLogger.logFlow("REFRESHING_NOTE_DATA", { noteId: note.id });
     resetStuckEnhancements();
     refreshNotes();
   }, [refreshNotes, resetStuckEnhancements]);
 
-  debugLogger.logState("OptimizedTwoColumnView", {
-    noteId: note.id,
-    activeContentType,
-    isEditOperation,
-    onGenerateEnhancement: typeof onGenerateEnhancement
-  });
+  // State logging disabled for cleaner console
 
   return (
     <div className="relative">

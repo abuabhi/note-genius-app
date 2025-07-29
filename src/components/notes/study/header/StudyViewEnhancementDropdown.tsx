@@ -27,13 +27,6 @@ export const StudyViewEnhancementDropdown = ({
 
   const isProcessing = processingEnhancement !== null;
 
-  console.log("🔧 FIXED DROPDOWN - Processing state:", {
-    processingEnhancement,
-    isProcessing,
-    hasReachedLimit: hasReachedLimit(),
-    noteId: note.id
-  });
-
   if (hasReachedLimit()) {
     return (
       <Button variant="outline" size="sm" disabled>

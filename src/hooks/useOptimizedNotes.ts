@@ -102,7 +102,7 @@ export const useOptimizedNotes = () => {
     setError(null);
 
     try {
-      console.log('🔄 Fetching notes from database...');
+      // Database fetch logging disabled for cleaner console
       const result = await fetchNotesFromSupabase(queryOptions);
       
       if (append) {

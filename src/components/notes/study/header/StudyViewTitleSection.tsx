@@ -62,7 +62,7 @@ export const StudyViewTitleSection = ({
     timeZone: userTimezone
   }).format(new Date(note.date)) : '';
 
-  console.log(`StudyViewTitleSection - Note: ${note?.title}, Subject ID: ${note?.subject_id}, Subject Name: ${subjectName}`);
+  // Title section logging disabled for cleaner console
 
   if (isEditing) {
     return (

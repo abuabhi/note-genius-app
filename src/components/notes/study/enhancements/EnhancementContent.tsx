@@ -37,16 +37,7 @@ export const EnhancementContent = ({
 }: EnhancementContentProps) => {
   const safeTitle = title || "Content";
   
-  // Remove extensive logging - keeping only essential debugging for enhancement flow
-  if (DEBUG_CONFIG.ENHANCEMENT_FLOW) {
-    debugLogger.log('ENHANCEMENT_CONTENT', `Rendering ${safeTitle}`, {
-      hasContent: !!content,
-      contentLength: content?.length || 0,
-      isLoading,
-      hasError,
-      enhancementType
-    });
-  }
+  // Enhancement content logging disabled for cleaner console
 
   if (isLoading) {
     return (

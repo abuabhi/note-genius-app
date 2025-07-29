@@ -103,13 +103,7 @@ export const EnhancementDisplayPanel = ({
       }
     }
     
-    if (DEBUG_CONFIG.ENHANCEMENT_FLOW) {
-      debugLogger.log('CONTENT_FETCH', `Getting content for ${type}`, {
-        hasContent: !!content,
-        contentLength: content.length,
-        isGenerating: isContentGenerating
-      });
-    }
+    // Content fetch logging disabled for cleaner console
     
     return content;
   };
@@ -162,13 +156,7 @@ export const EnhancementDisplayPanel = ({
   const content = getContentForType(contentType);
   const title = getTitleForType(contentType);
 
-  if (DEBUG_CONFIG.ENHANCEMENT_FLOW) {
-    debugLogger.log('PANEL_RENDER', `Rendering ${contentType} panel`, {
-      hasContent: !!content,
-      isLoading,
-      isGenerating: isContentGenerating
-    });
-  }
+  // Panel render logging disabled for cleaner console
 
   return (
     <div className={`flex flex-col h-full ${className}`}>

@@ -71,14 +71,12 @@ const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactN
 
   // Enhanced refresh function that invalidates all related caches
   const enhancedRefreshNotes = async () => {
-    console.log('🔄 Enhanced refresh triggered - clearing all caches');
-    
     // Call the original refresh
     await dataContext.refreshNotes();
     
     // Add a small delay to ensure data is fresh
     setTimeout(() => {
-      console.log('✅ Enhanced refresh completed');
+      // Refresh completed
     }, 100);
   };
 
