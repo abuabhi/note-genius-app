@@ -16,7 +16,7 @@ interface EnhancementContentProps {
   enhancementType?: string;
   noteId: string;
   contentType: string;
-  onRetry?: (enhancementType: string) => Promise<void>;
+  onGenerate?: (enhancementType: string) => Promise<void>;
   onCancel?: () => void;
 }
 
@@ -30,7 +30,7 @@ export const EnhancementContent = ({
   enhancementType = "",
   noteId,
   contentType,
-  onRetry,
+  onGenerate,
   onCancel
 }: EnhancementContentProps) => {
   const safeTitle = title || "Content";
@@ -74,7 +74,7 @@ export const EnhancementContent = ({
     return (
       <EnhancementError 
         error={`Failed to generate ${safeTitle.toLowerCase()}`}
-        onRetry={() => onRetry?.(enhancementType)}
+        onRetry={() => onGenerate?.(enhancementType)}
         title={`${safeTitle} Generation Failed`}
         enhancementType={enhancementType}
       />
@@ -97,7 +97,7 @@ export const EnhancementContent = ({
               Processing typically takes 10-30 seconds
             </p>
           </div>
-          {onRetry && (
+          {onGenerate && (
             <Button 
               size="lg" 
               onClick={async (e) => {
@@ -105,20 +105,20 @@ export const EnhancementContent = ({
                 e.stopPropagation();
                 console.log("🔥 BUTTON CLICKED - USER INITIATED GENERATION:", {
                   enhancementType,
-                  hasOnRetry: !!onRetry,
+                  hasOnGenerate: !!onGenerate,
                   noteId,
                   contentType
                 });
                 
-                if (!onRetry) {
-                  console.error("❌ NO onRetry function provided to button!");
+                if (!onGenerate) {
+                  console.error("❌ NO onGenerate function provided to button!");
                   return;
                 }
                 
                 try {
-                  console.log("🚀 CALLING onRetry from button...");
-                  await onRetry(enhancementType);
-                  console.log("✅ onRetry completed from button");
+                  console.log("🚀 CALLING onGenerate from button...");
+                  await onGenerate(enhancementType);
+                  console.log("✅ onGenerate completed from button");
                 } catch (error) {
                   console.error("❌ Error during enhancement generation from button:", error);
                 }

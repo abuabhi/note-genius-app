@@ -10,8 +10,8 @@ interface EnhancementHeaderProps {
   color: string;
   content: string;
   contentType: string;
-  onRetryEnhancement?: (enhancementType: string) => void;
-  retryLoading: boolean;
+  onGenerateEnhancement?: (enhancementType: string) => void;
+  generateLoading: boolean;
   getEnhancementTypeFromContent: (contentType: string) => string;
 }
 
@@ -22,8 +22,8 @@ export const EnhancementHeader = ({
   color,
   content,
   contentType,
-  onRetryEnhancement,
-  retryLoading,
+  onGenerateEnhancement,
+  generateLoading,
   getEnhancementTypeFromContent
 }: EnhancementHeaderProps) => {
   // Calculate reading stats
@@ -56,15 +56,15 @@ export const EnhancementHeader = ({
         </div>
       </div>
       
-      {contentType !== 'original' && onRetryEnhancement && (
+      {contentType !== 'original' && onGenerateEnhancement && (
         <Button
-          onClick={() => onRetryEnhancement(getEnhancementTypeFromContent(contentType))}
-          disabled={retryLoading}
+          onClick={() => onGenerateEnhancement(getEnhancementTypeFromContent(contentType))}
+          disabled={generateLoading}
           variant="ghost"
           size="sm"
           className="text-mint-600 hover:text-mint-700 hover:bg-mint-50"
         >
-          {retryLoading ? (
+          {generateLoading ? (
             <RefreshCw className="h-4 w-4 animate-spin text-mint-600" />
           ) : (
             <RefreshCw className="h-4 w-4 text-mint-600" />

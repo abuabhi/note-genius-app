@@ -12,7 +12,7 @@ interface EnhancementDisplayPanelProps {
   fontSize: number;
   textAlign: TextAlignType;
   isLoading?: boolean;
-  onRetryEnhancement?: (enhancementType: string) => Promise<void>;
+  onGenerateEnhancement?: (enhancementType: string) => Promise<void>;
   onCancelEnhancement?: () => void;
   enhancedContents?: Record<string, string>;
   className?: string;
@@ -25,7 +25,7 @@ export const EnhancementDisplayPanel = ({
   fontSize,
   textAlign,
   isLoading = false,
-  onRetryEnhancement,
+  onGenerateEnhancement,
   onCancelEnhancement,
   enhancedContents = {},
   className = "",
@@ -55,7 +55,7 @@ export const EnhancementDisplayPanel = ({
   const isContentGenerating = getGeneratingStatus(contentType);
   
   // SIMPLIFIED: Direct mapping for enhancement types
-  const getEnhancementTypeForRetry = (contentType: EnhancementContentType): string => {
+  const getEnhancementTypeForGenerate = (contentType: EnhancementContentType): string => {
     const mappings = {
       'summary': 'summarize',
       'keyPoints': 'extract-key-points', 
@@ -72,7 +72,7 @@ export const EnhancementDisplayPanel = ({
     let content = '';
     
     // Check in-memory enhanced contents first
-    const enhancementType = getEnhancementTypeForRetry(type);
+    const enhancementType = getEnhancementTypeForGenerate(type);
     if (enhancedContents[enhancementType]) {
       content = enhancedContents[enhancementType];
     } else {
@@ -125,29 +125,29 @@ export const EnhancementDisplayPanel = ({
     return titles[type] || 'Content';
   };
 
-  // Handle explicit retry calls with proper error handling
-  const handleExplicitRetry = async (enhancementType: string) => {
-    console.log("🔥 ENHANCEMENT DISPLAY PANEL EXPLICIT RETRY:", {
+  // Handle explicit generate calls with proper error handling
+  const handleExplicitGenerate = async (enhancementType: string) => {
+    console.log("🔥 ENHANCEMENT DISPLAY PANEL EXPLICIT GENERATE:", {
       enhancementType,
-      hasOnRetryEnhancement: !!onRetryEnhancement,
+      hasOnGenerateEnhancement: !!onGenerateEnhancement,
       noteId: note.id,
       contentType
     });
     
-    if (onRetryEnhancement) {
+    if (onGenerateEnhancement) {
       try {
-        console.log("🚀 CALLING onRetryEnhancement from DisplayPanel");
-        await onRetryEnhancement(enhancementType);
-        console.log("✅ onRetryEnhancement completed in DisplayPanel");
+        console.log("🚀 CALLING onGenerateEnhancement from DisplayPanel");
+        await onGenerateEnhancement(enhancementType);
+        console.log("✅ onGenerateEnhancement completed in DisplayPanel");
       } catch (error) {
-        console.error("❌ Error in explicit retry from DisplayPanel:", error);
+        console.error("❌ Error in explicit generate from DisplayPanel:", error);
       }
     } else {
-      console.error("❌ NO onRetryEnhancement function provided to DisplayPanel!");
+      console.error("❌ NO onGenerateEnhancement function provided to DisplayPanel!");
     }
   };
 
-  const enhancementType = getEnhancementTypeForRetry(contentType);
+  const enhancementType = getEnhancementTypeForGenerate(contentType);
   const content = getContentForType(contentType);
   const title = getTitleForType(contentType);
 
@@ -194,7 +194,7 @@ export const EnhancementDisplayPanel = ({
             enhancementType={enhancementType}
             noteId={note.id}
             contentType={contentType}
-            onRetry={handleExplicitRetry}
+            onGenerate={handleExplicitGenerate}
           />
         </div>
       )}
@@ -210,7 +210,7 @@ export const EnhancementDisplayPanel = ({
             enhancementType={enhancementType}
             noteId={note.id}
             contentType={contentType}
-            onRetry={handleExplicitRetry}
+            onGenerate={handleExplicitGenerate}
           />
         </div>
       )}

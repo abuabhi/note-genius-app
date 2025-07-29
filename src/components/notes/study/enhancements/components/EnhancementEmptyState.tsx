@@ -5,8 +5,8 @@ import { RefreshCw } from "lucide-react";
 interface EnhancementEmptyStateProps {
   title: string;
   icon: React.ComponentType<{ className?: string }>;
-  onRetryEnhancement?: (enhancementType: string) => void;
-  retryLoading: boolean;
+  onGenerateEnhancement?: (enhancementType: string) => void;
+  generateLoading: boolean;
   getEnhancementTypeFromContent: (contentType: string) => string;
   contentType: string;
 }
@@ -14,8 +14,8 @@ interface EnhancementEmptyStateProps {
 export const EnhancementEmptyState = ({
   title,
   icon: Icon,
-  onRetryEnhancement,
-  retryLoading,
+  onGenerateEnhancement,
+  generateLoading,
   getEnhancementTypeFromContent,
   contentType
 }: EnhancementEmptyStateProps) => {
@@ -29,15 +29,15 @@ export const EnhancementEmptyState = ({
         <p className="text-sm text-gray-500 mb-6">
           Generate AI-enhanced content to see {title.toLowerCase()} here
         </p>
-        {onRetryEnhancement && (
+        {onGenerateEnhancement && (
           <Button
-            onClick={() => onRetryEnhancement(getEnhancementTypeFromContent(contentType))}
-            disabled={retryLoading}
+            onClick={() => onGenerateEnhancement(getEnhancementTypeFromContent(contentType))}
+            disabled={generateLoading}
             variant="outline"
             size="sm"
             className="text-mint-600 hover:text-mint-700 border-mint-200 hover:border-mint-300 bg-mint-50 hover:bg-mint-100"
           >
-            {retryLoading ? (
+            {generateLoading ? (
               <RefreshCw className="h-4 w-4 animate-spin mr-2 text-mint-600" />
             ) : (
               <RefreshCw className="h-4 w-4 mr-2 text-mint-600" />

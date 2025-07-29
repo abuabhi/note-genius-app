@@ -12,7 +12,7 @@ interface NoteContentDisplayProps {
   textAlign: TextAlignType;
   isEditing: boolean;
   isLoading?: boolean;
-  onRetryEnhancement?: (enhancementType: string) => Promise<void>;
+  onGenerateEnhancement?: (enhancementType: string) => Promise<void>;
   onCancelEnhancement?: () => void;
   activeContentType?: EnhancementContentType;
   onActiveContentTypeChange?: (type: EnhancementContentType) => void;
@@ -25,7 +25,7 @@ export const NoteContentDisplay = ({
   textAlign,
   isEditing,
   isLoading = false,
-  onRetryEnhancement,
+  onGenerateEnhancement,
   onCancelEnhancement,
   activeContentType = 'original',
   onActiveContentTypeChange
@@ -53,7 +53,7 @@ export const NoteContentDisplay = ({
         textAlign={textAlign}
         activeContentType={localActiveContentType}
         setActiveContentType={handleActiveContentTypeChange}
-        onGenerateEnhancement={onRetryEnhancement}
+        onGenerateEnhancement={onGenerateEnhancement}
         isEditOperation={isLoading}
       />
     </div>
