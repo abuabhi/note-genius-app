@@ -5,6 +5,8 @@ import { EnhancementContentType } from "./EnhancementSelector";
 import { EnhancementContent } from "./EnhancementContent";
 import { LoadingAnimations } from "./LoadingAnimations";
 import { ContentMetadata } from "./ContentMetadata";
+import { debugLogger } from '@/utils/debug/EnhancementDebugLogger';
+import { DEBUG_CONFIG } from '@/config/debug';
 
 interface EnhancementDisplayPanelProps {
   note: Note;
@@ -101,13 +103,13 @@ export const EnhancementDisplayPanel = ({
       }
     }
     
-    console.log(`🎯 EnhancementDisplayPanel - Getting content for ${type}:`, {
-      contentType: type,
-      hasContent: !!content,
-      contentLength: content.length,
-      isGenerating: isContentGenerating,
-      contentPreview: content.substring(0, 100)
-    });
+    if (DEBUG_CONFIG.ENHANCEMENT_FLOW) {
+      debugLogger.log('CONTENT_FETCH', `Getting content for ${type}`, {
+        hasContent: !!content,
+        contentLength: content.length,
+        isGenerating: isContentGenerating
+      });
+    }
     
     return content;
   };
@@ -127,27 +129,25 @@ export const EnhancementDisplayPanel = ({
 
   // Handle explicit generate calls with proper error handling
   const handleExplicitGenerate = async (enhancementType: string) => {
-    console.log("🔥🔥🔥 ENHANCEMENT DISPLAY PANEL - BUTTON CLICKED 🔥🔥🔥");
-    console.log("🔥 ENHANCEMENT DISPLAY PANEL - UNIFIED GENERATE FLOW:", {
-      enhancementType,
-      hasOnGenerateEnhancement: !!onGenerateEnhancement,
-      noteId: note.id,
-      contentType,
-      callSource: 'EnhancementDisplayPanel.handleExplicitGenerate',
-      onGenerateEnhancementType: typeof onGenerateEnhancement,
-      timestamp: new Date().toISOString()
-    });
+    if (DEBUG_CONFIG.ENHANCEMENT_FLOW) {
+      debugLogger.log('GENERATE_CALL', `Enhancement requested for ${enhancementType}`, {
+        hasHandler: !!onGenerateEnhancement,
+        noteId: note.id,
+        contentType
+      });
+    }
     
     if (onGenerateEnhancement) {
       try {
-        console.log("🚀 UNIFIED FLOW - CALLING onGenerateEnhancement from DisplayPanel");
         await onGenerateEnhancement(enhancementType);
-        console.log("✅ UNIFIED FLOW - onGenerateEnhancement completed in DisplayPanel");
+        if (DEBUG_CONFIG.ENHANCEMENT_FLOW) {
+          debugLogger.log('ENHANCEMENT_SUCCESS', `Enhancement completed for ${enhancementType}`);
+        }
       } catch (error) {
-        console.error("❌ UNIFIED FLOW - Error in explicit generate from DisplayPanel:", error);
+        debugLogger.logError('Enhancement generation failed', { enhancementType, error });
       }
     } else {
-      console.error("❌ UNIFIED FLOW - NO onGenerateEnhancement function provided to DisplayPanel!");
+      debugLogger.logError('No enhancement handler provided to DisplayPanel');
     }
   };
 
@@ -155,16 +155,13 @@ export const EnhancementDisplayPanel = ({
   const content = getContentForType(contentType);
   const title = getTitleForType(contentType);
 
-  console.log("🎯 EnhancementDisplayPanel - FINAL RENDER:", {
-    contentType,
-    enhancementType,
-    hasContent: !!content,
-    contentLength: content.length,
-    isLoading,
-    isContentGenerating,
-    title,
-    contentPreview: content.substring(0, 100)
-  });
+  if (DEBUG_CONFIG.ENHANCEMENT_FLOW) {
+    debugLogger.log('PANEL_RENDER', `Rendering ${contentType} panel`, {
+      hasContent: !!content,
+      isLoading,
+      isGenerating: isContentGenerating
+    });
+  }
 
   return (
     <div className={`flex flex-col h-full ${className}`}>

@@ -5,6 +5,8 @@ import { RefreshCw, Sparkles } from "lucide-react";
 import { EnhancementError } from "../../enrichment/EnhancementError";
 import { LoadingAnimations } from "./LoadingAnimations";
 import { ExpandableContentRenderer } from "../expansion/ExpandableContentRenderer";
+import { debugLogger } from '@/utils/debug/EnhancementDebugLogger';
+import { DEBUG_CONFIG } from '@/config/debug';
 
 interface EnhancementContentProps {
   content: string;
@@ -35,31 +37,16 @@ export const EnhancementContent = ({
 }: EnhancementContentProps) => {
   const safeTitle = title || "Content";
   
-  console.log("🎨 EnhancementContent rendering:", {
-    title: safeTitle,
-    hasContent: !!content,
-    contentLength: content?.length || 0,
-    isLoading,
-    hasError,
-    enhancementType,
-    contentType,
-    noteId: noteId?.substring(0, 8) + '...',
-    contentPreview: content?.substring(0, 100)
-  });
-
-  // CRITICAL: Verify noteId and contentType are correct
-  console.log("🔧 FIXED PROPAGATION CHECK:", {
-    noteId: noteId ? 'VALID' : 'MISSING',
-    contentType: contentType || 'MISSING',
-    enhancementType: enhancementType || 'MISSING',
-    tabIsolationKey: `${noteId}-${contentType}`
-  });
-
-  // SIMPLIFIED: ALL CONTENT IS MARKDOWN - NO EXCEPTIONS
-  console.log("🎯 EVERYTHING IS MARKDOWN:", {
-    enhancementType,
-    reasoning: 'All content types now use markdown rendering'
-  });
+  // Remove extensive logging - keeping only essential debugging for enhancement flow
+  if (DEBUG_CONFIG.ENHANCEMENT_FLOW) {
+    debugLogger.log('ENHANCEMENT_CONTENT', `Rendering ${safeTitle}`, {
+      hasContent: !!content,
+      contentLength: content?.length || 0,
+      isLoading,
+      hasError,
+      enhancementType
+    });
+  }
 
   if (isLoading) {
     return (
@@ -101,29 +88,25 @@ export const EnhancementContent = ({
             <Button 
               size="lg" 
               onClick={async (e) => {
-                console.log("🔥🔥🔥 GENERATE BUTTON CLICKED IN ENHANCEMENT CONTENT 🔥🔥🔥");
+                if (DEBUG_CONFIG.ENHANCEMENT_FLOW) {
+                  debugLogger.log('BUTTON_CLICK', `Generate button clicked for ${enhancementType}`);
+                }
+                
                 e.preventDefault();
                 e.stopPropagation();
-                console.log("🚀 ENHANCEMENT CONTENT BUTTON - Generation started:", {
-                  enhancementType,
-                  hasOnGenerate: !!onGenerate,
-                  noteId,
-                  contentType,
-                  timestamp: new Date().toISOString(),
-                  buttonLocation: 'EnhancementContent'
-                });
                 
                 if (!onGenerate) {
-                  console.error("❌ NO onGenerate function provided to EnhancementContent button!");
+                  debugLogger.logError('No onGenerate function provided to button');
                   return;
                 }
                 
                 try {
-                  console.log("🚀 CALLING onGenerate from EnhancementContent button...");
                   await onGenerate(enhancementType);
-                  console.log("✅ onGenerate completed from EnhancementContent button");
+                  if (DEBUG_CONFIG.ENHANCEMENT_FLOW) {
+                    debugLogger.log('ENHANCEMENT_SUCCESS', `Enhancement completed for ${enhancementType}`);
+                  }
                 } catch (error) {
-                  console.error("❌ Error during enhancement generation from EnhancementContent button:", error);
+                  debugLogger.logError('Enhancement generation failed', { enhancementType, error });
                 }
               }}
               className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
@@ -134,17 +117,6 @@ export const EnhancementContent = ({
               Generate {safeTitle}
             </Button>
           )}
-          
-          {/* DEBUG: Show comprehensive debug info */}
-          <div className="mt-4 p-3 bg-gray-100 rounded text-xs text-gray-600 border">
-            <div className="font-semibold mb-2">🔧 Enhanced Debug Info:</div>
-            <div>• onGenerate: {onGenerate ? '✅ PROVIDED' : '❌ MISSING'}</div>
-            <div>• enhancementType: {enhancementType || '❌ MISSING'}</div>
-            <div>• noteId: {noteId ? '✅ ' + noteId.substring(0, 8) + '...' : '❌ MISSING'}</div>
-            <div>• contentType: {contentType || '❌ MISSING'}</div>
-            <div>• title: {safeTitle}</div>
-            <div>• buttonTestId: generate-{enhancementType}-button</div>
-          </div>
         </div>
       </div>
     );
