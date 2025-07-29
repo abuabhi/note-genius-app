@@ -24,12 +24,7 @@ export const NuclearContentRenderer = ({
   textAlign = 'left',
   className = ''
 }: NuclearContentRendererProps) => {
-  console.log("🚀 NUCLEAR RENDERER: Starting render process:", {
-    contentLength: content?.length || 0,
-    fontSize,
-    textAlign,
-    rawContentPreview: content?.substring(0, 200)
-  });
+  // Removed console log to clean up output
 
   // Validate content
   if (!validateContentForRendering(content)) {
@@ -44,15 +39,9 @@ export const NuclearContentRenderer = ({
   // Process content through unified processor
   const processedData = processContentForRendering(content);
   
-  console.log("✅ NUCLEAR RENDERER: Content processed successfully:", {
-    originalLength: content.length,
-    processedLength: processedData.content.length,
-    metadata: processedData.metadata,
-    processedPreview: processedData.content.substring(0, 400)
-  });
+  // Removed console log to clean up output
 
-  // IMPORTANT: Add debug logging to see the final content before ReactMarkdown
-  console.log("🎨 NUCLEAR RENDERER: Final content going to ReactMarkdown:", processedData.content);
+  // Removed console log to clean up output
 
   const containerStyle = {
     fontSize: '16px', // Fixed base font size instead of dynamic
@@ -158,12 +147,7 @@ export const NuclearContentRenderer = ({
     )
   };
 
-  console.log("🎨 NUCLEAR RENDERER: About to render with ReactMarkdown:", {
-    hasProcessedContent: !!processedData.content,
-    containerStyle,
-    componentsCount: Object.keys(nuclearMarkdownComponents).length,
-    finalContentPreview: processedData.content.substring(0, 400)
-  });
+  // Removed console log to clean up output
 
   return (
     <div 

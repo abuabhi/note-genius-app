@@ -31,12 +31,7 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
     };
   }
 
-  console.log("🚀 UNIFIED PROCESSOR: Processing content:", {
-    originalLength: rawContent.length,
-    hasTipTapMarkers: detectTipTapContent(rawContent),
-    hasEnrichedMarkers: rawContent.includes('[ENRICHED]') || rawContent.includes('**[ENRICHED]**'),
-    preview: rawContent.substring(0, 200)
-  });
+  // Removed console log to clean up output
 
   let processed = rawContent;
   let wasHtmlCleaned = false;
@@ -135,14 +130,7 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
 
   const metadata = analyzeContent(processed, wasHtmlCleaned, hasEnrichedContent);
 
-  console.log("✅ UNIFIED PROCESSOR: Content processed:", {
-    finalLength: processed.length,
-    metadata,
-    hasAIBlocks,
-    hasEnrichedContent,
-    wasHtmlCleaned,
-    finalPreview: processed.substring(0, 200)
-  });
+  // Removed console log to clean up output
 
   return {
     content: processed,
