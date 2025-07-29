@@ -33,8 +33,16 @@ const timestampFieldMapping = {
   'summarize': 'summary_generated_at',
   'extract-key-points': 'key_points_generated_at',
   'generate-questions': 'questions_generated_at', 
-  'convert-to-markdown': 'markdown_generated_at',
-  'enrich-note': 'enriched_generated_at'
+  'convert-to-markdown': 'markdown_content_generated_at',
+  'enrich-note': 'enriched_content_generated_at'
+};
+
+const statusFieldMapping = {
+  'summarize': 'summary_status',
+  'extract-key-points': 'key_points_status',
+  'generate-questions': 'questions_status',
+  'convert-to-markdown': 'markdown_content_status',
+  'enrich-note': 'enriched_status'
 };
 
 serve(async (req) => {
@@ -104,16 +112,18 @@ serve(async (req) => {
     // Update database
     const dbField = dbFieldMapping[enhancementType];
     const timestampField = timestampFieldMapping[enhancementType];
+    const statusField = statusFieldMapping[enhancementType];
     
-    if (!dbField || !timestampField) {
+    if (!dbField || !timestampField || !statusField) {
       throw new Error(`No database mapping for enhancement type: ${enhancementType}`);
     }
 
-    console.log(`💾 Updating database field: ${dbField}`);
+    console.log(`💾 Updating database field: ${dbField} and status: ${statusField}`);
     
     const updateData = {
       [dbField]: enhancedContent,
       [timestampField]: new Date().toISOString(),
+      [statusField]: 'completed',
       updated_at: new Date().toISOString()
     };
 
