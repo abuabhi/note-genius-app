@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { toast } from "sonner";
 import { Note } from "@/types/note";
@@ -10,6 +10,18 @@ import { Note } from "@/types/note";
 export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () => void) => {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const { enrichNote, hasReachedLimit } = useNoteEnrichment();
+
+  // CRITICAL FIX: Reset stuck enhancing state on mount/note change
+  useEffect(() => {
+    console.log("🔄 RESETTING STUCK ENHANCING STATE on mount/note change");
+    setIsEnhancing(false);
+  }, [currentNote.id]);
+
+  console.log("🔍 useNoteEnhancementGenerate STATE:", {
+    noteId: currentNote.id,
+    isEnhancing,
+    hasReachedLimit: hasReachedLimit()
+  });
 
   const handleGenerateEnhancement = async (enhancementType: string): Promise<void> => {
     console.log("🔄 GENERATE ENHANCEMENT HOOK CALLED:", {
