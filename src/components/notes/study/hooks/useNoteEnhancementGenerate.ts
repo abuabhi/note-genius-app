@@ -67,6 +67,7 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
   const isStuck = lastRequestTime && (Date.now() - lastRequestTime) > 120000;
 
   const handleGenerateEnhancement = async (enhancementType: string): Promise<void> => {
+    const startTime = performance.now();
     debugLogger.logFlow("UNIFIED_ENHANCEMENT_HANDLER_CALLED", {
       enhancementType,
       noteId: currentNote.id,
@@ -79,6 +80,7 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
       return;
     }
     
+    console.log(`⏱️ Starting enhancement ${enhancementType} at ${new Date().toISOString()}`);
     debugLogger.logFlow("SETTING_ENHANCING_STATE_TRUE", { noteId: currentNote.id, enhancementType });
     setIsEnhancing(true);
     setLastRequestTime(Date.now());
@@ -91,7 +93,7 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
         title: currentNote.title
       });
       
-      // Call the new simple-enhance-note edge function
+      console.log(`🚀 Tab Enhancement: Calling simple-enhance-note for ${enhancementType}`);
       debugLogger.logNetworkCall('simple-enhance-note', 'POST', { enhancementType, noteId: currentNote.id });
       
       const { data, error } = await supabase.functions.invoke('simple-enhance-note', {
@@ -152,7 +154,14 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
       toast.error("Failed to generate enhancement");
       debugLogger.logNetworkCall('simple-enhance-note', 'POST', { enhancementType }, 500);
     } finally {
-      debugLogger.logFlow("SETTING_ENHANCING_STATE_FALSE", { noteId: currentNote.id });
+      const endTime = performance.now();
+      const duration = (endTime - startTime) / 1000;
+      console.log(`⏱️ Enhancement ${enhancementType} completed in ${duration.toFixed(2)}s`);
+      
+      debugLogger.logFlow("SETTING_ENHANCING_STATE_FALSE", { 
+        noteId: currentNote.id, 
+        duration: `${duration.toFixed(2)}s` 
+      });
       setIsEnhancing(false);
       setLastRequestTime(null);
       

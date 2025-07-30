@@ -29,7 +29,7 @@ export const EnhancementStatusIndicator = ({
     if (retryCount > 0) {
       return `Retrying enhancement (${retryCount}/2)`;
     }
-    return "Generating enhancement...";
+    return "Generating enhancement... (Target: <10s)";
   };
 
   const getElapsedTime = () => {

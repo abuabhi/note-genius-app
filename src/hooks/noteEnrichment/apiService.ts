@@ -1,4 +1,5 @@
 
+// ⚠️ DEPRECATED: This file is now replaced by direct simple-enhance-note calls for unified performance
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancementFunction } from "./types";
 import { trackTokenUsage } from "./tokenTracking";

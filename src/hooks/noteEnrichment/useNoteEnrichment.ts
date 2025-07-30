@@ -7,7 +7,7 @@ import { enhancementOptions, getEnhancementDetails } from './enhancementOptions'
 import { EnhancementFunction, EnhancementResult } from './types';
 import { useUserTier } from '../useUserTier';
 import { useEnrichmentUsageStats } from './useEnrichmentUsageStats';
-import { callEnrichmentAPI } from './apiService';
+// Removed: import { callEnrichmentAPI } from './apiService'; - Now using simple-enhance-note directly
 import { useConcurrencyManager } from '../performance/useConcurrencyManager';
 import { useEnhancementCache } from '../performance/useEnhancementCache';
 
@@ -195,12 +195,27 @@ export const useNoteEnrichment = (note?: Note) => {
       setProcessingStage('Updating status...');
       await updateNoteStatus(noteId, enhancementType, 'generating');
       
-      // Step 2: Call API directly with UI feedback
+      // Step 2: Call simple-enhance-note directly (unified pathway)
       setProcessingStage('Calling AI service...');
-      const result = await callEnrichmentAPI(
-        { id: noteId, content, title },
-        enhancementType
-      );
+      
+      const { data, error } = await supabase.functions.invoke('simple-enhance-note', {
+        body: {
+          noteId,
+          content,
+          enhancementType,
+          title
+        }
+      });
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      if (!data?.success) {
+        throw new Error(data?.error || 'Enhancement failed');
+      }
+      
+      const result = data.enhancedContent || data.content;
       
       if (!result || result.trim() === '') {
         throw new Error('Empty response from enhancement API');

@@ -107,8 +107,9 @@ export const StudyViewHeader = ({
     'create-flashcards': 'original' // Default fallback
   };
 
-  // Handle enhancement selection with new simple function
+  // Handle enhancement selection with unified performance tracking
   const handleEnhancementSelect = async (enhancement: EnhancementFunction) => {
+    const startTime = performance.now();
     setProcessingEnhancement(enhancement);
     onEnhancementProcessing?.(enhancement);
     
@@ -121,7 +122,7 @@ export const StudyViewHeader = ({
     
     try {
       const originalContent = note.content || note.description || "";
-      console.log(`🚀 Calling simple-enhance-note for ${enhancement}`);
+      console.log(`⏱️ Header Enhancement: Starting ${enhancement} at ${new Date().toISOString()}`);
       
       const { data, error } = await supabase.functions.invoke('simple-enhance-note', {
         body: { 
@@ -132,6 +133,10 @@ export const StudyViewHeader = ({
         }
       });
 
+      const endTime = performance.now();
+      const duration = (endTime - startTime) / 1000;
+      console.log(`⏱️ Header Enhancement ${enhancement} completed in ${duration.toFixed(2)}s`);
+
       if (error) {
         console.error('❌ Enhancement error:', error);
         toast.error(`Enhancement failed: ${error.message}`);
@@ -139,7 +144,7 @@ export const StudyViewHeader = ({
       }
 
       if (data.success) {
-        toast.success(`${enhancementOptions.find(opt => opt.value === enhancement)?.title} completed successfully!`);
+        toast.success(`${enhancementOptions.find(opt => opt.value === enhancement)?.title} completed successfully! (${duration.toFixed(1)}s)`);
         // Force page refresh to show updated content
         window.location.reload();
       } else {
