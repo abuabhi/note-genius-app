@@ -314,121 +314,125 @@ export const SimpleEnhancementTabs = ({
         </Button>
       </div>
       
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as EnhancementType)} className="flex-1 flex flex-col">
-        <TabsList className="grid grid-cols-6 w-full">
-          {tabs.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value} className="flex flex-col items-center gap-1 py-3 px-2">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  {tab.hasContent ? (
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                  ) : (
-                    <div className="w-2 h-2 rounded-full bg-gray-300" />
-                  )}
-                  <tab.icon className="h-4 w-4" />
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as EnhancementType)} orientation="vertical" className="flex-1 flex">
+        <div className="w-64 flex-shrink-0">
+          <TabsList className="flex flex-col h-full w-full p-1 space-y-1">
+            {tabs.map((tab) => (
+              <TabsTrigger 
+                key={tab.value} 
+                value={tab.value} 
+                className="w-full justify-start py-4 px-4 data-[state=active]:bg-mint-50 data-[state=active]:border-r-2 data-[state=active]:border-mint-500"
+              >
+                <div className="flex items-center gap-3 w-full">
+                  <div className="flex items-center gap-2">
+                    {tab.hasContent ? (
+                      <div className="w-2 h-2 rounded-full bg-mint-500" />
+                    ) : (
+                      <div className="w-2 h-2 rounded-full bg-gray-300" />
+                    )}
+                    <tab.icon className="h-4 w-4" />
+                  </div>
+                  <span className="font-medium">{tab.label}</span>
                 </div>
-                <span className="hidden sm:inline font-medium">{tab.label}</span>
-              </div>
-              <span className="text-xs text-muted-foreground hidden md:block text-center leading-tight">
-                {tab.subtitle}
-              </span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
-        {tabs.map((tab) => (
-          <TabsContent key={tab.value} value={tab.value} className="flex-1 mt-4">
-            <Card className="h-full">
-              <CardContent className="p-0 h-full flex flex-col">
-                {/* Header with metadata */}
-                <div className="border-b border-border py-3 px-4 bg-gradient-to-r from-mint-50/30 to-white">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex items-center gap-2">
-                        {tab.hasContent ? (
-                          <div className="w-2 h-2 rounded-full bg-green-500" />
-                        ) : (
-                          <div className="w-2 h-2 rounded-full bg-gray-300" />
-                        )}
-                        <tab.icon className="h-5 w-5 text-mint-600" />
-                      </div>
-                      <div>
-                        <h2 className="text-sm font-semibold text-gray-900">{tab.label}</h2>
-                        <div className="flex items-center space-x-3 text-xs text-gray-500">
-                          <span>{tab.subtitle}</span>
-                          {(() => {
-                            const displayContent = generatedContent[tab.column!] || tab.content;
-                            if (displayContent) {
-                              const stats = getContentStats(displayContent);
-                              return (
-                                <>
-                                  <span>•</span>
-                                  <div className="flex items-center space-x-1">
-                                    <FileText className="h-3 w-3" />
-                                    <span>{stats.wordCount} words</span>
-                                  </div>
-                                  <span>•</span>
-                                  <div className="flex items-center space-x-1">
-                                    <Clock className="h-3 w-3" />
-                                    <span>{stats.readingTime} min read</span>
-                                  </div>
-                                </>
-                              );
-                            }
-                            return null;
-                          })()}
+        <div className="flex-1 ml-6">
+          {tabs.map((tab) => (
+            <TabsContent key={tab.value} value={tab.value} className="h-full mt-0">
+              <Card className="h-full">
+                <CardContent className="p-0 h-full flex flex-col">
+                  {/* Header with metadata */}
+                  <div className="border-b border-border py-4 px-6 bg-gradient-to-r from-mint-50/30 to-white">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center gap-2">
+                          {tab.hasContent ? (
+                            <div className="w-3 h-3 rounded-full bg-mint-500" />
+                          ) : (
+                            <div className="w-3 h-3 rounded-full bg-gray-300" />
+                          )}
+                          <tab.icon className="h-5 w-5 text-mint-600" />
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-semibold text-gray-900">{tab.label}</h2>
+                          <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                            <span>{tab.subtitle}</span>
+                            {(() => {
+                              const displayContent = generatedContent[tab.column!] || tab.content;
+                              if (displayContent) {
+                                const stats = getContentStats(displayContent);
+                                return (
+                                  <>
+                                    <span>•</span>
+                                    <div className="flex items-center space-x-1">
+                                      <FileText className="h-3 w-3" />
+                                      <span>{stats.wordCount} words</span>
+                                    </div>
+                                    <span>•</span>
+                                    <div className="flex items-center space-x-1">
+                                      <Clock className="h-3 w-3" />
+                                      <span>{stats.readingTime} min read</span>
+                                    </div>
+                                  </>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
                         </div>
                       </div>
+                      
+                      {tab.canGenerate && (
+                        <Button
+                          onClick={() => generateEnhancement(tab.enhancementType!, tab.column!, tab.statusColumn)}
+                          disabled={loadingStates[tab.enhancementType!]}
+                          variant="ghost"
+                          size="sm"
+                          className="text-mint-600 hover:text-mint-700 hover:bg-mint-50"
+                        >
+                          {loadingStates[tab.enhancementType!] ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-mint-600" />
+                          ) : (
+                            <RefreshCw className="h-4 w-4 text-mint-600" />
+                          )}
+                        </Button>
+                      )}
                     </div>
-                    
-                    {tab.canGenerate && (
-                      <Button
-                        onClick={() => generateEnhancement(tab.enhancementType!, tab.column!, tab.statusColumn)}
-                        disabled={loadingStates[tab.enhancementType!]}
-                        variant="ghost"
-                        size="sm"
-                        className="text-mint-600 hover:text-mint-700 hover:bg-mint-50"
-                      >
-                        {loadingStates[tab.enhancementType!] ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-mint-600" />
-                        ) : (
-                          <RefreshCw className="h-4 w-4 text-mint-600" />
-                        )}
-                      </Button>
-                    )}
                   </div>
-                </div>
 
-                {/* Content area */}
-                <div className="flex-1 overflow-auto p-6">
-                  {(() => {
-                    // Prioritize generated content over database content (like TestEnhancementPage)
-                    const displayContent = generatedContent[tab.column!] || tab.content;
-                    
-                    return displayContent ? (
-                      <NuclearContentRenderer
-                        content={displayContent}
-                        fontSize={fontSize}
-                        textAlign={textAlign}
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-muted-foreground">
-                        {tab.canGenerate ? (
-                          <div className="text-center">
-                            <p>No {tab.label.toLowerCase()} available</p>
-                            <p className="text-sm mt-2">Click "Generate" to create one</p>
-                          </div>
-                        ) : (
-                          <p>No content available</p>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
+                  {/* Content area */}
+                  <div className="flex-1 overflow-auto p-6">
+                    {(() => {
+                      const displayContent = generatedContent[tab.column!] || tab.content;
+                      
+                      return displayContent ? (
+                        <NuclearContentRenderer
+                          content={displayContent}
+                          fontSize={fontSize}
+                          textAlign={textAlign}
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground">
+                          {tab.canGenerate ? (
+                            <div className="text-center">
+                              <p>No {tab.label.toLowerCase()} available</p>
+                              <p className="text-sm mt-2">Click "Generate" to create one</p>
+                            </div>
+                          ) : (
+                            <p>No content available</p>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          ))}
+        </div>
       </Tabs>
     </div>
   );
