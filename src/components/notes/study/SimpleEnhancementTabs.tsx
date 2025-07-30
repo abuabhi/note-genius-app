@@ -131,9 +131,17 @@ export const SimpleEnhancementTabs = ({
       }
 
       // Update the note with the generated content
+      const timestampColumnMap: { [key: string]: string } = {
+        'summary': 'summary_generated_at',
+        'key_points': 'key_points_generated_at',
+        'markdown_content': 'markdown_content_generated_at',
+        'enriched_content': 'enriched_content_generated_at',
+        'questions_content': 'questions_generated_at'
+      };
+
       const updates: any = {
         [column]: processedContent,
-        [`${column.replace('_content', '')}_generated_at`]: new Date().toISOString(),
+        [timestampColumnMap[column] || `${column}_generated_at`]: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
@@ -175,7 +183,8 @@ export const SimpleEnhancementTabs = ({
       content: note.markdown_content || '',
       canGenerate: true,
       enhancementType: 'convert-to-markdown',
-      column: 'markdown_content'
+      column: 'markdown_content',
+      statusColumn: 'markdown_content_status'
     },
     {
       value: 'summary',
@@ -194,7 +203,8 @@ export const SimpleEnhancementTabs = ({
       content: note.key_points || '',
       canGenerate: true,
       enhancementType: 'extract-key-points',
-      column: 'key_points'
+      column: 'key_points',
+      statusColumn: 'key_points_status'
     },
     {
       value: 'enriched',
