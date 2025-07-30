@@ -86,10 +86,16 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     }
   };
 
-  // Handle header enhancement with proper state management
-  const handleEnhancementFromHeader = (enhancementType: string) => {
-    setHeaderProcessingEnhancement(enhancementType);
-    // Enhancement completion will trigger page reload, so no need to clear state
+  // Unified enhancement handler that works for both header and tabs
+  const handleEnhancement = async (enhancementType: string) => {
+    try {
+      setHeaderProcessingEnhancement(enhancementType);
+      await handleGenerateEnhancement(enhancementType);
+    } catch (error) {
+      console.error('Enhancement failed:', error);
+    } finally {
+      setHeaderProcessingEnhancement(null);
+    }
   };
 
   const handleEnhance = (enhancedContent: string) => {
@@ -118,7 +124,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
         onSave={handleSaveContent}
         onTitleChange={handleTitleChange}
         onEnhance={handleEnhance}
-        onEnhancementProcessing={setHeaderProcessingEnhancement}
+        onEnhancementProcessing={handleEnhancement}
         onActiveContentTypeChange={setActiveContentType}
       />
       <div className="container mx-auto px-4 py-6">

@@ -34,7 +34,7 @@ interface StudyViewHeaderProps {
   onSave: () => void;
   onTitleChange: (title: string) => void;
   onEnhance: (enhancedContent: string, enhancementType?: EnhancementFunction) => void;
-  onEnhancementProcessing?: (enhancementType: string | null) => void;
+  onEnhancementProcessing?: (enhancementType: string) => void;
   onActiveContentTypeChange?: (type: string) => void;
 }
 
@@ -107,12 +107,8 @@ export const StudyViewHeader = ({
     'create-flashcards': 'original' // Default fallback
   };
 
-  // Handle enhancement selection with unified performance tracking
+  // Handle enhancement selection - delegate to unified handler
   const handleEnhancementSelect = async (enhancement: EnhancementFunction) => {
-    const startTime = performance.now();
-    setProcessingEnhancement(enhancement);
-    onEnhancementProcessing?.(enhancement);
-    
     // Automatically switch to the relevant tab
     const contentType = enhancementToContentTypeMap[enhancement];
     if (contentType && onActiveContentTypeChange) {
@@ -120,42 +116,9 @@ export const StudyViewHeader = ({
       onActiveContentTypeChange(contentType);
     }
     
-    try {
-      const originalContent = note.content || note.description || "";
-      console.log(`⏱️ Header Enhancement: Starting ${enhancement} at ${new Date().toISOString()}`);
-      
-      const { data, error } = await supabase.functions.invoke('simple-enhance-note', {
-        body: { 
-          noteId: note.id,
-          content: originalContent, 
-          enhancementType: enhancement, 
-          title: note.title || "" 
-        }
-      });
-
-      const endTime = performance.now();
-      const duration = (endTime - startTime) / 1000;
-      console.log(`⏱️ Header Enhancement ${enhancement} completed in ${duration.toFixed(2)}s`);
-
-      if (error) {
-        console.error('❌ Enhancement error:', error);
-        toast.error(`Enhancement failed: ${error.message}`);
-        return;
-      }
-
-      if (data.success) {
-        toast.success(`${enhancementOptions.find(opt => opt.value === enhancement)?.title} completed successfully! (${duration.toFixed(1)}s)`);
-        // Force page refresh to show updated content
-        window.location.reload();
-      } else {
-        toast.error(`Enhancement failed: ${data.error}`);
-      }
-    } catch (error) {
-      console.error("Error enhancing note:", error);
-      toast.error("Failed to enhance note");
-    } finally {
-      setProcessingEnhancement(null);
-      onEnhancementProcessing?.(null);
+    // Delegate to the unified enhancement handler
+    if (onEnhancementProcessing) {
+      await onEnhancementProcessing(enhancement);
     }
   };
 

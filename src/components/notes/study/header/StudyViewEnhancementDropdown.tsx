@@ -40,9 +40,9 @@ export const StudyViewEnhancementDropdown = ({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" disabled={isProcessing} className="bg-mint-50 border-mint-200 text-mint-700 hover:bg-mint-100 hover:text-mint-800">
-          <Sparkles className="mr-2 h-4 w-4 text-mint-600" />
-          {isProcessing ? "Enhancing..." : "Use AI"}
-          <ChevronDown className="ml-2 h-4 w-4 text-mint-600" />
+          <Sparkles className={`mr-2 h-4 w-4 text-mint-600 ${isProcessing ? 'animate-spin' : ''}`} />
+          {isProcessing ? `Processing ${processingEnhancement}...` : "Use AI"}
+          {!isProcessing && <ChevronDown className="ml-2 h-4 w-4 text-mint-600" />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 

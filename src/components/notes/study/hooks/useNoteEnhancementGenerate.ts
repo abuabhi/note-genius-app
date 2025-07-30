@@ -80,10 +80,16 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
       return;
     }
     
-    console.log(`⏱️ Starting enhancement ${enhancementType} at ${new Date().toISOString()}`);
+    console.log(`⏱️ Starting tab enhancement ${enhancementType} at ${new Date().toISOString()}`);
     debugLogger.logFlow("SETTING_ENHANCING_STATE_TRUE", { noteId: currentNote.id, enhancementType });
     setIsEnhancing(true);
     setLastRequestTime(Date.now());
+    
+    // Show real-time progress with unique ID for tabs
+    toast.loading(`Processing ${enhancementType}...`, {
+      id: `tab-enhancement-${enhancementType}`,
+      duration: 30000 // 30 second timeout
+    });
     
     try {
       debugLogger.logFlow("CALLING_SIMPLE_ENHANCE_NOTE", {
@@ -105,16 +111,24 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
         }
       });
       
+      const endTime = performance.now();
+      const duration = (endTime - startTime) / 1000;
+      console.log(`⏱️ Tab Enhancement ${enhancementType} completed in ${duration.toFixed(2)}s`);
+      
+      // Dismiss loading toast
+      toast.dismiss(`tab-enhancement-${enhancementType}`);
+      
       debugLogger.logFlow("SIMPLE_ENHANCE_RESULT_RECEIVED", { 
         success: !error, 
         error: error?.message,
-        noteId: currentNote.id
+        noteId: currentNote.id,
+        duration: `${duration.toFixed(2)}s`
       });
       
       if (!error && data?.success) {
         debugLogger.logFlow("ENHANCEMENT_SUCCESS_FORCING_REFRESH", { noteId: currentNote.id });
+        toast.success(`Enhancement completed successfully! (${duration.toFixed(1)}s)`);
         forceRefresh();
-        toast.success("Enhancement generated successfully");
         debugLogger.logNetworkCall('simple-enhance-note', 'POST', { enhancementType }, 200);
       } else {
         const errorMessage = error?.message || data?.error || "Failed to generate enhancement";
@@ -143,6 +157,9 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
         enhancementType 
       });
       
+      // Dismiss loading toast on error
+      toast.dismiss(`tab-enhancement-${enhancementType}`);
+      
       // Offer retry for network errors
       if (retryCount < 2) {
         setRetryCount(prev => prev + 1);
@@ -154,13 +171,8 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
       toast.error("Failed to generate enhancement");
       debugLogger.logNetworkCall('simple-enhance-note', 'POST', { enhancementType }, 500);
     } finally {
-      const endTime = performance.now();
-      const duration = (endTime - startTime) / 1000;
-      console.log(`⏱️ Enhancement ${enhancementType} completed in ${duration.toFixed(2)}s`);
-      
       debugLogger.logFlow("SETTING_ENHANCING_STATE_FALSE", { 
-        noteId: currentNote.id, 
-        duration: `${duration.toFixed(2)}s` 
+        noteId: currentNote.id
       });
       setIsEnhancing(false);
       setLastRequestTime(null);

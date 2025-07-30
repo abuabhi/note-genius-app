@@ -268,7 +268,7 @@ serve(async (req) => {
     console.log('✅ Generated enhanced content');
     console.log(`📊 Enhanced content length: ${enhancedContent.length}`);
 
-    // Update database
+    // Database update fields
     const dbField = dbFieldMapping[enhancementType];
     const timestampField = timestampFieldMapping[enhancementType];
     const statusField = statusFieldMapping[enhancementType];
@@ -277,40 +277,48 @@ serve(async (req) => {
       throw new Error(`No database mapping for enhancement type: ${enhancementType}`);
     }
 
-    console.log(`💾 Updating database field: ${dbField} and status: ${statusField}`);
-    const dbStartTime = Date.now();
-    
-    const updateData = {
-      [dbField]: enhancedContent,
-      [timestampField]: new Date().toISOString(),
-      [statusField]: 'completed',
-      updated_at: new Date().toISOString()
+    // OPTIMIZATION: Return success immediately, perform database update in background
+    const totalProcessingTime = Date.now() - startTime;
+    console.log(`🚀 Returning response after ${totalProcessingTime}ms - DB update will happen in background`);
+
+    // Start background database update (non-blocking)
+    const backgroundUpdate = async () => {
+      const dbStartTime = Date.now();
+      console.log(`💾 [Background] Updating database field: ${dbField} and status: ${statusField}`);
+      
+      const updateData = {
+        [dbField]: enhancedContent,
+        [timestampField]: new Date().toISOString(),
+        [statusField]: 'completed',
+        updated_at: new Date().toISOString()
+      };
+      
+      const { error: updateError } = await supabase
+        .from('notes')
+        .update(updateData)
+        .eq('id', noteId);
+
+      const dbUpdateTime = Date.now() - dbStartTime;
+      
+      if (updateError) {
+        console.error('❌ [Background] Database update error:', updateError);
+        // Try to update status to failed as fallback
+        await supabase
+          .from('notes')
+          .update({ [statusField]: 'failed' })
+          .eq('id', noteId);
+      } else {
+        console.log(`✅ [Background] Database updated successfully in ${dbUpdateTime}ms`);
+      }
     };
-    
-    console.log(`📊 Update data:`, { 
-      contentField: dbField, 
-      statusField, 
-      statusValue: 'completed',
-      contentLength: enhancedContent.length 
-    });
 
-    const { error: updateError } = await supabase
-      .from('notes')
-      .update(updateData)
-      .eq('id', noteId);
-
-    const dbUpdateTime = Date.now() - dbStartTime;
-    console.log(`⏱️ Database update took: ${dbUpdateTime}ms`);
-
-    if (updateError) {
-      console.error('❌ Database update error:', updateError);
-      throw new Error(`Database update failed: ${updateError.message}`);
+    // Use background task to prevent blocking
+    if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) {
+      EdgeRuntime.waitUntil(backgroundUpdate());
+    } else {
+      // Fallback for environments without EdgeRuntime.waitUntil
+      backgroundUpdate().catch(console.error);
     }
-
-    console.log('✅ Database updated successfully');
-    
-    const totalTime = Date.now() - startTime;
-    console.log(`🏁 Total processing time: ${totalTime}ms (API: ${apiCallTime}ms, DB: ${dbUpdateTime}ms)`);
 
     return new Response(JSON.stringify({ 
       success: true, 
@@ -318,9 +326,9 @@ serve(async (req) => {
       enhancementType,
       noteId,
       performance: {
-        totalTime,
+        totalTime: totalProcessingTime,
         apiTime: apiCallTime,
-        dbTime: dbUpdateTime
+        dbUpdateInBackground: true
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
