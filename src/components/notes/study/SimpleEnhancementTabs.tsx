@@ -4,7 +4,7 @@ import { TextAlignType } from './hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Sparkles, FileText, List, HelpCircle, Code } from 'lucide-react';
+import { Loader2, Sparkles, FileText, List, HelpCircle, Code, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { EnhancementType } from '@/types/enhancement';
@@ -191,6 +191,22 @@ export const SimpleEnhancementTabs = ({
     }
   };
 
+  const regenerateAllEnhancements = async () => {
+    const regenerableTabsData = tabs.filter(tab => tab.canGenerate && tab.enhancementType);
+    
+    for (const tab of regenerableTabsData) {
+      if (tab.enhancementType && tab.column) {
+        await generateEnhancement(tab.enhancementType, tab.column, tab.statusColumn);
+        // Small delay between regenerations to avoid overwhelming the system
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+    
+    toast.success('All enhancements regenerated successfully!');
+  };
+
+  const isRegeneratingAll = Object.values(loadingStates).some(Boolean);
+
   const tabs = [
     {
       value: 'original',
@@ -253,6 +269,28 @@ export const SimpleEnhancementTabs = ({
 
   return (
     <div className="h-full flex flex-col">
+      <div className="mb-4 flex justify-end">
+        <Button
+          onClick={regenerateAllEnhancements}
+          disabled={isRegeneratingAll}
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+        >
+          {isRegeneratingAll ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Regenerating All...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-4 w-4" />
+              Regenerate All
+            </>
+          )}
+        </Button>
+      </div>
+      
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as EnhancementType)} className="flex-1 flex flex-col">
         <TabsList className="grid grid-cols-6 w-full">
           {tabs.map((tab) => (
