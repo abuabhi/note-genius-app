@@ -62,73 +62,34 @@ export const OptimizedTwoColumnView = ({
   // State logging disabled for cleaner console
 
   return (
-    <div className="relative">
-      {/* Unified Real-time Enhancement Progress Indicator */}
-      <UnifiedProgressIndicator
-        isEnhancing={isEnhancing}
-        processingTime={processingTime}
-        enhancementStartTime={enhancementStartTime}
-        enhancementType={headerProcessingEnhancement || undefined}
-        variant="full"
-        showTargetTime={true}
-      />
+    <div className="flex h-full relative">
+      {/* Simple processing indicator */}
+      {isEnhancing && (
+        <div className="absolute top-4 right-4 z-50 flex items-center gap-2 bg-white border rounded-lg px-3 py-2 shadow-sm">
+          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-sm text-gray-600">Processing...</span>
+        </div>
+      )}
       
-      {/* Recovery Button for stuck or slow enhancements */}
-      {onForceReset && (
-        <EnhancementRecoveryButton
-          onRecovery={onForceReset}
-          isVisible={isStuck || (processingTime > 30000)}
-          elapsedTime={processingTime}
+      {/* Left Panel - Enhancement Selector */}
+      <div className="w-80 border-r bg-background/50 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <EnhancementSelector
+          note={note}
+          activeContentType={activeContentType}
+          setActiveContentType={setActiveContentType}
         />
-      )}
-      
-      {/* Legacy Enhancement Status Indicator for retries */}
-      {retryCount > 0 && onForceReset && (
-        <div className="mb-4">
-          <EnhancementStatusIndicator
-            isEnhancing={isEnhancing}
-            isStuck={isStuck}
-            lastRequestTime={lastRequestTime}
-            retryCount={retryCount}
-            onForceReset={onForceReset}
-          />
-        </div>
-      )}
-      
-      <div className="flex h-full bg-white rounded-lg shadow-sm border border-mint-100 overflow-hidden">
-        {/* Left Column: Enhancement Selector - Always show all tabs */}
-        <div className="w-72 flex-shrink-0">
-          <EnhancementSelector
-            note={note}
-            activeContentType={activeContentType}
-            setActiveContentType={setActiveContentType}
-            className="h-full"
-            headerProcessingEnhancement={headerProcessingEnhancement}
-          />
-        </div>
-
-        {/* Right Column: Content Display */}
-        <div className="flex-1 min-w-0">
-          <EnhancementDisplayPanel
-            note={note}
-            contentType={activeContentType}
-            fontSize={fontSize}
-            textAlign={textAlign}
-            isLoading={false}
-            isEnhancing={isEditOperation}
-            onGenerateEnhancement={onGenerateEnhancement}
-            className="h-full"
-            processingStage={processingStage}
-          />
-        </div>
       </div>
       
-      {/* Debug Helper - always available for troubleshooting */}
-      <EnhancementFlowDebugger
-        note={note}
-        isEnhancing={isEditOperation}
-        onGenerateEnhancement={onGenerateEnhancement}
-      />
+      {/* Right Panel - Content Display */}
+      <div className="flex-1 overflow-hidden">
+        <EnhancementDisplayPanel
+          note={note}
+          contentType={activeContentType}
+          fontSize={fontSize}
+          textAlign={textAlign}
+          onGenerateEnhancement={onGenerateEnhancement}
+        />
+      </div>
     </div>
   );
 };

@@ -37,7 +37,53 @@ serve(async (req) => {
 
     console.log('🔑 OpenAI API Key found, making request...');
 
-    const systemPrompt = `You are an expert summarizer for educational content. Your task is to generate a clear, concise, and accurate summary from a long note (up to 10,000 words). The summary must preserve all key ideas, structure, and tone. Use simple academic language suitable for students and professionals.
+    const { text, enhancementType = 'summary' } = await req.json();
+    
+    console.log('📝 Input received:', {
+      length: text?.length || 0,
+      preview: text?.substring(0, 100) || 'No text',
+      enhancementType
+    });
+
+    let systemPrompt = '';
+    let userPrompt = '';
+
+    // Handle different enhancement types
+    switch (enhancementType) {
+      case 'extract-key-points':
+        systemPrompt = `You are an expert at extracting key points from educational content. Extract the most important concepts, facts, and insights from the provided text.
+
+Return a JSON format:
+{
+  "key_points": [
+    "<first key point>",
+    "<second key point>",
+    "... (up to 10 key points)"
+  ]
+}
+
+Respond ONLY with valid JSON. No other text.`;
+        userPrompt = `Extract the key points from this text:\n\n${text}`;
+        break;
+        
+      case 'generate-questions':
+        systemPrompt = `You are an expert at creating study questions from educational content. Generate thoughtful questions that test understanding of the material.
+
+Return a JSON format:
+{
+  "questions": [
+    "<first study question>",
+    "<second study question>",
+    "... (up to 8 questions)"
+  ]
+}
+
+Respond ONLY with valid JSON. No other text.`;
+        userPrompt = `Generate study questions from this text:\n\n${text}`;
+        break;
+        
+      default: // 'summary' or any other type
+        systemPrompt = `You are an expert summarizer for educational content. Your task is to generate a clear, concise, and accurate summary from a long note (up to 10,000 words). The summary must preserve all key ideas, structure, and tone. Use simple academic language suitable for students and professionals.
 
 Return the summary in a structured JSON format with the following keys:
 
@@ -57,6 +103,8 @@ Return the summary in a structured JSON format with the following keys:
 }
 
 Respond ONLY with valid JSON. No other text.`;
+        userPrompt = `Please summarize this text:\n\n${text}`;
+    }
 
     const apiStartTime = performance.now();
     
@@ -70,7 +118,7 @@ Respond ONLY with valid JSON. No other text.`;
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Please summarize this text:\n\n${text}` }
+          { role: 'user', content: userPrompt }
         ],
         temperature: 0.3,
         top_p: 0.9,
@@ -107,12 +155,9 @@ Respond ONLY with valid JSON. No other text.`;
       throw new Error('Failed to parse OpenAI response as JSON');
     }
 
-    // Validate the structure
-    const requiredFields = ['summary_title', 'summary_overview', 'key_points', 'notable_terms', 'quote_or_stat'];
-    for (const field of requiredFields) {
-      if (!(field in parsedResult)) {
-        throw new Error(`Missing required field: ${field}`);
-      }
+    // Basic validation - just check if we have some content
+    if (!parsedResult || typeof parsedResult !== 'object') {
+      throw new Error('Invalid response structure');
     }
 
     const totalTime = performance.now() - startTime;

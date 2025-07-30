@@ -172,10 +172,11 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
     try {
       console.log(`🚀 Tab Enhancement: Calling test-enhance for ${enhancementType}`);
       
-      // Use the fast test-enhance function instead of slow simple-enhance-note
+      // Use the fast test-enhance function for all enhancement types
       const enhancementResult = await supabase.functions.invoke('test-enhance', {
         body: {
-          text: currentNote.content || ''
+          text: currentNote.content || '',
+          enhancementType: enhancementType
         }
       });
       
@@ -194,27 +195,27 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
         duration: `${duration.toFixed(2)}s`
       });
       
-      if (!error && data?.summary) {
-        // Cache successful result for future instant access
-        if (shouldCache(noteContent)) {
-          setCachedEnhancement(noteContent, enhancementType as any, data.summary || 'Enhanced');
-          recordMetric('enhancement_cached', 1, { enhancementType, duration });
+      if (!error && data?.result) {
+        // Extract the right content based on enhancement type
+        let content = '';
+        const result = data.result;
+        
+        switch (enhancementType) {
+          case 'extract-key-points':
+            content = result.key_points?.join('\n• ') || 'No key points found';
+            break;
+          case 'generate-questions':
+            content = result.questions?.join('\n\n') || 'No questions generated';
+            break;
+          default: // summary
+            content = `# ${result.summary_title || 'Summary'}\n\n${result.summary_overview || ''}\n\n## Key Points\n• ${result.key_points?.join('\n• ') || 'None'}`;
         }
         
-        // Record performance metrics
-        recordMetric('enhancement_success', 1, { 
-          enhancementType, 
-          duration, 
-          contentLength: noteContent.length,
-          cacheEnabled: shouldCache(noteContent)
-        });
-        
-        debugLogger.logFlow("ENHANCEMENT_SUCCESS_FORCING_REFRESH", { noteId: currentNote.id });
-        toast.success(`Enhancement completed successfully! (${duration.toFixed(1)}s)`, {
-          description: `${enhancementType} generated in ${duration.toFixed(1)} seconds`
-        });
+        // Just show success - no need for complex storage
+        console.log(`✅ Enhancement completed: ${enhancementType}`, { content: content.substring(0, 100) + '...' });
+
+        toast.success(`${enhancementType} completed in ${duration.toFixed(1)}s`);
         forceRefresh();
-        // Success - no complex logging needed
       } else {
         const errorMessage = error?.message || data?.error || "Failed to generate enhancement";
         recordMetric('enhancement_error', 1, { 
