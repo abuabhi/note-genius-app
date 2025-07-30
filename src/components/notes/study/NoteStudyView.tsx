@@ -92,6 +92,19 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
   const handleEnhancement = async (enhancementType: string) => {
     try {
       setHeaderProcessingEnhancement(enhancementType);
+      // Switch to the appropriate tab when starting enhancement
+      if (enhancementType === 'summarize') {
+        setActiveContentType('summary');
+      } else if (enhancementType === 'extract-key-points') {
+        setActiveContentType('keyPoints');
+      } else if (enhancementType === 'generate-questions') {
+        setActiveContentType('questions');
+      } else if (enhancementType === 'convert-to-markdown') {
+        setActiveContentType('markdown');
+      } else if (enhancementType === 'enrich-note') {
+        setActiveContentType('original');
+      }
+      
       await handleGenerateEnhancement(enhancementType);
     } catch (error) {
       console.error('Enhancement failed:', error);

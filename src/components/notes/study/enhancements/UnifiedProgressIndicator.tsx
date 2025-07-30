@@ -39,7 +39,9 @@ export const UnifiedProgressIndicator = ({
     if (timeInSeconds <= 5) return "Initializing...";
     if (timeInSeconds <= 10) return "AI Processing";
     if (timeInSeconds <= 15) return "Nearly Complete";
-    return "Taking Longer Than Expected";
+    if (timeInSeconds <= 30) return "Taking Longer Than Expected";
+    if (timeInSeconds <= 60) return "Complex Content - Please Wait";
+    return "Still Processing - API Call Active";
   };
 
   // Header variant - compact display

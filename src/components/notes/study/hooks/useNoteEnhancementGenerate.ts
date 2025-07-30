@@ -70,18 +70,15 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
     };
   }, [isEnhancing, enhancementStartTime]);
 
-  // Auto-timeout detection for stuck enhancements (reduced to 20s for better UX)
+  // Show "taking longer" warning after 20s but don't kill the API call
   useEffect(() => {
     if (isEnhancing && !timeoutRef.current) {
       timeoutRef.current = setTimeout(() => {
-        console.warn(`⚠️ Enhancement timeout detected after 20 seconds`);
-        setIsEnhancing(false);
-        setLastRequestTime(null);
-        setEnhancementStartTime(null);
-        setProcessingTime(0);
-        recordMetric('enhancement_timeout', 1, { noteId: currentNote.id });
-        toast.error("Enhancement timed out. Please try again.");
-      }, 20000); // 20 second timeout (improved from 30s)
+        console.warn(`⚠️ Enhancement taking longer than expected (20+ seconds)`);
+        // Don't reset state - just record the metric for monitoring
+        recordMetric('enhancement_slow_warning', 1, { noteId: currentNote.id });
+        // The API call continues, just show warning in UI via processingTime
+      }, 20000); // 20 second warning (not timeout)
     }
 
     if (!isEnhancing && timeoutRef.current) {
@@ -165,10 +162,10 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
     // Record cache miss
     recordMetric('enhancement_cache_miss', 1, { enhancementType });
     
-    // Show real-time progress with unique ID for tabs
+    // Show real-time progress with unique ID for tabs - no timeout, let API complete
     toast.loading(`Processing ${enhancementType}...`, {
       id: `tab-enhancement-${enhancementType}`,
-      duration: 20000, // 20 second timeout
+      duration: Infinity, // Let the API call determine completion
       description: "AI is generating your content..."
     });
     
