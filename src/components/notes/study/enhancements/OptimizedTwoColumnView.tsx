@@ -6,6 +6,8 @@ import { EnhancementSelector, EnhancementContentType } from "./EnhancementSelect
 import { EnhancementDisplayPanel } from "./EnhancementDisplayPanel";
 import { EnhancementFlowDebugger } from "../debug/EnhancementFlowDebugger";
 import { EnhancementStatusIndicator } from "./EnhancementStatusIndicator";
+import { EnhancementProgressIndicator } from "./EnhancementProgressIndicator";
+import { EnhancementRecoveryButton } from "./EnhancementRecoveryButton";
 import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 import { useStuckEnhancementDetection } from "@/hooks/useStuckEnhancementDetection";
 import { debugLogger } from "@/utils/debug/EnhancementDebugLogger";
@@ -26,6 +28,8 @@ interface OptimizedTwoColumnViewProps {
   lastRequestTime?: number | null;
   retryCount?: number;
   onForceReset?: () => void;
+  processingTime?: number;
+  enhancementStartTime?: number | null;
 }
 
 export const OptimizedTwoColumnView = ({
@@ -42,7 +46,9 @@ export const OptimizedTwoColumnView = ({
   isStuck = false,
   lastRequestTime = null,
   retryCount = 0,
-  onForceReset
+  onForceReset,
+  processingTime = 0,
+  enhancementStartTime = null
 }: OptimizedTwoColumnViewProps) => {
   const { refreshNotes } = useOptimizedNotes();
   const { resetStuckEnhancements } = useStuckEnhancementDetection(note.id);
@@ -57,8 +63,29 @@ export const OptimizedTwoColumnView = ({
 
   return (
     <div className="relative">
-      {/* Enhancement Status Indicator */}
-      {(isEnhancing || isStuck) && onForceReset && (
+      {/* Real-time Enhancement Progress Indicator */}
+      {isEnhancing && enhancementStartTime && (
+        <div className="mb-4">
+          <EnhancementProgressIndicator
+            isEnhancing={isEnhancing}
+            enhancementStartTime={enhancementStartTime}
+            processingTime={processingTime}
+            enhancementType={headerProcessingEnhancement || undefined}
+          />
+        </div>
+      )}
+      
+      {/* Recovery Button for stuck or slow enhancements */}
+      {onForceReset && (
+        <EnhancementRecoveryButton
+          onRecovery={onForceReset}
+          isVisible={isStuck || (processingTime > 30000)}
+          elapsedTime={processingTime}
+        />
+      )}
+      
+      {/* Legacy Enhancement Status Indicator for retries */}
+      {retryCount > 0 && onForceReset && (
         <div className="mb-4">
           <EnhancementStatusIndicator
             isEnhancing={isEnhancing}

@@ -41,6 +41,8 @@ interface NoteStudyViewContentProps {
   lastRequestTime?: number | null;
   retryCount?: number;
   onForceReset?: () => void;
+  processingTime?: number;
+  enhancementStartTime?: number | null;
 }
 
 export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
@@ -76,7 +78,9 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
   isStuck,
   lastRequestTime,
   retryCount,
-  onForceReset
+  onForceReset,
+  processingTime,
+  enhancementStartTime
 }) => {
   return (
     <div className="p-6">
@@ -111,6 +115,8 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
           lastRequestTime={lastRequestTime}
           retryCount={retryCount}
           onForceReset={onForceReset}
+          processingTime={processingTime}
+          enhancementStartTime={enhancementStartTime}
         />
       )}
     </div>

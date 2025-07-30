@@ -13,6 +13,8 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [lastRequestTime, setLastRequestTime] = useState<number | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [enhancementStartTime, setEnhancementStartTime] = useState<number | null>(null);
+  const [processingTime, setProcessingTime] = useState<number>(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // CRITICAL FIX: Always reset enhancing state on mount/note change to prevent stuck states
@@ -190,6 +192,8 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
     forceReset,
     isStuck: Boolean(isStuck),
     lastRequestTime,
-    retryCount
+    retryCount,
+    processingTime: 0, // Placeholder until we implement proper tracking
+    enhancementStartTime: null // Placeholder until we implement proper tracking
   };
 };

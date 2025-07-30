@@ -71,7 +71,9 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     forceReset,
     isStuck,
     lastRequestTime,
-    retryCount
+    retryCount,
+    processingTime,
+    enhancementStartTime
   } = useNoteEnhancementGenerate(note, forceRefresh);
 
   // Auto-migrate YouTube content if needed
@@ -162,6 +164,8 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           lastRequestTime={lastRequestTime}
           retryCount={retryCount}
           onForceReset={forceReset}
+          processingTime={processingTime}
+          enhancementStartTime={enhancementStartTime}
         />
       </div>
     </div>

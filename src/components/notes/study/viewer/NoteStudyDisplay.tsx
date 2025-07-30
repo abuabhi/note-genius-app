@@ -21,6 +21,8 @@ interface NoteStudyDisplayProps {
   lastRequestTime?: number | null;
   retryCount?: number;
   onForceReset?: () => void;
+  processingTime?: number;
+  enhancementStartTime?: number | null;
 }
 
 export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
@@ -37,7 +39,9 @@ export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
   isStuck,
   lastRequestTime,
   retryCount,
-  onForceReset
+  onForceReset,
+  processingTime,
+  enhancementStartTime
 }) => {
   // Convert activeContentType string to EnhancementContentType
   const contentType = activeContentType as EnhancementContentType;
@@ -64,6 +68,8 @@ export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
         lastRequestTime={lastRequestTime}
         retryCount={retryCount}
         onForceReset={onForceReset}
+        processingTime={processingTime}
+        enhancementStartTime={enhancementStartTime}
       />
     </div>
   );
