@@ -1,60 +1,28 @@
-
-import { useState, useCallback } from "react";
+import React from "react";
 import { Note } from "@/types/note";
 import { TextAlignType } from "./hooks/useStudyViewState";
-import { OptimizedTwoColumnView } from "./enhancements/OptimizedTwoColumnView";
-import { EnhancementContentType } from "./enhancements/EnhancementSelector";
+import { SimpleEnhancementTabs } from "./SimpleEnhancementTabs";
 
 interface NoteContentDisplayProps {
   note: Note;
-  content: string;
   fontSize: number;
   textAlign: TextAlignType;
-  isEditing: boolean;
-  isLoading?: boolean;
-  onGenerateEnhancement?: (enhancementType: string) => Promise<void>;
-  onCancelEnhancement?: () => void;
-  activeContentType?: EnhancementContentType;
-  onActiveContentTypeChange?: (type: EnhancementContentType) => void;
+  onNoteUpdate?: () => void;
 }
 
-export const NoteContentDisplay = ({
+export const NoteContentDisplay: React.FC<NoteContentDisplayProps> = ({
   note,
-  content,
   fontSize,
   textAlign,
-  isEditing,
-  isLoading = false,
-  onGenerateEnhancement,
-  onCancelEnhancement,
-  activeContentType = 'original',
-  onActiveContentTypeChange
-}: NoteContentDisplayProps) => {
-  const [localActiveContentType, setLocalActiveContentType] = useState<EnhancementContentType>(activeContentType);
-
-  // Handle tab change - preserve the active tab
-  const handleActiveContentTypeChange = useCallback((type: EnhancementContentType) => {
-    setLocalActiveContentType(type);
-    onActiveContentTypeChange?.(type);
-  }, [onActiveContentTypeChange]);
-
-  console.log("🎯 NoteContentDisplay - UNIFIED RENDERING PATH - ALL MARKDOWN:", {
-    noteId: note.id,
-    activeContentType: localActiveContentType,
-    isEditing,
-    isLoading
-  });
-
+  onNoteUpdate
+}) => {
   return (
-    <div className="note-content-display">
-      <OptimizedTwoColumnView
+    <div className="note-content-display h-full">
+      <SimpleEnhancementTabs
         note={note}
         fontSize={fontSize}
         textAlign={textAlign}
-        activeContentType={localActiveContentType}
-        setActiveContentType={handleActiveContentTypeChange}
-        onGenerateEnhancement={onGenerateEnhancement}
-        isEditOperation={isLoading}
+        onNoteUpdate={onNoteUpdate}
       />
     </div>
   );

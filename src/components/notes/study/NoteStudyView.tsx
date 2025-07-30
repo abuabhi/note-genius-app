@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Note } from "@/types/note";
 import { StudyViewHeader } from "./header/StudyViewHeader";
@@ -6,7 +5,7 @@ import { NoteStudyViewContent } from "./viewer/NoteStudyViewContent";
 
 import { useStudyViewState } from "./hooks/useStudyViewState";
 import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
-import { useNoteEnhancementGenerate } from "./hooks/useNoteEnhancementGenerate";
+import { useSimpleEnhancement } from "@/hooks/useSimpleEnhancement";
 import { UserSubject } from "@/types/subject";
 import { EnhancementDebugger } from "@/components/debug/EnhancementDebugger";
 import { useYouTubeContentMigration } from "@/hooks/useYouTubeContentMigration";
@@ -61,23 +60,15 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
   const monthlyLimit = 100;
   const hasReachedLimit = () => false;
 
-  const {
-    handleGenerateEnhancement,
-    isEnhancing,
-    forceReset,
-    isStuck,
-    lastRequestTime,
-    retryCount,
-    processingTime,
-    enhancementStartTime
-  } = useNoteEnhancementGenerate(note, forceRefresh);
+  // Simple enhancement functionality
+  const { enhanceNote, isEnhancing } = useSimpleEnhancement(note, forceRefresh);
 
   // Auto-migrate YouTube content if needed
   useYouTubeContentMigration(note);
 
-  // Simple enhancement handler - use only the fast system
+  // Simple enhancement handler
   const handleEnhanceContent = async (enhancementType: string) => {
-    await handleGenerateEnhancement(enhancementType);
+    await enhanceNote(enhancementType);
   };
 
   // Unified enhancement handler that works for both header and tabs
@@ -97,7 +88,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
         setActiveContentType('original');
       }
       
-      await handleGenerateEnhancement(enhancementType);
+      await enhanceNote(enhancementType);
     } catch (error) {
       console.error('Enhancement failed:', error);
     } finally {
@@ -155,10 +146,10 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           toggleEditing={toggleEditing}
           handleEnhanceContent={handleEnhanceContent}
           setSelectedTags={setSelectedTags}
-          handleGenerateEnhancement={handleGenerateEnhancement}
+          handleGenerateEnhancement={enhanceNote}
           hasReachedLimit={hasReachedLimit()}
           fetchUsageStats={() => {}}
-          onNoteUpdate={onNoteUpdate}
+          onNoteUpdate={() => onNoteUpdate({})}
           onSubjectChange={handleSubjectChange}
           activeContentType={activeContentType}
           onActiveContentTypeChange={setActiveContentType}
