@@ -11,17 +11,26 @@ import { ChevronDown, Sparkles, HelpCircle } from "lucide-react";
 import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { Note } from "@/types/note";
 import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
+import { UnifiedProgressIndicator } from "../enhancements/UnifiedProgressIndicator";
+import { PerformanceContextBadge } from "../enhancements/PerformanceContextBadge";
 
 interface StudyViewEnhancementDropdownProps {
   note: Note;
   processingEnhancement: EnhancementFunction | null;
   onEnhancementSelect: (enhancement: EnhancementFunction) => Promise<void>;
+  // Progress tracking props
+  isEnhancing?: boolean;
+  processingTime?: number;
+  enhancementStartTime?: number | null;
 }
 
 export const StudyViewEnhancementDropdown = ({
   note,
   processingEnhancement,
-  onEnhancementSelect
+  onEnhancementSelect,
+  isEnhancing = false,
+  processingTime = 0,
+  enhancementStartTime = null
 }: StudyViewEnhancementDropdownProps) => {
   const { hasReachedLimit } = useNoteEnrichment();
 
@@ -41,7 +50,23 @@ export const StudyViewEnhancementDropdown = ({
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" disabled={isProcessing} className="bg-mint-50 border-mint-200 text-mint-700 hover:bg-mint-100 hover:text-mint-800">
           <Sparkles className={`mr-2 h-4 w-4 text-mint-600 ${isProcessing ? 'animate-spin' : ''}`} />
-          {isProcessing ? `Processing ${processingEnhancement}...` : "Use AI"}
+          <div className="flex items-center gap-2">
+            {isProcessing ? (
+              <>
+                <span>Use AI</span>
+                <UnifiedProgressIndicator
+                  isEnhancing={isEnhancing}
+                  processingTime={processingTime}
+                  enhancementStartTime={enhancementStartTime}
+                  enhancementType={processingEnhancement || undefined}
+                  variant="header"
+                  showTargetTime={false}
+                />
+              </>
+            ) : (
+              "Use AI"
+            )}
+          </div>
           {!isProcessing && <ChevronDown className="ml-2 h-4 w-4 text-mint-600" />}
         </Button>
       </DropdownMenuTrigger>
@@ -49,6 +74,25 @@ export const StudyViewEnhancementDropdown = ({
         align="end" 
         className="w-72 bg-white border border-gray-200 shadow-lg rounded-md z-50"
       >
+        {/* Show detailed progress in dropdown when processing */}
+        {isProcessing && (
+          <div className="p-3 border-b border-gray-100">
+            <UnifiedProgressIndicator
+              isEnhancing={isEnhancing}
+              processingTime={processingTime}
+              enhancementStartTime={enhancementStartTime}
+              enhancementType={processingEnhancement || undefined}
+              variant="full"
+              showTargetTime={true}
+            />
+            <div className="flex justify-center mt-2">
+              <PerformanceContextBadge 
+                processingTime={processingTime}
+                isCacheHit={false}
+              />
+            </div>
+          </div>
+        )}
         <DropdownMenuItem 
           onClick={async () => {
             console.log("🚀 DROPDOWN CLICK: summarize -> forwarding to onEnhancementSelect");

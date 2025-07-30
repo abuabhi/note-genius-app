@@ -6,8 +6,8 @@ import { EnhancementSelector, EnhancementContentType } from "./EnhancementSelect
 import { EnhancementDisplayPanel } from "./EnhancementDisplayPanel";
 import { EnhancementFlowDebugger } from "../debug/EnhancementFlowDebugger";
 import { EnhancementStatusIndicator } from "./EnhancementStatusIndicator";
-import { EnhancementProgressIndicator } from "./EnhancementProgressIndicator";
 import { EnhancementRecoveryButton } from "./EnhancementRecoveryButton";
+import { UnifiedProgressIndicator } from "./UnifiedProgressIndicator";
 import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 import { useStuckEnhancementDetection } from "@/hooks/useStuckEnhancementDetection";
 import { debugLogger } from "@/utils/debug/EnhancementDebugLogger";
@@ -63,17 +63,15 @@ export const OptimizedTwoColumnView = ({
 
   return (
     <div className="relative">
-      {/* Real-time Enhancement Progress Indicator */}
-      {isEnhancing && enhancementStartTime && (
-        <div className="mb-4">
-          <EnhancementProgressIndicator
-            isEnhancing={isEnhancing}
-            enhancementStartTime={enhancementStartTime}
-            processingTime={processingTime}
-            enhancementType={headerProcessingEnhancement || undefined}
-          />
-        </div>
-      )}
+      {/* Unified Real-time Enhancement Progress Indicator */}
+      <UnifiedProgressIndicator
+        isEnhancing={isEnhancing}
+        processingTime={processingTime}
+        enhancementStartTime={enhancementStartTime}
+        enhancementType={headerProcessingEnhancement || undefined}
+        variant="full"
+        showTargetTime={true}
+      />
       
       {/* Recovery Button for stuck or slow enhancements */}
       {onForceReset && (

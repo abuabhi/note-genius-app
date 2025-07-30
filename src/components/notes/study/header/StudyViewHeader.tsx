@@ -36,6 +36,10 @@ interface StudyViewHeaderProps {
   onEnhance: (enhancedContent: string, enhancementType?: EnhancementFunction) => void;
   onEnhancementProcessing?: (enhancementType: string) => void;
   onActiveContentTypeChange?: (type: string) => void;
+  // Progress tracking props
+  isEnhancing?: boolean;
+  processingTime?: number;
+  enhancementStartTime?: number | null;
 }
 
 export const StudyViewHeader = ({
@@ -58,6 +62,9 @@ export const StudyViewHeader = ({
   onEnhance,
   onEnhancementProcessing,
   onActiveContentTypeChange,
+  isEnhancing = false,
+  processingTime = 0,
+  enhancementStartTime = null,
 }: StudyViewHeaderProps) => {
   const [processingEnhancement, setProcessingEnhancement] = useState<EnhancementFunction | null>(null);
   const [testingOpenAI, setTestingOpenAI] = useState(false);
@@ -153,6 +160,9 @@ export const StudyViewHeader = ({
                 note={note}
                 processingEnhancement={processingEnhancement}
                 onEnhancementSelect={handleEnhancementSelect}
+                isEnhancing={isEnhancing}
+                processingTime={processingTime}
+                enhancementStartTime={enhancementStartTime}
               />
               
               <StudyViewExportDropdown note={note} />

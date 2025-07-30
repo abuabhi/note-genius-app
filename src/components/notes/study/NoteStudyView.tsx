@@ -128,6 +128,9 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
         onEnhance={handleEnhance}
         onEnhancementProcessing={handleEnhancement}
         onActiveContentTypeChange={setActiveContentType}
+        isEnhancing={isEnhancing}
+        processingTime={processingTime}
+        enhancementStartTime={enhancementStartTime}
       />
       <div className="container mx-auto px-4 py-6">
         <NoteStudyViewContent
