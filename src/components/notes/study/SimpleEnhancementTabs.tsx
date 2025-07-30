@@ -4,11 +4,32 @@ import { TextAlignType } from './hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { UnifiedContentRenderer } from './enhancements/UnifiedContentRenderer';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Loader2, Sparkles, FileText, List, HelpCircle, Code } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { EnhancementType } from '@/types/enhancement';
+
+// Simple content renderer component
+const SimpleContentRenderer = ({ content, fontSize, textAlign }: { content: string; fontSize: number; textAlign: TextAlignType }) => {
+  if (!content) return <div className="text-muted-foreground">No content available</div>;
+  
+  const containerStyle = {
+    fontSize: `${fontSize}px`,
+    textAlign: textAlign === 'left' ? 'left' as const : 
+              textAlign === 'center' ? 'center' as const : 
+              'justify' as const
+  };
+
+  return (
+    <div style={containerStyle} className="prose prose-sm max-w-none">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+};
 
 interface SimpleEnhancementTabsProps {
   note: Note;
@@ -239,7 +260,7 @@ export const SimpleEnhancementTabs = ({
 
                 <div className="flex-1 overflow-auto">
                   {tab.content ? (
-                    <UnifiedContentRenderer
+                    <SimpleContentRenderer
                       content={tab.content}
                       fontSize={fontSize}
                       textAlign={textAlign}
