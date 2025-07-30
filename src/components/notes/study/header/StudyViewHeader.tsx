@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Note } from "@/types/note";
 import { StudyViewControls } from "../controls/StudyViewControls";
 import { TextAlignType } from "../hooks/useStudyViewState";
-import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
 import { toast } from "sonner";
 import { StudyViewTitleSection } from "./StudyViewTitleSection";
@@ -38,8 +37,6 @@ interface StudyViewHeaderProps {
   onActiveContentTypeChange?: (type: string) => void;
   // Progress tracking props
   isEnhancing?: boolean;
-  processingTime?: number;
-  enhancementStartTime?: number | null;
 }
 
 export const StudyViewHeader = ({
@@ -63,12 +60,9 @@ export const StudyViewHeader = ({
   onEnhancementProcessing,
   onActiveContentTypeChange,
   isEnhancing = false,
-  processingTime = 0,
-  enhancementStartTime = null,
 }: StudyViewHeaderProps) => {
   const [processingEnhancement, setProcessingEnhancement] = useState<EnhancementFunction | null>(null);
   const [testingOpenAI, setTestingOpenAI] = useState(false);
-  const { enrichNote, enhancementOptions } = useNoteEnrichment();
 
   // Test OpenAI function
   const testOpenAI = async () => {
@@ -161,8 +155,6 @@ export const StudyViewHeader = ({
                 processingEnhancement={processingEnhancement}
                 onEnhancementSelect={handleEnhancementSelect}
                 isEnhancing={isEnhancing}
-                processingTime={processingTime}
-                enhancementStartTime={enhancementStartTime}
               />
               
               <StudyViewExportDropdown note={note} />

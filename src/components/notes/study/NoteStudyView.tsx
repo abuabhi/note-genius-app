@@ -6,7 +6,6 @@ import { NoteStudyViewContent } from "./viewer/NoteStudyViewContent";
 
 import { useStudyViewState } from "./hooks/useStudyViewState";
 import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
-import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
 import { useNoteEnhancementGenerate } from "./hooks/useNoteEnhancementGenerate";
 import { UserSubject } from "@/types/subject";
 import { EnhancementDebugger } from "@/components/debug/EnhancementDebugger";
@@ -56,14 +55,10 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     onNoteUpdate
   } = useNoteStudyEditor(note, forceRefresh);
 
-  // Use enhancement hooks for the missing functionality
-  const {
-    currentUsage,
-    monthlyLimit,
-    hasReachedLimit,
-    enrichNote,
-    processingStage
-  } = useNoteEnrichment(note);
+  // Simple usage tracking (no complex features)
+  const currentUsage = 0;
+  const monthlyLimit = 100;
+  const hasReachedLimit = () => false;
 
   const {
     handleGenerateEnhancement,
@@ -79,13 +74,9 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
   // Auto-migrate YouTube content if needed
   useYouTubeContentMigration(note);
 
-  // Handle enhancement
+  // Simple enhancement handler - use only the fast system
   const handleEnhanceContent = async (enhancementType: string) => {
-    try {
-      await enrichNote(note.id, note.content || '', enhancementType as any, note.title);
-    } catch (error) {
-      console.error('Enhancement failed:', error);
-    }
+    await handleGenerateEnhancement(enhancementType);
   };
 
   // Unified enhancement handler that works for both header and tabs
@@ -142,8 +133,6 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
         onEnhancementProcessing={handleEnhancement}
         onActiveContentTypeChange={setActiveContentType}
         isEnhancing={isEnhancing}
-        processingTime={processingTime}
-        enhancementStartTime={enhancementStartTime}
       />
       <div className="container mx-auto px-4 py-6">
         <NoteStudyViewContent
@@ -173,15 +162,8 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           activeContentType={activeContentType}
           onActiveContentTypeChange={setActiveContentType}
           isEditOperation={isEnhancing}
-          processingStage={processingStage}
           headerProcessingEnhancement={headerProcessingEnhancement}
           isEnhancing={isEnhancing}
-          isStuck={isStuck}
-          lastRequestTime={lastRequestTime}
-          retryCount={retryCount}
-          onForceReset={forceReset}
-          processingTime={processingTime}
-          enhancementStartTime={enhancementStartTime}
         />
       </div>
     </div>

@@ -1,16 +1,9 @@
 
-import { useEffect } from "react";
+
 import { Note } from "@/types/note";
 import { TextAlignType } from "../hooks/useStudyViewState";
 import { EnhancementSelector, EnhancementContentType } from "./EnhancementSelector";
 import { EnhancementDisplayPanel } from "./EnhancementDisplayPanel";
-import { EnhancementFlowDebugger } from "../debug/EnhancementFlowDebugger";
-import { EnhancementStatusIndicator } from "./EnhancementStatusIndicator";
-import { EnhancementRecoveryButton } from "./EnhancementRecoveryButton";
-import { UnifiedProgressIndicator } from "./UnifiedProgressIndicator";
-import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
-import { useStuckEnhancementDetection } from "@/hooks/useStuckEnhancementDetection";
-import { debugLogger } from "@/utils/debug/EnhancementDebugLogger";
 
 interface OptimizedTwoColumnViewProps {
   note: Note;
@@ -24,12 +17,6 @@ interface OptimizedTwoColumnViewProps {
   headerProcessingEnhancement?: string | null;
   // Enhancement status props
   isEnhancing?: boolean;
-  isStuck?: boolean;
-  lastRequestTime?: number | null;
-  retryCount?: number;
-  onForceReset?: () => void;
-  processingTime?: number;
-  enhancementStartTime?: number | null;
 }
 
 export const OptimizedTwoColumnView = ({
@@ -42,24 +29,9 @@ export const OptimizedTwoColumnView = ({
   isEditOperation = false,
   processingStage,
   headerProcessingEnhancement,
-  isEnhancing = false,
-  isStuck = false,
-  lastRequestTime = null,
-  retryCount = 0,
-  onForceReset,
-  processingTime = 0,
-  enhancementStartTime = null
+  isEnhancing = false
 }: OptimizedTwoColumnViewProps) => {
-  const { refreshNotes } = useOptimizedNotes();
-  const { resetStuckEnhancements } = useStuckEnhancementDetection(note.id);
-
-  // Force refresh the note data when component mounts and reset any stuck states
-  useEffect(() => {
-    resetStuckEnhancements();
-    refreshNotes();
-  }, [refreshNotes, resetStuckEnhancements]);
-
-  // State logging disabled for cleaner console
+  // Component simplified - removed all complex enhancement tracking
 
   return (
     <div className="flex h-full relative">

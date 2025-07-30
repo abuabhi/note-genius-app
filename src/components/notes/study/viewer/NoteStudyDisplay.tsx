@@ -17,12 +17,6 @@ interface NoteStudyDisplayProps {
   headerProcessingEnhancement?: string | null;
   // Enhancement status props
   isEnhancing?: boolean;
-  isStuck?: boolean;
-  lastRequestTime?: number | null;
-  retryCount?: number;
-  onForceReset?: () => void;
-  processingTime?: number;
-  enhancementStartTime?: number | null;
 }
 
 export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
@@ -35,13 +29,7 @@ export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
   isEditOperation,
   processingStage,
   headerProcessingEnhancement,
-  isEnhancing,
-  isStuck,
-  lastRequestTime,
-  retryCount,
-  onForceReset,
-  processingTime,
-  enhancementStartTime
+  isEnhancing
 }) => {
   // Convert activeContentType string to EnhancementContentType
   const contentType = activeContentType as EnhancementContentType;
@@ -64,12 +52,6 @@ export const NoteStudyDisplay: React.FC<NoteStudyDisplayProps> = ({
         processingStage={processingStage}
         headerProcessingEnhancement={headerProcessingEnhancement}
         isEnhancing={isEnhancing}
-        isStuck={isStuck}
-        lastRequestTime={lastRequestTime}
-        retryCount={retryCount}
-        onForceReset={onForceReset}
-        processingTime={processingTime}
-        enhancementStartTime={enhancementStartTime}
       />
     </div>
   );

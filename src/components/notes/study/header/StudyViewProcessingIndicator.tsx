@@ -1,6 +1,6 @@
 
 import { Loader2 } from "lucide-react";
-import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
+
 import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
 
 interface StudyViewProcessingIndicatorProps {
@@ -10,13 +10,12 @@ interface StudyViewProcessingIndicatorProps {
 export const StudyViewProcessingIndicator = ({
   processingEnhancement,
 }: StudyViewProcessingIndicatorProps) => {
-  const { enhancementOptions } = useNoteEnrichment();
+  // Simplified - removed complex enhancement options system
 
   if (!processingEnhancement) return null;
 
   const getProcessingTitle = () => {
-    const option = enhancementOptions.find(opt => opt.value === processingEnhancement);
-    return option?.title || "";
+    return processingEnhancement || "Processing";
   };
 
   return (
