@@ -35,6 +35,7 @@ interface StudyViewHeaderProps {
   onTitleChange: (title: string) => void;
   onEnhance: (enhancedContent: string, enhancementType?: EnhancementFunction) => void;
   onEnhancementProcessing?: (enhancementType: string | null) => void;
+  onActiveContentTypeChange?: (type: string) => void;
 }
 
 export const StudyViewHeader = ({
@@ -56,6 +57,7 @@ export const StudyViewHeader = ({
   onTitleChange,
   onEnhance,
   onEnhancementProcessing,
+  onActiveContentTypeChange,
 }: StudyViewHeaderProps) => {
   const [processingEnhancement, setProcessingEnhancement] = useState<EnhancementFunction | null>(null);
   const [testingOpenAI, setTestingOpenAI] = useState(false);
@@ -95,10 +97,27 @@ export const StudyViewHeader = ({
     }
   };
 
+  // Mapping from enhancement function to content type for automatic tab switching
+  const enhancementToContentTypeMap: Record<EnhancementFunction, string> = {
+    'summarize': 'summary',
+    'extract-key-points': 'keyPoints',
+    'generate-questions': 'questions',
+    'convert-to-markdown': 'markdown',
+    'enrich-note': 'enriched',
+    'create-flashcards': 'original' // Default fallback
+  };
+
   // Handle enhancement selection with new simple function
   const handleEnhancementSelect = async (enhancement: EnhancementFunction) => {
     setProcessingEnhancement(enhancement);
     onEnhancementProcessing?.(enhancement);
+    
+    // Automatically switch to the relevant tab
+    const contentType = enhancementToContentTypeMap[enhancement];
+    if (contentType && onActiveContentTypeChange) {
+      console.log(`🎯 Auto-switching to tab: ${contentType} for enhancement: ${enhancement}`);
+      onActiveContentTypeChange(contentType);
+    }
     
     try {
       const originalContent = note.content || note.description || "";
