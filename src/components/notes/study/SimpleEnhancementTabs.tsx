@@ -4,11 +4,19 @@ import { TextAlignType } from './hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Sparkles, FileText, List, HelpCircle, Code, RefreshCw } from 'lucide-react';
+import { Loader2, Sparkles, FileText, List, HelpCircle, Code, RefreshCw, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { EnhancementType } from '@/types/enhancement';
 import { NuclearContentRenderer } from './enhancements/NuclearContentRenderer';
+
+// Utility function for content statistics
+const getContentStats = (content: string) => {
+  const wordCount = content ? content.trim().split(/\s+/).filter(word => word.length > 0).length : 0;
+  const charCount = content ? content.length : 0;
+  const readingTime = Math.max(1, Math.ceil(wordCount / 200)); // 200 words/minute
+  return { wordCount, charCount, readingTime };
+};
 
 interface SimpleEnhancementTabsProps {
   note: Note;
@@ -207,63 +215,78 @@ export const SimpleEnhancementTabs = ({
 
   const isRegeneratingAll = Object.values(loadingStates).some(Boolean);
 
+  // Helper function to check if content is generated
+  const hasContent = (content: string) => content && content.trim().length > 0;
+
   const tabs = [
     {
       value: 'original',
       label: 'Original',
+      subtitle: 'Your original note content',
       icon: FileText,
       content: note.content || note.description || '',
-      canGenerate: false
+      canGenerate: false,
+      hasContent: hasContent(note.content || note.description || '')
     },
     {
       value: 'markdown',
       label: 'Original++',
+      subtitle: 'Original note formatted',
       icon: Code,
       content: note.markdown_content || '',
       canGenerate: true,
       enhancementType: 'convert-to-markdown',
       column: 'markdown_content',
-      statusColumn: 'markdown_content_status'
+      statusColumn: 'markdown_content_status',
+      hasContent: hasContent(generatedContent['markdown_content'] || note.markdown_content || '')
     },
     {
       value: 'summary',
       label: 'Summary',
+      subtitle: 'AI-generated concise summary',
       icon: FileText,
       content: note.summary || '',
       canGenerate: true,
       enhancementType: 'summary',
       column: 'summary',
-      statusColumn: 'summary_status'
+      statusColumn: 'summary_status',
+      hasContent: hasContent(generatedContent['summary'] || note.summary || '')
     },
     {
       value: 'keyPoints',
       label: 'Key Points',
+      subtitle: 'Essential highlights extracted',
       icon: List,
       content: note.key_points || '',
       canGenerate: true,
       enhancementType: 'extract-key-points',
       column: 'key_points',
-      statusColumn: 'key_points_status'
+      statusColumn: 'key_points_status',
+      hasContent: hasContent(generatedContent['key_points'] || note.key_points || '')
     },
     {
       value: 'enriched',
       label: 'Enriched Note',
+      subtitle: '50-70% more detailed content',
       icon: Sparkles,
       content: note.enriched_content || '',
       canGenerate: true,
       enhancementType: 'enrich-note',
       column: 'enriched_content',
-      statusColumn: 'enriched_status'
+      statusColumn: 'enriched_status',
+      hasContent: hasContent(generatedContent['enriched_content'] || note.enriched_content || '')
     },
     {
       value: 'questions',
       label: 'Top 10 Questions',
+      subtitle: 'Study questions and answers',
       icon: HelpCircle,
       content: note.questions_content || '',
       canGenerate: true,
       enhancementType: 'generate-questions',
       column: 'questions_content',
-      statusColumn: 'questions_status'
+      statusColumn: 'questions_status',
+      hasContent: hasContent(generatedContent['questions_content'] || note.questions_content || '')
     }
   ];
 
@@ -294,9 +317,21 @@ export const SimpleEnhancementTabs = ({
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as EnhancementType)} className="flex-1 flex flex-col">
         <TabsList className="grid grid-cols-6 w-full">
           {tabs.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value} className="flex items-center gap-2">
-              <tab.icon className="h-4 w-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
+            <TabsTrigger key={tab.value} value={tab.value} className="flex flex-col items-center gap-1 py-3 px-2">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  {tab.hasContent ? (
+                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                  ) : (
+                    <div className="w-2 h-2 rounded-full bg-gray-300" />
+                  )}
+                  <tab.icon className="h-4 w-4" />
+                </div>
+                <span className="hidden sm:inline font-medium">{tab.label}</span>
+              </div>
+              <span className="text-xs text-muted-foreground hidden md:block text-center leading-tight">
+                {tab.subtitle}
+              </span>
             </TabsTrigger>
           ))}
         </TabsList>
@@ -304,32 +339,68 @@ export const SimpleEnhancementTabs = ({
         {tabs.map((tab) => (
           <TabsContent key={tab.value} value={tab.value} className="flex-1 mt-4">
             <Card className="h-full">
-              <CardContent className="p-6 h-full flex flex-col">
-                {tab.canGenerate && (
-                  <div className="mb-4 flex justify-between items-center">
-                    <h3 className="text-lg font-semibold">{tab.label}</h3>
-                    <Button
-                      onClick={() => generateEnhancement(tab.enhancementType!, tab.column!, tab.statusColumn)}
-                      disabled={loadingStates[tab.enhancementType!]}
-                      size="sm"
-                      className="flex items-center gap-2"
-                    >
-                      {loadingStates[tab.enhancementType!] ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4" />
-                          {tab.content ? 'Regenerate' : 'Generate'}
-                        </>
-                      )}
-                    </Button>
+              <CardContent className="p-0 h-full flex flex-col">
+                {/* Header with metadata */}
+                <div className="border-b border-border py-3 px-4 bg-gradient-to-r from-mint-50/30 to-white">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center gap-2">
+                        {tab.hasContent ? (
+                          <div className="w-2 h-2 rounded-full bg-green-500" />
+                        ) : (
+                          <div className="w-2 h-2 rounded-full bg-gray-300" />
+                        )}
+                        <tab.icon className="h-5 w-5 text-mint-600" />
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-semibold text-gray-900">{tab.label}</h2>
+                        <div className="flex items-center space-x-3 text-xs text-gray-500">
+                          <span>{tab.subtitle}</span>
+                          {(() => {
+                            const displayContent = generatedContent[tab.column!] || tab.content;
+                            if (displayContent) {
+                              const stats = getContentStats(displayContent);
+                              return (
+                                <>
+                                  <span>•</span>
+                                  <div className="flex items-center space-x-1">
+                                    <FileText className="h-3 w-3" />
+                                    <span>{stats.wordCount} words</span>
+                                  </div>
+                                  <span>•</span>
+                                  <div className="flex items-center space-x-1">
+                                    <Clock className="h-3 w-3" />
+                                    <span>{stats.readingTime} min read</span>
+                                  </div>
+                                </>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {tab.canGenerate && (
+                      <Button
+                        onClick={() => generateEnhancement(tab.enhancementType!, tab.column!, tab.statusColumn)}
+                        disabled={loadingStates[tab.enhancementType!]}
+                        variant="ghost"
+                        size="sm"
+                        className="text-mint-600 hover:text-mint-700 hover:bg-mint-50"
+                      >
+                        {loadingStates[tab.enhancementType!] ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-mint-600" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4 text-mint-600" />
+                        )}
+                      </Button>
+                    )}
                   </div>
-                )}
+                </div>
 
-                <div className="flex-1 overflow-auto">
+                {/* Content area */}
+                <div className="flex-1 overflow-auto p-6">
                   {(() => {
                     // Prioritize generated content over database content (like TestEnhancementPage)
                     const displayContent = generatedContent[tab.column!] || tab.content;
