@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Note } from '@/types/note';
 import { TextAlignType } from './hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Sparkles, FileText, List, HelpCircle, Code, RefreshCw, Clock } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { EnhancementType } from '@/types/enhancement';
 import { NuclearContentRenderer } from './enhancements/NuclearContentRenderer';
+import { useEnhancementManager } from '@/hooks/useEnhancementManager';
 
 // Utility function for content statistics
 const getContentStats = (content: string) => {
@@ -32,193 +31,11 @@ export const SimpleEnhancementTabs = ({
   onNoteUpdate
 }: SimpleEnhancementTabsProps) => {
   const [activeTab, setActiveTab] = useState<EnhancementType>('original');
-  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
-  // Local state for immediate display (like TestEnhancementPage)
-  const [generatedContent, setGeneratedContent] = useState<Record<string, string>>({});
+  const { generatedContent, generateEnhancement, regenerateAll, isLoading, isAnyLoading } = useEnhancementManager(note, onNoteUpdate);
 
-  const updateNote = async (updates: Partial<Note>) => {
-    try {
-      const { error } = await supabase
-        .from('notes')
-        .update(updates)
-        .eq('id', note.id);
-      
-      if (error) throw error;
-      
-      // Trigger note refresh if callback provided
-      if (onNoteUpdate) {
-        onNoteUpdate();
-      }
-    } catch (error) {
-      console.error('Error updating note:', error);
-      throw error;
-    }
-  };
-
-  // Background database save function (like TestEnhancementPage pattern)
-  const saveToDatabase = async (column: string, content: string, statusColumn?: string) => {
-    try {
-      console.log('💾 Saving to database...', { column, contentLength: content.length });
-      
-      const timestampColumnMap: { [key: string]: string } = {
-        'summary': 'summary_generated_at',
-        'key_points': 'key_points_generated_at',
-        'markdown_content': 'markdown_content_generated_at',
-        'enriched_content': 'enriched_content_generated_at',
-        'questions_content': 'questions_generated_at'
-      };
-
-      const updates: any = {
-        [column]: content,
-        [timestampColumnMap[column] || `${column}_generated_at`]: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      if (statusColumn) {
-        updates[statusColumn] = 'completed';
-      }
-
-      await updateNote(updates);
-      console.log('✅ Database save completed');
-      
-    } catch (error) {
-      console.error('❌ Database save failed:', error);
-      // Don't throw - this is background operation
-    }
-  };
-
-  const generateEnhancement = async (enhancementType: string, column: string, statusColumn?: string) => {
-    const loadingKey = enhancementType;
-    
-    // Exact same pattern as TestEnhancementPage
-    console.time('🔥 Total Enhancement Time');
-    const start = performance.now();
-    setLoadingStates(prev => ({ ...prev, [loadingKey]: true }));
-    
-    try {
-      console.log('📤 Sending enhancement request...', {
-        enhancementType,
-        textLength: (note.content || note.description || '').length,
-        timestamp: new Date().toISOString()
-      });
-
-      const { data, error } = await supabase.functions.invoke('test-enhance', {
-        body: {
-          text: note.content || note.description || '',
-          enhancementType
-        }
-      });
-
-      const totalTime = performance.now() - start;
-      console.timeEnd('🔥 Total Enhancement Time');
-
-      if (error) {
-        console.error('❌ Enhancement error:', error);
-        toast.error('Enhancement failed: ' + error.message);
-        return;
-      }
-
-      if (!data.success) {
-        console.error('❌ Enhancement failed:', data.error);
-        toast.error('Enhancement failed: ' + data.error);
-        return;
-      }
-
-      console.log('✅ Enhancement completed:', {
-        success: data.success,
-        processingTime: data.processing_time,
-        totalTime: totalTime,
-        tokensUsed: data.tokens_used
-      });
-
-      const content = data.result;
-      let processedContent = '';
-
-      // Process different enhancement types (same as before)
-      switch (enhancementType) {
-        case 'summary':
-          if (content.summary_overview) {
-            processedContent = `# ${content.summary_title || 'Summary'}\n\n${content.summary_overview}`;
-            if (content.key_points && content.key_points.length > 0) {
-              processedContent += '\n\n## Key Points\n\n' + content.key_points.map((point: string) => `- ${point}`).join('\n');
-            }
-            if (content.quote_or_stat && content.quote_or_stat !== 'N/A') {
-              processedContent += `\n\n## Notable Quote\n\n> ${content.quote_or_stat}`;
-            }
-          } else {
-            processedContent = JSON.stringify(content, null, 2);
-          }
-          break;
-
-        case 'extract-key-points':
-          if (content.key_points && Array.isArray(content.key_points)) {
-            processedContent = content.key_points.map((point: string) => `• ${point}`).join('\n\n');
-          } else {
-            processedContent = JSON.stringify(content, null, 2);
-          }
-          break;
-
-        case 'generate-questions':
-          if (content.questions && Array.isArray(content.questions)) {
-            processedContent = content.questions.map((question: string, index: number) => `${index + 1}. ${question}`).join('\n\n');
-          } else {
-            processedContent = JSON.stringify(content, null, 2);
-          }
-          break;
-
-        case 'convert-to-markdown':
-        case 'enrich-note':
-        default:
-          processedContent = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
-          break;
-      }
-
-      // IMMEDIATE DISPLAY (like TestEnhancementPage)
-      setGeneratedContent(prev => ({
-        ...prev,
-        [column]: processedContent
-      }));
-
-      // Show success toast immediately
-      toast.success(`Enhancement completed in ${(totalTime / 1000).toFixed(1)}s`);
-
-      // BACKGROUND DATABASE SAVE (like TestEnhancementPage pattern)
-      // Save to database in background without blocking UI
-      setTimeout(() => {
-        saveToDatabase(column, processedContent, statusColumn);
-      }, 0);
-      
-    } catch (error) {
-      const totalTime = performance.now() - start;
-      console.timeEnd('🔥 Total Enhancement Time');
-      console.error('💥 Enhancement request failed:', error);
-      
-      toast.error('Request failed: ' + (error instanceof Error ? error.message : 'Network error'));
-    } finally {
-      setLoadingStates(prev => ({ ...prev, [loadingKey]: false }));
-    }
-  };
-
-  const regenerateAllEnhancements = async () => {
-    const regenerableTabsData = tabs.filter(tab => tab.canGenerate && tab.enhancementType);
-    
-    for (const tab of regenerableTabsData) {
-      if (tab.enhancementType && tab.column) {
-        await generateEnhancement(tab.enhancementType, tab.column, tab.statusColumn);
-        // Small delay between regenerations to avoid overwhelming the system
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-    }
-    
-    toast.success('All enhancements regenerated successfully!');
-  };
-
-  const isRegeneratingAll = Object.values(loadingStates).some(Boolean);
-
-  // Helper function to check if content is generated
   const hasContent = (content: string) => content && content.trim().length > 0;
 
-  const tabs = [
+  const tabs = useMemo(() => [
     {
       value: 'original',
       label: 'Original',
@@ -288,19 +105,29 @@ export const SimpleEnhancementTabs = ({
       statusColumn: 'questions_status',
       hasContent: hasContent(generatedContent['questions_content'] || note.questions_content || '')
     }
-  ];
+  ], [note, generatedContent]);
+
+  const handleRegenerateAll = () => {
+    const enhanceableItems = tabs.filter(tab => tab.canGenerate && tab.enhancementType)
+      .map(tab => ({ 
+        enhancementType: tab.enhancementType!, 
+        column: tab.column!, 
+        statusColumn: tab.statusColumn 
+      }));
+    regenerateAll(enhanceableItems);
+  };
 
   return (
     <div className="h-full flex flex-col">
       <div className="mb-4 flex justify-end">
         <Button
-          onClick={regenerateAllEnhancements}
-          disabled={isRegeneratingAll}
+          onClick={handleRegenerateAll}
+          disabled={isAnyLoading}
           variant="outline"
           size="sm"
           className="flex items-center gap-2"
         >
-          {isRegeneratingAll ? (
+          {isAnyLoading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
               Regenerating All...
@@ -316,12 +143,12 @@ export const SimpleEnhancementTabs = ({
       
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as EnhancementType)} orientation="vertical" className="flex-1 flex">
         <div className="w-64 flex-shrink-0">
-          <TabsList className="flex flex-col h-full w-full p-1 space-y-1">
+          <TabsList className="flex flex-col h-full w-full p-1 space-y-1 bg-muted">
             {tabs.map((tab) => (
               <TabsTrigger 
                 key={tab.value} 
-                value={tab.value} 
-                className="w-full justify-start py-4 px-4 data-[state=active]:bg-mint-50 data-[state=active]:border-r-2 data-[state=active]:border-mint-500"
+                value={tab.value}
+                className="w-full justify-start py-4 px-4"
               >
                 <div className="flex items-center gap-3 w-full">
                   <div className="flex items-center gap-2">
@@ -388,12 +215,12 @@ export const SimpleEnhancementTabs = ({
                       {tab.canGenerate && (
                         <Button
                           onClick={() => generateEnhancement(tab.enhancementType!, tab.column!, tab.statusColumn)}
-                          disabled={loadingStates[tab.enhancementType!]}
+                          disabled={isLoading(tab.enhancementType!)}
                           variant="ghost"
                           size="sm"
                           className="text-mint-600 hover:text-mint-700 hover:bg-mint-50"
                         >
-                          {loadingStates[tab.enhancementType!] ? (
+                          {isLoading(tab.enhancementType!) ? (
                             <Loader2 className="h-4 w-4 animate-spin text-mint-600" />
                           ) : (
                             <RefreshCw className="h-4 w-4 text-mint-600" />
