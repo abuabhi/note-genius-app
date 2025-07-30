@@ -67,7 +67,11 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
 
   const {
     handleGenerateEnhancement,
-    isEnhancing
+    isEnhancing,
+    forceReset,
+    isStuck,
+    lastRequestTime,
+    retryCount
   } = useNoteEnhancementGenerate(note, forceRefresh);
 
   // Auto-migrate YouTube content if needed
@@ -147,6 +151,11 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           isEditOperation={isEnhancing}
           processingStage={processingStage}
           headerProcessingEnhancement={headerProcessingEnhancement}
+          isEnhancing={isEnhancing}
+          isStuck={isStuck}
+          lastRequestTime={lastRequestTime}
+          retryCount={retryCount}
+          onForceReset={forceReset}
         />
       </div>
     </div>

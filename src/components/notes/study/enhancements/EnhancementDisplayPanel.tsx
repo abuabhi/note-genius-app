@@ -5,6 +5,7 @@ import { EnhancementContentType } from "./EnhancementSelector";
 import { EnhancementContent } from "./EnhancementContent";
 import { LoadingAnimations } from "./LoadingAnimations";
 import { ContentMetadata } from "./ContentMetadata";
+import { EnhancementStatusIndicator } from "./EnhancementStatusIndicator";
 import { debugLogger } from '@/utils/debug/EnhancementDebugLogger';
 import { DEBUG_CONFIG } from '@/config/debug';
 

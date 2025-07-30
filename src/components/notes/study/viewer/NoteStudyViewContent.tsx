@@ -35,6 +35,12 @@ interface NoteStudyViewContentProps {
   isEditOperation: boolean;
   processingStage?: string;
   headerProcessingEnhancement?: string | null;
+  // Enhancement status props
+  isEnhancing?: boolean;
+  isStuck?: boolean;
+  lastRequestTime?: number | null;
+  retryCount?: number;
+  onForceReset?: () => void;
 }
 
 export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
@@ -65,7 +71,12 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
   onActiveContentTypeChange,
   isEditOperation,
   processingStage,
-  headerProcessingEnhancement
+  headerProcessingEnhancement,
+  isEnhancing,
+  isStuck,
+  lastRequestTime,
+  retryCount,
+  onForceReset
 }) => {
   return (
     <div className="p-6">
@@ -95,6 +106,11 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
           isEditOperation={isEditOperation}
           processingStage={processingStage}
           headerProcessingEnhancement={headerProcessingEnhancement}
+          isEnhancing={isEnhancing}
+          isStuck={isStuck}
+          lastRequestTime={lastRequestTime}
+          retryCount={retryCount}
+          onForceReset={onForceReset}
         />
       )}
     </div>

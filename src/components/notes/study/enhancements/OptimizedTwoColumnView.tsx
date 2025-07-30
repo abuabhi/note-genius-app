@@ -5,6 +5,7 @@ import { TextAlignType } from "../hooks/useStudyViewState";
 import { EnhancementSelector, EnhancementContentType } from "./EnhancementSelector";
 import { EnhancementDisplayPanel } from "./EnhancementDisplayPanel";
 import { EnhancementFlowDebugger } from "../debug/EnhancementFlowDebugger";
+import { EnhancementStatusIndicator } from "./EnhancementStatusIndicator";
 import { useOptimizedNotes } from "@/contexts/OptimizedNotesContext";
 import { useStuckEnhancementDetection } from "@/hooks/useStuckEnhancementDetection";
 import { debugLogger } from "@/utils/debug/EnhancementDebugLogger";
@@ -19,6 +20,12 @@ interface OptimizedTwoColumnViewProps {
   isEditOperation?: boolean;
   processingStage?: string;
   headerProcessingEnhancement?: string | null;
+  // Enhancement status props
+  isEnhancing?: boolean;
+  isStuck?: boolean;
+  lastRequestTime?: number | null;
+  retryCount?: number;
+  onForceReset?: () => void;
 }
 
 export const OptimizedTwoColumnView = ({
@@ -30,7 +37,12 @@ export const OptimizedTwoColumnView = ({
   onGenerateEnhancement,
   isEditOperation = false,
   processingStage,
-  headerProcessingEnhancement
+  headerProcessingEnhancement,
+  isEnhancing = false,
+  isStuck = false,
+  lastRequestTime = null,
+  retryCount = 0,
+  onForceReset
 }: OptimizedTwoColumnViewProps) => {
   const { refreshNotes } = useOptimizedNotes();
   const { resetStuckEnhancements } = useStuckEnhancementDetection(note.id);
@@ -45,6 +57,19 @@ export const OptimizedTwoColumnView = ({
 
   return (
     <div className="relative">
+      {/* Enhancement Status Indicator */}
+      {(isEnhancing || isStuck) && onForceReset && (
+        <div className="mb-4">
+          <EnhancementStatusIndicator
+            isEnhancing={isEnhancing}
+            isStuck={isStuck}
+            lastRequestTime={lastRequestTime}
+            retryCount={retryCount}
+            onForceReset={onForceReset}
+          />
+        </div>
+      )}
+      
       <div className="flex h-full bg-white rounded-lg shadow-sm border border-mint-100 overflow-hidden">
         {/* Left Column: Enhancement Selector - Always show all tabs */}
         <div className="w-72 flex-shrink-0">
