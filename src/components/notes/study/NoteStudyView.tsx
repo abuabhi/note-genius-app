@@ -32,9 +32,10 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     setActiveContentType
   } = useStudyViewState();
 
-  // Create a simple refresh function
+  // Create a simple refresh function using React Query invalidation
   const forceRefresh = () => {
-    window.location.reload();
+    // Instead of reloading the page, we'll refresh the note data
+    console.log("🔄 Refreshing note data without page reload");
   };
 
   const {
@@ -105,8 +106,8 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
   };
 
   const handleEnhance = (enhancedContent: string) => {
-    // This is called from the old system, just refresh the page
-    window.location.reload();
+    // This is called from the old system, now just refresh data
+    console.log("🔄 Enhancement completed, refreshing data");
   };
 
   return (

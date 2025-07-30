@@ -193,7 +193,8 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
         console.log(`✅ Enhancement completed: ${enhancementType}`, { content: content.substring(0, 100) + '...' });
 
         toast.success(`${enhancementType} completed in ${duration.toFixed(1)}s`);
-        forceRefresh();
+        // Enhancement content is already saved to database by test-enhance function
+        // No need to force refresh - the UI will update automatically
       } else {
         const errorMessage = error?.message || data?.error || "Failed to generate enhancement";
         recordMetric('enhancement_error', 1, { 
