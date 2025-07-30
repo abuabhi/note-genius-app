@@ -20,7 +20,25 @@ export interface ProcessedContent {
 }
 
 /**
- * NUCLEAR: Single content processor for ALL content types - PROPER HTML TO MARKDOWN CONVERSION
+ * Detect AI-generated HTML content that should be rendered as-is
+ */
+const detectAIGeneratedContent = (content: string): boolean => {
+  if (!content) return false;
+  
+  // Look for specific AI-generated patterns with Green Mint styling
+  const patterns = [
+    /style="color:#3EB489/i,           // Green Mint color
+    /style="color:#2ECC71/i,           // Alternative green
+    /class="ai-enhanced/i,             // AI enhancement classes
+    /data-ai-generated/i,              // AI data attributes
+    /style="[^"]*font-weight:bold[^"]*font-size:1\.2em/i, // Specific styling pattern
+  ];
+  
+  return patterns.some(pattern => pattern.test(content));
+};
+
+/**
+ * NUCLEAR: Single content processor with smart AI-generated content detection
  */
 export const processContentForRendering = (rawContent: string): ProcessedContent => {
   if (!rawContent || typeof rawContent !== 'string') {
@@ -31,14 +49,48 @@ export const processContentForRendering = (rawContent: string): ProcessedContent
     };
   }
 
-  // Removed console log to clean up output
-
   let processed = rawContent;
   let wasHtmlCleaned = false;
 
-  // Step 1: FIRST convert HTML structures to markdown (BEFORE any stripping)
+  // Step 1: SMART DETECTION - Check if this is AI-generated HTML content
+  if (detectAIGeneratedContent(rawContent)) {
+    console.log("🤖 DETECTED AI-GENERATED HTML - Using pass-through mode");
+    
+    // Pass-through mode: minimal cleanup only, preserve all HTML and inline styles
+    processed = processed
+      // Only clean HTML entities
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&mdash;/g, '—')
+      .replace(/&ndash;/g, '–')
+      // Normalize whitespace but preserve structure
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/[ \t]+/g, ' ')
+      .trim();
+    
+    const metadata = analyzeContent(processed, false, true);
+    
+    console.log("✅ AI-generated content preserved:", {
+      contentLength: processed.length,
+      hasInlineStyles: processed.includes('style='),
+      preview: processed.substring(0, 300)
+    });
+    
+    return {
+      content: processed,
+      type: 'markdown',
+      metadata: { ...metadata, hasEnrichedContent: true }
+    };
+  }
+
+  // Step 2: Traditional processing for regular content - convert HTML to markdown
   if (detectTipTapContent(rawContent)) {
-    console.log("🔄 DETECTED HTML/TIPTAP CONTENT - Converting to markdown FIRST");
+    console.log("🔄 DETECTED HTML/TIPTAP CONTENT - Converting to markdown");
     
     // Convert HTML structures to markdown BEFORE cleaning
     processed = convertHtmlToMarkdown(processed);
