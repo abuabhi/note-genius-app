@@ -13,7 +13,7 @@ interface EnhancementTabsProps {
 export const EnhancementTabs = ({ note, fontSize, textAlign }: EnhancementTabsProps) => {
   return (
     <Tabs defaultValue="original" orientation="vertical" className="flex h-full">
-      <TabsList className="flex-col h-fit w-48">
+      <TabsList className="flex-col items-start h-auto w-48">
         <TabsTrigger value="original" className="w-full justify-start">Original</TabsTrigger>
         <TabsTrigger value="summary" className="w-full justify-start">Summary</TabsTrigger>
         <TabsTrigger value="keyPoints" className="w-full justify-start">Key Points</TabsTrigger>
