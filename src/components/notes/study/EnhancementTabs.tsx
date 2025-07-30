@@ -12,49 +12,51 @@ interface EnhancementTabsProps {
 
 export const EnhancementTabs = ({ note, fontSize, textAlign }: EnhancementTabsProps) => {
   return (
-    <Tabs defaultValue="original" className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="original">Original</TabsTrigger>
-        <TabsTrigger value="summary">Summary</TabsTrigger>
-        <TabsTrigger value="keyPoints">Key Points</TabsTrigger>
-        <TabsTrigger value="improved">Improved</TabsTrigger>
+    <Tabs defaultValue="original" orientation="vertical" className="flex h-full">
+      <TabsList className="flex-col h-fit w-48">
+        <TabsTrigger value="original" className="w-full justify-start">Original</TabsTrigger>
+        <TabsTrigger value="summary" className="w-full justify-start">Summary</TabsTrigger>
+        <TabsTrigger value="keyPoints" className="w-full justify-start">Key Points</TabsTrigger>
+        <TabsTrigger value="improved" className="w-full justify-start">Improved</TabsTrigger>
       </TabsList>
       
-      <TabsContent value="original" className="mt-4">
-        <UnifiedContentRenderer
-          content={note.content || note.description || ''}
-          fontSize={fontSize}
-          textAlign={textAlign}
-          isMarkdown={true}
-        />
-      </TabsContent>
-      
-      <TabsContent value="summary" className="mt-4">
-        <UnifiedContentRenderer
-          content={note.summary || 'No summary available'}
-          fontSize={fontSize}
-          textAlign={textAlign}
-          isMarkdown={true}
-        />
-      </TabsContent>
-      
-      <TabsContent value="keyPoints" className="mt-4">
-        <UnifiedContentRenderer
-          content={note.key_points || 'No key points available'}
-          fontSize={fontSize}
-          textAlign={textAlign}
-          isMarkdown={true}
-        />
-      </TabsContent>
-      
-      <TabsContent value="improved" className="mt-4">
-        <UnifiedContentRenderer
-          content={note.questions_content || 'No questions available'}
-          fontSize={fontSize}
-          textAlign={textAlign}
-          isMarkdown={true}
-        />
-      </TabsContent>
+      <div className="flex-1 ml-4">
+        <TabsContent value="original">
+          <UnifiedContentRenderer
+            content={note.content || note.description || ''}
+            fontSize={fontSize}
+            textAlign={textAlign}
+            isMarkdown={true}
+          />
+        </TabsContent>
+        
+        <TabsContent value="summary">
+          <UnifiedContentRenderer
+            content={note.summary || 'No summary available'}
+            fontSize={fontSize}
+            textAlign={textAlign}
+            isMarkdown={true}
+          />
+        </TabsContent>
+        
+        <TabsContent value="keyPoints">
+          <UnifiedContentRenderer
+            content={note.key_points || 'No key points available'}
+            fontSize={fontSize}
+            textAlign={textAlign}
+            isMarkdown={true}
+          />
+        </TabsContent>
+        
+        <TabsContent value="improved">
+          <UnifiedContentRenderer
+            content={note.questions_content || 'No questions available'}
+            fontSize={fontSize}
+            textAlign={textAlign}
+            isMarkdown={true}
+          />
+        </TabsContent>
+      </div>
     </Tabs>
   );
 };
