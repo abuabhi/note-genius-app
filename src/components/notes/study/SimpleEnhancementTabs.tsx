@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Note } from '@/types/note';
 import { TextAlignType } from './hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ interface SimpleEnhancementTabsProps {
   onNoteUpdate?: () => void;
 }
 
-export const SimpleEnhancementTabs = ({
+export const SimpleEnhancementTabs = React.memo(({
   note,
   fontSize,
   textAlign,
@@ -33,7 +33,7 @@ export const SimpleEnhancementTabs = ({
   const [activeTab, setActiveTab] = useState<EnhancementType>('original');
   const { generatedContent, generateEnhancement, regenerateAll, isLoading, isAnyLoading } = useEnhancementManager(note, onNoteUpdate);
 
-  const hasContent = (content: string) => content && content.trim().length > 0;
+  const hasContent = useCallback((content: string) => content && content.trim().length > 0, []);
 
   const tabs = useMemo(() => [
     {
@@ -107,7 +107,7 @@ export const SimpleEnhancementTabs = ({
     }
   ], [note, generatedContent]);
 
-  const handleRegenerateAll = () => {
+  const handleRegenerateAll = useCallback(() => {
     const enhanceableItems = tabs.filter(tab => tab.canGenerate && tab.enhancementType)
       .map(tab => ({ 
         enhancementType: tab.enhancementType!, 
@@ -115,7 +115,7 @@ export const SimpleEnhancementTabs = ({
         statusColumn: tab.statusColumn 
       }));
     regenerateAll(enhanceableItems);
-  };
+  }, [tabs, regenerateAll]);
 
   return (
     <div className="h-full flex flex-col">
@@ -141,126 +141,137 @@ export const SimpleEnhancementTabs = ({
         </Button>
       </div>
       
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as EnhancementType)} orientation="vertical" className="flex-1 flex">
-        <div className="w-64 flex-shrink-0">
-          <TabsList className="flex flex-col h-full w-full p-1 space-y-1 bg-muted">
+      {/* NUCLEAR FIX: Remove conflicting flex layouts and let Radix handle orientation */}
+      <Tabs 
+        value={activeTab} 
+        onValueChange={(value) => setActiveTab(value as EnhancementType)} 
+        orientation="vertical" 
+        className="h-full"
+      >
+        <div className="grid grid-cols-[280px_1fr] gap-6 h-full">
+          {/* NUCLEAR: Let Radix UI handle vertical layout via data attributes */}
+          <TabsList className="h-full w-full p-2 bg-muted/30 data-[orientation=vertical]:flex-col data-[orientation=vertical]:h-full data-[orientation=vertical]:space-y-1">
             {tabs.map((tab) => (
               <TabsTrigger 
                 key={tab.value} 
                 value={tab.value}
-                className="w-full justify-start py-4 px-4"
+                className="w-full justify-start py-4 px-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-200"
               >
                 <div className="flex items-center gap-3 w-full">
                   <div className="flex items-center gap-2">
                     {tab.hasContent ? (
-                      <div className="w-2 h-2 rounded-full bg-mint-500" />
+                      <div className="w-2 h-2 rounded-full bg-mint-500 data-[state=active]:bg-white" />
                     ) : (
-                      <div className="w-2 h-2 rounded-full bg-gray-300" />
+                      <div className="w-2 h-2 rounded-full bg-muted-foreground/40" />
                     )}
                     <tab.icon className="h-4 w-4" />
                   </div>
-                  <span className="font-medium">{tab.label}</span>
+                  <div className="text-left min-w-0">
+                    <span className="font-medium block">{tab.label}</span>
+                    <span className="text-xs text-muted-foreground block truncate">{tab.subtitle}</span>
+                  </div>
                 </div>
               </TabsTrigger>
             ))}
           </TabsList>
-        </div>
 
-        <div className="flex-1 ml-6">
-          {tabs.map((tab) => (
-            <TabsContent key={tab.value} value={tab.value} className="h-full mt-0">
-              <Card className="h-full">
-                <CardContent className="p-0 h-full flex flex-col">
-                  {/* Header with metadata */}
-                  <div className="border-b border-border py-4 px-6 bg-gradient-to-r from-mint-50/30 to-white">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex items-center gap-2">
-                          {tab.hasContent ? (
-                            <div className="w-3 h-3 rounded-full bg-mint-500" />
-                          ) : (
-                            <div className="w-3 h-3 rounded-full bg-gray-300" />
-                          )}
-                          <tab.icon className="h-5 w-5 text-mint-600" />
-                        </div>
-                        <div>
-                          <h2 className="text-lg font-semibold text-gray-900">{tab.label}</h2>
-                          <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                            <span>{tab.subtitle}</span>
-                            {(() => {
-                              const displayContent = generatedContent[tab.column!] || tab.content;
-                              if (displayContent) {
-                                const stats = getContentStats(displayContent);
-                                return (
-                                  <>
-                                    <span>•</span>
-                                    <div className="flex items-center space-x-1">
-                                      <FileText className="h-3 w-3" />
-                                      <span>{stats.wordCount} words</span>
-                                    </div>
-                                    <span>•</span>
-                                    <div className="flex items-center space-x-1">
-                                      <Clock className="h-3 w-3" />
-                                      <span>{stats.readingTime} min read</span>
-                                    </div>
-                                  </>
-                                );
-                              }
-                              return null;
-                            })()}
+          {/* Content area - simplified structure */}
+          <div className="h-full">
+            {tabs.map((tab) => (
+              <TabsContent key={tab.value} value={tab.value} className="h-full m-0 data-[state=active]:block data-[state=inactive]:hidden">
+                <Card className="h-full">
+                  <CardContent className="p-0 h-full flex flex-col">
+                    {/* Header with metadata */}
+                    <div className="border-b border-border py-4 px-6 bg-gradient-to-r from-primary/5 to-transparent">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center gap-2">
+                            {tab.hasContent ? (
+                              <div className="w-3 h-3 rounded-full bg-primary" />
+                            ) : (
+                              <div className="w-3 h-3 rounded-full bg-muted-foreground/40" />
+                            )}
+                            <tab.icon className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <h2 className="text-lg font-semibold">{tab.label}</h2>
+                            <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
+                              <span>{tab.subtitle}</span>
+                              {(() => {
+                                const displayContent = generatedContent[tab.column!] || tab.content;
+                                if (displayContent) {
+                                  const stats = getContentStats(displayContent);
+                                  return (
+                                    <>
+                                      <span>•</span>
+                                      <div className="flex items-center space-x-1">
+                                        <FileText className="h-3 w-3" />
+                                        <span>{stats.wordCount} words</span>
+                                      </div>
+                                      <span>•</span>
+                                      <div className="flex items-center space-x-1">
+                                        <Clock className="h-3 w-3" />
+                                        <span>{stats.readingTime} min read</span>
+                                      </div>
+                                    </>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
                           </div>
                         </div>
+                        
+                        {tab.canGenerate && (
+                          <Button
+                            onClick={() => generateEnhancement(tab.enhancementType!, tab.column!, tab.statusColumn)}
+                            disabled={isLoading(tab.enhancementType!)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-primary hover:text-primary hover:bg-primary/10"
+                          >
+                            {isLoading(tab.enhancementType!) ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
                       </div>
-                      
-                      {tab.canGenerate && (
-                        <Button
-                          onClick={() => generateEnhancement(tab.enhancementType!, tab.column!, tab.statusColumn)}
-                          disabled={isLoading(tab.enhancementType!)}
-                          variant="ghost"
-                          size="sm"
-                          className="text-mint-600 hover:text-mint-700 hover:bg-mint-50"
-                        >
-                          {isLoading(tab.enhancementType!) ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-mint-600" />
-                          ) : (
-                            <RefreshCw className="h-4 w-4 text-mint-600" />
-                          )}
-                        </Button>
-                      )}
                     </div>
-                  </div>
 
-                  {/* Content area */}
-                  <div className="flex-1 overflow-auto p-6">
-                    {(() => {
-                      const displayContent = generatedContent[tab.column!] || tab.content;
-                      
-                      return displayContent ? (
-                        <NuclearContentRenderer
-                          content={displayContent}
-                          fontSize={fontSize}
-                          textAlign={textAlign}
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground">
-                          {tab.canGenerate ? (
-                            <div className="text-center">
-                              <p>No {tab.label.toLowerCase()} available</p>
-                              <p className="text-sm mt-2">Click "Generate" to create one</p>
-                            </div>
-                          ) : (
-                            <p>No content available</p>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          ))}
+                    {/* Content area */}
+                    <div className="flex-1 overflow-auto p-6">
+                      {(() => {
+                        const displayContent = generatedContent[tab.column!] || tab.content;
+                        
+                        return displayContent ? (
+                          <NuclearContentRenderer
+                            content={displayContent}
+                            fontSize={fontSize}
+                            textAlign={textAlign}
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-muted-foreground">
+                            {tab.canGenerate ? (
+                              <div className="text-center">
+                                <p>No {tab.label.toLowerCase()} available</p>
+                                <p className="text-sm mt-2">Click "Generate" to create one</p>
+                              </div>
+                            ) : (
+                              <p>No content available</p>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            ))}
+          </div>
         </div>
       </Tabs>
     </div>
   );
-};
+});
