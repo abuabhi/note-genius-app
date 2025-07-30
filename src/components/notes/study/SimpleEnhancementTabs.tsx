@@ -46,6 +46,8 @@ export const SimpleEnhancementTabs = ({
 }: SimpleEnhancementTabsProps) => {
   const [activeTab, setActiveTab] = useState<EnhancementType>('original');
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
+  // Local state for immediate display (like TestEnhancementPage)
+  const [generatedContent, setGeneratedContent] = useState<Record<string, string>>({});
 
   const updateNote = async (updates: Partial<Note>) => {
     try {
@@ -66,17 +68,52 @@ export const SimpleEnhancementTabs = ({
     }
   };
 
+  // Background database save function (like TestEnhancementPage pattern)
+  const saveToDatabase = async (column: string, content: string, statusColumn?: string) => {
+    try {
+      console.log('💾 Saving to database...', { column, contentLength: content.length });
+      
+      const timestampColumnMap: { [key: string]: string } = {
+        'summary': 'summary_generated_at',
+        'key_points': 'key_points_generated_at',
+        'markdown_content': 'markdown_content_generated_at',
+        'enriched_content': 'enriched_content_generated_at',
+        'questions_content': 'questions_generated_at'
+      };
+
+      const updates: any = {
+        [column]: content,
+        [timestampColumnMap[column] || `${column}_generated_at`]: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      if (statusColumn) {
+        updates[statusColumn] = 'completed';
+      }
+
+      await updateNote(updates);
+      console.log('✅ Database save completed');
+      
+    } catch (error) {
+      console.error('❌ Database save failed:', error);
+      // Don't throw - this is background operation
+    }
+  };
+
   const generateEnhancement = async (enhancementType: string, column: string, statusColumn?: string) => {
     const loadingKey = enhancementType;
+    
+    // Exact same pattern as TestEnhancementPage
+    console.time('🔥 Total Enhancement Time');
+    const start = performance.now();
     setLoadingStates(prev => ({ ...prev, [loadingKey]: true }));
     
     try {
-      // Set status to generating if status column exists
-      if (statusColumn) {
-        await updateNote({
-          [statusColumn]: 'generating'
-        });
-      }
+      console.log('📤 Sending enhancement request...', {
+        enhancementType,
+        textLength: (note.content || note.description || '').length,
+        timestamp: new Date().toISOString()
+      });
 
       const { data, error } = await supabase.functions.invoke('test-enhance', {
         body: {
@@ -85,13 +122,32 @@ export const SimpleEnhancementTabs = ({
         }
       });
 
-      if (error) throw error;
-      if (!data.success) throw new Error(data.error);
+      const totalTime = performance.now() - start;
+      console.timeEnd('🔥 Total Enhancement Time');
+
+      if (error) {
+        console.error('❌ Enhancement error:', error);
+        toast.error('Enhancement failed: ' + error.message);
+        return;
+      }
+
+      if (!data.success) {
+        console.error('❌ Enhancement failed:', data.error);
+        toast.error('Enhancement failed: ' + data.error);
+        return;
+      }
+
+      console.log('✅ Enhancement completed:', {
+        success: data.success,
+        processingTime: data.processing_time,
+        totalTime: totalTime,
+        tokensUsed: data.tokens_used
+      });
 
       const content = data.result;
       let processedContent = '';
 
-      // Process different enhancement types
+      // Process different enhancement types (same as before)
       switch (enhancementType) {
         case 'summary':
           if (content.summary_overview) {
@@ -130,39 +186,27 @@ export const SimpleEnhancementTabs = ({
           break;
       }
 
-      // Update the note with the generated content
-      const timestampColumnMap: { [key: string]: string } = {
-        'summary': 'summary_generated_at',
-        'key_points': 'key_points_generated_at',
-        'markdown_content': 'markdown_content_generated_at',
-        'enriched_content': 'enriched_content_generated_at',
-        'questions_content': 'questions_generated_at'
-      };
+      // IMMEDIATE DISPLAY (like TestEnhancementPage)
+      setGeneratedContent(prev => ({
+        ...prev,
+        [column]: processedContent
+      }));
 
-      const updates: any = {
-        [column]: processedContent,
-        [timestampColumnMap[column] || `${column}_generated_at`]: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      // Show success toast immediately
+      toast.success(`Enhancement completed in ${(totalTime / 1000).toFixed(1)}s`);
 
-      if (statusColumn) {
-        updates[statusColumn] = 'completed';
-      }
-
-      await updateNote(updates);
-
-      toast.success(`${enhancementType.replace('-', ' ')} generated successfully!`);
+      // BACKGROUND DATABASE SAVE (like TestEnhancementPage pattern)
+      // Save to database in background without blocking UI
+      setTimeout(() => {
+        saveToDatabase(column, processedContent, statusColumn);
+      }, 0);
       
     } catch (error) {
-      console.error(`Error generating ${enhancementType}:`, error);
-      toast.error(`Failed to generate ${enhancementType.replace('-', ' ')}`);
+      const totalTime = performance.now() - start;
+      console.timeEnd('🔥 Total Enhancement Time');
+      console.error('💥 Enhancement request failed:', error);
       
-      // Set status to failed if status column exists
-      if (statusColumn) {
-        await updateNote({
-          [statusColumn]: 'failed'
-        });
-      }
+      toast.error('Request failed: ' + (error instanceof Error ? error.message : 'Network error'));
     } finally {
       setLoadingStates(prev => ({ ...prev, [loadingKey]: false }));
     }
@@ -269,24 +313,29 @@ export const SimpleEnhancementTabs = ({
                 )}
 
                 <div className="flex-1 overflow-auto">
-                  {tab.content ? (
-                    <SimpleContentRenderer
-                      content={tab.content}
-                      fontSize={fontSize}
-                      textAlign={textAlign}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                      {tab.canGenerate ? (
-                        <div className="text-center">
-                          <p>No {tab.label.toLowerCase()} available</p>
-                          <p className="text-sm mt-2">Click "Generate" to create one</p>
-                        </div>
-                      ) : (
-                        <p>No content available</p>
-                      )}
-                    </div>
-                  )}
+                  {(() => {
+                    // Prioritize generated content over database content (like TestEnhancementPage)
+                    const displayContent = generatedContent[tab.column!] || tab.content;
+                    
+                    return displayContent ? (
+                      <SimpleContentRenderer
+                        content={displayContent}
+                        fontSize={fontSize}
+                        textAlign={textAlign}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        {tab.canGenerate ? (
+                          <div className="text-center">
+                            <p>No {tab.label.toLowerCase()} available</p>
+                            <p className="text-sm mt-2">Click "Generate" to create one</p>
+                          </div>
+                        ) : (
+                          <p>No content available</p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>
