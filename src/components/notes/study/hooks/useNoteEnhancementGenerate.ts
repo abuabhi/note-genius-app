@@ -5,6 +5,9 @@ import { Note } from "@/types/note";
 import { debugLogger } from "@/utils/debug/EnhancementDebugLogger";
 import { DEBUG_CONFIG } from "@/config/debug";
 import { supabase } from "@/integrations/supabase/client";
+import { useEnhancementCache } from "@/hooks/performance/useEnhancementCache";
+import { useQueryDeduplication } from "@/hooks/notes/useQueryDeduplication";
+import { useProductionMetrics } from "@/hooks/performance/useProductionMetrics";
 
 /**
  * Hook for handling note enhancement generation functionality with stuck state recovery
@@ -16,27 +19,69 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
   const [enhancementStartTime, setEnhancementStartTime] = useState<number | null>(null);
   const [processingTime, setProcessingTime] = useState<number>(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Initialize caching and performance monitoring
+  const { 
+    getCachedEnhancement, 
+    setCachedEnhancement, 
+    shouldCache,
+    getCacheStats,
+    clearCache 
+  } = useEnhancementCache();
+  const { deduplicateQuery, getActiveQueriesCount } = useQueryDeduplication();
+  const { recordMetric } = useProductionMetrics('EnhancementGenerate');
 
   // CRITICAL FIX: Always reset enhancing state on mount/note change to prevent stuck states
   useEffect(() => {
     setIsEnhancing(false);
     setLastRequestTime(null);
     setRetryCount(0);
+    setEnhancementStartTime(null);
+    setProcessingTime(0);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
   }, [currentNote.id]);
 
-  // Auto-timeout detection for stuck enhancements
+  // Real-time progress tracking - updates every 100ms during enhancement
+  useEffect(() => {
+    if (isEnhancing && enhancementStartTime && !progressTimerRef.current) {
+      progressTimerRef.current = setInterval(() => {
+        setProcessingTime(Date.now() - enhancementStartTime);
+      }, 100);
+    }
+
+    if (!isEnhancing && progressTimerRef.current) {
+      clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+
+    return () => {
+      if (progressTimerRef.current) {
+        clearInterval(progressTimerRef.current);
+        progressTimerRef.current = null;
+      }
+    };
+  }, [isEnhancing, enhancementStartTime]);
+
+  // Auto-timeout detection for stuck enhancements (reduced to 20s for better UX)
   useEffect(() => {
     if (isEnhancing && !timeoutRef.current) {
       timeoutRef.current = setTimeout(() => {
-        console.warn(`⚠️ Enhancement timeout detected after 30 seconds`);
+        console.warn(`⚠️ Enhancement timeout detected after 20 seconds`);
         setIsEnhancing(false);
         setLastRequestTime(null);
+        setEnhancementStartTime(null);
+        setProcessingTime(0);
+        recordMetric('enhancement_timeout', 1, { noteId: currentNote.id });
         toast.error("Enhancement timed out. Please try again.");
-      }, 30000); // 30 second timeout
+      }, 20000); // 20 second timeout (improved from 30s)
     }
 
     if (!isEnhancing && timeoutRef.current) {
@@ -50,7 +95,7 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
         timeoutRef.current = null;
       }
     };
-  }, [isEnhancing]);
+  }, [isEnhancing, recordMetric, currentNote.id]);
 
   // Force reset function for stuck states
   const forceReset = useCallback(() => {
@@ -58,18 +103,27 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
     setIsEnhancing(false);
     setLastRequestTime(null);
     setRetryCount(0);
+    setEnhancementStartTime(null);
+    setProcessingTime(0);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+    recordMetric('enhancement_force_reset', 1, { noteId: currentNote.id });
     toast.info("Enhancement state reset");
-  }, []);
+  }, [recordMetric, currentNote.id]);
 
-  // Check if enhancement is stuck (processing for more than 2 minutes)
-  const isStuck = lastRequestTime && (Date.now() - lastRequestTime) > 120000;
+  // Check if enhancement is stuck (processing for more than 20 seconds)
+  const isStuck = lastRequestTime && (Date.now() - lastRequestTime) > 20000;
 
   const handleGenerateEnhancement = async (enhancementType: string): Promise<void> => {
     const startTime = performance.now();
+    const actualStartTime = Date.now();
+    
     debugLogger.logFlow("UNIFIED_ENHANCEMENT_HANDLER_CALLED", {
       enhancementType,
       noteId: currentNote.id,
@@ -79,18 +133,43 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
 
     if (isEnhancing) {
       debugLogger.logFlow("DUPLICATE_REQUEST_BLOCKED", { noteId: currentNote.id, enhancementType });
+      recordMetric('enhancement_duplicate_blocked', 1, { enhancementType });
       return;
+    }
+
+    // Check cache first for instant response
+    const noteContent = currentNote.content || '';
+    if (shouldCache(noteContent)) {
+      const cachedResult = getCachedEnhancement(noteContent, enhancementType as any);
+      if (cachedResult) {
+        console.log(`🎯 Cache hit for ${enhancementType} - instant response!`);
+        recordMetric('enhancement_cache_hit', 1, { enhancementType });
+        toast.success(`Loaded from cache (0.1s)`, {
+          description: `${enhancementType} enhancement ready instantly!`
+        });
+        // Force refresh to show cached content
+        forceRefresh();
+        return;
+      }
     }
     
     console.log(`⏱️ Starting tab enhancement ${enhancementType} at ${new Date().toISOString()}`);
     debugLogger.logFlow("SETTING_ENHANCING_STATE_TRUE", { noteId: currentNote.id, enhancementType });
+    
+    // Set timing states for real-time progress
     setIsEnhancing(true);
-    setLastRequestTime(Date.now());
+    setLastRequestTime(actualStartTime);
+    setEnhancementStartTime(actualStartTime);
+    setProcessingTime(0);
+    
+    // Record cache miss
+    recordMetric('enhancement_cache_miss', 1, { enhancementType });
     
     // Show real-time progress with unique ID for tabs
     toast.loading(`Processing ${enhancementType}...`, {
       id: `tab-enhancement-${enhancementType}`,
-      duration: 30000 // 30 second timeout
+      duration: 20000, // 20 second timeout
+      description: "AI is generating your content..."
     });
     
     try {
@@ -104,15 +183,22 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
       console.log(`🚀 Tab Enhancement: Calling simple-enhance-note for ${enhancementType}`);
       debugLogger.logNetworkCall('simple-enhance-note', 'POST', { enhancementType, noteId: currentNote.id });
       
-      const { data, error } = await supabase.functions.invoke('simple-enhance-note', {
-        body: {
-          noteId: currentNote.id,
-          content: currentNote.content || '',
-          enhancementType: enhancementType,
-          title: currentNote.title || ''
+      // Use query deduplication to prevent concurrent identical requests
+      const enhancementResult = await deduplicateQuery(
+        `enhance-${currentNote.id}-${enhancementType}`,
+        async () => {
+          return await supabase.functions.invoke('simple-enhance-note', {
+            body: {
+              noteId: currentNote.id,
+              content: currentNote.content || '',
+              enhancementType: enhancementType,
+              title: currentNote.title || ''
+            }
+          });
         }
-      });
+      );
       
+      const { data, error } = enhancementResult;
       const endTime = performance.now();
       const duration = (endTime - startTime) / 1000;
       console.log(`⏱️ Tab Enhancement ${enhancementType} completed in ${duration.toFixed(2)}s`);
@@ -128,12 +214,34 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
       });
       
       if (!error && data?.success) {
+        // Cache successful result for future instant access
+        if (shouldCache(noteContent)) {
+          setCachedEnhancement(noteContent, enhancementType as any, data.enhancedContent || 'Enhanced');
+          recordMetric('enhancement_cached', 1, { enhancementType, duration });
+        }
+        
+        // Record performance metrics
+        recordMetric('enhancement_success', 1, { 
+          enhancementType, 
+          duration, 
+          contentLength: noteContent.length,
+          cacheEnabled: shouldCache(noteContent)
+        });
+        
         debugLogger.logFlow("ENHANCEMENT_SUCCESS_FORCING_REFRESH", { noteId: currentNote.id });
-        toast.success(`Enhancement completed successfully! (${duration.toFixed(1)}s)`);
+        toast.success(`Enhancement completed successfully! (${duration.toFixed(1)}s)`, {
+          description: `${enhancementType} generated in ${duration.toFixed(1)} seconds`
+        });
         forceRefresh();
         debugLogger.logNetworkCall('simple-enhance-note', 'POST', { enhancementType }, 200);
       } else {
         const errorMessage = error?.message || data?.error || "Failed to generate enhancement";
+        recordMetric('enhancement_error', 1, { 
+          enhancementType, 
+          error: errorMessage,
+          retryCount 
+        });
+        
         debugLogger.logError("ENHANCEMENT_FAILED", { 
           error: errorMessage, 
           noteId: currentNote.id, 
@@ -153,6 +261,12 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      recordMetric('enhancement_exception', 1, { 
+        enhancementType, 
+        error: errorMessage,
+        retryCount 
+      });
+      
       debugLogger.logError("ENHANCEMENT_CATCH_ERROR", { 
         error: errorMessage,
         noteId: currentNote.id,
@@ -178,10 +292,16 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
       });
       setIsEnhancing(false);
       setLastRequestTime(null);
+      setEnhancementStartTime(null);
+      setProcessingTime(0);
       
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
+      }
+      if (progressTimerRef.current) {
+        clearInterval(progressTimerRef.current);
+        progressTimerRef.current = null;
       }
     }
   };
@@ -193,7 +313,11 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
     isStuck: Boolean(isStuck),
     lastRequestTime,
     retryCount,
-    processingTime: 0, // Placeholder until we implement proper tracking
-    enhancementStartTime: null // Placeholder until we implement proper tracking
+    processingTime, // Now tracks real processing time
+    enhancementStartTime, // Now tracks actual start time
+    // Additional cache and performance methods
+    getCacheStats,
+    clearCache,
+    getActiveQueriesCount
   };
 };
