@@ -68,11 +68,21 @@ export const EnhancementSelector = ({
   const isGeneratingSummary = summaryStatus === 'generating' || headerProcessingEnhancement === 'summarize'; // Show progress for both individual and dropdown
   const hasSummaryError = summaryStatus === 'failed';
   const showSummaryProcessing = Boolean(isGeneratingSummary && !hasSummary);
+  
+  // Debug logging for progress bar display
+  if (headerProcessingEnhancement === 'summarize') {
+    console.log(`🔍 PROGRESS DEBUG - Summary: headerProcessing=${headerProcessingEnhancement}, isGenerating=${isGeneratingSummary}, showProcessing=${showSummaryProcessing}, hasContent=${hasSummary}`);
+  }
 
   const keyPointsStatus = note.key_points_status;
   const isGeneratingKeyPoints = keyPointsStatus === 'generating' || headerProcessingEnhancement === 'extract-key-points'; // Show progress for both individual and dropdown
   const hasKeyPointsError = keyPointsStatus === 'failed';
   const showKeyPointsProcessing = Boolean(isGeneratingKeyPoints && !hasKeyPoints);
+  
+  // Debug logging for progress bar display
+  if (headerProcessingEnhancement === 'extract-key-points') {
+    console.log(`🔍 PROGRESS DEBUG - Key Points: headerProcessing=${headerProcessingEnhancement}, isGenerating=${isGeneratingKeyPoints}, showProcessing=${showKeyPointsProcessing}, hasContent=${hasKeyPoints}`);
+  }
 
   const markdownStatus = note.markdown_content_status;
   const isGeneratingMarkdown = markdownStatus === 'generating' || headerProcessingEnhancement === 'convert-to-markdown'; // Show progress for both individual and dropdown
@@ -83,6 +93,11 @@ export const EnhancementSelector = ({
   const isGeneratingQuestions = questionsStatus === 'generating' || headerProcessingEnhancement === 'generate-questions'; // Show progress for both individual and dropdown
   const hasQuestionsError = questionsStatus === 'failed';
   const showQuestionsProcessing = Boolean(isGeneratingQuestions && !hasQuestions);
+  
+  // Debug logging for progress bar display
+  if (headerProcessingEnhancement === 'generate-questions') {
+    console.log(`🔍 PROGRESS DEBUG - Questions: headerProcessing=${headerProcessingEnhancement}, isGenerating=${isGeneratingQuestions}, showProcessing=${showQuestionsProcessing}, hasContent=${hasQuestions}`);
+  }
 
   const enrichedStatus = note.enriched_status;
   const isGeneratingEnriched = enrichedStatus === 'generating' || headerProcessingEnhancement === 'enrich-note'; // Show progress for both individual and dropdown

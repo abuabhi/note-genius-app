@@ -72,8 +72,10 @@ serve(async (req) => {
       throw new Error(`Unknown enhancement type: ${enhancementType}`);
     }
 
-    // Call OpenAI API
+    // Call OpenAI API with optimized settings for speed
     console.log('🤖 Calling OpenAI API...');
+    const startTime = Date.now();
+    
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -85,17 +87,21 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: 'You are an expert educational assistant. Provide clear, well-structured responses that help with learning and studying.' 
+            content: 'You are an expert educational assistant. Provide clear, concise responses quickly.' 
           },
           { 
             role: 'user', 
             content: `${prompt}\n\nTitle: ${title || 'Untitled'}\n\nContent:\n${content}` 
           }
         ],
-        max_tokens: 2000,
-        temperature: 0.7,
+        max_tokens: 1500, // Reduced for faster response
+        temperature: 0.3, // Lower for more focused output
+        top_p: 0.9,      // More focused sampling
       }),
     });
+
+    const apiCallTime = Date.now() - startTime;
+    console.log(`⏱️ OpenAI API call took: ${apiCallTime}ms`);
 
     if (!openAIResponse.ok) {
       const error = await openAIResponse.text();
@@ -119,6 +125,7 @@ serve(async (req) => {
     }
 
     console.log(`💾 Updating database field: ${dbField} and status: ${statusField}`);
+    const dbStartTime = Date.now();
     
     const updateData = {
       [dbField]: enhancedContent,
@@ -126,11 +133,21 @@ serve(async (req) => {
       [statusField]: 'completed',
       updated_at: new Date().toISOString()
     };
+    
+    console.log(`📊 Update data:`, { 
+      contentField: dbField, 
+      statusField, 
+      statusValue: 'completed',
+      contentLength: enhancedContent.length 
+    });
 
     const { error: updateError } = await supabase
       .from('notes')
       .update(updateData)
       .eq('id', noteId);
+
+    const dbUpdateTime = Date.now() - dbStartTime;
+    console.log(`⏱️ Database update took: ${dbUpdateTime}ms`);
 
     if (updateError) {
       console.error('❌ Database update error:', updateError);
@@ -138,12 +155,20 @@ serve(async (req) => {
     }
 
     console.log('✅ Database updated successfully');
+    
+    const totalTime = Date.now() - startTime;
+    console.log(`🏁 Total processing time: ${totalTime}ms (API: ${apiCallTime}ms, DB: ${dbUpdateTime}ms)`);
 
     return new Response(JSON.stringify({ 
       success: true, 
       data: enhancedContent,
       enhancementType,
-      noteId 
+      noteId,
+      performance: {
+        totalTime,
+        apiTime: apiCallTime,
+        dbTime: dbUpdateTime
+      }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
