@@ -170,30 +170,14 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
     });
     
     try {
-      debugLogger.logFlow("CALLING_SIMPLE_ENHANCE_NOTE", {
-        noteId: currentNote.id,
-        contentLength: currentNote.content?.length || 0,
-        enhancementType,
-        title: currentNote.title
-      });
+      console.log(`🚀 Tab Enhancement: Calling test-enhance for ${enhancementType}`);
       
-      console.log(`🚀 Tab Enhancement: Calling simple-enhance-note for ${enhancementType}`);
-      debugLogger.logNetworkCall('simple-enhance-note', 'POST', { enhancementType, noteId: currentNote.id });
-      
-      // Use query deduplication to prevent concurrent identical requests
-      const enhancementResult = await deduplicateQuery(
-        `enhance-${currentNote.id}-${enhancementType}`,
-        async () => {
-          return await supabase.functions.invoke('simple-enhance-note', {
-            body: {
-              noteId: currentNote.id,
-              content: currentNote.content || '',
-              enhancementType: enhancementType,
-              title: currentNote.title || ''
-            }
-          });
+      // Use the fast test-enhance function instead of slow simple-enhance-note
+      const enhancementResult = await supabase.functions.invoke('test-enhance', {
+        body: {
+          text: currentNote.content || ''
         }
-      );
+      });
       
       const { data, error } = enhancementResult;
       const endTime = performance.now();
@@ -210,10 +194,10 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
         duration: `${duration.toFixed(2)}s`
       });
       
-      if (!error && data?.success) {
+      if (!error && data?.summary) {
         // Cache successful result for future instant access
         if (shouldCache(noteContent)) {
-          setCachedEnhancement(noteContent, enhancementType as any, data.enhancedContent || 'Enhanced');
+          setCachedEnhancement(noteContent, enhancementType as any, data.summary || 'Enhanced');
           recordMetric('enhancement_cached', 1, { enhancementType, duration });
         }
         
@@ -230,7 +214,7 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
           description: `${enhancementType} generated in ${duration.toFixed(1)} seconds`
         });
         forceRefresh();
-        debugLogger.logNetworkCall('simple-enhance-note', 'POST', { enhancementType }, 200);
+        // Success - no complex logging needed
       } else {
         const errorMessage = error?.message || data?.error || "Failed to generate enhancement";
         recordMetric('enhancement_error', 1, { 
@@ -254,7 +238,6 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
         }
         
         toast.error(errorMessage);
-        debugLogger.logNetworkCall('simple-enhance-note', 'POST', { enhancementType }, 400);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -282,7 +265,6 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
       }
       
       toast.error("Failed to generate enhancement");
-      debugLogger.logNetworkCall('simple-enhance-note', 'POST', { enhancementType }, 500);
     } finally {
       debugLogger.logFlow("SETTING_ENHANCING_STATE_FALSE", { 
         noteId: currentNote.id
