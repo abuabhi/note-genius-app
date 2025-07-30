@@ -1,7 +1,7 @@
 
 import { Loader2 } from "lucide-react";
 
-import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
+type EnhancementFunction = string;
 
 interface StudyViewProcessingIndicatorProps {
   processingEnhancement: EnhancementFunction | null;

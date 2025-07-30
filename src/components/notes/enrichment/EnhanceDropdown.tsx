@@ -1,175 +1,92 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { useNoteEnrichment } from "@/hooks/useNoteEnrichment";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Sparkles } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
 import { toast } from "sonner";
-import { Progress } from "@/components/ui/progress";
 
 interface EnhanceDropdownProps {
   noteId: string;
-  noteTitle: string;
   noteContent: string;
-  onEnhance: (enhancedContent: string) => void;
+  onEnhancement?: (content: string) => void;
 }
 
 export const EnhanceDropdown = ({
   noteId,
-  noteTitle,
   noteContent,
-  onEnhance,
+  onEnhancement,
 }: EnhanceDropdownProps) => {
-  const {
-    isProcessing,
-    enhancementOptions,
-    enrichNote,
-    isEnabled,
-    currentUsage,
-    monthlyLimit,
-    hasReachedLimit
-  } = useNoteEnrichment();
+  const [isProcessing, setIsProcessing] = React.useState(false);
 
-  const handleEnhancementSelect = async (enhancement: EnhancementFunction) => {
+  const handleEnhancementSelect = async (enhancementType: string) => {
     if (!noteId || !noteContent) return;
     
-    // Check if it's the "create-flashcards" option which is coming soon
-    if (enhancement === 'create-flashcards') {
-      toast.info("Coming Soon", {
-        description: "Flashcard creation from notes will be available soon!"
-      });
-      return;
-    }
-    
+    setIsProcessing(true);
     try {
-      const result = await enrichNote(noteId, noteContent, enhancement, noteTitle);
+      const { data, error } = await supabase.functions.invoke('test-enhance', {
+        body: { text: noteContent, enhancementType }
+      });
+
+      if (error) throw error;
       
-      if (result.success) {
-        onEnhance(result.content);
+      if (data.success && onEnhancement) {
+        onEnhancement(JSON.stringify(data.result, null, 2));
+        toast.success('Enhancement completed successfully!');
       }
     } catch (error) {
       console.error("Error enhancing note:", error);
       toast.error("Failed to enhance note");
+    } finally {
+      setIsProcessing(false);
     }
   };
-
-  if (!isEnabled) {
-    return (
-      <Button disabled size="icon" className="h-8 w-8" title="Enhancement requires premium">
-        <Sparkles className="h-4 w-4 text-mint-500" />
-      </Button>
-    );
-  }
-  
-  const isLimitReached = hasReachedLimit();
-  const usagePercentage = monthlyLimit ? Math.min((currentUsage / monthlyLimit) * 100, 100) : 0;
-
-  // Group enhancement options by category for the dropdown
-  const nonReplacementOptions = enhancementOptions.filter(opt => !opt.replaceContent);
-  const replacementOptions = enhancementOptions.filter(opt => opt.replaceContent);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 relative group"
-          disabled={isProcessing || isLimitReached}
-          title={isLimitReached ? "Monthly limit reached" : isProcessing ? "Processing enhancement..." : "Enhance note"}
+          variant="outline" 
+          size="sm" 
+          disabled={isProcessing}
         >
           {isProcessing ? (
-            <Loader2 className="h-4 w-4 animate-spin text-mint-500" />
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Processing...
+            </>
           ) : (
-            <Sparkles className="h-4 w-4 text-mint-500 transition-all duration-300 group-hover:text-mint-600 group-hover:scale-110 group-hover:rotate-12" />
+            <>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Enhance
+            </>
           )}
-          <span className="absolute inset-0 rounded-full bg-mint-200/0 group-hover:bg-mint-100/50 transition-colors duration-300"></span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
-        className="bg-white border-mint-100 shadow-md rounded-md w-64 p-1"
-      >
-        {/* Usage stats */}
-        {monthlyLimit !== null && (
-          <>
-            <div className="px-2 py-1.5">
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-muted-foreground">
-                  {currentUsage} / {monthlyLimit} used this month
-                </span>
-                <span className={`font-medium ${usagePercentage > 80 ? 'text-red-500' : 'text-mint-600'}`}>
-                  {Math.round(usagePercentage)}%
-                </span>
-              </div>
-              <Progress 
-                value={usagePercentage} 
-                className={`h-1 ${usagePercentage > 80 ? 'bg-red-100' : 'bg-mint-100'}`}
-              />
-            </div>
-            <DropdownMenuSeparator />
-          </>
-        )}
-        
-        {/* Limit reached message */}
-        {isLimitReached ? (
-          <div className="px-3 py-2 text-sm text-amber-600">
-            You've reached your monthly limit for note enhancements. Check back next month or upgrade your plan.
-          </div>
-        ) : (
-          /* Enhancement options */
-          <>
-            {/* First category - non-replacement options */}
-            {nonReplacementOptions.map((option) => (
-              <DropdownMenuItem
-                key={option.id}
-                onClick={() => handleEnhancementSelect(option.value as EnhancementFunction)}
-                className={`cursor-pointer flex items-start p-2 rounded hover:bg-mint-50 focus:bg-mint-50 transition-colors ${option.value === 'create-flashcards' ? 'opacity-60' : ''}`}
-                disabled={isProcessing || option.value === 'create-flashcards'}
-              >
-                <div className="flex flex-col">
-                  <span className="font-medium text-mint-800">{option.title}</span>
-                  <span className="text-xs text-muted-foreground mt-0.5">{option.description}</span>
-                  {option.value === 'create-flashcards' && (
-                    <span className="text-xs text-amber-600 mt-0.5 font-medium">Coming soon</span>
-                  )}
-                </div>
-              </DropdownMenuItem>
-            ))}
-
-            {/* Separator between categories */}
-            {nonReplacementOptions.length > 0 && replacementOptions.length > 0 && (
-              <>
-                <DropdownMenuSeparator />
-                <div className="px-2 py-1 text-xs text-muted-foreground">
-                  Content Improvements
-                </div>
-              </>
-            )}
-
-            {/* Second category - replacement options */}
-            {replacementOptions.map((option) => (
-              <DropdownMenuItem
-                key={option.id}
-                onClick={() => handleEnhancementSelect(option.value as EnhancementFunction)}
-                className="cursor-pointer flex items-start p-2 rounded hover:bg-mint-50 focus:bg-mint-50 transition-colors"
-                disabled={isProcessing}
-              >
-                <div className="flex flex-col">
-                  <span className="font-medium text-mint-800">{option.title}</span>
-                  <span className="text-xs text-muted-foreground mt-0.5">{option.description}</span>
-                </div>
-              </DropdownMenuItem>
-            ))}
-          </>
-        )}
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onClick={() => handleEnhancementSelect('summary')}
+          disabled={isProcessing}
+        >
+          Generate Summary
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => handleEnhancementSelect('extract-key-points')}
+          disabled={isProcessing}
+        >
+          Extract Key Points
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => handleEnhancementSelect('generate-questions')}
+          disabled={isProcessing}
+        >
+          Generate Questions
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

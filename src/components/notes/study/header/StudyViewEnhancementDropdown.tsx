@@ -10,7 +10,7 @@ import {
 import { ChevronDown, Sparkles, HelpCircle } from "lucide-react";
 
 import { Note } from "@/types/note";
-import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
+type EnhancementFunction = string;
 
 interface StudyViewEnhancementDropdownProps {
   note: Note;

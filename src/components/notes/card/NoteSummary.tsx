@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
 import { updateNoteInDatabase } from '@/contexts/notes/operations';
 import { Note } from '@/types/note';
-import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface NoteSummaryProps {
@@ -35,7 +35,7 @@ export const NoteSummary = ({
   const [error, setError] = useState<string | null>(null);
 
   // Handle the case where the component receives a note object
-  const { enrichNote } = useNoteEnrichment();
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
   const handleGenerateSummary = async () => {
     if (onGenerateSummary) {
@@ -53,11 +53,17 @@ export const NoteSummary = ({
       setSummaryState('generating');
       setError(null);
 
-      const result = await enrichNote(note.id, note.content || '', 'summarize', note.title);
+      setIsEnhancing(true);
+      const { data, error } = await supabase.functions.invoke('test-enhance', {
+        body: { text: note.content || '', enhancementType: 'summary' }
+      });
       
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to generate summary');
-      }
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error);
+      
+      const result = { success: true, content: JSON.stringify(data.result, null, 2) };
+      
+      // result is always successful at this point
 
       const summaryContent = result.content;
       
@@ -80,6 +86,8 @@ export const NoteSummary = ({
       toast('Failed to generate summary', {
         description: 'There was an error generating the note summary.'
       });
+    } finally {
+      setIsEnhancing(false);
     }
   };
 

@@ -15,11 +15,12 @@ serve(async (req) => {
 
   try {
     const startTime = performance.now();
-    const { text } = await req.json();
+    const { text, enhancementType = 'summary' } = await req.json();
     
     console.log('📝 Input received:', {
       length: text?.length || 0,
-      preview: text?.substring(0, 100) || 'No text'
+      preview: text?.substring(0, 100) || 'No text',
+      enhancementType
     });
 
     if (!text || typeof text !== 'string') {
@@ -36,14 +37,6 @@ serve(async (req) => {
     }
 
     console.log('🔑 OpenAI API Key found, making request...');
-
-    const { text, enhancementType = 'summary' } = await req.json();
-    
-    console.log('📝 Input received:', {
-      length: text?.length || 0,
-      preview: text?.substring(0, 100) || 'No text',
-      enhancementType
-    });
 
     let systemPrompt = '';
     let userPrompt = '';

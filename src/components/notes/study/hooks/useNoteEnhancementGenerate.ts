@@ -5,7 +5,7 @@ import { Note } from "@/types/note";
 import { debugLogger } from "@/utils/debug/EnhancementDebugLogger";
 import { DEBUG_CONFIG } from "@/config/debug";
 import { supabase } from "@/integrations/supabase/client";
-import { useEnhancementCache } from "@/hooks/performance/useEnhancementCache";
+// Cache functionality removed for simplification
 import { useQueryDeduplication } from "@/hooks/notes/useQueryDeduplication";
 import { useProductionMetrics } from "@/hooks/performance/useProductionMetrics";
 
@@ -21,14 +21,7 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize caching and performance monitoring
-  const { 
-    getCachedEnhancement, 
-    setCachedEnhancement, 
-    shouldCache,
-    getCacheStats,
-    clearCache 
-  } = useEnhancementCache();
+  // Simplified - no caching or complex metrics
   const { deduplicateQuery, getActiveQueriesCount } = useQueryDeduplication();
   const { recordMetric } = useProductionMetrics('EnhancementGenerate');
 
@@ -134,21 +127,7 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
       return;
     }
 
-    // Check cache first for instant response
-    const noteContent = currentNote.content || '';
-    if (shouldCache(noteContent)) {
-      const cachedResult = getCachedEnhancement(noteContent, enhancementType as any);
-      if (cachedResult) {
-        console.log(`🎯 Cache hit for ${enhancementType} - instant response!`);
-        recordMetric('enhancement_cache_hit', 1, { enhancementType });
-        toast.success(`Loaded from cache (0.1s)`, {
-          description: `${enhancementType} enhancement ready instantly!`
-        });
-        // Force refresh to show cached content
-        forceRefresh();
-        return;
-      }
-    }
+    // Direct API call - no caching for simplicity
     
     console.log(`⏱️ Starting tab enhancement ${enhancementType} at ${new Date().toISOString()}`);
     debugLogger.logFlow("SETTING_ENHANCING_STATE_TRUE", { noteId: currentNote.id, enhancementType });
@@ -159,8 +138,7 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
     setEnhancementStartTime(actualStartTime);
     setProcessingTime(0);
     
-    // Record cache miss
-    recordMetric('enhancement_cache_miss', 1, { enhancementType });
+    // Start processing
     
     // Show real-time progress with unique ID for tabs - no timeout, let API complete
     toast.loading(`Processing ${enhancementType}...`, {
@@ -295,9 +273,7 @@ export const useNoteEnhancementGenerate = (currentNote: Note, forceRefresh: () =
     retryCount,
     processingTime, // Now tracks real processing time
     enhancementStartTime, // Now tracks actual start time
-    // Additional cache and performance methods
-    getCacheStats,
-    clearCache,
+    // Additional performance methods
     getActiveQueriesCount
   };
 };

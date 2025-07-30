@@ -1,24 +1,16 @@
-import React, { useEffect } from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import React, { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { useNoteEnrichment } from '@/hooks/useNoteEnrichment';
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { PremiumFeatureNotice } from './PremiumFeatureNotice';
-import { EnhancementSelection } from './EnhancementSelection';
-import { EnhancementProcessing } from './EnhancementProcessing';
-import { EnhancementResults } from './EnhancementResults';
-import { EnhancementError } from './EnhancementError';
-import { UsageIndicator } from './UsageIndicator';
-import { Note } from '@/types/note';
-import { EnhancementFunction } from '@/hooks/noteEnrichment/types';
-import { useEnrichmentUsageStats } from '@/hooks/noteEnrichment/useEnrichmentUsageStats';
 
 interface NoteEnrichmentDialogProps {
   open: boolean;
@@ -37,168 +29,119 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
   noteContent,
   onApplyEnhancement
 }) => {
-  // Create a mock note object to pass to useNoteEnrichment
-  const mockNote: Note = {
-    id: noteId,
-    title: noteTitle,
-    content: noteContent,
-    description: "",
-    date: new Date().toISOString().split('T')[0],
-    subject: "General",
-    sourceType: "manual" // Explicitly set as "manual" with the correct type
-  };
-  
-  const { 
-    isProcessing,
-    enhancedContent, 
-    error,
-    selectedEnhancement,
-    setSelectedEnhancement,
-    enhancementOptions,
-    processEnhancement,
-    isLoading,
-    isEnabled,
-    initialize,
-    setEnhancedContent,
-    hasReachedLimit
-  } = useNoteEnrichment(mockNote);
-  
-  // Use the dedicated usage stats hook
-  const { 
-    currentUsage, 
-    monthlyLimit, 
-    isLoading: usageLoading,
-    fetchUsageStats 
-  } = useEnrichmentUsageStats();
-  
-  useEffect(() => {
-    if (open) {
-      setSelectedEnhancement(null);
-      setEnhancedContent('');
-      initialize();
-      fetchUsageStats();
-    }
-  }, [open, initialize, setSelectedEnhancement, setEnhancedContent, fetchUsageStats]);
-  
+  const [selectedEnhancement, setSelectedEnhancement] = useState<string>('summary');
+  const [enhancedContent, setEnhancedContent] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const handleEnhancement = async () => {
-    if (!selectedEnhancement) {
-      toast("Enhancement required", {
-        description: "Please select an enhancement type"
+    if (!noteContent) {
+      toast.error("Content required", {
+        description: "Please add content to enhance"
       });
       return;
     }
     
-    if (!noteContent || noteContent.trim().length < 50) {
-      toast("Content too short", {
-        description: "Please add more content to enhance"
+    setIsProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('test-enhance', {
+        body: { text: noteContent, enhancementType: selectedEnhancement }
       });
-      return;
+
+      if (error) throw error;
+      
+      if (data.success) {
+        setEnhancedContent(JSON.stringify(data.result, null, 2));
+        toast.success('Enhancement completed successfully!');
+      }
+    } catch (error) {
+      console.error('Enhancement failed:', error);
+      toast.error("Failed to enhance note");
+    } finally {
+      setIsProcessing(false);
     }
-    
-    // Check if user has reached their monthly limit
-    if (hasReachedLimit()) {
-      toast.error("Monthly limit reached", {
-        description: "You've reached your monthly limit for note enhancements"
-      });
-      return;
-    }
-    
-    console.log("Starting enhancement with type:", selectedEnhancement);
-    await processEnhancement(selectedEnhancement);
-  };
-  
-  const handleApplyEnhancement = () => {
-    if (enhancedContent) {
-      onApplyEnhancement(enhancedContent);
-      toast("Enhancement applied", {
-        description: "Your note has been updated with the enhanced content"
-      });
-      onOpenChange(false);
-    }
-  };
-  
-  const handleRetry = () => {
-    if (selectedEnhancement) {
-      processEnhancement(selectedEnhancement);
-    }
-  };
-  
-  const handleClose = () => {
-    onOpenChange(false);
   };
 
-  const handleSelectEnhancement = (id: EnhancementFunction) => {
-    console.log("NoteEnrichmentDialog - Setting selected enhancement to:", id);
-    setSelectedEnhancement(id);
+  const handleApplyEnhancement = () => {
+    onApplyEnhancement(enhancedContent);
+    onOpenChange(false);
+    setEnhancedContent('');
   };
-  
-  // If feature is not enabled, show premium notice
-  if (!isEnabled) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <PremiumFeatureNotice onClose={() => onOpenChange(false)} />
-        </DialogContent>
-      </Dialog>
-    );
-  }
-  
+
+  const handleClose = () => {
+    onOpenChange(false);
+    setEnhancedContent('');
+  };
+  const enhancementOptions = [
+    { id: 'summary', label: 'Generate Summary', description: 'Create a concise summary of your note' },
+    { id: 'extract-key-points', label: 'Extract Key Points', description: 'Identify the most important concepts' },
+    { id: 'generate-questions', label: 'Generate Questions', description: 'Create study questions from your content' }
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Enhance Your Note</DialogTitle>
           <DialogDescription>
-            Select an enhancement option below to improve your note content.
+            Choose an enhancement type to improve your note with AI
           </DialogDescription>
         </DialogHeader>
-        
-        <UsageIndicator 
-          currentUsage={currentUsage} 
-          monthlyLimit={monthlyLimit} 
-          isLoading={usageLoading} 
-        />
 
-        {/* Error Display */}
-        {error && (
-          <EnhancementError error={error} onRetry={handleRetry} />
-        )}
+        <div className="space-y-6">
+          {!enhancedContent && !isProcessing && (
+            <div className="space-y-4">
+              <h3 className="font-medium">Select Enhancement Type</h3>
+              <div className="grid gap-3">
+                {enhancementOptions.map((option) => (
+                  <div
+                    key={option.id}
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      selectedEnhancement === option.id
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:bg-muted/50'
+                    }`}
+                    onClick={() => setSelectedEnhancement(option.id)}
+                  >
+                    <div className="font-medium">{option.label}</div>
+                    <div className="text-sm text-muted-foreground">{option.description}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-        {/* Enhancement Selection */}
-        {!enhancedContent && !isLoading && !error && (
-          <EnhancementSelection 
-            options={enhancementOptions}
-            selectedEnhancement={selectedEnhancement}
-            onSelect={handleSelectEnhancement}
-          />
-        )}
-        
-        {/* Loading State */}
-        {isLoading && <EnhancementProcessing />}
-        
-        {/* Results Display */}
-        {enhancedContent && !isLoading && (
-          <EnhancementResults 
-            enhancedContent={enhancedContent} 
-            onApply={handleApplyEnhancement} 
-          />
-        )}
-        
-        <DialogFooter className="flex justify-between mt-4">
-          <Button 
-            variant="outline" 
-            onClick={handleClose}
-            className="border-mint-200 hover:bg-mint-50 hover:text-mint-700"
-          >
+          {isProcessing && (
+            <div className="flex items-center justify-center p-8">
+              <div className="text-center">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                <p className="mt-2 text-muted-foreground">Processing...</p>
+              </div>
+            </div>
+          )}
+
+          {enhancedContent && (
+            <div className="space-y-4">
+              <h3 className="font-medium">Enhanced Content</h3>
+              <div className="border rounded-md p-4 max-h-[400px] overflow-y-auto">
+                <pre className="whitespace-pre-wrap text-sm">{enhancedContent}</pre>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>
-          {!enhancedContent && !isLoading && !error && (
-            <Button 
-              onClick={handleEnhancement}
-              disabled={selectedEnhancement === null || isLoading || hasReachedLimit()}
-              className="bg-mint-500 hover:bg-mint-600 text-white"
-            >
+          {!enhancedContent && !isProcessing && (
+            <Button onClick={handleEnhancement} disabled={isProcessing}>
+              <Sparkles className="h-4 w-4 mr-2" />
               Generate Enhancement
+            </Button>
+          )}
+          {enhancedContent && (
+            <Button onClick={handleApplyEnhancement}>
+              Apply to Note
             </Button>
           )}
         </DialogFooter>

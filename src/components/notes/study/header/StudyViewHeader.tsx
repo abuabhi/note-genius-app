@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Note } from "@/types/note";
 import { StudyViewControls } from "../controls/StudyViewControls";
 import { TextAlignType } from "../hooks/useStudyViewState";
-import { EnhancementFunction } from "@/hooks/noteEnrichment/types";
+type EnhancementFunction = string;
 import { toast } from "sonner";
 import { StudyViewTitleSection } from "./StudyViewTitleSection";
 import { StudyViewEnhancementDropdown } from "./StudyViewEnhancementDropdown";
