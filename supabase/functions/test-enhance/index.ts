@@ -44,35 +44,87 @@ serve(async (req) => {
     // Handle different enhancement types
     switch (enhancementType) {
       case 'extract-key-points':
-        systemPrompt = `You are an expert at extracting key points from educational content. Extract the most important concepts, facts, and insights from the provided text.
+        systemPrompt = `You are an AI assistant for a structured learning web platform. Your task is to extract the **most important key points** from a long block of unstructured educational content.
 
-Return a JSON format:
-{
-  "key_points": [
-    "<first key point>",
-    "<second key point>",
-    "... (up to 10 key points)"
-  ]
-}
+Follow these rules:
 
-Respond ONLY with valid JSON. No other text.`;
+1. Extract the **essential insights** or facts from the text — one per line.
+2. Present each key point as a standalone bullet (•), written in full sentence format if possible.
+3. Do **not** add new interpretations or summaries — only distill and extract what's already there.
+4. Do **not** highlight, bold, or color any individual terms.
+5. Begin with a section heading styled as follows (Green Mint for web):
+   <div style="color:#3EB489; font-weight:bold; font-size:1.2em; margin-top:10px;">Key Points</div>
+6. Ensure proper spacing between each bullet.
+7. Limit to **8–12 key points** unless more are clearly justified by the content length.
+
+Return only the clean, formatted text block suitable for direct web rendering (no markdown, no wrapper HTML).`;
         userPrompt = `Extract the key points from this text:\n\n${text}`;
         break;
         
       case 'generate-questions':
-        systemPrompt = `You are an expert at creating study questions from educational content. Generate thoughtful questions that test understanding of the material.
+        systemPrompt = `You are an AI study assistant that extracts the most important questions and answers from a long educational note.
 
-Return a JSON format:
-{
-  "questions": [
-    "<first study question>",
-    "<second study question>",
-    "... (up to 8 questions)"
-  ]
-}
+Your job is to:
+- Identify the top 10 most relevant questions a student should be able to answer after reading the content.
+- Provide clear, accurate answers directly based on the note.
+- Format the questions using bold text and a Mint Green color (#3EB489) suitable for web display.
 
-Respond ONLY with valid JSON. No other text.`;
+Follow these rules:
+
+1. Questions must come directly from the content — no guessing or external facts.
+2. Provide a **mix of recall, concept, and reasoning questions**.
+3. Limit each answer to 2–5 sentences.
+4. Do not add headers, summaries, or instructions — return only the formatted Q&A pairs.
+5. Format each question using this HTML tag:
+   <div style="color:#3EB489; font-weight:bold; margin-top:12px;">QX. Your question here?</div>
+
+Return only the clean, formatted content suitable for direct web rendering.`;
         userPrompt = `Generate study questions from this text:\n\n${text}`;
+        break;
+
+      case 'convert-to-markdown':
+        systemPrompt = `You are a formatting assistant for a web-based educational platform. Your task is to take long, unstructured raw text and convert it into a cleanly formatted version that is easier to read, scan, and visually follow.
+
+Your formatting rules are:
+
+1. Convert major sections into headings and apply this format:
+   <div style="color:#3EB489; font-weight:bold; font-size:1.2em; margin-top:10px;">Heading Text</div>
+   This applies your webapp's Green Mint color (#3EB489).
+
+2. Use bullet points (•) for lists and unordered concepts.
+
+3. Use numbered lists (1., 2., 3.) for steps or processes.
+
+4. Add appropriate line breaks between paragraphs, bullets, and headings to visually separate ideas.
+
+5. Apply indentation where needed to show sub-points or hierarchy.
+
+6. Do **not** highlight, bold, or color individual keywords or phrases.
+
+7. Do **not** summarize, rephrase, or remove any content from the original input. Only format it for readability.
+
+8. Return the final result as raw HTML-compatible text (for rendering inside a styled web component). Do not wrap it in HTML or provide markdown.
+
+Only return the structured, formatted output based on the raw text.`;
+        userPrompt = `Format this text for better readability:\n\n${text}`;
+        break;
+
+      case 'enrich-note':
+        systemPrompt = `You are an expert AI content enhancer for a study tool. Your task is to enrich the original content with meaningful, in-context additions to improve clarity, understanding, and depth.
+
+Here's how to perform the enhancement:
+
+1. Expand the original content by **adding 50–70% more content** without changing the core meaning or tone.
+2. Insert the additional content **inline**, immediately following the related idea or paragraph.
+3. Do not rephrase or rewrite the original content — preserve it as-is.
+4. Ensure all additions are **context-aware**, relevant, and educational — examples, definitions, explanations, analogies, or clarifications.
+5. Wrap each new block of AI-added content using the following HTML style:
+   <div style="background-color:#E6F7F1; border-left:4px solid #3EB489; padding:8px; margin:8px 0;">
+     [AI_ENHANCED] Your added content goes here.
+   </div>
+
+Return the enhanced content suitable for direct web rendering.`;
+        userPrompt = `Enhance this educational content with additional context and explanations:\n\n${text}`;
         break;
         
       default: // 'summary' or any other type
@@ -139,18 +191,23 @@ Respond ONLY with valid JSON. No other text.`;
       tokensUsed: data.usage?.total_tokens || 0
     });
 
-    // Parse the JSON response
+    // Handle response based on enhancement type
     let parsedResult;
-    try {
-      parsedResult = JSON.parse(content);
-    } catch (parseError) {
-      console.error('❌ JSON parse error:', parseError);
-      throw new Error('Failed to parse OpenAI response as JSON');
-    }
-
-    // Basic validation - just check if we have some content
-    if (!parsedResult || typeof parsedResult !== 'object') {
-      throw new Error('Invalid response structure');
+    if (['extract-key-points', 'generate-questions', 'convert-to-markdown', 'enrich-note'].includes(enhancementType)) {
+      // These return direct HTML content, not JSON
+      parsedResult = content;
+    } else {
+      // Summary still returns JSON
+      try {
+        parsedResult = JSON.parse(content);
+        // Basic validation - just check if we have some content
+        if (!parsedResult || typeof parsedResult !== 'object') {
+          throw new Error('Invalid response structure');
+        }
+      } catch (parseError) {
+        console.error('❌ JSON parse error:', parseError);
+        throw new Error('Failed to parse OpenAI response as JSON');
+      }
     }
 
     const totalTime = performance.now() - startTime;
