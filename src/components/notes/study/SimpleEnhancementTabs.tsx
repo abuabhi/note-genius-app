@@ -148,9 +148,9 @@ export const SimpleEnhancementTabs = React.memo(({
         orientation="vertical" 
         className="h-full"
       >
-        <div className="grid grid-cols-[280px_1fr] gap-6 h-full">
-          {/* NUCLEAR: Let Radix UI handle vertical layout via data attributes */}
-          <TabsList className="h-full w-full p-2 bg-muted/30 data-[orientation=vertical]:flex-col data-[orientation=vertical]:h-full data-[orientation=vertical]:space-y-1">
+        <div className="flex gap-6 h-full items-start">
+          {/* FIXED: Use flexbox with items-start to align tabs to top */}
+          <TabsList className="w-[280px] h-full p-2 bg-muted/30 self-start data-[orientation=vertical]:flex-col data-[orientation=vertical]:h-full data-[orientation=vertical]:space-y-1 data-[orientation=vertical]:items-start">
             {tabs.map((tab) => (
               <TabsTrigger 
                 key={tab.value} 
