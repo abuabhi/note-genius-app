@@ -96,7 +96,9 @@ export const markdownToHtml = (markdown: string): string => {
     else if (/^[\s]*[-•]\s+/.test(processedBlock) || /^\d+\.\s+/.test(processedBlock)) {
       processedBlock = processedBlock
         .replace(/^[\s]*[-•]\s+(.*$)/gm, '<li>$1</li>')
-        .replace(/^(\d+)\.\s+(.*$)/gm, '<li>$2</li>');
+        .replace(/^(\d+)\.\s+(.*$)/gm, '<li>$2</li>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>');
       processedBlock = `<ul>${processedBlock}</ul>`;
     }
     // Regular paragraphs
