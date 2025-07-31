@@ -10,23 +10,49 @@ export const useSimpleEnhancement = (note: Note, onNoteUpdate?: () => void) => {
     setIsEnhancing(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('test-enhance', {
-        body: {
-          text: note.content || note.description || '',
-          enhancementType
+      const noteContent = note.content || note.description || '';
+      
+      // Use enrich-note function for enrichment requests to handle large content with chunking
+      if (enhancementType === 'enrich-note') {
+        const { data, error } = await supabase.functions.invoke('enrich-note', {
+          body: {
+            noteId: note.id,
+            noteContent,
+            enhancementType,
+            noteTitle: note.title || 'Untitled Note'
+          }
+        });
+
+        if (error) throw error;
+        if (!data.success) throw new Error(data.error || 'Enhancement failed');
+
+        toast.success('Note enrichment completed successfully!');
+        
+        if (onNoteUpdate) {
+          onNoteUpdate();
         }
-      });
+        
+        return data.result;
+      } else {
+        // Use test-enhance for other enhancement types
+        const { data, error } = await supabase.functions.invoke('test-enhance', {
+          body: {
+            text: noteContent,
+            enhancementType
+          }
+        });
 
-      if (error) throw error;
-      if (!data.success) throw new Error(data.error);
+        if (error) throw error;
+        if (!data.success) throw new Error(data.error);
 
-      toast.success(`${enhancementType.replace('-', ' ')} completed successfully!`);
-      
-      if (onNoteUpdate) {
-        onNoteUpdate();
+        toast.success(`${enhancementType.replace('-', ' ')} completed successfully!`);
+        
+        if (onNoteUpdate) {
+          onNoteUpdate();
+        }
+        
+        return data.result;
       }
-      
-      return data.result;
     } catch (error) {
       console.error(`Error generating ${enhancementType}:`, error);
       toast.error(`Failed to generate ${enhancementType.replace('-', ' ')}`);
