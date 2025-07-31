@@ -143,7 +143,8 @@ export default function TestEnhancementPage() {
                 <Button 
                   onClick={handleEnhance}
                   disabled={isProcessing || !inputText.trim()}
-                  className="flex items-center gap-2"
+                  variant="outline"
+                  className="flex items-center gap-2 border-mint-200 bg-white hover:bg-mint-50 text-mint-700 hover:text-mint-800"
                 >
                   {isProcessing ? (
                     <>
@@ -153,7 +154,7 @@ export default function TestEnhancementPage() {
                   ) : (
                     <>
                       <Zap className="w-4 h-4" />
-                      Enhance Text
+                      Convert
                     </>
                   )}
                 </Button>

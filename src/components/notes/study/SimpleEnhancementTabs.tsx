@@ -196,14 +196,20 @@ export const SimpleEnhancementTabs = React.memo(({
                           <Button
                             onClick={() => generateEnhancement(tab.enhancementType!, tab.column!, tab.statusColumn)}
                             disabled={isLoading(tab.enhancementType!)}
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            className="text-primary hover:text-primary hover:bg-primary/10"
+                            className="border-mint-200 bg-white hover:bg-mint-50 text-mint-700 hover:text-mint-800"
                           >
                             {isLoading(tab.enhancementType!) ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                Generating...
+                              </>
                             ) : (
-                              <RefreshCw className="h-4 w-4" />
+                              <>
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                {tab.hasContent ? 'ReGenerate' : 'Generate'}
+                              </>
                             )}
                           </Button>
                         )}
