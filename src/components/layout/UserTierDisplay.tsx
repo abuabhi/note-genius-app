@@ -35,6 +35,8 @@ export function UserTierDisplay() {
     queryFn: async () => {
       if (!user?.id) return null;
       
+      console.log('🔍 [UserTierDisplay] Fetching usage stats for user:', user.id);
+      
       // Get notes count with user filter
       const { count: notesCount, error: notesError } = await supabase
         .from('notes')
@@ -42,6 +44,7 @@ export function UserTierDisplay() {
         .eq('user_id', user.id);
       
       if (notesError) console.error('Error fetching notes count:', notesError);
+      console.log('📝 [UserTierDisplay] Notes count:', notesCount);
       
       // Get flashcard sets count with user filter
       const { count: flashcardSetsCount, error: flashcardSetsError } = await supabase
@@ -50,6 +53,7 @@ export function UserTierDisplay() {
         .eq('user_id', user.id);
       
       if (flashcardSetsError) console.error('Error fetching flashcard sets count:', flashcardSetsError);
+      console.log('🃏 [UserTierDisplay] Flashcard sets count:', flashcardSetsCount);
       
       // Get actual storage used - calculate based on note content size
       const { data: notes, error: contentError } = await supabase
@@ -77,13 +81,17 @@ export function UserTierDisplay() {
         .eq('month_year', currentMonth);
       
       if (aiError) console.error('Error fetching AI enrichment usage:', aiError);
+      console.log('✨ [UserTierDisplay] AI enrichment count:', aiEnrichmentCount);
       
-      return {
+      const result = {
         notesCount: notesCount || 0,
         flashcardSetsCount: flashcardSetsCount || 0,
         storageUsed: storageMB || 0,
         aiEnrichmentUsage: aiEnrichmentCount || 0,
       };
+      
+      console.log('📊 [UserTierDisplay] Final usage stats:', result);
+      return result;
     },
     enabled: !!userTier && !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
