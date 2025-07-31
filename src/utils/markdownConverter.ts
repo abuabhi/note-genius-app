@@ -43,46 +43,67 @@ export const markdownToHtml = (markdown: string): string => {
     return `__HTML_TAG_${existingTags.length - 1}__`;
   });
   
-  // Convert markdown elements to HTML
+  // Normalize line breaks - convert multiple newlines to proper paragraph breaks
   html = html
-    // Questions (Q1., Q2., etc.) - process before other patterns - handle various formats
-    .replace(/^(Q\d+[.:\-]?\s+.*?)$/gm, '<div class="question-text">$1</div>')
-    .replace(/^(Question\s*\d*[.:\-]?\s+.*?)$/gmi, '<div class="question-text">$1</div>')
-    .replace(/^(Answer[.:\-]?\s+.*?)$/gmi, '<div class="answer-text">$1</div>')
+    .replace(/\r\n/g, '\n') // Normalize line endings
+    .replace(/\n{3,}/g, '\n\n') // Max 2 consecutive newlines
+    .trim();
+  
+  // Split content into blocks (separated by double newlines)
+  const blocks = html.split(/\n\n+/);
+  const processedBlocks: string[] = [];
+  
+  blocks.forEach(block => {
+    if (!block.trim()) return;
     
-    // Blockquotes (handle before headers)
-    .replace(/^>\s*(.*$)/gm, '<blockquote class="simple-blockquote">$1</blockquote>')
+    let processedBlock = block.trim();
     
-    // Headers (process in order of specificity)
-    .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
-    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+    // Questions (Q1., Q2., etc.) - process first
+    if (/^(Q\d+[.:\-]?\s+.*?)$/m.test(processedBlock)) {
+      processedBlock = processedBlock.replace(/^(Q\d+[.:\-]?\s+.*?)$/gm, '<div class="question-text">$1</div>');
+    }
+    else if (/^(Question\s*\d*[.:\-]?\s+.*?)$/mi.test(processedBlock)) {
+      processedBlock = processedBlock.replace(/^(Question\s*\d*[.:\-]?\s+.*?)$/gmi, '<div class="question-text">$1</div>');
+    }
+    else if (/^(Answer[.:\-]?\s+.*?)$/mi.test(processedBlock)) {
+      processedBlock = processedBlock.replace(/^(Answer[.:\-]?\s+.*?)$/gmi, '<div class="answer-text">$1</div>');
+    }
+    // Blockquotes
+    else if (/^>\s*/.test(processedBlock)) {
+      processedBlock = processedBlock
+        .replace(/^>\s*(.*$)/gm, '$1')
+        .replace(/\n/g, '<br>');
+      processedBlock = `<blockquote class="simple-blockquote">${processedBlock}</blockquote>`;
+    }
+    // Headers
+    else if (/^#{1,6}\s+/.test(processedBlock)) {
+      processedBlock = processedBlock
+        .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
+        .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gm, '<h1>$1</h1>');
+    }
+    // Lists (bullet points or numbered)
+    else if (/^[\s]*[-•]\s+/.test(processedBlock) || /^\d+\.\s+/.test(processedBlock)) {
+      processedBlock = processedBlock
+        .replace(/^[\s]*[-•]\s+(.*$)/gm, '<li>$1</li>')
+        .replace(/^(\d+)\.\s+(.*$)/gm, '<li>$2</li>');
+      processedBlock = `<ul>${processedBlock}</ul>`;
+    }
+    // Regular paragraphs
+    else {
+      // Handle inline formatting within paragraphs
+      processedBlock = processedBlock
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n/g, '<br>'); // Convert single line breaks to <br>
+      processedBlock = `<p>${processedBlock}</p>`;
+    }
     
-    // Bold and italic
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    
-    // Handle bullet points (including • character)
-    .replace(/^[\s]*[-•]\s+(.*$)/gm, '<li>$1</li>')
-    .replace(/^(\d+)\.\s+(.*$)/gm, '<li>$2</li>')
-    
-    // Wrap consecutive list items in ul/ol tags
-    .replace(/(<li>.*?<\/li>)(\s*<li>.*?<\/li>)*/gs, (match) => {
-      return `<ul>${match}</ul>`;
-    })
-    
-    // Convert line breaks to HTML breaks (but not inside HTML tags)
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>')
-    
-    // Wrap content in paragraph tags if not already wrapped
-    .replace(/^(?!<[uo]l>|<h[1-6]>|<p>)(.*?)(?=<|$)/gm, '<p>$1</p>')
-    
-    // Clean up empty paragraphs and malformed HTML
-    .replace(/<p><\/p>/g, '')
-    .replace(/<p>(<[uo]l>.*?<\/[uo]l>)<\/p>/gs, '$1')
-    .replace(/<p>(<h[1-6]>.*?<\/h[1-6]>)<\/p>/gs, '$1');
+    processedBlocks.push(processedBlock);
+  });
+  
+  html = processedBlocks.join('');
   
   // Restore HTML tags
   existingTags.forEach((tag, index) => {

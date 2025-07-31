@@ -5,6 +5,7 @@
   overflow-wrap: break-word;
   color: hsl(var(--foreground));
   font-family: inherit;
+  line-height: 1.6;
 }
 
 /* Dark Green Headers for Both HTML and Markdown */
@@ -37,45 +38,42 @@
 }
 
 /* Typography */
+.simple-content p,
 .simple-p {
-  margin-bottom: 1rem;
-  line-height: 1.7;
+  margin-bottom: 1.2rem;
+  line-height: 1.6;
+  margin-top: 0;
 }
 
 .simple-ul,
-.simple-ol {
-  margin-bottom: 1rem;
-  padding-left: 1.5rem;
-}
-
-/* Actual HTML list elements styling */
+.simple-ol,
 .simple-content ul,
 .simple-content ol {
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
+  margin-top: 0;
   padding-left: 1.5rem;
   list-style-type: disc;
 }
 
 .simple-content ul li,
-.simple-content ol li {
-  margin-bottom: 0;
-  line-height: 1.2;
+.simple-content ol li,
+.simple-li {
+  margin-bottom: 0.2rem;
+  margin-top: 0;
+  line-height: 1.4;
+  padding-left: 0.2rem;
 }
 
 /* Remove margins from paragraphs inside list items */
 .simple-content li p {
   margin: 0 !important;
   padding: 0 !important;
+  line-height: 1.4;
 }
 
 /* Green bullet points */
 .simple-content ul li::marker {
   color: #236248;
-}
-
-.simple-li {
-  margin-bottom: 0;
-  line-height: 1.2;
 }
 
 .simple-strong {
@@ -103,15 +101,16 @@
   margin-bottom: 1rem;
 }
 
+.simple-content blockquote,
 .simple-blockquote {
   border-left: 4px solid #236248;
-  padding-left: 1rem;
-  margin: 1rem 0;
+  padding: 1.2rem;
+  margin: 1.5rem 0;
   font-style: italic;
   color: hsl(var(--muted-foreground));
   background-color: hsl(var(--muted) / 0.3);
-  padding: 1rem;
   border-radius: 6px;
+  line-height: 1.6;
 }
 
 /* Ensure all content is readable */
@@ -125,15 +124,17 @@
 .simple-content .question-text {
   color: #236248 !important;
   font-weight: bold !important;
-  margin-bottom: 0.5rem;
-  margin-top: 1.5rem;
+  margin-bottom: 0.8rem;
+  margin-top: 1.8rem;
   font-size: 1.05em;
+  line-height: 1.4;
 }
 
 .simple-content .answer-text {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   color: hsl(var(--foreground));
-  margin-top: 0.5rem;
+  margin-top: 0.8rem;
+  line-height: 1.6;
 }
 
 /* Fix for any HTML content that might have specific styling */
