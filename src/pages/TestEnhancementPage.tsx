@@ -8,6 +8,7 @@ import Layout from '@/components/layout/Layout';
 import { Loader2, Clock, FileText, Zap } from 'lucide-react';
 import { useTabVisibility } from '@/hooks/performance/useTabVisibility';
 import { useBackgroundProcessor } from '@/hooks/performance/useBackgroundProcessor';
+import { useParams } from 'react-router-dom';
 
 interface EnhancementResult {
   summary_title: string;
@@ -29,8 +30,10 @@ interface TestResult {
 const STORAGE_KEY = 'test-enhancement-state';
 
 export default function TestEnhancementPage() {
+  const { noteId } = useParams();
   const [inputText, setInputText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSavingToDb, setIsSavingToDb] = useState(false);
   const [result, setResult] = useState<TestResult | null>(null);
   const [startTime, setStartTime] = useState<number>(0);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -113,6 +116,36 @@ export default function TestEnhancementPage() {
     });
   }, [registerWorker]);
 
+  // Background database save function
+  const saveToDatabase = async (enhancementResult: EnhancementResult) => {
+    if (!noteId) {
+      console.warn('No note ID available for saving');
+      return;
+    }
+
+    setIsSavingToDb(true);
+    try {
+      console.log('💾 Saving enhancement to database...', { noteId });
+      
+      const { data, error } = await supabase.functions.invoke('simple-enhance-note', {
+        body: {
+          noteId,
+          enhancementData: enhancementResult
+        }
+      });
+
+      if (error) throw error;
+
+      console.log('✅ Enhancement saved to database successfully');
+      toast.success('Enhancement saved to note');
+    } catch (error) {
+      console.error('❌ Failed to save enhancement to database:', error);
+      toast.error('Failed to save enhancement to note');
+    } finally {
+      setIsSavingToDb(false);
+    }
+  };
+
   const handleEnhance = async () => {
     if (!inputText.trim()) {
       toast.error('Please enter some text to enhance');
@@ -184,6 +217,11 @@ export default function TestEnhancementPage() {
 
       if (data.success) {
         toast.success(`Enhancement completed in ${(totalTime / 1000).toFixed(1)}s`);
+        
+        // Save to database in background
+        if (data.result) {
+          saveToDatabase(data.result);
+        }
       } else {
         toast.error('Enhancement failed: ' + data.error);
       }
@@ -292,6 +330,12 @@ export default function TestEnhancementPage() {
                   {result.processing_time && (
                     <span className="text-muted-foreground">
                       {(result.processing_time / 1000).toFixed(1)}s API
+                    </span>
+                  )}
+                  {isSavingToDb && (
+                    <span className="text-mint-600 text-xs flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Saving...
                     </span>
                   )}
                 </div>
