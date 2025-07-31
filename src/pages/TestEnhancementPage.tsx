@@ -255,7 +255,7 @@ export default function TestEnhancementPage() {
                   onClick={handleEnhance}
                   disabled={isProcessing || !inputText.trim()}
                   variant="outline"
-                  className="flex items-center gap-2 border-mint-200 bg-white hover:bg-mint-50 text-mint-700 hover:text-mint-800"
+                  className="flex items-center gap-2 bg-mint-50 border-mint-200 text-mint-700 hover:bg-mint-100 hover:text-mint-800"
                 >
                   {isProcessing ? (
                     <>
