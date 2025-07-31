@@ -91,6 +91,11 @@
   max-width: 100%;
 }
 
+/* Title and Question Consistency */
+.title-green {
+  color: #22d3ae !important;
+}
+
 /* Question and Answer Styling */
 .simple-content .question-text {
   color: #22d3ae !important;
