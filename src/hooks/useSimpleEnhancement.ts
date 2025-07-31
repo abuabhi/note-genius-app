@@ -24,7 +24,7 @@ export const useSimpleEnhancement = (note: Note, onNoteUpdate?: () => void) => {
         });
 
         if (error) throw error;
-        if (!data.success) throw new Error(data.error || 'Enhancement failed');
+        if (!data.enhancedContent) throw new Error('Enhancement failed - no content returned');
 
         toast.success('Note enrichment completed successfully!');
         
@@ -32,7 +32,7 @@ export const useSimpleEnhancement = (note: Note, onNoteUpdate?: () => void) => {
           onNoteUpdate();
         }
         
-        return data.result;
+        return data.enhancedContent;
       } else {
         // Use test-enhance for other enhancement types
         const { data, error } = await supabase.functions.invoke('test-enhance', {
