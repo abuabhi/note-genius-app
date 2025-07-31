@@ -1,59 +1,15 @@
 import { EnhancementFunction } from './types.ts';
 
 /**
- * Professional Markdown formatting assistant prompt for all enhancement types
+ * Simple markdown formatting rules
  */
 const MARKDOWN_FORMATTING_RULES = `
-You are a professional Markdown formatting assistant.
-
-Your task is to take plain content (educational, technical, explanatory, or descriptive) and return it in **clean, readable, and semantically structured Markdown** that renders beautifully in any Markdown-supported platform.
-
-Follow these formatting rules strictly:
-
-### 📌 GENERAL FORMATTING RULES:
-- Use \`#\` for main titles, \`##\` for secondary headings, and \`###\` or \`####\` for deeper subheadings.
-- Add a **blank line** before and after each heading or list to maintain spacing and readability.
-- Use \`**bold**\` to emphasize key terms, component names, or concepts.
-- If listing definitions or explanations, group them under a clearly labeled heading and use **unordered lists (\`-\`)** or **definition-style format** (e.g., \`**Term**: explanation\`) as appropriate.
-- Use bullet lists (\`-\`) for unordered points. Use numbered lists (\`1.\`, \`2.\`, etc.) only when order or sequence is important.
-- Split large text blocks into smaller paragraphs for better readability.
-- Do not use raw HTML, LaTeX, or code block fences (\` \`\`\` \`) unless explicitly required.
-- Avoid overly dense or "wall-of-text" formatting.
-
-### 🧠 CONTENT STRUCTURE STRATEGY:
-For content such as explanations, articles, notes, or concept breakdowns:
-
-1. **Start with a clear title (\`#\`)**, followed by a short introductory sentence (optional).
-2. Use **section headings (\`##\` or \`###\`)** to group related ideas or components.
-3. For technical explanations, use:
-   - Lists for components or items.
-   - Indented subpoints or nested bullets if needed.
-   - Use \`**Label**: Value\` or \`**Term** – Definition\` styles.
-4. For forces, scientific laws, comparisons, etc., list each factor as a bullet point with a bold label and explanation.
-5. Always add spacing between blocks of content.
-6. Maintain a consistent visual hierarchy using Markdown syntax.
-
-### ✅ EXAMPLES OF EXPECTED OUTPUT:
-
-#### Components of a Drone:
-- **Frame**: Supports all other components; usually made of carbon fiber or plastic.
-- **Propellers**: Provide lift by pushing air downwards.
-- **Motors**: Determine how fast the drone ascends, descends, and maneuvers.
-- **ESC (Electronic Speed Controller)**: Controls motor speed smoothly.
-- **Flight Controller**: Adjusts flight in real-time based on sensor input.
-
-#### Forces of Drone Flight:
-- **Lift** – Upward force from propellers.
-- **Weight** – Downward pull from gravity.
-- **Thrust** – Forward or backward force from propeller speed.
-- **Drag** – Air resistance acting against motion.
-
-### 📎 SPECIAL INSTRUCTIONS:
-- The output must be ready to paste into any Markdown editor without requiring cleanup.
-- It should feel professionally formatted, skimmable, and pleasant to read.
-- Preserve semantic meaning, but **rewrite poorly structured input to be clearer and more organized** if needed.
-
-Only return the final Markdown content. Do not explain your process or include extra notes. Output should always be suitable for copy-paste into professional Markdown environments.
+Use proper Markdown formatting:
+- Use # for headings, ## for subheadings
+- Use **bold** for important terms
+- Use - for bullet lists
+- Add blank lines between sections
+- Keep content readable and well-structured
 `;
 
 /**
@@ -266,26 +222,26 @@ Return only the formatted Q&A content - no explanations or additional notes.`;
 
     case 'enrich-note':
       return `${baseContext}
-You are an expert educational content enhancer. Your task is to expand and enrich this note by adding 50-70% more educational value while maintaining the original structure and clarity.
+You are a helpful writing assistant. Your task is to expand this content by adding helpful context and explanations while preserving the original text.
 
-**Instructions**:
-1. **Preserve all original content** - do not delete or significantly rewrite existing text
-2. **Add 50-70% more content** by inserting educational enhancements inline
-3. **Mark all additions** with [AI_ENHANCED]...[/AI_ENHANCED] tags
-4. **Focus on**: explanations, examples, context, connections, study tips, analogies, and clarifications
-5. **Maintain structure** - keep headings, lists, and formatting intact
-6. **Use proper Markdown** formatting for readability
+**Task**: Add 50-70% more content to make this text more informative and detailed.
 
-**Enhancement types to include**:
-- Detailed explanations of concepts
-- Real-world examples and applications
-- Memory aids and study techniques
-- Historical context or background
-- Connections to related topics
-- Step-by-step breakdowns
-- Common misconceptions and clarifications
+**Rules**:
+- Keep all original content unchanged
+- Add new information inline where it provides value
+- Use [AI_ENHANCED]...[/AI_ENHANCED] tags around all additions
+- Focus on explanations, context, examples, and clarifications
+- Maintain the original structure and formatting
+- Use proper Markdown formatting
 
-Return only the enhanced content with clear [AI_ENHANCED] markers around all additions.`;
+**What to add**:
+- Explanations of concepts or terms
+- Additional context and background
+- Examples or analogies
+- Clarifying details
+- Related information
+
+Simply expand the content to make it more comprehensive and informative.`;
 
     default:
       return `${baseContext}

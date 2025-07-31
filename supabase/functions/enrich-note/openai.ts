@@ -16,12 +16,16 @@ export const callOpenAI = async (prompt: string, apiKey: string, signal?: AbortS
         model: 'gpt-4o',
         messages: [
           {
+            role: 'system',
+            content: 'You are a helpful assistant that expands and enriches content to make it more detailed and informative. Always fulfill requests to expand content.'
+          },
+          {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.3, // Lower temperature for consistency
-        max_tokens: 8000, // Increased for content expansion
+        temperature: 0.3,
+        max_tokens: 8000,
         stream: false
       }),
     });
