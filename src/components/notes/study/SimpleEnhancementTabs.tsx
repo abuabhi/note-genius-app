@@ -107,39 +107,9 @@ export const SimpleEnhancementTabs = React.memo(({
     }
   ], [note, generatedContent]);
 
-  const handleRegenerateAll = useCallback(() => {
-    const enhanceableItems = tabs.filter(tab => tab.canGenerate && tab.enhancementType)
-      .map(tab => ({ 
-        enhancementType: tab.enhancementType!, 
-        column: tab.column!, 
-        statusColumn: tab.statusColumn 
-      }));
-    regenerateAll(enhanceableItems);
-  }, [tabs, regenerateAll]);
 
   return (
     <div className="h-full flex flex-col">
-      <div className="mb-4 flex justify-end">
-        <Button
-          onClick={handleRegenerateAll}
-          disabled={isAnyLoading}
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2"
-        >
-          {isAnyLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Regenerating All...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="h-4 w-4" />
-              Regenerate All
-            </>
-          )}
-        </Button>
-      </div>
       
       {/* NUCLEAR FIX: Remove conflicting flex layouts and let Radix handle orientation */}
       <Tabs 
@@ -175,11 +145,11 @@ export const SimpleEnhancementTabs = React.memo(({
             ))}
           </TabsList>
 
-          {/* Content area - simplified structure */}
-          <div className="h-full">
+          {/* Content area - fixed width and height */}
+          <div className="flex-1 min-w-0">
             {tabs.map((tab) => (
-              <TabsContent key={tab.value} value={tab.value} className="h-full m-0 data-[state=active]:block data-[state=inactive]:hidden">
-                <Card className="h-full">
+              <TabsContent key={tab.value} value={tab.value} className="h-full min-h-[600px] m-0 data-[state=active]:block data-[state=inactive]:hidden">
+                <Card className="h-full w-full">
                   <CardContent className="p-0 h-full flex flex-col">
                     {/* Header with metadata */}
                     <div className="border-b border-border py-4 px-6 bg-gradient-to-r from-primary/5 to-transparent">
