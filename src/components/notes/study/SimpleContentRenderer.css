@@ -58,7 +58,7 @@
 
 .simple-content ul li,
 .simple-content ol li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0;
   line-height: 1.6;
 }
 
@@ -68,7 +68,7 @@
 }
 
 .simple-li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0;
   line-height: 1.6;
 }
 
