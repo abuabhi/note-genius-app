@@ -45,6 +45,10 @@ export const markdownToHtml = (markdown: string): string => {
   
   // Convert markdown elements to HTML
   html = html
+    // Questions (Q1., Q2., etc.) - process before other patterns
+    .replace(/^(Q\d+\.\s+.*?)$/gm, '<div class="question-text">$1</div>')
+    .replace(/^(Answer:\s+.*?)$/gm, '<div class="answer-text">$1</div>')
+    
     // Headers (process in order of specificity)
     .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
     .replace(/^### (.*$)/gm, '<h3>$1</h3>')

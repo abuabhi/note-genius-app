@@ -91,6 +91,19 @@
   max-width: 100%;
 }
 
+/* Question and Answer Styling */
+.simple-content .question-text {
+  color: #22d3ae !important;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  margin-top: 1rem;
+}
+
+.simple-content .answer-text {
+  margin-bottom: 1.5rem;
+  color: hsl(var(--foreground));
+}
+
 /* Fix for any HTML content that might have specific styling */
 .simple-content div,
 .simple-content span,
