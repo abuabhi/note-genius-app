@@ -52,12 +52,15 @@ Follow these rules:
 2. Present each key point as a standalone bullet (•), written in full sentence format if possible.
 3. Do **not** add new interpretations or summaries — only distill and extract what's already there.
 4. Do **not** highlight, bold, or color any individual terms.
-5. Begin with a section heading styled as follows (Green Mint for web):
-   <div style="color:#3EB489; font-weight:bold; font-size:1.2em; margin-top:10px;">Key Points</div>
-6. Ensure proper spacing between each bullet.
+5. Format each bullet point with proper HTML line breaks and spacing:
+   • First key point<br><br>
+   • Second key point<br><br>
+   • Third key point<br><br>
+6. Ensure proper spacing between each bullet for readability.
 7. Limit to **8–12 key points** unless more are clearly justified by the content length.
+8. Do NOT include any headers or titles - start directly with the bullet points.
 
-Return only the clean, formatted text block suitable for direct web rendering (no markdown, no wrapper HTML).`;
+Return only the clean, formatted bullet points suitable for direct web rendering (no markdown, no wrapper HTML).`;
         userPrompt = `Extract the key points from this text:\n\n${text}`;
         break;
         
