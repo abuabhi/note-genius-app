@@ -59,7 +59,13 @@
 .simple-content ul li,
 .simple-content ol li {
   margin-bottom: 0;
-  line-height: 1.6;
+  line-height: 1.2;
+}
+
+/* Remove margins from paragraphs inside list items */
+.simple-content li p {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Green bullet points */
