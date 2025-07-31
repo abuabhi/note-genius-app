@@ -56,33 +56,18 @@ export const useEnhancementManager = (note: Note, onNoteUpdate?: () => void) => 
   }, [updateNote]);
 
   const processEnhancementContent = useCallback((enhancementType: string, data: any): string => {
-    switch (enhancementType) {
-      case 'summary':
-        if (data.summary_overview) {
-          let content = `# ${data.summary_title || 'Summary'}\n\n${data.summary_overview}`;
-          if (data.key_points && data.key_points.length > 0) {
-            content += '\n\n## Key Points\n\n' + data.key_points.map((point: string) => `- ${point}`).join('\n');
-          }
-          if (data.quote_or_stat && data.quote_or_stat !== 'N/A') {
-            content += `\n\n## Notable Quote\n\n> ${data.quote_or_stat}`;
-          }
-          return content;
-        }
-        break;
-      case 'extract-key-points':
-        if (data.key_points && Array.isArray(data.key_points)) {
-          return data.key_points.map((point: string) => `• ${point}`).join('\n\n');
-        }
-        break;
-      case 'generate-questions':
-        if (data.questions && Array.isArray(data.questions)) {
-          return data.questions.map((question: string, index: number) => `${index + 1}. ${question}`).join('\n\n');
-        }
-        break;
-      default:
-        return typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    // NUCLEAR FIX: Return raw AI content without any processing
+    // Let SimpleContentRenderer handle HTML vs markdown detection
+    console.log("🚀 RAW AI CONTENT:", data);
+    
+    // Return the raw result from AI, preserving HTML styling
+    if (data && typeof data === 'object' && data.result) {
+      console.log("🚀 RETURNING RAW RESULT:", data.result);
+      return data.result;
     }
-    return JSON.stringify(data, null, 2);
+    
+    // Fallback for direct string content
+    return typeof data === 'string' ? data : JSON.stringify(data, null, 2);
   }, []);
 
   const generateEnhancement = useCallback(async (enhancementType: string, column: string, statusColumn?: string): Promise<EnhancementResult> => {
