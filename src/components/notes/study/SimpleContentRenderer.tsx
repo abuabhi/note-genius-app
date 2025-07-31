@@ -17,6 +17,7 @@ const hasHTMLContent = (content: string): boolean => {
   console.log("🔍 CHECKING CONTENT:", content.substring(0, 200));
   const hasHTML = content.includes('<div') || content.includes('<span') || content.includes('style=');
   console.log("🔍 HAS HTML:", hasHTML);
+  console.log("🔍 FULL CONTENT:", content);
   return hasHTML;
 };
 

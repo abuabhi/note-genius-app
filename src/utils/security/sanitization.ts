@@ -8,11 +8,11 @@ const configureDOMPurify = () => {
       'p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li', 
       'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre'
     ],
-    // Allow only safe attributes
-    ALLOWED_ATTR: ['class'],
+    // Allow only safe attributes - ALLOW STYLE for AI-generated content
+    ALLOWED_ATTR: ['class', 'style'],
     // Forbid tags and attributes
     FORBID_TAGS: ['script', 'object', 'embed', 'iframe', 'form', 'input'],
-    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'style', 'src', 'href'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'src', 'href'],
     // Clean up whitespace
     KEEP_CONTENT: true,
     // Return DOM instead of string for better performance
