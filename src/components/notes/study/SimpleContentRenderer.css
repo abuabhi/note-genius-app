@@ -1,0 +1,100 @@
+/* Simple Content Renderer Styles */
+.simple-content {
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  color: hsl(var(--foreground));
+  font-family: inherit;
+}
+
+/* Mint Green Headers for Both HTML and Markdown */
+.simple-content h1,
+.simple-content h2,
+.simple-content h3,
+.simple-content h4,
+.simple-content h5,
+.simple-content h6,
+.simple-h1,
+.simple-h2,
+.simple-h3,
+.simple-h4,
+.simple-h5,
+.simple-h6 {
+  color: #22d3ae !important;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  margin-top: 1.5rem;
+  line-height: 1.25;
+}
+
+/* AI-Generated HTML Content Styling */
+.simple-content div[style*="#3EB489"],
+.simple-content div[style*="color:#3EB489"],
+.simple-content span[style*="#3EB489"],
+.simple-content span[style*="color:#3EB489"] {
+  color: #22d3ae !important;
+  font-weight: bold !important;
+}
+
+/* Typography */
+.simple-p {
+  margin-bottom: 1rem;
+  line-height: 1.7;
+}
+
+.simple-ul,
+.simple-ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.simple-li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.simple-strong {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.simple-em {
+  font-style: italic;
+}
+
+.simple-code {
+  background-color: hsl(var(--muted));
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.simple-pre {
+  background-color: hsl(var(--muted));
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.simple-blockquote {
+  border-left: 4px solid #22d3ae;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Ensure all content is readable */
+.simple-content * {
+  max-width: 100%;
+}
+
+/* Fix for any HTML content that might have specific styling */
+.simple-content div,
+.simple-content span,
+.simple-content p {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}

@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Sparkles, FileText, List, HelpCircle, Code, RefreshCw, Clock } from 'lucide-react';
 import { EnhancementType } from '@/types/enhancement';
-import { NuclearContentRenderer } from './enhancements/NuclearContentRenderer';
+import { SimpleContentRenderer } from './SimpleContentRenderer';
 import { useEnhancementManager } from '@/hooks/useEnhancementManager';
 
 // Utility function for content statistics
@@ -216,7 +216,7 @@ export const SimpleEnhancementTabs = React.memo(({
                         const displayContent = generatedContent[tab.column!] || tab.content;
                         
                         return displayContent ? (
-                          <NuclearContentRenderer
+                          <SimpleContentRenderer
                             content={displayContent}
                             fontSize={fontSize}
                             textAlign={textAlign}
