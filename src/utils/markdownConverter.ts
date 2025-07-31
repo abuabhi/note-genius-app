@@ -29,31 +29,71 @@ export const htmlToMarkdown = (html: string): string => {
   return turndownService.turndown(html);
 };
 
-// Convert Markdown to HTML (for display purposes)
+// Enhanced Markdown to HTML converter that handles pure markdown and hybrid content
 export const markdownToHtml = (markdown: string): string => {
   if (!markdown) return '';
   
-  // Simple markdown to HTML conversion for basic formatting
-  let html = markdown
-    // Headers
+  let html = markdown;
+  
+  // First, handle any existing HTML tags by preserving them
+  const htmlTagPattern = /<[^>]+>/g;
+  const existingTags: string[] = [];
+  html = html.replace(htmlTagPattern, (match) => {
+    existingTags.push(match);
+    return `__HTML_TAG_${existingTags.length - 1}__`;
+  });
+  
+  // Convert markdown elements to HTML
+  html = html
+    // Headers (process in order of specificity)
+    .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
     .replace(/^### (.*$)/gm, '<h3>$1</h3>')
     .replace(/^## (.*$)/gm, '<h2>$1</h2>')
     .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+    
     // Bold and italic
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    // Lists
-    .replace(/^\- (.*$)/gm, '<li>$1</li>')
-    .replace(/^(\d+)\. (.*$)/gm, '<li>$2</li>')
-    // Wrap list items in ul/ol
-    .replace(/(<li>.*<\/li>)/gs, (match) => {
-      if (match.includes('<li>')) {
-        return `<ul>${match}</ul>`;
-      }
-      return match;
-    })
-    // Line breaks
-    .replace(/\n/g, '<br>');
     
+    // Handle bullet points (including • character)
+    .replace(/^[\s]*[-•]\s+(.*$)/gm, '<li>$1</li>')
+    .replace(/^(\d+)\.\s+(.*$)/gm, '<li>$2</li>')
+    
+    // Wrap consecutive list items in ul/ol tags
+    .replace(/(<li>.*?<\/li>)(\s*<li>.*?<\/li>)*/gs, (match) => {
+      return `<ul>${match}</ul>`;
+    })
+    
+    // Convert line breaks to HTML breaks (but not inside HTML tags)
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>')
+    
+    // Wrap content in paragraph tags if not already wrapped
+    .replace(/^(?!<[uo]l>|<h[1-6]>|<p>)(.*?)(?=<|$)/gm, '<p>$1</p>')
+    
+    // Clean up empty paragraphs and malformed HTML
+    .replace(/<p><\/p>/g, '')
+    .replace(/<p>(<[uo]l>.*?<\/[uo]l>)<\/p>/gs, '$1')
+    .replace(/<p>(<h[1-6]>.*?<\/h[1-6]>)<\/p>/gs, '$1');
+  
+  // Restore HTML tags
+  existingTags.forEach((tag, index) => {
+    html = html.replace(`__HTML_TAG_${index}__`, tag);
+  });
+  
   return html;
+};
+
+// Process any content to ensure consistent markdown formatting
+export const processContentForDisplay = (content: string): string => {
+  if (!content) return '';
+  
+  // If content has HTML tags, convert to clean markdown first, then back to HTML
+  if (content.includes('<') && content.includes('>')) {
+    const cleanMarkdown = htmlToMarkdown(content);
+    return markdownToHtml(cleanMarkdown);
+  }
+  
+  // If pure markdown or hybrid content, process directly
+  return markdownToHtml(content);
 };
