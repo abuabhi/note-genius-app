@@ -50,6 +50,9 @@ export const markdownToHtml = (markdown: string): string => {
     .replace(/^(Question\s*\d*[.:\-]?\s+.*?)$/gmi, '<div class="question-text">$1</div>')
     .replace(/^(Answer[.:\-]?\s+.*?)$/gmi, '<div class="answer-text">$1</div>')
     
+    // Blockquotes (handle before headers)
+    .replace(/^>\s*(.*$)/gm, '<blockquote class="simple-blockquote">$1</blockquote>')
+    
     // Headers (process in order of specificity)
     .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
     .replace(/^### (.*$)/gm, '<h3>$1</h3>')

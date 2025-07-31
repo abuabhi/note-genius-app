@@ -7,7 +7,7 @@
   font-family: inherit;
 }
 
-/* Mint Green Headers for Both HTML and Markdown */
+/* Dark Green Headers for Both HTML and Markdown */
 .simple-content h1,
 .simple-content h2,
 .simple-content h3,
@@ -20,7 +20,7 @@
 .simple-h4,
 .simple-h5,
 .simple-h6 {
-  color: #22d3ae !important;
+  color: #236248 !important;
   font-weight: bold;
   margin-bottom: 1rem;
   margin-top: 1.5rem;
@@ -32,7 +32,7 @@
 .simple-content div[style*="color:#3EB489"],
 .simple-content span[style*="#3EB489"],
 .simple-content span[style*="color:#3EB489"] {
-  color: #22d3ae !important;
+  color: #236248 !important;
   font-weight: bold !important;
 }
 
@@ -75,7 +75,7 @@
 
 .simple-li {
   margin-bottom: 0;
-  line-height: 1.6;
+  line-height: 1.2;
 }
 
 .simple-strong {
@@ -104,11 +104,14 @@
 }
 
 .simple-blockquote {
-  border-left: 4px solid #22d3ae;
+  border-left: 4px solid #236248;
   padding-left: 1rem;
   margin: 1rem 0;
   font-style: italic;
   color: hsl(var(--muted-foreground));
+  background-color: hsl(var(--muted) / 0.3);
+  padding: 1rem;
+  border-radius: 6px;
 }
 
 /* Ensure all content is readable */
