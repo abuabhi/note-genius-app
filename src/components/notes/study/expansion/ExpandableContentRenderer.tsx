@@ -5,7 +5,7 @@ import { useContentExpansion } from './useContentExpansion';
 import { TextAlignType } from '../hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { NuclearContentRenderer } from '../enhancements/NuclearContentRenderer';
+import { SimpleContentRenderer } from '../SimpleContentRenderer';
 
 interface ExpandableContentRendererProps {
   content: string;
@@ -227,8 +227,8 @@ ${cleanExpandedContent}
         }}
         onMouseUp={handleTextSelection}
       >
-        {/* FIXED: Use NuclearContentRenderer with consistent font size */}
-        <NuclearContentRenderer
+        {/* FIXED: Use SimpleContentRenderer with consistent font size */}
+        <SimpleContentRenderer
           content={processedContent}
           fontSize={16} // Fixed font size for consistency
           textAlign={textAlign}

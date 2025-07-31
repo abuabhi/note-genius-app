@@ -14,7 +14,10 @@ interface SimpleContentRendererProps {
 
 // Simple detection: if content has HTML tags with style attributes, render as HTML
 const hasHTMLContent = (content: string): boolean => {
-  return content.includes('<div') || content.includes('<span') || content.includes('style=');
+  console.log("🔍 CHECKING CONTENT:", content.substring(0, 200));
+  const hasHTML = content.includes('<div') || content.includes('<span') || content.includes('style=');
+  console.log("🔍 HAS HTML:", hasHTML);
+  return hasHTML;
 };
 
 export const SimpleContentRenderer: React.FC<SimpleContentRendererProps> = ({

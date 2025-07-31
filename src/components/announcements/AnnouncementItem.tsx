@@ -3,7 +3,7 @@ import React from 'react';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { UnifiedContentRenderer } from '@/components/notes/study/enhancements/UnifiedContentRenderer';
+import { SimpleContentRenderer } from '@/components/notes/study/SimpleContentRenderer';
 
 interface Announcement {
   id: string;
@@ -80,12 +80,11 @@ export const AnnouncementItem = ({
               )}
             </div>
             <div className={`${isMobile ? 'text-xs' : 'text-sm'} flex-1`}>
-              <UnifiedContentRenderer 
+              <SimpleContentRenderer 
                 content={displayText}
                 textAlign={textAlignValue as any}
                 className="text-current [&_*]:text-current [&_mark]:bg-yellow-200 [&_mark]:text-gray-900 [&_mark]:px-1 [&_mark]:rounded"
                 fontSize={isMobile ? 14 : 16}
-                isMarkdown={true}
               />
             </div>
           </div>

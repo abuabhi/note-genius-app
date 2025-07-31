@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Eye, EyeOff, Smartphone, CalendarClock, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import { Announcement } from './types';
-import { UnifiedContentRenderer } from '@/components/notes/study/enhancements/UnifiedContentRenderer';
+import { SimpleContentRenderer } from '@/components/notes/study/SimpleContentRenderer';
 
 interface AnnouncementCardProps {
   announcement: Announcement;
@@ -65,9 +65,8 @@ export const AnnouncementCard = ({
               <div>{getStatusBadge(announcement)}</div>
             </div>
             <div className="text-muted-foreground text-sm max-h-20 overflow-hidden">
-              <UnifiedContentRenderer 
+              <SimpleContentRenderer 
                 content={announcement.content.slice(0, 150)} 
-                isMarkdown={true}
                 className="text-sm"
               />
               {announcement.content.length > 150 ? '...' : ''}
