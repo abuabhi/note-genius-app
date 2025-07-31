@@ -25,13 +25,19 @@ export interface ProcessedContent {
 const detectAIGeneratedContent = (content: string): boolean => {
   if (!content) return false;
   
-  // Look for specific AI-generated patterns with Green Mint styling
+  // Look for specific AI-generated patterns with styling - MORE COMPREHENSIVE
   const patterns = [
-    /style="color:#3EB489/i,           // Green Mint color
-    /style="color:#2ECC71/i,           // Alternative green
+    /#3EB489/i,                       // The exact mint color from DB (any context)
+    /#2ECC71/i,                       // Alternative green
+    /style="[^"]*color:#[0-9A-Fa-f]{6}/i,  // Any hex colors in styles
+    /style="[^"]*color:\s*#[0-9A-Fa-f]{6}/i, // Hex colors with spacing
+    /style="[^"]*font-weight:\s*bold/i,     // Bold styling patterns
+    /style="[^"]*font-size:\s*1\.[0-9]em/i, // Font size patterns
     /class="ai-enhanced/i,             // AI enhancement classes
     /data-ai-generated/i,              // AI data attributes
-    /style="[^"]*font-weight:bold[^"]*font-size:1\.2em/i, // Specific styling pattern
+    /<strong[^>]*style=/i,             // Styled strong tags
+    /<span[^>]*style=[^>]*color:/i,    // Styled span tags with color
+    /<div[^>]*style=[^>]*color:/i,     // Styled div tags with color
   ];
   
   return patterns.some(pattern => pattern.test(content));
