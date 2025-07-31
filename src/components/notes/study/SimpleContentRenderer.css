@@ -48,6 +48,25 @@
   padding-left: 1.5rem;
 }
 
+/* Actual HTML list elements styling */
+.simple-content ul,
+.simple-content ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.simple-content ul li,
+.simple-content ol li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+/* Green bullet points */
+.simple-content ul li::marker {
+  color: #236248;
+}
+
 .simple-li {
   margin-bottom: 0.5rem;
   line-height: 1.6;
