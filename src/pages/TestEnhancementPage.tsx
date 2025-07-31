@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import Layout from '@/components/layout/Layout';
 import { Loader2, Clock, FileText, Zap } from 'lucide-react';
+import { useTabVisibility } from '@/hooks/performance/useTabVisibility';
+import { useBackgroundProcessor } from '@/hooks/performance/useBackgroundProcessor';
 
 interface EnhancementResult {
   summary_title: string;
@@ -24,17 +26,106 @@ interface TestResult {
   error?: string;
 }
 
+const STORAGE_KEY = 'test-enhancement-state';
+
 export default function TestEnhancementPage() {
   const [inputText, setInputText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<TestResult | null>(null);
   const [startTime, setStartTime] = useState<number>(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isVisible = useTabVisibility();
+  const { addJob, registerWorker } = useBackgroundProcessor();
+
+  // State persistence
+  useEffect(() => {
+    const savedState = sessionStorage.getItem(STORAGE_KEY);
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        if (state.isProcessing) {
+          // If we were processing when we left, show a recovery message
+          setInputText(state.inputText || '');
+          setIsProcessing(false);
+          toast.info('Previous generation was interrupted. You can restart it.');
+        } else {
+          setInputText(state.inputText || '');
+          setResult(state.result || null);
+        }
+      } catch (error) {
+        console.error('Failed to restore state:', error);
+      }
+    }
+  }, []);
+
+  // Save state on changes
+  useEffect(() => {
+    const state = {
+      inputText,
+      isProcessing,
+      result,
+      startTime
+    };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }, [inputText, isProcessing, result, startTime]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        console.log('🛑 Enhancement request aborted due to component unmount');
+      }
+    };
+  }, []);
+
+  // Background worker registration
+  useEffect(() => {
+    registerWorker('enhance-text', async (data) => {
+      try {
+        const { data: result, error } = await supabase.functions.invoke('test-enhance', {
+          body: { text: data.text }
+        });
+        
+        if (error) throw error;
+        
+        // Update state with result
+        setResult({
+          ...result,
+          total_time: performance.now() - data.startTime
+        });
+        setIsProcessing(false);
+        
+        if (result.success) {
+          toast.success('Enhancement completed in background!');
+        } else {
+          toast.error('Enhancement failed: ' + result.error);
+        }
+      } catch (error) {
+        setResult({
+          success: false,
+          error: error instanceof Error ? error.message : 'Background processing failed',
+          total_time: performance.now() - data.startTime
+        });
+        setIsProcessing(false);
+        toast.error('Background enhancement failed');
+      }
+    });
+  }, [registerWorker]);
 
   const handleEnhance = async () => {
     if (!inputText.trim()) {
       toast.error('Please enter some text to enhance');
       return;
     }
+
+    // Cancel any existing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
 
     console.time('🔥 Total Enhancement Time');
     const start = performance.now();
@@ -48,9 +139,22 @@ export default function TestEnhancementPage() {
         timestamp: new Date().toISOString()
       });
 
+      // Start background job if tab becomes hidden
+      if (!isVisible) {
+        addJob('enhance-text', { text: inputText, startTime: start }, 'high');
+        toast.info('Generation will continue in background');
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('test-enhance', {
         body: { text: inputText }
       });
+
+      // Check if request was aborted
+      if (abortControllerRef.current?.signal.aborted) {
+        console.log('🛑 Request was aborted');
+        return;
+      }
 
       const totalTime = performance.now() - start;
       console.timeEnd('🔥 Total Enhancement Time');
@@ -84,6 +188,12 @@ export default function TestEnhancementPage() {
         toast.error('Enhancement failed: ' + data.error);
       }
     } catch (error) {
+      // Don't show error if request was aborted
+      if (abortControllerRef.current?.signal.aborted) {
+        console.log('🛑 Request aborted, not showing error');
+        return;
+      }
+
       const totalTime = performance.now() - start;
       console.timeEnd('🔥 Total Enhancement Time');
       console.error('💥 Enhancement request failed:', error);
@@ -96,6 +206,7 @@ export default function TestEnhancementPage() {
       toast.error('Request failed: ' + (error instanceof Error ? error.message : 'Network error'));
     } finally {
       setIsProcessing(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -196,10 +307,17 @@ export default function TestEnhancementPage() {
               {isProcessing && (
                 <div className="text-center py-8">
                   <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-                  <p className="text-muted-foreground">Processing enhancement...</p>
+                  <p className="text-muted-foreground">
+                    {isVisible ? 'Processing enhancement...' : 'Processing in background...'}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-2">
                     Elapsed: {startTime ? ((performance.now() - startTime) / 1000).toFixed(1) : 0}s
                   </p>
+                  {!isVisible && (
+                    <p className="text-xs text-mint-600 mt-1">
+                      Generation continues even when you navigate away
+                    </p>
+                  )}
                 </div>
               )}
 
