@@ -12,7 +12,16 @@ interface EnhancementResult {
 
 export const useEnhancementManager = (note: Note, onNoteUpdate?: () => void) => {
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
-  const [generatedContent, setGeneratedContent] = useState<Record<string, string>>({});
+  const [generatedContent, setGeneratedContent] = useState<Record<string, string>>(() => {
+    // Initialize with existing database content so all tabs use processed content
+    return {
+      summary: note.summary || '',
+      key_points: note.key_points || '',
+      markdown_content: note.markdown_content || '',
+      enriched_content: note.enriched_content || '',
+      questions_content: note.questions_content || ''
+    };
+  });
 
   const updateNote = useCallback(async (updates: Partial<Note>) => {
     try {
