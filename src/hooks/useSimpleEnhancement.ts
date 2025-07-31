@@ -16,7 +16,8 @@ export const useSimpleEnhancement = (note: Note, onNoteUpdate?: () => void) => {
         type: enhancementType,
         originalLength: noteContent.length,
         originalWordCount,
-        noteId: note.id
+        noteId: note.id,
+        functionChoice: enhancementType === 'enrich-note' ? 'enrich-note' : 'test-enhance'
       });
       
       // Use enrich-note function for enrichment requests to handle large content with chunking

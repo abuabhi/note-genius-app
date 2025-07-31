@@ -119,22 +119,35 @@ Return only plain text with markdown formatting, no HTML.`;
         break;
 
       case 'enrich-note':
-        systemPrompt = `You are an expert AI content enhancer for a study tool. Your task is to enrich the original content with meaningful, in-context additions to improve clarity, understanding, and depth.
+        systemPrompt = `You are an expert AI content enhancer for a study tool. Your mission is to significantly expand educational content while preserving ALL original text exactly as written.
 
-Here's how to perform the enhancement:
+CRITICAL REQUIREMENTS:
+1. **PRESERVE ORIGINAL CONTENT**: Never modify, rephrase, or remove any original text. The original content must remain 100% intact.
+2. **EXPANSION TARGET**: Add 60-80% more content (if original is 1000 words, result should be 1600-1800 words).
+3. **STRATEGIC PLACEMENT**: After each major concept, paragraph, or idea in the original text, add comprehensive enhancements.
 
-1. Expand the original content by **adding 50–70% more content** without changing the core meaning or tone.
-2. Insert the additional content **inline**, immediately following the related idea or paragraph.
-3. Do not rephrase or rewrite the original content — preserve it as-is.
-4. Ensure all additions are **context-aware**, relevant, and educational — examples, definitions, explanations, analogies, or clarifications.
-5. Mark each new block of AI-added content with a clear text marker:
-   
-   [AI_ENHANCED] Your added content goes here.
-   
-6. Use simple line breaks to separate enhanced sections from original content.
+ENHANCEMENT TYPES TO ADD:
+- Detailed explanations and context
+- Real-world examples and applications  
+- Background information and history
+- Step-by-step breakdowns of complex concepts
+- Memory aids and study tips
+- Connections to related topics
+- Practical implications and use cases
 
-Return the enhanced content as plain text with clear markers for AI-added sections.`;
-        userPrompt = `Enhance this educational content with additional context and explanations:\n\n${text}`;
+FORMATTING:
+- Wrap all AI-added content with: [AI_ENHANCED] your enhancement here [/AI_ENHANCED]
+- Use natural paragraph breaks between original and enhanced content
+- Ensure enhanced sections flow naturally with the original text
+
+EXAMPLE:
+Original: "Photosynthesis is the process plants use to make food."
+Enhanced: "Photosynthesis is the process plants use to make food.
+
+[AI_ENHANCED] This remarkable biological process occurs primarily in the chloroplasts of plant cells, where chlorophyll captures light energy from the sun. The process can be broken down into two main stages: the light-dependent reactions (photo stage) and the Calvin cycle (synthesis stage). During photosynthesis, plants convert carbon dioxide from the air and water from the soil into glucose (sugar) and oxygen. This process is fundamental to life on Earth, as it produces the oxygen we breathe and forms the base of most food chains. The chemical equation is: 6CO2 + 6H2O + light energy → C6H12O6 + 6O2. [/AI_ENHANCED]"
+
+Remember: The goal is substantial content expansion while keeping every word of the original text unchanged.`;
+        userPrompt = `Enhance this educational content with substantial additional context and explanations. Original content length: ${text.length} characters. Target: Increase by 60-80%.\n\nContent:\n${text}`;
         break;
         
       default: // 'summary' or any other type
@@ -170,14 +183,14 @@ Respond ONLY with valid JSON. No other text.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: enhancementType === 'enrich-note' ? 'gpt-4o' : 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.3,
         top_p: 0.9,
-        max_tokens: 2000
+        max_tokens: enhancementType === 'enrich-note' ? 8000 : 2000
       }),
     });
 

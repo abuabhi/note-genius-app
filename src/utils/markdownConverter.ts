@@ -59,8 +59,8 @@ export const markdownToHtml = (markdown: string): string => {
     let processedBlock = block.trim();
     
     // Enhanced content (AI-generated) - process first with robust regex
-    // This handles: [ENRICHED], **[ENRICHED]**, [AI_ENHANCED], etc. with case-insensitive matching
-    const enrichedRegex = /(\*\*)?(\[(?:AI_)?ENRICHED\])(\*\*)?([\s\S]*?)(\*\*)?(\[\/(?:AI_)?ENRICHED\])(\*\*)?/gi;
+    // This handles: [ENRICHED], [AI_ENHANCED], [AI_ENRICHED], etc. with case-insensitive matching
+    const enrichedRegex = /(\*\*)?(\[(?:AI_)?(?:ENHANCED|ENRICHED)\])(\*\*)?([\s\S]*?)(\*\*)?(\[\/(?:AI_)?(?:ENHANCED|ENRICHED)\])(\*\*)?/gi;
     if (enrichedRegex.test(processedBlock)) {
       // Reset regex for replacement
       enrichedRegex.lastIndex = 0;
