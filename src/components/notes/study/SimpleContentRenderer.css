@@ -91,14 +91,11 @@
   max-width: 100%;
 }
 
-/* Title and Question Consistency */
-.title-green {
-  color: #22d3ae !important;
-}
+/* Title and Question Consistency - Removed: Using Tailwind text-mint-800 instead */
 
 /* Question and Answer Styling */
 .simple-content .question-text {
-  color: #22d3ae !important;
+  color: #236248 !important;
   font-weight: bold !important;
   margin-bottom: 0.5rem;
   margin-top: 1.5rem;

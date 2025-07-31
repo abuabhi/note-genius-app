@@ -79,7 +79,7 @@ export const StudyViewTitleSection = ({
     <div className="space-y-3">
       <div className="space-y-2">
         <div className="flex items-center">
-          <h1 className="text-2xl font-bold title-green leading-tight">{note?.title}</h1>
+          <h1 className="text-2xl font-bold text-mint-800 leading-tight">{note?.title}</h1>
         </div>
         
         <div className="flex items-center gap-4 text-sm">
