@@ -1,13 +1,18 @@
-
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 
 export interface ChatError {
-  type: 'network' | 'server' | 'validation' | 'auth' | 'unknown';
+  type: 'network' | 'server' | 'validation' | 'auth' | 'content_policy' | 'unknown';
   message: string;
   details?: string;
   timestamp: Date;
   retryable: boolean;
+  suggestions?: string[];
+  help?: {
+    reason: string;
+    commonTriggers: string[];
+    nextSteps: string[];
+  };
 }
 
 export const useErrorHandler = () => {
@@ -19,7 +24,22 @@ export const useErrorHandler = () => {
 
     let chatError: ChatError;
 
-    if (error?.message?.includes('fetch')) {
+    // Handle content policy violations with helpful messaging
+    if (error?.error === 'Content Policy Violation' || error?.message?.includes('safety filters')) {
+      chatError = {
+        type: 'content_policy',
+        message: 'Content flagged by AI safety filters - contains marketing/sales language that appears spammy',
+        details: error.message || error.details,
+        timestamp: new Date(),
+        retryable: true,
+        suggestions: error.suggestions || [
+          'Remove aggressive sales language like "guaranteed" or "instant results"',
+          'Replace promotional terms with educational language',
+          'Use neutral, academic tone instead of persuasive marketing language'
+        ],
+        help: error.help
+      };
+    } else if (error?.message?.includes('fetch')) {
       chatError = {
         type: 'network',
         message: 'Network connection failed. Please check your internet connection.',
@@ -63,8 +83,23 @@ export const useErrorHandler = () => {
 
     setErrors(prev => [...prev.slice(-4), chatError]); // Keep last 5 errors
 
-    // Show appropriate toast
-    if (chatError.retryable && retryCount < 3) {
+    // Show appropriate toast with enhanced content policy messaging
+    if (chatError.type === 'content_policy') {
+      toast.error('Content Policy Issue', {
+        description: 'Your content contains marketing language that triggers AI safety filters. Click for suggestions.',
+        duration: 8000,
+        action: {
+          label: 'View Suggestions',
+          onClick: () => {
+            // Create a more detailed toast with suggestions
+            toast.info('Content Policy Suggestions', {
+              description: chatError.suggestions?.slice(0, 2).join(' • ') || 'Rephrase content to be more educational',
+              duration: 10000
+            });
+          }
+        }
+      });
+    } else if (chatError.retryable && retryCount < 3) {
       toast.error(chatError.message, {
         action: {
           label: 'Retry',

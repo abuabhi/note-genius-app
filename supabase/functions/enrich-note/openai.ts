@@ -1,6 +1,14 @@
 
 import type { TokenUsage } from './types.ts';
 
+// Custom error types
+class ContentPolicyError extends Error {
+  constructor(message: string, public suggestions: string[]) {
+    super(message);
+    this.name = 'ContentPolicyError';
+  }
+}
+
 export const callOpenAI = async (prompt: string, apiKey: string, signal?: AbortSignal): Promise<{ enhancedContent: string; tokenUsage?: TokenUsage }> => {
   console.log('🤖 Calling OpenAI API...');
   
@@ -55,6 +63,16 @@ export const callOpenAI = async (prompt: string, apiKey: string, signal?: AbortS
     }
 
     let enhancedContent = data.choices[0].message.content;
+    
+    // Detect content policy violations (safety filter rejections)
+    if (isContentPolicyRejection(enhancedContent)) {
+      console.warn('🚫 Content policy violation detected in OpenAI response');
+      const suggestions = generateContentPolicySuggestions(prompt);
+      throw new ContentPolicyError(
+        'Content was flagged by AI safety filters due to marketing/sales language that may appear spammy. This is a safety measure to prevent misuse.',
+        suggestions
+      );
+    }
     
     // Post-processing: Ensure improve-clarity responses have proper inline markers
     if (prompt.includes('improve-clarity') || prompt.includes('CRITICAL INLINE ENHANCEMENT RULES')) {
@@ -280,4 +298,92 @@ function isEnhancedContent(text: string): boolean {
          text.includes('Important:') ||
          text.includes('Note:') ||
          (text.startsWith('-') && text.length > 50);
+}
+
+/**
+ * Detects if OpenAI response is a content policy rejection
+ */
+function isContentPolicyRejection(content: string): boolean {
+  const rejectionPatterns = [
+    /I'm sorry,?\s*but I can't assist/i,
+    /I can't help with/i,
+    /I'm unable to assist/i,
+    /I cannot help/i,
+    /I'm not able to/i,
+    /I can't provide/i,
+    /I cannot provide/i,
+    /I'm sorry,?\s*I can't/i,
+    /violates.*policy/i,
+    /against.*guidelines/i,
+    /not appropriate/i,
+    /I cannot fulfill/i,
+    /I'm not comfortable/i,
+    /I can't create.*content.*that/i
+  ];
+  
+  return rejectionPatterns.some(pattern => pattern.test(content));
+}
+
+/**
+ * Generates helpful suggestions for content policy violations
+ */
+function generateContentPolicySuggestions(originalPrompt: string): string[] {
+  const suggestions = [
+    'Remove aggressive sales language like "guaranteed", "instant results", or "buy now"',
+    'Replace promotional terms with educational language',
+    'Focus on informational content rather than sales tactics',
+    'Use neutral, academic tone instead of persuasive marketing language',
+    'Remove references to mass outreach, cold emails, or lead generation'
+  ];
+  
+  // Add specific suggestions based on detected problematic patterns
+  const lowercasePrompt = originalPrompt.toLowerCase();
+  
+  if (lowercasePrompt.includes('cold email') || lowercasePrompt.includes('outreach')) {
+    suggestions.unshift('Replace "cold email" with "professional communication" or "business correspondence"');
+  }
+  
+  if (lowercasePrompt.includes('guaranteed') || lowercasePrompt.includes('instant')) {
+    suggestions.unshift('Remove absolute claims like "guaranteed" or "instant" results');
+  }
+  
+  if (lowercasePrompt.includes('lead generation') || lowercasePrompt.includes('leads')) {
+    suggestions.unshift('Replace "lead generation" with "networking" or "professional connections"');
+  }
+  
+  if (lowercasePrompt.includes('sales') || lowercasePrompt.includes('selling')) {
+    suggestions.unshift('Replace sales terminology with educational or informational language');
+  }
+  
+  return suggestions.slice(0, 5); // Return top 5 most relevant suggestions
+}
+
+/**
+ * Proactively checks content for patterns that commonly trigger safety filters
+ */
+export function detectProblematicContent(content: string): { isProblematic: boolean; warnings: string[] } {
+  const warnings: string[] = [];
+  const lowercaseContent = content.toLowerCase();
+  
+  // Marketing/Sales patterns that often trigger filters
+  const problematicPatterns = [
+    { pattern: /\b(guaranteed|instant|immediate)\s+(results|success|income|profit)/gi, warning: 'Avoid absolute claims about results or success' },
+    { pattern: /\b(cold\s+email|mass\s+email|email\s+blast)/gi, warning: 'Cold email terminology may trigger safety filters' },
+    { pattern: /\b(buy\s+now|act\s+now|limited\s+time)/gi, warning: 'Urgent sales language may be flagged as spam' },
+    { pattern: /\b(leads?|prospects?)\s+(generation|acquisition|harvesting)/gi, warning: 'Lead generation language may appear spammy' },
+    { pattern: /\b(scrape|scraping|harvested)\s+(emails?|contacts?|data)/gi, warning: 'Data scraping references violate platform policies' },
+    { pattern: /\b(spam|spamming|bulk\s+send)/gi, warning: 'Direct spam references will be rejected' },
+    { pattern: /\$\d+[k]?\s+(per|\/)\s+(day|week|month)/gi, warning: 'Income claims may trigger safety filters' }
+  ];
+  
+  problematicPatterns.forEach(({ pattern, warning }) => {
+    if (pattern.test(content)) {
+      warnings.push(warning);
+    }
+  });
+  
+  return {
+    isProblematic: warnings.length > 0,
+    warnings
+  };
 }

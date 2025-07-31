@@ -3,7 +3,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders, createCorsResponse } from './cors.ts';
 import { authenticateUser } from './auth.ts';
-import { callOpenAI } from './openai.ts';
+import { callOpenAI, detectProblematicContent } from './openai.ts';
 import { createPrompt } from './prompts.ts';
 import { processLargeContent } from './chunking.ts';
 import { checkRateLimit, cleanupRateLimitStore, getRateLimitStatus } from './rate-limiter.ts';
@@ -159,6 +159,24 @@ serve(async (req) => {
       }, 400);
     }
     
+    // Proactive content scanning for problematic patterns
+    console.log(`🔍 [${requestId}] Scanning content for problematic patterns...`);
+    const contentCheck = detectProblematicContent(noteContent);
+    if (contentCheck.isProblematic) {
+      console.warn(`⚠️ [${requestId}] Potentially problematic content detected:`, contentCheck.warnings);
+      return createCorsResponse({
+        error: 'Content contains patterns that may be rejected by AI safety filters',
+        warnings: contentCheck.warnings,
+        suggestions: [
+          'Consider rephrasing marketing language to be more neutral',
+          'Replace sales terminology with educational language',
+          'Remove references to mass outreach or cold emails',
+          'Use informational tone instead of persuasive marketing'
+        ],
+        requestId
+      }, 400);
+    }
+
     // Enhanced content processing with timeout management
     console.log(`🔄 [${requestId}] Processing content (${noteContent.length} characters)...`);
     
@@ -231,6 +249,7 @@ serve(async (req) => {
       clearTimeout(timeoutId);
       console.error(`❌ [${requestId}] Enhancement processing error:`, {
         error: openAIError.message,
+        errorName: openAIError.name,
         stack: openAIError.stack,
         aborted: controller.signal.aborted,
         processingTime: Date.now() - startTime
@@ -243,6 +262,32 @@ serve(async (req) => {
           requestId,
           processingTime: Date.now() - startTime
         }, 408);
+      }
+      
+      // Handle content policy violations with helpful error messages
+      if (openAIError.name === 'ContentPolicyError') {
+        console.warn(`🚫 [${requestId}] Content policy violation:`, openAIError.message);
+        return createCorsResponse({
+          error: 'Content Policy Violation',
+          message: openAIError.message,
+          suggestions: openAIError.suggestions,
+          help: {
+            reason: 'Your content contains language that triggers AI safety filters',
+            commonTriggers: [
+              'Aggressive sales language ("guaranteed", "instant results")',
+              'Mass email/outreach terminology',
+              'Spam-like promotional content',
+              'Income claims or get-rich-quick schemes'
+            ],
+            nextSteps: [
+              'Rephrase the content using more neutral, educational language',
+              'Replace marketing terms with informational equivalents',
+              'Focus on educational value rather than persuasive tactics'
+            ]
+          },
+          requestId,
+          processingTime: Date.now() - startTime
+        }, 400);
       }
       
       return createCorsResponse({
