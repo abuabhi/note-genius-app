@@ -1,4 +1,3 @@
-
 import { EnhancementFunction } from './types.ts';
 
 /**
@@ -269,13 +268,20 @@ Return only the formatted Q&A content - no explanations or additional notes.`;
       return `${baseContext}
 Do not include or repeat the note title in the output.
 
-**CRITICAL MISSION**: Transform this note into a comprehensive learning resource by adding **50-70% MORE content** while preserving every word of the original.
+**CRITICAL MISSION**: Transform this note into a comprehensive learning resource by adding **50-70% MORE content** while preserving EVERY SINGLE WORD of the original text.
 
-**📋 CONTENT EXPANSION REQUIREMENTS:**
-- **PRESERVE ORIGINAL**: Keep 100% of the original content exactly as written
-- **ADD SUBSTANTIAL CONTENT**: Expand by 50-70% with detailed explanations, examples, and context
+**⚠️ ABSOLUTELY CRITICAL RULES:**
+- **NEVER CHANGE ORIGINAL TEXT**: Do not alter, delete, summarize, rephrase, or modify ANY part of the original content
+- **PRESERVE EXACT WORDING**: Keep every sentence, paragraph, and word exactly as written in the original
+- **ONLY ADD NEW CONTENT**: You can ONLY add new content, never change existing content
+- **SUBSTANTIAL EXPANSION**: Add 50-70% MORE content in total length compared to the original
 - **MARK ALL ADDITIONS**: Wrap every new section with **\`**[ENRICHED]**\`** and **\`**[/ENRICHED]**\`** markers
 - **USE MARKDOWN**: Format everything in clean, professional Markdown
+
+**📊 TARGET METRICS:**
+- If original note is 17,000 words, output should be 25,500-28,900 words (50-70% increase)
+- Original content remains completely unchanged
+- All new content clearly marked with [ENRICHED] tags
 
 **🎯 WHAT TO ADD:**
 - **Detailed explanations** of complex concepts mentioned in the original
@@ -315,14 +321,21 @@ Photosynthesis occurs in two main stages:
 
 Next original paragraph continues here.
 
-**⚠️ STRICT RULES:**
-- Never alter, delete, or rephrase original content
-- Every addition must be in \`**[ENRICHED]**\` markers
-- Aim for 50-70% content increase overall
-- Keep enriched content educational and valuable
-- Maintain professional, academic tone
+**⚠️ ABSOLUTELY NON-NEGOTIABLE RULES:**
+- **NEVER** alter, delete, rephrase, summarize, or modify ANY original content
+- **ALWAYS** keep every single word of the original exactly as written
+- **EVERY** addition must be in \`**[ENRICHED]**\` markers
+- **ACHIEVE** 50-70% content increase in total word count
+- **MAINTAIN** educational value and professional, academic tone
+- **INTERSPERSE** enriched content throughout, not just at the end
 
-Return the complete enriched note with original content preserved and substantial additions clearly marked.`;
+**🎯 SUCCESS CRITERIA:**
+- Original content is 100% preserved verbatim
+- New content adds substantial educational value
+- Total output is significantly longer than input (50-70% increase)
+- All additions are clearly marked with [ENRICHED] tags
+
+Return the complete enriched note with ALL original content preserved exactly as written and substantial educational additions clearly marked.`;
 
     default:
       return `${baseContext}
