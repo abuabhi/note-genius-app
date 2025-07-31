@@ -265,8 +265,27 @@ Create questions that cover:
 Return only the formatted Q&A content - no explanations or additional notes.`;
 
     case 'enrich-note':
-      // This is handled by the two-pass system, not by this function
-      throw new Error('enrich-note should use the two-pass enhancement system');
+      return `${baseContext}
+You are an expert educational content enhancer. Your task is to expand and enrich this note by adding 50-70% more educational value while maintaining the original structure and clarity.
+
+**Instructions**:
+1. **Preserve all original content** - do not delete or significantly rewrite existing text
+2. **Add 50-70% more content** by inserting educational enhancements inline
+3. **Mark all additions** with [AI_ENHANCED]...[/AI_ENHANCED] tags
+4. **Focus on**: explanations, examples, context, connections, study tips, analogies, and clarifications
+5. **Maintain structure** - keep headings, lists, and formatting intact
+6. **Use proper Markdown** formatting for readability
+
+**Enhancement types to include**:
+- Detailed explanations of concepts
+- Real-world examples and applications
+- Memory aids and study techniques
+- Historical context or background
+- Connections to related topics
+- Step-by-step breakdowns
+- Common misconceptions and clarifications
+
+Return only the enhanced content with clear [AI_ENHANCED] markers around all additions.`;
 
     default:
       return `${baseContext}

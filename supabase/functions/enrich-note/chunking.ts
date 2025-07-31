@@ -3,7 +3,7 @@ import { createPrompt } from './prompts.ts';
 import type { EnhancementFunction, TokenUsage } from './types.ts';
 
 /**
- * Process large content by chunking it into manageable pieces
+ * Process large content by chunking it into manageable pieces with overlap and context
  */
 export const processLargeContent = async (
   content: string,
@@ -14,9 +14,9 @@ export const processLargeContent = async (
 ): Promise<{ enhancedContent: string; tokenUsage?: TokenUsage }> => {
   console.log(`🔄 Processing large content: ${content.length} characters`);
   
-  // Split content into chunks of ~20,000 characters at logical boundaries
-  const chunks = smartChunkContent(content, 20000);
-  console.log(`📦 Split into ${chunks.length} chunks`);
+  // Use optimized chunk size for better token management (15,000 chars ≈ 4,000 tokens)
+  const chunks = smartChunkContentWithContext(content, 15000);
+  console.log(`📦 Split into ${chunks.length} chunks with context overlap`);
   
   let allEnhancedChunks: string[] = [];
   let totalTokenUsage: TokenUsage = {
@@ -25,14 +25,13 @@ export const processLargeContent = async (
     totalTokens: 0
   };
   
-  // Process each chunk
+  // Process each chunk with enhanced context
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
-    console.log(`🔄 Processing chunk ${i + 1}/${chunks.length} (${chunk.length} chars)`);
+    console.log(`🔄 Processing chunk ${i + 1}/${chunks.length} (${chunk.chunkContent.length} chars)`);
     
     try {
-      const chunkTitle = `${noteTitle} (Part ${i + 1}/${chunks.length})`;
-      const prompt = createPrompt(enhancementType, chunkTitle, chunk);
+      const prompt = createChunkedPrompt(enhancementType, noteTitle, chunk, i + 1, chunks.length);
       const result = await callOpenAI(prompt, openaiApiKey, signal);
       
       allEnhancedChunks.push(result.enhancedContent);
@@ -63,58 +62,201 @@ export const processLargeContent = async (
 };
 
 /**
- * Split content into chunks at logical boundaries (paragraphs, sentences)
+ * Split content into chunks with context and overlap for better continuity
  */
-function smartChunkContent(content: string, maxChunkSize: number): string[] {
-  const chunks: string[] = [];
+interface ChunkWithContext {
+  chunkContent: string;
+  sectionTitle: string;
+  chunkIndex: number;
+  totalChunks: number;
+  previousContext?: string;
+}
+
+function smartChunkContentWithContext(content: string, maxChunkSize: number): ChunkWithContext[] {
+  const chunks: ChunkWithContext[] = [];
   
-  // First, try to split by double newlines (paragraphs)
-  const paragraphs = content.split('\n\n');
+  // Extract any existing headings to maintain document structure
+  const headingMatches = content.match(/^#+\s+.+$/gm) || [];
+  
+  // First, try to split by headings if they exist
+  if (headingMatches.length > 1) {
+    const headingSections = content.split(/(?=^#+\s+.+$)/gm).filter(section => section.trim());
+    
+    for (let i = 0; i < headingSections.length; i++) {
+      const section = headingSections[i];
+      const sectionTitleMatch = section.match(/^#+\s+(.+)$/m);
+      const sectionTitle = sectionTitleMatch ? sectionTitleMatch[1].trim() : `Section ${i + 1}`;
+      
+      if (section.length <= maxChunkSize) {
+        chunks.push({
+          chunkContent: section.trim(),
+          sectionTitle,
+          chunkIndex: chunks.length + 1,
+          totalChunks: 0, // Will be updated later
+          previousContext: chunks.length > 0 ? getLastSentence(chunks[chunks.length - 1].chunkContent) : undefined
+        });
+      } else {
+        // Split large section further
+        const subChunks = splitLargeSectionWithContext(section, maxChunkSize, sectionTitle);
+        chunks.push(...subChunks);
+      }
+    }
+  } else {
+    // No clear headings, split by paragraphs with context
+    const paragraphChunks = splitByParagraphsWithContext(content, maxChunkSize);
+    chunks.push(...paragraphChunks);
+  }
+  
+  // Update total chunks count
+  chunks.forEach((chunk, index) => {
+    chunk.chunkIndex = index + 1;
+    chunk.totalChunks = chunks.length;
+    if (index > 0) {
+      chunk.previousContext = getLastSentence(chunks[index - 1].chunkContent);
+    }
+  });
+  
+  return chunks;
+}
+
+/**
+ * Split a large section into smaller chunks with context
+ */
+function splitLargeSectionWithContext(section: string, maxChunkSize: number, sectionTitle: string): ChunkWithContext[] {
+  const chunks: ChunkWithContext[] = [];
+  const paragraphs = section.split('\n\n');
   
   let currentChunk = '';
+  let subChunkIndex = 1;
   
   for (const paragraph of paragraphs) {
-    // If adding this paragraph would exceed limit, save current chunk
     if (currentChunk.length + paragraph.length > maxChunkSize && currentChunk.length > 0) {
-      chunks.push(currentChunk.trim());
+      chunks.push({
+        chunkContent: currentChunk.trim(),
+        sectionTitle: `${sectionTitle} (Part ${subChunkIndex})`,
+        chunkIndex: 0, // Will be updated later
+        totalChunks: 0, // Will be updated later
+      });
       currentChunk = paragraph + '\n\n';
+      subChunkIndex++;
     } else {
       currentChunk += paragraph + '\n\n';
     }
   }
   
-  // Add the last chunk if it has content
   if (currentChunk.trim().length > 0) {
-    chunks.push(currentChunk.trim());
+    chunks.push({
+      chunkContent: currentChunk.trim(),
+      sectionTitle: subChunkIndex > 1 ? `${sectionTitle} (Part ${subChunkIndex})` : sectionTitle,
+      chunkIndex: 0, // Will be updated later
+      totalChunks: 0, // Will be updated later
+    });
   }
   
-  // If we still have chunks that are too large, split by sentences
-  const finalChunks: string[] = [];
+  return chunks;
+}
+
+/**
+ * Split content by paragraphs when no clear headings exist
+ */
+function splitByParagraphsWithContext(content: string, maxChunkSize: number): ChunkWithContext[] {
+  const chunks: ChunkWithContext[] = [];
+  const paragraphs = content.split('\n\n');
   
-  for (const chunk of chunks) {
-    if (chunk.length <= maxChunkSize) {
-      finalChunks.push(chunk);
+  let currentChunk = '';
+  let chunkIndex = 1;
+  
+  for (const paragraph of paragraphs) {
+    if (currentChunk.length + paragraph.length > maxChunkSize && currentChunk.length > 0) {
+      chunks.push({
+        chunkContent: currentChunk.trim(),
+        sectionTitle: `Content Part ${chunkIndex}`,
+        chunkIndex: 0, // Will be updated later
+        totalChunks: 0, // Will be updated later
+      });
+      currentChunk = paragraph + '\n\n';
+      chunkIndex++;
     } else {
-      // Split large chunk by sentences
-      const sentences = chunk.split(/(?<=[.!?])\s+/);
-      let currentSentenceChunk = '';
-      
-      for (const sentence of sentences) {
-        if (currentSentenceChunk.length + sentence.length > maxChunkSize && currentSentenceChunk.length > 0) {
-          finalChunks.push(currentSentenceChunk.trim());
-          currentSentenceChunk = sentence + ' ';
-        } else {
-          currentSentenceChunk += sentence + ' ';
-        }
-      }
-      
-      if (currentSentenceChunk.trim().length > 0) {
-        finalChunks.push(currentSentenceChunk.trim());
-      }
+      currentChunk += paragraph + '\n\n';
     }
   }
   
-  return finalChunks;
+  if (currentChunk.trim().length > 0) {
+    chunks.push({
+      chunkContent: currentChunk.trim(),
+      sectionTitle: `Content Part ${chunkIndex}`,
+      chunkIndex: 0, // Will be updated later
+      totalChunks: 0, // Will be updated later
+    });
+  }
+  
+  return chunks;
+}
+
+/**
+ * Extract the last sentence from content for context overlap
+ */
+function getLastSentence(content: string): string {
+  const sentences = content.split(/(?<=[.!?])\s+/);
+  return sentences.length > 0 ? sentences[sentences.length - 1].trim() : '';
+}
+
+/**
+ * Create an optimized prompt for chunked content processing
+ */
+function createChunkedPrompt(
+  enhancementType: EnhancementFunction, 
+  noteTitle: string, 
+  chunk: ChunkWithContext, 
+  chunkIndex: number, 
+  totalChunks: number
+): string {
+  const contextInfo = chunk.previousContext 
+    ? `\n**Previous context**: ${chunk.previousContext}\n\n`
+    : '';
+  
+  const chunkInfo = totalChunks > 1 
+    ? `This is part ${chunkIndex} of ${totalChunks} from the document "${noteTitle}". Section: "${chunk.sectionTitle}".`
+    : '';
+  
+  if (enhancementType === 'enrich-note') {
+    return `You are an expert educational content enhancer. Your task is to expand and enrich the following note content by adding 50-70% more educational value while maintaining the original structure and clarity.
+
+**Document**: ${noteTitle}
+${chunkInfo}
+
+${contextInfo}**Content to enhance**:
+${chunk.chunkContent}
+
+**Instructions**:
+1. **Preserve all original content** - do not delete or significantly rewrite existing text
+2. **Add 50-70% more content** by inserting educational enhancements inline
+3. **Mark all additions** with [AI_ENHANCED]...[/AI_ENHANCED] tags
+4. **Focus on**: explanations, examples, context, connections, study tips, analogies, and clarifications
+5. **Maintain structure** - keep headings, lists, and formatting intact
+6. **Use proper Markdown** formatting for readability
+7. **Ensure continuity** - if this is a middle chunk, connect smoothly with the previous context
+
+**Enhancement types to include**:
+- Detailed explanations of concepts
+- Real-world examples and applications
+- Memory aids and study techniques
+- Historical context or background
+- Connections to related topics
+- Step-by-step breakdowns
+- Common misconceptions and clarifications
+
+Return only the enhanced content with clear [AI_ENHANCED] markers around all additions.`;
+  }
+  
+  // For other enhancement types, use simpler chunked approach
+  return `Document: ${noteTitle}
+${chunkInfo}
+
+${contextInfo}Content:
+${chunk.chunkContent}
+
+Please process this content for: ${enhancementType}`;
 }
 
 /**
@@ -237,8 +379,49 @@ function combineForMarkdown(chunks: string[]): string {
 }
 
 /**
- * Combine enriched note chunks maintaining structure
+ * Combine enriched note chunks maintaining structure and removing overlap
  */
 function combineForEnrichedNote(chunks: string[]): string {
-  return chunks.join('\n\n');
+  if (chunks.length === 1) {
+    return chunks[0];
+  }
+  
+  let combinedContent = '';
+  
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    
+    if (i === 0) {
+      // First chunk - include everything
+      combinedContent = chunk;
+    } else {
+      // Subsequent chunks - remove potential overlap
+      const cleanedChunk = removePotentialOverlap(chunk, combinedContent);
+      combinedContent += '\n\n' + cleanedChunk;
+    }
+  }
+  
+  return combinedContent.trim();
+}
+
+/**
+ * Remove potential overlap between chunks by checking for repeated sentences
+ */
+function removePotentialOverlap(newChunk: string, existingContent: string): string {
+  const newLines = newChunk.split('\n');
+  const existingLines = existingContent.split('\n');
+  
+  // Find where the new chunk should start by looking for the first unique line
+  let startIndex = 0;
+  for (let i = 0; i < Math.min(newLines.length, 5); i++) {
+    const line = newLines[i].trim();
+    if (line.length > 10 && !existingLines.some(existingLine => 
+      existingLine.trim().includes(line) || line.includes(existingLine.trim())
+    )) {
+      startIndex = i;
+      break;
+    }
+  }
+  
+  return newLines.slice(startIndex).join('\n').trim();
 }

@@ -196,11 +196,11 @@ serve(async (req) => {
         };
         
       } else if (enhancementType === 'enrich-note' && noteContent.length > 15000) {
-        console.log(`📚 [${requestId}] Large content for enrich-note detected (${noteContent.length} chars), using chunking approach`);
+        console.log(`📚 [${requestId}] Large content for enrich-note detected (${noteContent.length} chars), using optimized chunking`);
         const result = await processLargeContent(noteContent, enhancementType, noteTitle, openaiApiKey, controller.signal);
         enhancedContent = result.enhancedContent;
         tokenUsage = result.tokenUsage;
-        processingStats = { method: 'chunking', reason: 'content_too_large_for_enrichment' };
+        processingStats = { method: 'optimized_chunking', reason: 'content_too_large_for_enrichment' };
       } else if (noteContent.length > 30000) {
         console.log(`📚 [${requestId}] Large content detected, using chunking approach`);
         const result = await processLargeContent(noteContent, enhancementType, noteTitle, openaiApiKey, controller.signal);
