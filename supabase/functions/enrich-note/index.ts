@@ -175,32 +175,33 @@ serve(async (req) => {
     
     try {
       if (enhancementType === 'enrich-note') {
-        console.log(`🚀 [${requestId}] Using Two-Pass Enhancement System`);
-        const { performTwoPassEnhancement } = await import('./two-pass-enhancement.ts');
-        
-        const result = await performTwoPassEnhancement(noteContent, noteTitle, openaiApiKey, controller.signal);
-        enhancedContent = result.enhancedContent;
-        
-        // Estimate token usage for two-pass system
-        const estimatedTokens = Math.ceil((noteContent.length + enhancedContent.length) / 3);
-        tokenUsage = {
-          promptTokens: Math.ceil(noteContent.length / 3),
-          completionTokens: Math.ceil((enhancedContent.length - noteContent.length) / 3),
-          totalTokens: estimatedTokens
-        };
-        
-        processingStats = {
-          conceptsExtracted: result.conceptsExtracted,
-          enhancementsAdded: result.enhancementsAdded,
-          method: 'two-pass-enhancement'
-        };
-        
-      } else if (enhancementType === 'enrich-note' && noteContent.length > 15000) {
-        console.log(`📚 [${requestId}] Large content for enrich-note detected (${noteContent.length} chars), using optimized chunking`);
-        const result = await processLargeContent(noteContent, enhancementType, noteTitle, openaiApiKey, controller.signal);
-        enhancedContent = result.enhancedContent;
-        tokenUsage = result.tokenUsage;
-        processingStats = { method: 'optimized_chunking', reason: 'content_too_large_for_enrichment' };
+        if (noteContent.length > 15000) {
+          console.log(`📚 [${requestId}] Large content for enrich-note detected (${noteContent.length} chars), using optimized chunking`);
+          const result = await processLargeContent(noteContent, enhancementType, noteTitle, openaiApiKey, controller.signal);
+          enhancedContent = result.enhancedContent;
+          tokenUsage = result.tokenUsage;
+          processingStats = { method: 'optimized_chunking', reason: 'content_too_large_for_enrichment' };
+        } else {
+          console.log(`🚀 [${requestId}] Using Two-Pass Enhancement System`);
+          const { performTwoPassEnhancement } = await import('./two-pass-enhancement.ts');
+          
+          const result = await performTwoPassEnhancement(noteContent, noteTitle, openaiApiKey, controller.signal);
+          enhancedContent = result.enhancedContent;
+          
+          // Estimate token usage for two-pass system
+          const estimatedTokens = Math.ceil((noteContent.length + enhancedContent.length) / 3);
+          tokenUsage = {
+            promptTokens: Math.ceil(noteContent.length / 3),
+            completionTokens: Math.ceil((enhancedContent.length - noteContent.length) / 3),
+            totalTokens: estimatedTokens
+          };
+          
+          processingStats = {
+            conceptsExtracted: result.conceptsExtracted,
+            enhancementsAdded: result.enhancementsAdded,
+            method: 'two-pass-enhancement'
+          };
+        }
       } else if (noteContent.length > 30000) {
         console.log(`📚 [${requestId}] Large content detected, using chunking approach`);
         const result = await processLargeContent(noteContent, enhancementType, noteTitle, openaiApiKey, controller.signal);
