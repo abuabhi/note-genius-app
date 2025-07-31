@@ -165,19 +165,42 @@ serve(async (req) => {
     // Set up abort controller for timeout management
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      console.error(`❌ [${requestId}] Processing timeout after 45 seconds`);
+      console.error(`❌ [${requestId}] Processing timeout after 60 seconds`);
       controller.abort();
-    }, 45000); // 45 second timeout for processing
+    }, 60000); // 60 second timeout for two-pass processing
     
     let enhancedContent: string;
     let tokenUsage;
+    let processingStats = {};
     
     try {
-      if (noteContent.length > 30000) {
+      if (enhancementType === 'enrich-note') {
+        console.log(`🚀 [${requestId}] Using Two-Pass Enhancement System`);
+        const { performTwoPassEnhancement } = await import('./two-pass-enhancement.ts');
+        
+        const result = await performTwoPassEnhancement(noteContent, noteTitle, openaiApiKey, controller.signal);
+        enhancedContent = result.enhancedContent;
+        
+        // Estimate token usage for two-pass system
+        const estimatedTokens = Math.ceil((noteContent.length + enhancedContent.length) / 3);
+        tokenUsage = {
+          promptTokens: Math.ceil(noteContent.length / 3),
+          completionTokens: Math.ceil((enhancedContent.length - noteContent.length) / 3),
+          totalTokens: estimatedTokens
+        };
+        
+        processingStats = {
+          conceptsExtracted: result.conceptsExtracted,
+          enhancementsAdded: result.enhancementsAdded,
+          method: 'two-pass-enhancement'
+        };
+        
+      } else if (noteContent.length > 30000) {
         console.log(`📚 [${requestId}] Large content detected, using chunking approach`);
         const result = await processLargeContent(noteContent, enhancementType, noteTitle, openaiApiKey, controller.signal);
         enhancedContent = result.enhancedContent;
         tokenUsage = result.tokenUsage;
+        processingStats = { method: 'chunking' };
       } else {
         console.log(`📝 [${requestId}] Standard content processing`);
         const prompt = createPrompt(enhancementType, noteTitle, noteContent);
@@ -185,6 +208,7 @@ serve(async (req) => {
         const openAIResult = await callOpenAI(prompt, openaiApiKey, controller.signal);
         enhancedContent = openAIResult.enhancedContent;
         tokenUsage = openAIResult.tokenUsage;
+        processingStats = { method: 'standard' };
       }
       
       clearTimeout(timeoutId);
@@ -192,7 +216,8 @@ serve(async (req) => {
         originalLength: noteContent.length,
         enhancedLength: enhancedContent.length,
         tokenUsage,
-        processingTime: Date.now() - startTime
+        processingTime: Date.now() - startTime,
+        ...processingStats
       });
       
     } catch (openAIError) {

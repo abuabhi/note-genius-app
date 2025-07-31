@@ -265,77 +265,8 @@ Create questions that cover:
 Return only the formatted Q&A content - no explanations or additional notes.`;
 
     case 'enrich-note':
-      return `${baseContext}
-Do not include or repeat the note title in the output.
-
-**CRITICAL MISSION**: Transform this note into a comprehensive learning resource by adding **50-70% MORE content** while preserving EVERY SINGLE WORD of the original text.
-
-**⚠️ ABSOLUTELY CRITICAL RULES:**
-- **NEVER CHANGE ORIGINAL TEXT**: Do not alter, delete, summarize, rephrase, or modify ANY part of the original content
-- **PRESERVE EXACT WORDING**: Keep every sentence, paragraph, and word exactly as written in the original
-- **ONLY ADD NEW CONTENT**: You can ONLY add new content, never change existing content
-- **SUBSTANTIAL EXPANSION**: Add 50-70% MORE content in total length compared to the original
-- **MARK ALL ADDITIONS**: Wrap every new section with **\`**[ENRICHED]**\`** and **\`**[/ENRICHED]**\`** markers
-- **USE MARKDOWN**: Format everything in clean, professional Markdown
-
-**📊 TARGET METRICS:**
-- If original note is 17,000 words, output should be 25,500-28,900 words (50-70% increase)
-- Original content remains completely unchanged
-- All new content clearly marked with [ENRICHED] tags
-
-**🎯 WHAT TO ADD:**
-- **Detailed explanations** of complex concepts mentioned in the original
-- **Real-world examples** and practical applications
-- **Background context** and historical information where relevant
-- **Step-by-step breakdowns** of processes
-- **Connections** to related topics and broader themes
-- **Memory aids** and study tips
-- **Technical details** and specifications where appropriate
-- **Visual descriptions** and analogies to aid understanding
-
-**🏗️ STRUCTURE APPROACH:**
-1. Keep the original content in its exact sequence
-2. After each paragraph or concept, add enriched content in \`**[ENRICHED]**\` markers
-3. Use proper Markdown hierarchy (\`##\`, \`###\`, bullet points, **bold** text)
-4. Ensure enriched sections flow naturally with the original content
-5. Make the enriched content visually distinct but contextually integrated
-
-**📐 EXAMPLE FORMAT:**
-
-Original paragraph about photosynthesis.
-
-**[ENRICHED]**
-
-### Detailed Process Breakdown
-
-Photosynthesis occurs in two main stages:
-
-- **Light-dependent reactions**: Occur in the thylakoid membranes where chlorophyll absorbs light energy
-- **Light-independent reactions (Calvin cycle)**: Take place in the stroma where CO₂ is converted to glucose
-
-**Real-world significance**: This process produces approximately 330 billion tons of organic compounds annually, supporting virtually all life on Earth.
-
-**Memory aid**: Remember "Light → ATP → Sugar" as the basic flow of photosynthesis.
-
-**[/ENRICHED]**
-
-Next original paragraph continues here.
-
-**⚠️ ABSOLUTELY NON-NEGOTIABLE RULES:**
-- **NEVER** alter, delete, rephrase, summarize, or modify ANY original content
-- **ALWAYS** keep every single word of the original exactly as written
-- **EVERY** addition must be in \`**[ENRICHED]**\` markers
-- **ACHIEVE** 50-70% content increase in total word count
-- **MAINTAIN** educational value and professional, academic tone
-- **INTERSPERSE** enriched content throughout, not just at the end
-
-**🎯 SUCCESS CRITERIA:**
-- Original content is 100% preserved verbatim
-- New content adds substantial educational value
-- Total output is significantly longer than input (50-70% increase)
-- All additions are clearly marked with [ENRICHED] tags
-
-Return the complete enriched note with ALL original content preserved exactly as written and substantial educational additions clearly marked.`;
+      // This is handled by the two-pass system, not by this function
+      throw new Error('enrich-note should use the two-pass enhancement system');
 
     default:
       return `${baseContext}

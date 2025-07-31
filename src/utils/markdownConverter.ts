@@ -58,11 +58,13 @@ export const markdownToHtml = (markdown: string): string => {
     
     let processedBlock = block.trim();
     
-    // Enhanced content (AI-generated) - process first with improved regex
-    if (/(\*\*)?(\[ENRICHED\])/i.test(processedBlock)) {
-      // Handle multiple variations: [ENRICHED], **[ENRICHED]**, [AI_ENHANCED], etc.
-      processedBlock = processedBlock.replace(/(\*\*)?(\[(?:AI_)?ENRICHED\])(\*\*)?(.*?)(\*\*)?(\[\/(?:AI_)?ENRICHED\])(\*\*)?/gis, 
-        '<div class="ai-enriched-content">$4</div>');
+    // Enhanced content (AI-generated) - process first with robust regex
+    // This handles: [ENRICHED], **[ENRICHED]**, [AI_ENHANCED], etc. with case-insensitive matching
+    const enrichedRegex = /(\*\*)?(\[(?:AI_)?ENRICHED\])(\*\*)?([\s\S]*?)(\*\*)?(\[\/(?:AI_)?ENRICHED\])(\*\*)?/gi;
+    if (enrichedRegex.test(processedBlock)) {
+      // Reset regex for replacement
+      enrichedRegex.lastIndex = 0;
+      processedBlock = processedBlock.replace(enrichedRegex, '<div class="ai-enriched-content">$4</div>');
     }
     
     // Questions (Q1., Q2., etc.) - process after enriched content
