@@ -49,18 +49,19 @@ serve(async (req) => {
 Follow these rules:
 
 1. Extract the **essential insights** or facts from the text — one per line.
-2. Present each key point as a standalone bullet (•), written in full sentence format if possible.
+2. Present each key point as a standalone bullet using the • character, written in full sentence format if possible.
 3. Do **not** add new interpretations or summaries — only distill and extract what's already there.
 4. Do **not** highlight, bold, or color any individual terms.
-5. Format each bullet point with proper HTML line breaks and spacing:
-   • First key point<br><br>
-   • Second key point<br><br>
-   • Third key point<br><br>
-6. Ensure proper spacing between each bullet for readability.
-7. Limit to **8–12 key points** unless more are clearly justified by the content length.
-8. Do NOT include any headers or titles - start directly with the bullet points.
+5. Format each bullet point on its own line with a single newline between points.
+6. Limit to **8–12 key points** unless more are clearly justified by the content length.
+7. Do NOT include any headers, titles, or HTML formatting - return only plain text.
 
-Return only the clean, formatted bullet points suitable for direct web rendering (no markdown, no wrapper HTML).`;
+Example format:
+• First key point
+• Second key point
+• Third key point
+
+Return only plain text with bullet points, no HTML or markdown formatting.`;
         userPrompt = `Extract the key points from this text:\n\n${text}`;
         break;
         
@@ -70,18 +71,22 @@ Return only the clean, formatted bullet points suitable for direct web rendering
 Your job is to:
 - Identify the top 10 most relevant questions a student should be able to answer after reading the content.
 - Provide clear, accurate answers directly based on the note.
-- Format the questions using bold text and a Mint Green color (#3EB489) suitable for web display.
+- Format as plain text with simple numbering.
 
 Follow these rules:
 
 1. Questions must come directly from the content — no guessing or external facts.
 2. Provide a **mix of recall, concept, and reasoning questions**.
 3. Limit each answer to 2–5 sentences.
-4. Do not add headers, summaries, or instructions — return only the formatted Q&A pairs.
-5. Format each question using this HTML tag:
-   <div style="color:#3EB489; font-weight:bold; margin-top:12px;">QX. Your question here?</div>
+4. Do not add headers, summaries, or instructions — return only the Q&A pairs.
+5. Format each question-answer pair as:
+   Q1. Your question here?
+   Answer: Your answer here.
+   
+   Q2. Your next question?
+   Answer: Your answer here.
 
-Return only the clean, formatted content suitable for direct web rendering.`;
+Return only plain text with simple numbering, no HTML or markdown formatting.`;
         userPrompt = `Generate study questions from this text:\n\n${text}`;
         break;
 
@@ -90,9 +95,10 @@ Return only the clean, formatted content suitable for direct web rendering.`;
 
 Your formatting rules are:
 
-1. Convert major sections into headings and apply this format:
-   <div style="color:#3EB489; font-weight:bold; font-size:1.2em; margin-top:10px;">Heading Text</div>
-   This applies your webapp's Green Mint color (#3EB489).
+1. Convert major sections into headings using markdown format:
+   # Main Heading
+   ## Sub Heading
+   ### Minor Heading
 
 2. Use bullet points (•) for lists and unordered concepts.
 
@@ -106,9 +112,9 @@ Your formatting rules are:
 
 7. Do **not** summarize, rephrase, or remove any content from the original input. Only format it for readability.
 
-8. Return the final result as raw HTML-compatible text (for rendering inside a styled web component). Do not wrap it in HTML or provide markdown.
+8. Return clean markdown text with proper line breaks and structure.
 
-Only return the structured, formatted output based on the raw text.`;
+Return only plain text with markdown formatting, no HTML.`;
         userPrompt = `Format this text for better readability:\n\n${text}`;
         break;
 
@@ -121,12 +127,13 @@ Here's how to perform the enhancement:
 2. Insert the additional content **inline**, immediately following the related idea or paragraph.
 3. Do not rephrase or rewrite the original content — preserve it as-is.
 4. Ensure all additions are **context-aware**, relevant, and educational — examples, definitions, explanations, analogies, or clarifications.
-5. Wrap each new block of AI-added content using the following HTML style:
-   <div style="background-color:#E6F7F1; border-left:4px solid #3EB489; padding:8px; margin:8px 0;">
-     [AI_ENHANCED] Your added content goes here.
-   </div>
+5. Mark each new block of AI-added content with a clear text marker:
+   
+   [AI_ENHANCED] Your added content goes here.
+   
+6. Use simple line breaks to separate enhanced sections from original content.
 
-Return the enhanced content suitable for direct web rendering.`;
+Return the enhanced content as plain text with clear markers for AI-added sections.`;
         userPrompt = `Enhance this educational content with additional context and explanations:\n\n${text}`;
         break;
         
