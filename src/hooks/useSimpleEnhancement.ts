@@ -11,6 +11,13 @@ export const useSimpleEnhancement = (note: Note, onNoteUpdate?: () => void) => {
     
     try {
       const noteContent = note.content || note.description || '';
+      const originalWordCount = noteContent.split(/\s+/).length;
+      console.log(`🔍 [Enhancement Debug] Starting enhancement:`, {
+        type: enhancementType,
+        originalLength: noteContent.length,
+        originalWordCount,
+        noteId: note.id
+      });
       
       // Use enrich-note function for enrichment requests to handle large content with chunking
       if (enhancementType === 'enrich-note') {
@@ -25,6 +32,17 @@ export const useSimpleEnhancement = (note: Note, onNoteUpdate?: () => void) => {
 
         if (error) throw error;
         if (!data.enhancedContent) throw new Error('Enhancement failed - no content returned');
+
+        const enhancedWordCount = data.enhancedContent.split(/\s+/).length;
+        const hasEnrichedTags = /\[(?:AI_)?ENRICHED\]/i.test(data.enhancedContent);
+        
+        console.log(`✅ [Enhancement Debug] Enrichment completed:`, {
+          enhancedLength: data.enhancedContent.length,
+          enhancedWordCount,
+          wordCountIncrease: enhancedWordCount - originalWordCount,
+          percentageIncrease: ((enhancedWordCount - originalWordCount) / originalWordCount * 100).toFixed(1) + '%',
+          hasEnrichedTags
+        });
 
         toast.success('Note enrichment completed successfully!');
         
@@ -44,6 +62,14 @@ export const useSimpleEnhancement = (note: Note, onNoteUpdate?: () => void) => {
 
         if (error) throw error;
         if (!data.success) throw new Error(data.error);
+
+        const resultWordCount = data.result.split(/\s+/).length;
+        console.log(`✅ [Enhancement Debug] Enhancement completed:`, {
+          type: enhancementType,
+          resultLength: data.result.length,
+          resultWordCount,
+          wordCountChange: resultWordCount - originalWordCount
+        });
 
         toast.success(`${enhancementType.replace('-', ' ')} completed successfully!`);
         

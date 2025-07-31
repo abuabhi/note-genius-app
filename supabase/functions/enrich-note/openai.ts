@@ -13,7 +13,7 @@ export const callOpenAI = async (prompt: string, apiKey: string, signal?: AbortS
       },
       signal,
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'user',
@@ -21,7 +21,7 @@ export const callOpenAI = async (prompt: string, apiKey: string, signal?: AbortS
           }
         ],
         temperature: 0.3, // Lower temperature for consistency
-        max_tokens: 4000, // Increased for better quality output
+        max_tokens: 8000, // Increased for content expansion
         stream: false
       }),
     });
