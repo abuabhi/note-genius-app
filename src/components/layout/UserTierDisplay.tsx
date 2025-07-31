@@ -2,12 +2,13 @@
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useUserTier, UserTier } from "@/hooks/useUserTier";
-import { CirclePercent, BarChart, ArrowRight } from "lucide-react";
+import { CirclePercent, BarChart, ArrowRight, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { startTransition } from "react";
+import { useAuth } from "@/hooks/auth/useAuth";
 
 // Updated badge variants to match the mint theme
 const tierBadgeVariants = {
@@ -21,33 +22,40 @@ interface UsageStats {
   notesCount: number;
   flashcardSetsCount: number;
   storageUsed: number;
+  aiEnrichmentUsage: number;
 }
 
 export function UserTierDisplay() {
   const { userTier, tierLimits, isLoading } = useUserTier();
+  const { user } = useAuth();
   const navigate = useNavigate();
   
   const { data: usageStats, isLoading: isLoadingUsage } = useQuery({
-    queryKey: ["userUsageStats"],
+    queryKey: ["userUsageStats", user?.id],
     queryFn: async () => {
-      // Get notes count
+      if (!user?.id) return null;
+      
+      // Get notes count with user filter
       const { count: notesCount, error: notesError } = await supabase
         .from('notes')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
       
       if (notesError) console.error('Error fetching notes count:', notesError);
       
-      // Fix: Get flashcard sets count instead of flashcards count
+      // Get flashcard sets count with user filter
       const { count: flashcardSetsCount, error: flashcardSetsError } = await supabase
         .from('flashcard_sets')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
       
       if (flashcardSetsError) console.error('Error fetching flashcard sets count:', flashcardSetsError);
       
       // Get actual storage used - calculate based on note content size
       const { data: notes, error: contentError } = await supabase
         .from('notes')
-        .select('content');
+        .select('content')
+        .eq('user_id', user.id);
         
       if (contentError) console.error('Error fetching notes content:', contentError);
       
@@ -60,13 +68,24 @@ export function UserTierDisplay() {
       // Convert bytes to MB with 2 decimal places
       const storageMB = Math.round((contentSize / (1024 * 1024)) * 100) / 100;
       
+      // Get AI enrichment usage for current month
+      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+      const { count: aiEnrichmentCount, error: aiError } = await supabase
+        .from('note_enrichment_usage')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('month_year', currentMonth);
+      
+      if (aiError) console.error('Error fetching AI enrichment usage:', aiError);
+      
       return {
         notesCount: notesCount || 0,
         flashcardSetsCount: flashcardSetsCount || 0,
         storageUsed: storageMB || 0,
+        aiEnrichmentUsage: aiEnrichmentCount || 0,
       };
     },
-    enabled: !!userTier,
+    enabled: !!userTier && !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     refetchOnWindowFocus: false, // Prevent automatic refetch on focus
   });
@@ -165,6 +184,23 @@ export function UserTierDisplay() {
             </div>
             <Progress 
               value={isLoadingUsage ? 45 : getUsagePercentage(usageStats?.storageUsed || 0, tierLimits.max_storage_mb)}
+              className="h-1"
+            />
+          </div>
+          
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">AI Enrichment</span>
+              </div>
+              <span className="text-xs font-medium">
+                {isLoadingUsage ? '...' : usageStats?.aiEnrichmentUsage || 0}/
+                {formatLimitDisplay(tierLimits.note_enrichment_limit_per_month)}
+              </span>
+            </div>
+            <Progress 
+              value={isLoadingUsage ? 20 : getUsagePercentage(usageStats?.aiEnrichmentUsage || 0, tierLimits.note_enrichment_limit_per_month)}
               className="h-1"
             />
           </div>
