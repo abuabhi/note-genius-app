@@ -34,6 +34,8 @@ export const callOpenAI = async (prompt: string, apiKey: string, signal?: AbortS
         throw new Error('AI service is busy. Please try again in a moment.');
       } else if (response.status === 401) {
         throw new Error('AI service authentication failed. Please check configuration.');
+      } else if (response.status === 400 && errorText.includes('too lengthy')) {
+        throw new Error('Content too lengthy for AI processing. The system will automatically use chunking for large content.');
       } else if (response.status >= 500) {
         throw new Error('AI service is temporarily unavailable. Please try again.');
       } else {

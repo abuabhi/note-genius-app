@@ -195,14 +195,20 @@ serve(async (req) => {
           method: 'two-pass-enhancement'
         };
         
+      } else if (enhancementType === 'enrich-note' && noteContent.length > 15000) {
+        console.log(`📚 [${requestId}] Large content for enrich-note detected (${noteContent.length} chars), using chunking approach`);
+        const result = await processLargeContent(noteContent, enhancementType, noteTitle, openaiApiKey, controller.signal);
+        enhancedContent = result.enhancedContent;
+        tokenUsage = result.tokenUsage;
+        processingStats = { method: 'chunking', reason: 'content_too_large_for_enrichment' };
       } else if (noteContent.length > 30000) {
         console.log(`📚 [${requestId}] Large content detected, using chunking approach`);
         const result = await processLargeContent(noteContent, enhancementType, noteTitle, openaiApiKey, controller.signal);
         enhancedContent = result.enhancedContent;
         tokenUsage = result.tokenUsage;
-        processingStats = { method: 'chunking' };
+        processingStats = { method: 'chunking', reason: 'content_exceeds_standard_limit' };
       } else {
-        console.log(`📝 [${requestId}] Standard content processing`);
+        console.log(`📝 [${requestId}] Standard content processing (${noteContent.length} chars)`);
         const prompt = createPrompt(enhancementType, noteTitle, noteContent);
         console.log(`🤖 [${requestId}] Calling OpenAI API with prompt length: ${prompt.length}`);
         const openAIResult = await callOpenAI(prompt, openaiApiKey, controller.signal);
