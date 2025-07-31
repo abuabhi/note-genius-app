@@ -33,7 +33,6 @@ export default function TestEnhancementPage() {
   const { noteId } = useParams();
   const [inputText, setInputText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isSavingToDb, setIsSavingToDb] = useState(false);
   const [result, setResult] = useState<TestResult | null>(null);
   const [startTime, setStartTime] = useState<number>(0);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -82,25 +81,37 @@ export default function TestEnhancementPage() {
     };
   }, []);
 
-  // Background worker registration
+  // Background worker registration - uses optimized simple-enhance-note
   useEffect(() => {
     registerWorker('enhance-text', async (data) => {
       try {
-        const { data: result, error } = await supabase.functions.invoke('test-enhance', {
-          body: { text: data.text }
+        // Use simple-enhance-note for background processing with DB save
+        const { data: result, error } = await supabase.functions.invoke('simple-enhance-note', {
+          body: { 
+            text: data.text,
+            noteId: data.noteId,
+            enhancementType: 'questions'
+          }
         });
         
         if (error) throw error;
         
         // Update state with result
         setResult({
-          ...result,
+          success: result.success,
+          result: result.enhancedContent ? {
+            summary_title: 'Background Enhancement Complete',
+            summary_overview: result.enhancedContent.substring(0, 200) + '...',
+            key_points: ['Enhancement completed in background'],
+            notable_terms: [],
+            quote_or_stat: 'N/A'
+          } : undefined,
           total_time: performance.now() - data.startTime
         });
         setIsProcessing(false);
         
         if (result.success) {
-          toast.success('Enhancement completed in background!');
+          toast.success('Enhancement completed and saved to database!');
         } else {
           toast.error('Enhancement failed: ' + result.error);
         }
@@ -116,35 +127,21 @@ export default function TestEnhancementPage() {
     });
   }, [registerWorker]);
 
-  // Background database save function
-  const saveToDatabase = async (enhancementResult: EnhancementResult) => {
-    if (!noteId) {
-      console.warn('No note ID available for saving');
-      return;
-    }
-
-    setIsSavingToDb(true);
-    try {
-      console.log('💾 Saving enhancement to database...', { noteId });
+  // Handle tab visibility changes during processing
+  useEffect(() => {
+    if (!isVisible && isProcessing && abortControllerRef.current) {
+      console.log('🔄 Tab hidden during processing, switching to background mode');
+      addJob('enhance-text', { 
+        text: inputText, 
+        startTime: startTime,
+        noteId 
+      }, 'high');
       
-      const { data, error } = await supabase.functions.invoke('simple-enhance-note', {
-        body: {
-          noteId,
-          enhancementData: enhancementResult
-        }
-      });
-
-      if (error) throw error;
-
-      console.log('✅ Enhancement saved to database successfully');
-      toast.success('Enhancement saved to note');
-    } catch (error) {
-      console.error('❌ Failed to save enhancement to database:', error);
-      toast.error('Failed to save enhancement to note');
-    } finally {
-      setIsSavingToDb(false);
+      // Abort foreground request
+      abortControllerRef.current.abort();
+      toast.info('Processing moved to background');
     }
-  };
+  }, [isVisible, isProcessing, inputText, startTime, noteId, addJob]);
 
   const handleEnhance = async () => {
     if (!inputText.trim()) {
@@ -172,16 +169,18 @@ export default function TestEnhancementPage() {
         timestamp: new Date().toISOString()
       });
 
-      // Start background job if tab becomes hidden
-      if (!isVisible) {
-        addJob('enhance-text', { text: inputText, startTime: start }, 'high');
-        toast.info('Generation will continue in background');
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke('test-enhance', {
-        body: { text: inputText }
-      });
+      // Use simple-enhance-note for optimized processing with background DB save
+      const { data, error } = noteId 
+        ? await supabase.functions.invoke('simple-enhance-note', {
+            body: { 
+              text: inputText,
+              noteId,
+              enhancementType: 'questions'
+            }
+          })
+        : await supabase.functions.invoke('test-enhance', {
+            body: { text: inputText }
+          });
 
       // Check if request was aborted
       if (abortControllerRef.current?.signal.aborted) {
@@ -207,21 +206,33 @@ export default function TestEnhancementPage() {
         success: data.success,
         processingTime: data.processing_time,
         totalTime: totalTime,
-        tokensUsed: data.tokens_used
+        enhancedContent: noteId ? !!data.enhancedContent : !!data.result
       });
 
-      setResult({
+      // Transform response based on function used
+      const result = noteId && data.enhancedContent ? {
+        success: true,
+        result: {
+          summary_title: 'Enhanced Content Generated',
+          summary_overview: data.enhancedContent.substring(0, 200) + '...',
+          key_points: ['Content enhanced and saved to database'],
+          notable_terms: [],
+          quote_or_stat: 'N/A'
+        },
+        processing_time: data.processing_time,
+        total_time: totalTime
+      } : {
         ...data,
         total_time: totalTime
-      });
+      };
+
+      setResult(result);
 
       if (data.success) {
-        toast.success(`Enhancement completed in ${(totalTime / 1000).toFixed(1)}s`);
-        
-        // Save to database in background
-        if (data.result) {
-          saveToDatabase(data.result);
-        }
+        const message = noteId 
+          ? `Enhancement completed and saved in ${(totalTime / 1000).toFixed(1)}s`
+          : `Enhancement completed in ${(totalTime / 1000).toFixed(1)}s`;
+        toast.success(message);
       } else {
         toast.error('Enhancement failed: ' + data.error);
       }
@@ -332,10 +343,9 @@ export default function TestEnhancementPage() {
                       {(result.processing_time / 1000).toFixed(1)}s API
                     </span>
                   )}
-                  {isSavingToDb && (
-                    <span className="text-mint-600 text-xs flex items-center gap-1">
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                      Saving...
+                  {noteId && (
+                    <span className="text-mint-600 text-xs">
+                      Auto-saved to note
                     </span>
                   )}
                 </div>
