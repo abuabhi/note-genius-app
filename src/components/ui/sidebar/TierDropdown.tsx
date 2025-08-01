@@ -3,11 +3,14 @@ import {
   DropdownMenuContent, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Crown, Zap, Users, Star } from "lucide-react";
+import { ChevronDown, Crown, Zap, Users, Star, Sparkles, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useUserTier, UserTier } from "@/hooks/useUserTier";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/auth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TierDropdownProps {
   isCollapsed: boolean;
@@ -36,10 +39,54 @@ const nextTierMap = {
 
 export const TierDropdown = ({ isCollapsed }: TierDropdownProps) => {
   const { userTier, tierLimits, isLoading } = useUserTier();
+  const { user } = useAuth();
   const navigate = useNavigate();
   
   const TierIcon = tierIcons[userTier];
   const nextTier = nextTierMap[userTier];
+
+  // Query for notes count
+  const { data: notesCount = 0 } = useQuery({
+    queryKey: ['notes-count', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      const { count } = await supabase
+        .from('notes')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('archived', false);
+      return count || 0;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Query for flashcard sets count
+  const { data: flashcardSetsCount = 0 } = useQuery({
+    queryKey: ['flashcard-sets-count', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      const { count } = await supabase
+        .from('flashcard_sets')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      return count || 0;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Query for AI enrichment usage
+  const { data: aiEnrichmentCount = 0 } = useQuery({
+    queryKey: ['ai-enrichment-count', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      const { count } = await supabase
+        .from('note_enrichment_usage')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      return count || 0;
+    },
+    enabled: !!user?.id,
+  });
 
   if (isLoading) {
     return (
@@ -55,26 +102,31 @@ export const TierDropdown = ({ isCollapsed }: TierDropdownProps) => {
   const getUsageStats = () => {
     if (!tierLimits) return [];
 
-    return [
+    const stats = [
       {
         label: "Notes",
-        current: 0, // TODO: Get actual usage
+        current: notesCount,
         max: tierLimits.max_notes === -1 ? "Unlimited" : tierLimits.max_notes,
-        percentage: tierLimits.max_notes === -1 ? 0 : 0, // TODO: Calculate actual percentage
+        percentage: tierLimits.max_notes === -1 ? 0 : Math.round((notesCount / tierLimits.max_notes) * 100),
+        icon: Brain,
       },
       {
         label: "Flashcard Sets", 
-        current: 0, // TODO: Get actual usage
+        current: flashcardSetsCount,
         max: tierLimits.max_flashcard_sets === -1 ? "Unlimited" : tierLimits.max_flashcard_sets,
-        percentage: tierLimits.max_flashcard_sets === -1 ? 0 : 0, // TODO: Calculate actual percentage
+        percentage: tierLimits.max_flashcard_sets === -1 ? 0 : Math.round((flashcardSetsCount / tierLimits.max_flashcard_sets) * 100),
+        icon: Zap,
       },
       {
-        label: "Storage",
-        current: 0, // TODO: Get actual usage
-        max: tierLimits.max_storage_mb === -1 ? "Unlimited" : `${tierLimits.max_storage_mb}MB`,
-        percentage: tierLimits.max_storage_mb === -1 ? 0 : 0, // TODO: Calculate actual percentage
+        label: "AI Enrichment",
+        current: aiEnrichmentCount,
+        max: tierLimits.note_enrichment_limit_per_month === -1 ? "Unlimited" : tierLimits.note_enrichment_limit_per_month || 0,
+        percentage: tierLimits.note_enrichment_limit_per_month === -1 ? 0 : Math.round((aiEnrichmentCount / (tierLimits.note_enrichment_limit_per_month || 1)) * 100),
+        icon: Sparkles,
       },
     ];
+
+    return stats;
   };
 
   const usageStats = getUsageStats();
