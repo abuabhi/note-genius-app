@@ -72,28 +72,6 @@ export const QuizMetadataForm = ({ form, userSubjects }: QuizMetadataFormProps) 
         )}
       />
 
-      <FormField
-        control={form.control}
-        name="isPublic"
-        render={({ field }) => (
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-            <FormControl>
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            </FormControl>
-            <div className="space-y-1 leading-none">
-              <FormLabel>
-                Make this quiz public
-              </FormLabel>
-              <p className="text-xs text-muted-foreground">
-                Other users will be able to see and take this quiz
-              </p>
-            </div>
-          </FormItem>
-        )}
-      />
     </div>
   );
 };
