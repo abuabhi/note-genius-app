@@ -33,7 +33,14 @@ export const useQuizForm = ({
     handleCorrectChange
   } = useQuizQuestionOperations({ form });
   
-  const { onSubmit, isSubmitting } = useQuizFormSubmission({
+  const { 
+    onSubmit, 
+    isSubmitting,
+    showSuccessDialog,
+    setShowSuccessDialog,
+    handleCreateAnother,
+    handleGoToQuizzes
+  } = useQuizFormSubmission({
     sourceType,
     sourceId,
     onSuccess
@@ -48,6 +55,10 @@ export const useQuizForm = ({
     addOption,
     removeOption,
     handleCorrectChange,
-    isSubmitting
+    isSubmitting,
+    showSuccessDialog,
+    setShowSuccessDialog,
+    handleCreateAnother,
+    handleGoToQuizzes
   };
 };

@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { PlusCircleIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useSubjects } from "@/hooks/useSubjects";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 import { QuizQuestion } from "./form-sections/QuizQuestion";
 import { useNoteToQuizForm } from "./hooks/useNoteToQuizForm";
+import { QuizCreatedDialog } from "./QuizCreatedDialog";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface NoteToQuizFormProps {
   initialQuestions?: {
@@ -38,7 +40,7 @@ export const NoteToQuizForm = ({
   sourceId,
   onSuccess
 }: NoteToQuizFormProps) => {
-  const { academicSubjects } = useSubjects();
+  const { subjects: userSubjects } = useUserSubjects();
   const navigate = useNavigate();
   
   const { 
@@ -49,7 +51,11 @@ export const NoteToQuizForm = ({
     addOption, 
     removeOption, 
     handleCorrectChange,
-    isSubmitting
+    isSubmitting,
+    showSuccessDialog,
+    setShowSuccessDialog,
+    handleCreateAnother,
+    handleGoToQuizzes
   } = useNoteToQuizForm({
     initialQuestions,
     initialTitle,
@@ -121,7 +127,7 @@ export const NoteToQuizForm = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {academicSubjects?.map((subject) => (
+                        {userSubjects?.map((subject) => (
                           <SelectItem key={subject.id} value={subject.id}>
                             {subject.name}
                           </SelectItem>
@@ -129,6 +135,30 @@ export const NoteToQuizForm = ({
                       </SelectContent>
                     </Select>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="isPublic"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="border-mint-300 data-[state=checked]:bg-mint-600 data-[state=checked]:border-mint-600"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="text-mint-700">
+                        Make this quiz public
+                      </FormLabel>
+                      <p className="text-xs text-mint-600">
+                        Other users will be able to see and take this quiz
+                      </p>
+                    </div>
                   </FormItem>
                 )}
               />
@@ -189,6 +219,13 @@ export const NoteToQuizForm = ({
           </div>
         </form>
       </Form>
+      
+      <QuizCreatedDialog
+        open={showSuccessDialog}
+        onOpenChange={setShowSuccessDialog}
+        onCreateAnother={handleCreateAnother}
+        onGoToQuizzes={handleGoToQuizzes}
+      />
     </div>
   );
 };

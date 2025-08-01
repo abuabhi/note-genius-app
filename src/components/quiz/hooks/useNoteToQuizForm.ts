@@ -11,6 +11,7 @@ const noteToQuizFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   subjectId: z.string().optional(),
+  isPublic: z.boolean().default(false),
   questions: z.array(z.object({
     question: z.string().min(1, "Question is required"),
     explanation: z.string().optional(),
@@ -52,6 +53,7 @@ export const useNoteToQuizForm = ({
 }: UseNoteToQuizFormProps) => {
   const navigate = useNavigate();
   const { mutateAsync: createQuiz, isPending: isSubmitting } = useCreateQuiz();
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   
   // Transform initial questions to include proper difficulty
   const transformedQuestions = initialQuestions?.map(q => ({
@@ -77,6 +79,7 @@ export const useNoteToQuizForm = ({
       title: initialTitle,
       description: initialDescription,
       subjectId: initialSubjectId,
+      isPublic: false,
       questions: transformedQuestions,
     },
   });
@@ -165,7 +168,7 @@ export const useNoteToQuizForm = ({
         subject_id: data.subjectId,
         source_type: sourceType,
         source_id: sourceId,
-        is_public: false,
+        is_public: data.isPublic,
         questions: data.questions.map((q, index) => ({
           question: q.question,
           explanation: q.explanation,
@@ -179,15 +182,10 @@ export const useNoteToQuizForm = ({
         }))
       });
 
-      toast({
-        title: "Quiz created successfully",
-        description: "Your quiz has been created and is ready to use.",
-      });
-
       if (onSuccess) {
         onSuccess();
       } else {
-        navigate("/quizzes");
+        setShowSuccessDialog(true);
       }
     } catch (error) {
       console.error("Error creating quiz:", error);
@@ -199,6 +197,30 @@ export const useNoteToQuizForm = ({
     }
   };
 
+  const handleCreateAnother = () => {
+    setShowSuccessDialog(false);
+    form.reset({
+      title: '',
+      description: '',
+      subjectId: initialSubjectId,
+      isPublic: false,
+      questions: [{
+        question: "",
+        explanation: "",
+        difficulty: 3,
+        options: [
+          { content: "", isCorrect: true },
+          { content: "", isCorrect: false },
+        ]
+      }],
+    });
+  };
+
+  const handleGoToQuizzes = () => {
+    setShowSuccessDialog(false);
+    navigate("/quizzes");
+  };
+
   return {
     form,
     onSubmit,
@@ -207,6 +229,10 @@ export const useNoteToQuizForm = ({
     addOption,
     removeOption,
     handleCorrectChange,
-    isSubmitting
+    isSubmitting,
+    showSuccessDialog,
+    setShowSuccessDialog,
+    handleCreateAnother,
+    handleGoToQuizzes
   };
 };

@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuizFormValues } from "../schema/quizFormSchema";
 import { useQuizzes } from "@/hooks/useQuizzes";
@@ -17,6 +18,7 @@ export const useQuizFormSubmission = ({
 }: UseQuizFormSubmissionProps) => {
   const { createQuiz } = useQuizzes();
   const navigate = useNavigate();
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   
   const onSubmit = async (data: QuizFormValues) => {
     try {
@@ -42,23 +44,32 @@ export const useQuizFormSubmission = ({
         }))
       });
       
-      toast({
-        title: "Quiz created",
-        description: "Your quiz has been created successfully."
-      });
-      
       if (onSuccess) {
         onSuccess();
       } else {
-        navigate("/quizzes");
+        setShowSuccessDialog(true);
       }
     } catch (error) {
       console.error("Error creating quiz:", error);
     }
   };
   
+  const handleCreateAnother = () => {
+    setShowSuccessDialog(false);
+    // The form will be reset by the parent component
+  };
+
+  const handleGoToQuizzes = () => {
+    setShowSuccessDialog(false);
+    navigate("/quizzes");
+  };
+
   return {
     onSubmit,
-    isSubmitting: createQuiz.isPending
+    isSubmitting: createQuiz.isPending,
+    showSuccessDialog,
+    setShowSuccessDialog,
+    handleCreateAnother,
+    handleGoToQuizzes
   };
 };
