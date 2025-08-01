@@ -19,6 +19,8 @@ export const QuizReviewTab = ({
   selectedNotes,
   onSuccess,
 }: QuizReviewTabProps) => {
+  const subjectAnalysis = analyzeSelectedNotesSubjects(selectedNotes);
+
   // Auto-detect subject from selected notes
   const getAutoSelectedSubject = () => {
     if (selectedNotes.length === 0) return undefined;
@@ -50,7 +52,6 @@ export const QuizReviewTab = ({
   };
 
   const autoSelectedSubject = getAutoSelectedSubject();
-  const subjectAnalysis = analyzeSelectedNotesSubjects(selectedNotes);
 
   return (
     <div className="space-y-6">
