@@ -4,8 +4,10 @@ import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, FileText, Clock } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Search, FileText, Clock, Info } from 'lucide-react';
 import { Note } from '@/types/note';
+import { analyzeSelectedNotesSubjects } from '@/utils/subjectAnalyzer';
 
 interface NoteSelectionTabProps {
   selectedNotes: Note[];
@@ -47,6 +49,9 @@ export const NoteSelectionTab = ({
     onNoteToggle?.(note);
   };
 
+  // Analyze selected notes for multiple subjects
+  const subjectAnalysis = analyzeSelectedNotesSubjects(selectedNotes);
+
   return (
     <div className="space-y-4">
       <div className="relative">
@@ -58,6 +63,32 @@ export const NoteSelectionTab = ({
           className="pl-10"
         />
       </div>
+
+      {/* Multi-Subject Warning */}
+      {subjectAnalysis.hasMultipleSubjects && selectedNotes.length > 0 && (
+        <Alert className="border-amber-200 bg-amber-50">
+          <Info className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            <div className="space-y-1">
+              <p className="font-medium">Multi-Subject Quiz</p>
+              <p className="text-sm">
+                You've selected notes from {subjectAnalysis.totalSubjects} different subjects: {' '}
+                {subjectAnalysis.distributions.map((dist, index) => (
+                  <span key={dist.subjectId}>
+                    <span className="font-medium">{dist.subjectName}</span> ({dist.count} note{dist.count > 1 ? 's' : ''})
+                    {index < subjectAnalysis.distributions.length - 1 && ', '}
+                  </span>
+                ))}
+              </p>
+              <p className="text-sm">
+                The quiz will include questions from all notes, but will be categorized under{' '}
+                <span className="font-medium">{subjectAnalysis.primarySubject?.subjectName}</span>{' '}
+                since it has the most notes.
+              </p>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Quiz Generation Controls */}
       {(onGenerateQuiz && numberOfQuestions !== undefined && onNumberOfQuestionsChange) && (
