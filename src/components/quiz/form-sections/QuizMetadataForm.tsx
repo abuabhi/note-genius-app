@@ -52,7 +52,7 @@ export const QuizMetadataForm = ({ form, userSubjects }: QuizMetadataFormProps) 
         name="subjectId"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Subject</FormLabel>
+            <FormLabel>Subject *</FormLabel>
             <Select onValueChange={field.onChange} value={field.value || ""}>
               <FormControl>
                 <SelectTrigger>

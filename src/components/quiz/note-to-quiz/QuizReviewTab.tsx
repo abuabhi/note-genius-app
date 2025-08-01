@@ -23,23 +23,30 @@ export const QuizReviewTab = ({
   const getAutoSelectedSubject = () => {
     if (selectedNotes.length === 0) return undefined;
     
-    // Get all subjects from selected notes
-    const subjects = selectedNotes
+    // First try to get subjects by subject_id
+    const subjectIds = selectedNotes
       .map(note => note.subject_id)
       .filter(Boolean);
     
-    if (subjects.length === 0) return undefined;
+    if (subjectIds.length > 0) {
+      // Find the most common subject_id
+      const subjectCounts = subjectIds.reduce((acc: Record<string, number>, subjectId: string) => {
+        acc[subjectId] = (acc[subjectId] || 0) + 1;
+        return acc;
+      }, {});
+      
+      const mostCommonSubject = Object.entries(subjectCounts)
+        .sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0];
+      
+      return mostCommonSubject;
+    }
     
-    // Find the most common subject
-    const subjectCounts = subjects.reduce((acc: Record<string, number>, subjectId: string) => {
-      acc[subjectId] = (acc[subjectId] || 0) + 1;
-      return acc;
-    }, {});
+    // If no subject_id, try to use the primary subject from analysis
+    if (subjectAnalysis.primarySubject?.subjectId) {
+      return subjectAnalysis.primarySubject.subjectId;
+    }
     
-    const mostCommonSubject = Object.entries(subjectCounts)
-      .sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0];
-    
-    return mostCommonSubject;
+    return undefined;
   };
 
   const autoSelectedSubject = getAutoSelectedSubject();
