@@ -3262,6 +3262,7 @@ export type Database = {
       }
       subscribers: {
         Row: {
+          billing_cycle_start: string
           created_at: string
           email: string
           id: string
@@ -3273,6 +3274,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          billing_cycle_start: string
           created_at?: string
           email: string
           id?: string
@@ -3284,6 +3286,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          billing_cycle_start?: string
           created_at?: string
           email?: string
           id?: string
@@ -3411,6 +3414,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tier_change_history: {
+        Row: {
+          billing_cycle_start: string
+          change_date: string
+          created_at: string
+          from_tier: string
+          id: string
+          next_billing_date: string
+          prorated_amount: number | null
+          to_tier: string
+          user_id: string
+        }
+        Insert: {
+          billing_cycle_start: string
+          change_date?: string
+          created_at?: string
+          from_tier: string
+          id?: string
+          next_billing_date: string
+          prorated_amount?: number | null
+          to_tier: string
+          user_id: string
+        }
+        Update: {
+          billing_cycle_start?: string
+          change_date?: string
+          created_at?: string
+          from_tier?: string
+          id?: string
+          next_billing_date?: string
+          prorated_amount?: number | null
+          to_tier?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       tier_limits: {
         Row: {

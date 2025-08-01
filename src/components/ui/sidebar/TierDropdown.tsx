@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getAIEnrichmentCountForBillingCycle } from "@/utils/billingCycleHelpers";
 
 interface TierDropdownProps {
   isCollapsed: boolean;
@@ -74,21 +75,35 @@ export const TierDropdown = ({ isCollapsed }: TierDropdownProps) => {
     enabled: !!user?.id,
   });
 
-  // Query for AI enrichment usage
-  const { data: aiEnrichmentCount = 0 } = useQuery({
-    queryKey: ['ai-enrichment-count', user?.id],
+  // Query for AI enrichment usage (billing cycle aware)
+  const { data: aiEnrichmentCount = 0, isLoading: isLoadingAI } = useQuery({
+    queryKey: ['ai-enrichment-billing-cycle', user?.id],
     queryFn: async () => {
-      if (!user?.id) return 0;
-      const { count } = await supabase
-        .from('note_enrichment_usage')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-      return count || 0;
+      if (!user?.id) {
+        console.log('No user ID available for AI enrichment query');
+        return 0;
+      }
+      
+      console.log('Fetching AI enrichment count for user:', user.id);
+      const count = await getAIEnrichmentCountForBillingCycle(user.id);
+      console.log('AI enrichment count result:', count);
+      return count;
     },
     enabled: !!user?.id,
   });
 
-  if (isLoading) {
+  // Debug logging
+  console.log('TierDropdown Debug Info:', {
+    userTier,
+    tierLimits,
+    notesCount,
+    flashcardSetsCount,
+    aiEnrichmentCount,
+    userId: user?.id,
+    isLoading: { isLoading, isLoadingAI }
+  });
+
+  if (isLoading || isLoadingAI) {
     return (
       <div className="px-3">
         <div className="flex h-8 w-full items-center gap-2 rounded-md px-2 py-1.5 bg-muted/50">
@@ -116,7 +131,7 @@ export const TierDropdown = ({ isCollapsed }: TierDropdownProps) => {
         percentage: tierLimits.max_flashcard_sets === -1 ? 0 : Math.round((flashcardSetsCount / tierLimits.max_flashcard_sets) * 100),
       },
       {
-        label: "AI Enrichment",
+        label: "AI Enrichment (Billing Cycle)",
         current: aiEnrichmentCount,
         max: tierLimits.note_enrichment_limit_per_month === -1 ? "Unlimited" : tierLimits.note_enrichment_limit_per_month || 0,
         percentage: tierLimits.note_enrichment_limit_per_month === -1 ? 0 : Math.round((aiEnrichmentCount / (tierLimits.note_enrichment_limit_per_month || 1)) * 100),
