@@ -21,8 +21,8 @@ const tierBadgeVariants = {
 interface UsageStats {
   notesCount: number;
   flashcardSetsCount: number;
-  storageUsed: number;
   aiEnrichmentUsage: number;
+  aiFlashcardGenerationUsage: number;
 }
 
 export function UserTierDisplay() {
@@ -33,7 +33,10 @@ export function UserTierDisplay() {
   const { data: usageStats, isLoading: isLoadingUsage } = useQuery({
     queryKey: ["userUsageStats", user?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
+      if (!user?.id) {
+        console.log('❌ [UserTierDisplay] No user ID found');
+        return null;
+      }
       
       console.log('🔍 [UserTierDisplay] Fetching usage stats for user:', user.id);
       
@@ -43,8 +46,11 @@ export function UserTierDisplay() {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
       
-      if (notesError) console.error('Error fetching notes count:', notesError);
-      console.log('📝 [UserTierDisplay] Notes count:', notesCount);
+      if (notesError) {
+        console.error('❌ Error fetching notes count:', notesError);
+      } else {
+        console.log('📝 [UserTierDisplay] Notes count:', notesCount);
+      }
       
       // Get flashcard sets count with user filter
       const { count: flashcardSetsCount, error: flashcardSetsError } = await supabase
@@ -52,25 +58,11 @@ export function UserTierDisplay() {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
       
-      if (flashcardSetsError) console.error('Error fetching flashcard sets count:', flashcardSetsError);
-      console.log('🃏 [UserTierDisplay] Flashcard sets count:', flashcardSetsCount);
-      
-      // Get actual storage used - calculate based on note content size
-      const { data: notes, error: contentError } = await supabase
-        .from('notes')
-        .select('content')
-        .eq('user_id', user.id);
-        
-      if (contentError) console.error('Error fetching notes content:', contentError);
-      
-      // Calculate storage used by the notes content
-      const contentSize = notes?.reduce((total, note) => {
-        // Calculate bytes in content: 2 bytes per character (UTF-16)
-        return total + (note.content ? note.content.length * 2 : 0);
-      }, 0) || 0;
-      
-      // Convert bytes to MB with 2 decimal places
-      const storageMB = Math.round((contentSize / (1024 * 1024)) * 100) / 100;
+      if (flashcardSetsError) {
+        console.error('❌ Error fetching flashcard sets count:', flashcardSetsError);
+      } else {
+        console.log('🃏 [UserTierDisplay] Flashcard sets count:', flashcardSetsCount);
+      }
       
       // Get AI enrichment usage for current month
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
@@ -80,14 +72,21 @@ export function UserTierDisplay() {
         .eq('user_id', user.id)
         .eq('month_year', currentMonth);
       
-      if (aiError) console.error('Error fetching AI enrichment usage:', aiError);
-      console.log('✨ [UserTierDisplay] AI enrichment count:', aiEnrichmentCount);
+      if (aiError) {
+        console.error('❌ Error fetching AI enrichment usage:', aiError);
+      } else {
+        console.log('✨ [UserTierDisplay] AI enrichment count:', aiEnrichmentCount);
+      }
+      
+      // Get AI flashcard generation usage (if this exists in your system)
+      // This is a placeholder - adjust based on your actual AI flashcard tracking
+      const aiFlashcardGenerationUsage = 0; // TODO: implement if needed
       
       const result = {
         notesCount: notesCount || 0,
         flashcardSetsCount: flashcardSetsCount || 0,
-        storageUsed: storageMB || 0,
         aiEnrichmentUsage: aiEnrichmentCount || 0,
+        aiFlashcardGenerationUsage,
       };
       
       console.log('📊 [UserTierDisplay] Final usage stats:', result);
@@ -182,23 +181,6 @@ export function UserTierDisplay() {
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-1.5">
-                <BarChart className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Storage</span>
-              </div>
-              <span className="text-xs font-medium">
-                {isLoadingUsage ? '...' : `${usageStats?.storageUsed || 0} MB`}/
-                {formatLimitDisplay(tierLimits.max_storage_mb)} MB
-              </span>
-            </div>
-            <Progress 
-              value={isLoadingUsage ? 45 : getUsagePercentage(usageStats?.storageUsed || 0, tierLimits.max_storage_mb)}
-              className="h-1"
-            />
-          </div>
-          
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-1.5">
                 <Sparkles className="h-3 w-3 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">AI Enrichment</span>
               </div>
@@ -209,6 +191,22 @@ export function UserTierDisplay() {
             </div>
             <Progress 
               value={isLoadingUsage ? 20 : getUsagePercentage(usageStats?.aiEnrichmentUsage || 0, tierLimits.note_enrichment_limit_per_month)}
+              className="h-1"
+            />
+          </div>
+          
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">AI Flash Creation</span>
+              </div>
+              <span className="text-xs font-medium">
+                {isLoadingUsage ? '...' : usageStats?.aiFlashcardGenerationUsage || 0}/50
+              </span>
+            </div>
+            <Progress 
+              value={isLoadingUsage ? 10 : getUsagePercentage(usageStats?.aiFlashcardGenerationUsage || 0, 50)}
               className="h-1"
             />
           </div>
