@@ -3,14 +3,15 @@ import { useQuizFormState, UseQuizFormStateProps } from "./useQuizFormState";
 import { useQuizQuestionOperations } from "./useQuizQuestionOperations";
 import { useQuizFormSubmission, UseQuizFormSubmissionProps } from "./useQuizFormSubmission";
 
-export interface UseQuizFormProps extends UseQuizFormStateProps, UseQuizFormSubmissionProps {}
+export interface UseQuizFormProps extends UseQuizFormStateProps, UseQuizFormSubmissionProps {
+  sections?: any[];
+}
 
 export const useQuizForm = ({
   initialQuestions,
   initialTitle = '',
   initialDescription = '',
-  initialCountryId = '',
-  initialEducationSystem = '',
+  initialSubjectId = '',
   sourceType = 'custom',
   sourceId,
   onSuccess,
@@ -20,9 +21,7 @@ export const useQuizForm = ({
     initialQuestions,
     initialTitle,
     initialDescription,
-    initialCountryId,
-    initialEducationSystem,
-    sections
+    initialSubjectId
   });
   
   const {

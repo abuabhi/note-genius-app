@@ -66,10 +66,6 @@ export const CreateQuizForm = ({
       title: '',
       description: '',
       subjectId: '',
-      gradeId: '',
-      sectionId: '',
-      countryId: '',
-      educationSystem: '',
       isPublic: false,
       questions: [{
         question: "",

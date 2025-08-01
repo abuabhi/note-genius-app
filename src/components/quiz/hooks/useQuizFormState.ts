@@ -15,27 +15,22 @@ export interface UseQuizFormStateProps {
   }[];
   initialTitle?: string;
   initialDescription?: string;
-  initialCountryId?: string;
-  initialEducationSystem?: string;
-  sections: any[];
+  initialSubjectId?: string;
 }
 
 export const useQuizFormState = ({
   initialQuestions,
   initialTitle = '',
   initialDescription = '',
-  initialCountryId = '',
-  initialEducationSystem = '',
-  sections
+  initialSubjectId = ''
 }: UseQuizFormStateProps) => {
   const form = useForm<QuizFormValues>({
     resolver: zodResolver(quizFormSchema),
     defaultValues: {
       title: initialTitle,
       description: initialDescription,
+      subjectId: initialSubjectId,
       isPublic: false,
-      countryId: initialCountryId,
-      educationSystem: initialEducationSystem,
       questions: initialQuestions || [
         {
           question: "",
@@ -50,22 +45,8 @@ export const useQuizFormState = ({
     },
   });
   
-  const [filteredSections, setFilteredSections] = useState(sections || []);
-  
-  const watchedSubject = form.watch('subjectId');
-  
-  useEffect(() => {
-    if (watchedSubject && sections) {
-      setFilteredSections(sections.filter(section => 
-        section.subject_id === watchedSubject
-      ));
-    } else {
-      setFilteredSections(sections || []);
-    }
-  }, [watchedSubject, sections]);
-  
   return {
     form,
-    filteredSections
+    filteredSections: []
   };
 };

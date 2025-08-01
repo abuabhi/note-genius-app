@@ -22,27 +22,35 @@ export const useQuizFormSubmission = ({
   
   const onSubmit = async (data: QuizFormValues) => {
     try {
-      await createQuiz.mutateAsync({
+      console.log("Submitting quiz data:", data);
+      
+      const quizData = {
         title: data.title,
-        description: data.description,
-        subject_id: data.subjectId, // Changed from category_id to subject_id
-        grade_id: data.gradeId,
-        section_id: data.sectionId,
-        country_id: data.countryId,
-        education_system: data.educationSystem,
+        description: data.description || null,
+        subject_id: data.subjectId || null,
+        grade_id: null,
+        section_id: null,
+        country_id: null,
+        education_system: null,
         source_type: sourceType,
         source_id: sourceId,
         is_public: data.isPublic,
         questions: data.questions.map(q => ({
           question: q.question,
-          explanation: q.explanation,
+          explanation: q.explanation || null,
           difficulty: q.difficulty,
           options: q.options.map(opt => ({
             content: opt.content,
             is_correct: opt.isCorrect
           }))
         }))
-      });
+      };
+      
+      console.log("Final quiz data being sent:", quizData);
+      
+      await createQuiz.mutateAsync(quizData);
+      
+      console.log("Quiz created successfully");
       
       if (onSuccess) {
         onSuccess();
@@ -51,6 +59,11 @@ export const useQuizFormSubmission = ({
       }
     } catch (error) {
       console.error("Error creating quiz:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create quiz. Please try again.",
+        variant: "destructive"
+      });
     }
   };
   
