@@ -1,6 +1,7 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 import { corsHeaders, createCorsResponse } from './cors.ts';
 import { authenticateUser } from './auth.ts';
 import { callOpenAI, detectProblematicContent } from './openai.ts';
@@ -244,6 +245,38 @@ serve(async (req) => {
         processingTime: Date.now() - startTime,
         ...processingStats
       });
+      
+      // Track AI enrichment usage
+      try {
+        const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        });
+        
+        const currentDate = new Date();
+        const monthYear = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        const { error: usageError } = await supabase
+          .from('note_enrichment_usage')
+          .insert({
+            user_id: user!.id,
+            note_id: noteId,
+            enhancement_type: enhancementType,
+            tokens_used: tokenUsage?.totalTokens || 0,
+            month_year: monthYear,
+            llm_provider: 'openai'
+          });
+          
+        if (usageError) {
+          console.error(`❌ [${requestId}] Failed to record usage:`, usageError);
+        } else {
+          console.log(`✅ [${requestId}] Usage tracked successfully`);
+        }
+      } catch (trackingError) {
+        console.error(`❌ [${requestId}] Error tracking usage:`, trackingError);
+      }
       
     } catch (openAIError) {
       clearTimeout(timeoutId);

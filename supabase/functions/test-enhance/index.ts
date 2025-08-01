@@ -1,10 +1,14 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
 serve(async (req) => {
   console.log('🧪 Test Enhancement function called');
@@ -15,7 +19,27 @@ serve(async (req) => {
 
   try {
     const startTime = performance.now();
-    const { text, enhancementType = 'summary' } = await req.json();
+    const { text, enhancementType = 'summary', noteId, userId } = await req.json();
+    
+    // Create Supabase client
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+    
+    // Get authenticated user ID if not provided
+    let currentUserId = userId;
+    if (!currentUserId) {
+      const authHeader = req.headers.get('Authorization');
+      if (authHeader) {
+        const { data: { user }, error } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+        if (user && !error) {
+          currentUserId = user.id;
+        }
+      }
+    }
     
     console.log('📝 Input received:', {
       length: text?.length || 0,
@@ -240,6 +264,35 @@ Respond ONLY with valid JSON. No other text.`;
       totalTime: `${totalTime.toFixed(0)}ms`,
       tokensUsed: data.usage?.total_tokens || 0
     });
+
+    // Track AI enrichment usage if we have the required info
+    if (currentUserId && noteId) {
+      try {
+        const currentDate = new Date();
+        const monthYear = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        const { error: usageError } = await supabase
+          .from('note_enrichment_usage')
+          .insert({
+            user_id: currentUserId,
+            note_id: noteId,
+            enhancement_type: enhancementType,
+            tokens_used: data.usage?.total_tokens || 0,
+            month_year: monthYear,
+            llm_provider: 'openai'
+          });
+          
+        if (usageError) {
+          console.error('❌ Failed to record usage:', usageError);
+        } else {
+          console.log('✅ Usage tracked successfully');
+        }
+      } catch (trackingError) {
+        console.error('❌ Error tracking usage:', trackingError);
+      }
+    } else {
+      console.warn('⚠️ Cannot track usage - missing userId or noteId');
+    }
 
     return new Response(JSON.stringify({
       success: true,
