@@ -19,6 +19,14 @@ const NoteStudyPageContent = () => {
   // Require authentication
   useRequireAuth();
 
+  // Redirect invalid "convert" route to proper flashcard conversion page
+  useEffect(() => {
+    if (noteId === 'convert') {
+      navigate('/note-to-flashcard', { replace: true });
+      return;
+    }
+  }, [noteId, navigate]);
+
   // Use optimized data fetching
   const { note, isLoading, error } = useOptimizedNoteStudy(noteId || '');
 
