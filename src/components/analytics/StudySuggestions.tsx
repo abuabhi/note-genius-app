@@ -87,7 +87,7 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
         navigate('/goals');
         break;
       case 'notes-to-flashcards':
-        navigate('/notes/study/convert');
+        navigate('/note-to-flashcard');
         break;
       case 'create-quiz-from-notes':
         navigate('/quiz/create');

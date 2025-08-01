@@ -233,7 +233,7 @@ function generateIntermediateUserSuggestions(data: StudyData, progressState: Use
       description: 'Convert your existing notes into interactive flashcards for better memorization and recall',
       actionable: true,
       icon: '🧠',
-      actionUrl: '/notes/study/convert',
+      actionUrl: '/note-to-flashcard',
       metadata: { count: data.notes.length }
     });
   }
