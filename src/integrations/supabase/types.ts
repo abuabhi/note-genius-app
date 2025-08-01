@@ -3928,6 +3928,14 @@ export type Database = {
           dismissible: boolean
         }[]
       }
+      get_ai_enrichment_count_for_billing_cycle: {
+        Args: {
+          user_id_param: string
+          cycle_start_param: string
+          cycle_end_param: string
+        }
+        Returns: number
+      }
       get_digest_users: {
         Args: Record<PropertyKey, never>
         Returns: {
