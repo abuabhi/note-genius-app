@@ -102,31 +102,26 @@ export const TierDropdown = ({ isCollapsed }: TierDropdownProps) => {
   const getUsageStats = () => {
     if (!tierLimits) return [];
 
-    const stats = [
+    return [
       {
         label: "Notes",
         current: notesCount,
         max: tierLimits.max_notes === -1 ? "Unlimited" : tierLimits.max_notes,
         percentage: tierLimits.max_notes === -1 ? 0 : Math.round((notesCount / tierLimits.max_notes) * 100),
-        icon: Brain,
       },
       {
         label: "Flashcard Sets", 
         current: flashcardSetsCount,
         max: tierLimits.max_flashcard_sets === -1 ? "Unlimited" : tierLimits.max_flashcard_sets,
         percentage: tierLimits.max_flashcard_sets === -1 ? 0 : Math.round((flashcardSetsCount / tierLimits.max_flashcard_sets) * 100),
-        icon: Zap,
       },
       {
         label: "AI Enrichment",
         current: aiEnrichmentCount,
         max: tierLimits.note_enrichment_limit_per_month === -1 ? "Unlimited" : tierLimits.note_enrichment_limit_per_month || 0,
         percentage: tierLimits.note_enrichment_limit_per_month === -1 ? 0 : Math.round((aiEnrichmentCount / (tierLimits.note_enrichment_limit_per_month || 1)) * 100),
-        icon: Sparkles,
       },
     ];
-
-    return stats;
   };
 
   const usageStats = getUsageStats();
