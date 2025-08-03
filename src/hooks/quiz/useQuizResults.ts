@@ -4,7 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const useQuizResults = (userId?: string) => {
   const fetchResults = async () => {
-    const currentUser = (await supabase.auth.getUser()).data.user?.id;
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const currentUser = userData.user?.id;
+    
+    if (userError) {
+      console.error('Error getting user:', userError);
+      throw userError;
+    }
     
     if (!currentUser && !userId) {
       return [];

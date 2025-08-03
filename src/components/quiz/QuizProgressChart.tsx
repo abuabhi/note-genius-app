@@ -105,7 +105,7 @@ const QuizProgressChart = () => {
                   <Line
                     type="monotone"
                     dataKey="score"
-                    stroke="#3b82f6"
+                    stroke="hsl(var(--primary))"
                     activeDot={{ r: 8 }}
                     name="Quiz Score (%)"
                   />
@@ -134,7 +134,7 @@ const QuizProgressChart = () => {
                   <Legend />
                   <Bar
                     dataKey="percentage"
-                    fill="#3b82f6"
+                    fill="hsl(var(--primary))"
                     name="Score (%)"
                   />
                 </BarChart>
