@@ -11,6 +11,7 @@ import { NoteMetadataForm } from '../../scanning/NoteMetadataForm';
 import { Button } from '@/components/ui/button';
 import { FileText, Loader2 } from 'lucide-react';
 import { getOrCreateSubjectId } from "@/utils/subjectHelpers";
+import { useToast } from "@/hooks/use-toast";
 
 interface ScanImportTabProps {
   onSaveNote: (note: any) => Promise<boolean>;
@@ -18,6 +19,7 @@ interface ScanImportTabProps {
 }
 
 export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps) => {
+  const { toast } = useToast();
   const [selectedLanguage, setSelectedLanguage] = React.useState("eng");
   const [recognizedText, setRecognizedText] = React.useState("");
   const [noteTitle, setNoteTitle] = React.useState("");
@@ -117,9 +119,19 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         await onSaveNote(note);
       }
 
+      toast({
+        title: "Success!",
+        description: `Successfully saved ${completedImages.length} notes from scanned documents.`,
+      });
+
       resetForm();
     } catch (error) {
       console.error("Error saving batch notes:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save some notes. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -162,10 +174,19 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
 
       const success = await onSaveNote(newNote);
       if (success) {
+        toast({
+          title: "Success!",
+          description: "Your scanned note has been saved successfully.",
+        });
         resetForm();
       }
     } catch (error) {
       console.error("Error saving note:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save the note. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
