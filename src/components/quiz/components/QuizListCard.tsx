@@ -31,7 +31,7 @@ export const QuizListCard = ({
     navigate(`/quiz/${quiz.id}`);
   };
 
-  const subjectName = quiz.academic_subjects?.name || 'General';
+  const subjectName = quiz.user_subjects?.name || 'General';
   const questionCount = quiz.questionCount || 0;
   const isOwner = currentUserId === quiz.user_id;
   const isFavorite = favoriteQuizIds.has(quiz.id);
@@ -77,7 +77,7 @@ export const QuizListCard = ({
     created_at: quiz.created_at,
     questionCount: quiz.questionCount || 0,
     user_id: quiz.user_id,
-    academic_subjects: quiz.academic_subjects,
+    user_subjects: quiz.user_subjects,
   };
 
   // Create description with proper "..." truncation

@@ -23,6 +23,7 @@ export const useQuizList = (filters: {
           updated_at,
           user_id,
           subject_id,
+          user_subject_id,
           grade_id,
           section_id,
           source_type,
@@ -45,7 +46,7 @@ export const useQuizList = (filters: {
           if (subjectError) {
             console.warn('Error fetching user subjects for quiz filtering:', subjectError);
           } else if (userSubjects && userSubjects.length > 0) {
-            query = query.eq('subject_id', userSubjects[0].id);
+            query = query.eq('user_subject_id', userSubjects[0].id);
           }
         } catch (error) {
           console.warn('Failed to apply subject filter to quizzes:', error);
@@ -76,7 +77,7 @@ export const useQuizList = (filters: {
       // Get question counts and user subject data in parallel
       if (quizzes && quizzes.length > 0) {
         const quizIds = quizzes.map(q => q.id);
-        const subjectIds = quizzes.map(q => q.subject_id).filter(Boolean);
+        const subjectIds = quizzes.map(q => q.user_subject_id).filter(Boolean);
 
         // Fetch question counts and user subjects in parallel
         const [questionCountData, userSubjectsData] = await Promise.all([
@@ -113,17 +114,17 @@ export const useQuizList = (filters: {
         const enrichedQuizzes = quizzes.map(quiz => ({
           ...quiz,
           questionCount: countMap[quiz.id] || 0,
-          academic_subjects: quiz.subject_id && quiz.subject_id in userSubjectsMap ? userSubjectsMap[quiz.subject_id] : null,
+          user_subjects: quiz.user_subject_id && quiz.user_subject_id in userSubjectsMap ? userSubjectsMap[quiz.user_subject_id] : null,
         }));
 
         return { quizzes: enrichedQuizzes };
       }
 
-      // Return quizzes with default values for questionCount and academic_subjects
+      // Return quizzes with default values for questionCount and user_subjects
       const enrichedQuizzes = quizzes?.map(quiz => ({
         ...quiz,
         questionCount: 0,
-        academic_subjects: null,
+        user_subjects: null,
       })) || [];
 
       return { quizzes: enrichedQuizzes };

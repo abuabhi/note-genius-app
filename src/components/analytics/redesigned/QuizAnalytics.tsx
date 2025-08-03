@@ -21,7 +21,7 @@ export const QuizAnalytics = () => {
         .from('quiz_results')
         .select(`
           *,
-          quizzes(title, subject_id, academic_subjects(name))
+          quizzes(title, user_subject_id, user_subjects(name))
         `)
         .eq('user_id', user.id)
         .order('completed_at', { ascending: false });
@@ -58,7 +58,7 @@ export const QuizAnalytics = () => {
       const subjectPerformance: Record<string, { scores: number[]; totalQuestions: number; totalScore: number }> = {};
       
       results?.forEach(result => {
-        const subjectName = result.quizzes?.academic_subjects?.name || 'Unknown';
+        const subjectName = result.quizzes?.user_subjects?.name || 'Unknown';
         if (!subjectPerformance[subjectName]) {
           subjectPerformance[subjectName] = { scores: [], totalQuestions: 0, totalScore: 0 };
         }

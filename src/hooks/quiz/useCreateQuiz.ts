@@ -37,7 +37,7 @@ export const useCreateQuiz = () => {
         .insert({
           title: newQuiz.title,
           description: newQuiz.description || null,
-          subject_id: newQuiz.subject_id || null, // References user_subjects.id
+          user_subject_id: newQuiz.subject_id || null, // Now properly references user_subjects.id
           section_id: newQuiz.section_id || null,
           grade_id: newQuiz.grade_id || null,
           country_id: newQuiz.country_id || null,

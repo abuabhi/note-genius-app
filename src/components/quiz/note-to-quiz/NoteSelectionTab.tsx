@@ -122,7 +122,7 @@ export const NoteSelectionTab = ({
             <Card
               key={note.id}
               className={`cursor-pointer transition-all hover:shadow-md ${
-                isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                isSelected ? 'ring-2 ring-primary bg-mint-50' : ''
               }`}
               onClick={() => toggleNoteSelection(note)}
             >

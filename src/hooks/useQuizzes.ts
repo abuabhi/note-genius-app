@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 interface CreateQuizPayload {
   title: string;
   description?: string;
-  subject_id?: string;
+  subject_id?: string; // This now maps to user_subject_id in the database
   section_id?: string;
   grade_id?: string;
   country_id?: string;
@@ -35,6 +35,10 @@ export const useQuizzes = () => {
         .from('quizzes')
         .select(`
           *,
+          user_subjects:user_subject_id (
+            id,
+            name
+          ),
           questions:quiz_questions(
             *,
             options:quiz_options(*)
@@ -57,7 +61,7 @@ export const useQuizzes = () => {
         .insert({
           title: payload.title,
           description: payload.description,
-          subject_id: payload.subject_id,
+          user_subject_id: payload.subject_id, // Map subject_id to user_subject_id
           section_id: payload.section_id,
           grade_id: payload.grade_id,
           country_id: payload.country_id,
@@ -147,6 +151,10 @@ export const useQuiz = (quizId?: string) => {
         .from('quizzes')
         .select(`
           *,
+          user_subjects:user_subject_id (
+            id,
+            name
+          ),
           questions:quiz_questions(
             *,
             options:quiz_options(*)

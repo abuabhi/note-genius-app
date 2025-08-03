@@ -3,7 +3,8 @@ export interface Quiz {
   id: string;
   title: string;
   description: string | null;
-  subject_id: string | null; // Changed from category_id to subject_id
+  subject_id: string | null; // Legacy field - kept for backward compatibility
+  user_subject_id: string | null; // New field that references user_subjects.id
   section_id: string | null;
   grade_id: string | null;
   source_type: 'prebuilt' | 'note' | 'custom';
@@ -14,7 +15,7 @@ export interface Quiz {
   updated_at: string;
   // Extended properties for enhanced quiz display
   questionCount: number; // Made required instead of optional
-  academic_subjects?: { id: string; name: string } | null;
+  user_subjects?: { id: string; name: string } | null;
 }
 
 export interface QuizQuestion {

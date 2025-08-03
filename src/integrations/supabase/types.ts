@@ -47,64 +47,6 @@ export type Database = {
         }
         Relationships: []
       }
-      academic_subjects: {
-        Row: {
-          country_id: string | null
-          created_at: string
-          education_system: string | null
-          grade_id: string | null
-          id: string
-          level: number | null
-          name: string
-          parent_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          country_id?: string | null
-          created_at?: string
-          education_system?: string | null
-          grade_id?: string | null
-          id?: string
-          level?: number | null
-          name: string
-          parent_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          country_id?: string | null
-          created_at?: string
-          education_system?: string | null
-          grade_id?: string | null
-          id?: string
-          level?: number | null
-          name?: string
-          parent_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subject_categories_country_id_fkey"
-            columns: ["country_id"]
-            isOneToOne: false
-            referencedRelation: "countries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subject_categories_grade_id_fkey"
-            columns: ["grade_id"]
-            isOneToOne: false
-            referencedRelation: "grades"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subject_categories_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "academic_subjects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       admin_settings: {
         Row: {
           created_at: string
@@ -2364,6 +2306,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string | null
+          user_subject_id: string | null
         }
         Insert: {
           country_id?: string | null
@@ -2380,6 +2323,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id?: string | null
+          user_subject_id?: string | null
         }
         Update: {
           country_id?: string | null
@@ -2396,15 +2340,9 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string | null
+          user_subject_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "quizzes_category_id_fkey"
-            columns: ["subject_id"]
-            isOneToOne: false
-            referencedRelation: "academic_subjects"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "quizzes_country_id_fkey"
             columns: ["country_id"]
@@ -2424,6 +2362,13 @@ export type Database = {
             columns: ["section_id"]
             isOneToOne: false
             referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quizzes_user_subject_id_fkey"
+            columns: ["user_subject_id"]
+            isOneToOne: false
+            referencedRelation: "user_subjects"
             referencedColumns: ["id"]
           },
         ]
@@ -2650,15 +2595,7 @@ export type Database = {
           name?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "sections_subject_id_fkey"
-            columns: ["academic_subject_id"]
-            isOneToOne: false
-            referencedRelation: "academic_subjects"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       shared_flashcard_sets: {
         Row: {

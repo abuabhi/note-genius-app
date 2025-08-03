@@ -68,6 +68,7 @@ const QuizList = ({ viewMode }: QuizListProps) => {
   // Transform the data to ensure it has all required Quiz properties with proper defaults
   const transformedQuizzes: Quiz[] = quizzes.map(quiz => ({
     ...quiz,
+    user_subject_id: quiz.user_subject_id || null, // This should now be populated from the API
     section_id: quiz.section_id || null,
     source_type: (quiz.source_type as "custom" | "prebuilt" | "note") || 'custom',
     source_id: quiz.source_id || null,
