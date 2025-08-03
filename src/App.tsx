@@ -4,7 +4,7 @@ import { QueryProvider } from './components/app/QueryProvider';
 import { AuthProvider } from './contexts/auth/AuthProvider';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import { HelpProvider } from './contexts/HelpContext';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import SidebarLayout from '@/components/layout/SidebarLayout';
 import { ProductionOptimizationProvider } from '@/components/performance/ProductionOptimizationProvider';
 import AppRoutes from './components/app/AppRoutes';
 import { useNotificationToasts } from '@/hooks/useNotificationToasts';
@@ -17,9 +17,9 @@ function AppContent() {
   }, []);
 
   return (
-    <div className="App min-h-screen bg-gray-50 w-full">
+    <SidebarLayout>
       <AppRoutes />
-    </div>
+    </SidebarLayout>
   );
 }
 
@@ -30,9 +30,7 @@ function App() {
         <ProductionOptimizationProvider>
           <SubscriptionProvider>
             <HelpProvider>
-              <SidebarProvider>
-                <AppContent />
-              </SidebarProvider>
+              <AppContent />
             </HelpProvider>
           </SubscriptionProvider>
         </ProductionOptimizationProvider>

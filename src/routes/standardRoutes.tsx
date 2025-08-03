@@ -1,7 +1,7 @@
 
 import React, { lazy } from 'react';
 import type { RouteConfig } from './publicRoutes';
-import SidebarLayout from '@/components/layout/SidebarLayout';
+// import SidebarLayout from '@/components/layout/SidebarLayout'; // Not needed - using global SidebarProvider
 
 // Lazy load components for better performance
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
@@ -37,123 +37,123 @@ const StudySessionsPage = lazy(() => import('@/pages/AnalyticsPage'));
 export const standardRoutes: RouteConfig[] = [
   {
     path: '/dashboard',
-    element: <SidebarLayout><DashboardPage /></SidebarLayout>
+    element: <DashboardPage />
   },
   {
     path: '/flashcards/create',
-    element: <SidebarLayout><CreateFlashcardSetPage /></SidebarLayout>
+    element: <CreateFlashcardSetPage />
   },
   {
     path: '/flashcards/:setId/create',
-    element: <SidebarLayout><CreateFlashcardPage /></SidebarLayout>
+    element: <CreateFlashcardPage />
   },
   {
     path: '/flashcards/study/:id',
-    element: <SidebarLayout><FlashcardStudyPage /></SidebarLayout>
+    element: <FlashcardStudyPage />
   },
   {
     path: '/flashcards/:id',
-    element: <SidebarLayout><FlashcardSetPage /></SidebarLayout>
+    element: <FlashcardSetPage />
   },
   {
     path: '/flashcards/*',
-    element: <SidebarLayout><FlashcardsPage /></SidebarLayout>
+    element: <FlashcardsPage />
   },
   {
     path: '/notes/study/:noteId',
-    element: <SidebarLayout><NoteStudyPage /></SidebarLayout>
+    element: <NoteStudyPage />
   },
   {
     path: '/notes/*',
-    element: <SidebarLayout><NotesPage /></SidebarLayout>
+    element: <NotesPage />
   },
   {
     path: '/quiz/create',
-    element: <SidebarLayout><CreateQuizPage /></SidebarLayout>
+    element: <CreateQuizPage />
   },
   {
     path: '/create-quiz',
-    element: <SidebarLayout><CreateQuizPage /></SidebarLayout>
+    element: <CreateQuizPage />
   },
   {
     path: '/quiz/:id/take',
-    element: <SidebarLayout><TakeQuizPage /></SidebarLayout>
+    element: <TakeQuizPage />
   },
   {
     path: '/quiz/:id',
-    element: <SidebarLayout><QuizDetailsPage /></SidebarLayout>
+    element: <QuizDetailsPage />
   },
   {
     path: '/note-to-flashcard',
-    element: <SidebarLayout><NoteToFlashcardPage /></SidebarLayout>
+    element: <NoteToFlashcardPage />
   },
   {
     path: '/quiz/*',
-    element: <SidebarLayout><QuizPage /></SidebarLayout>
+    element: <QuizPage />
   },
   {
     path: '/quizzes/*',
-    element: <SidebarLayout><QuizPage /></SidebarLayout>
+    element: <QuizPage />
   },
   {
     path: '/quizzes',
-    element: <SidebarLayout><QuizPage /></SidebarLayout>
+    element: <QuizPage />
   },
   {
     path: '/analytics',
-    element: <SidebarLayout><AnalyticsPage /></SidebarLayout>
+    element: <AnalyticsPage />
   },
   // Legacy redirects - these will render the new AnalyticsPage
   {
     path: '/progress',
-    element: <SidebarLayout><ProgressPage /></SidebarLayout>
+    element: <ProgressPage />
   },
   {
     path: '/study-sessions',
-    element: <SidebarLayout><StudySessionsPage /></SidebarLayout>
+    element: <StudySessionsPage />
   },
   {
     path: '/goals',
-    element: <SidebarLayout><GoalsPage /></SidebarLayout>
+    element: <GoalsPage />
   },
   {
     path: '/todos',
-    element: <SidebarLayout><TodoPage /></SidebarLayout>
+    element: <TodoPage />
   },
   {
     path: '/schedule',
-    element: <SidebarLayout><SchedulePage /></SidebarLayout>
+    element: <SchedulePage />
   },
   {
     path: '/study-planner',
-    element: <SidebarLayout><StudyPlannerPage /></SidebarLayout>
+    element: <StudyPlannerPage />
   },
   {
     path: '/reminders',
-    element: <SidebarLayout><RemindersPage /></SidebarLayout>
+    element: <RemindersPage />
   },
   {
     path: '/settings',
-    element: <SidebarLayout><SettingsPage /></SidebarLayout>
+    element: <SettingsPage />
   },
   {
     path: '/feedback',
-    element: <SidebarLayout><FeedbackPage /></SidebarLayout>
+    element: <FeedbackPage />
   },
   {
     path: '/referrals',
-    element: <SidebarLayout><ReferralsPage /></SidebarLayout>
+    element: <ReferralsPage />
   },
   {
     path: '/help',
-    element: <SidebarLayout><HelpPage /></SidebarLayout>
+    element: <HelpPage />
   },
   {
     path: '/faq',
-    element: <SidebarLayout><FAQPage /></SidebarLayout>
+    element: <FAQPage />
   },
   {
     path: '/influencer',
-    element: <SidebarLayout><InfluencerDashboardPage /></SidebarLayout>
+    element: <InfluencerDashboardPage />
   }
 ];
