@@ -43,7 +43,7 @@ export const EnhancedImportDialog = ({
   return (
     <>
       <Dialog open={isVisible} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="max-w-4xl h-[85vh] flex flex-col bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+        <DialogContent className="max-w-4xl max-h-[90vh] h-[90vh] flex flex-col bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
           {/* Compact Header */}
           <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">
             <div className="flex items-center gap-3 mb-2">

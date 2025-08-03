@@ -69,57 +69,70 @@ export const BatchProcessingView = ({
   };
 
   const canSave = saveMode === 'separate' || (saveMode === 'merged' && mergedTitle.trim());
+  
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Batch Processing ({processedImages.length} images)</h3>
-        <Button variant="outline" onClick={onReset}>
-          <X className="h-4 w-4 mr-2" />
-          Cancel
-        </Button>
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span>Overall Progress</span>
-          <span>{Math.round(batchProgress)}%</span>
+    <div className="flex flex-col h-full">
+      {/* Fixed Header Section */}
+      <div className="flex-shrink-0 space-y-4 border-b border-gray-200 pb-4 mb-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium">Batch Processing ({processedImages.length} images)</h3>
+          <Button variant="outline" size="sm" onClick={onReset}>
+            <X className="h-4 w-4 mr-2" />
+            Cancel
+          </Button>
         </div>
-        <Progress value={batchProgress} className="w-full" />
+
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>Overall Progress</span>
+            <span>{Math.round(batchProgress)}%</span>
+          </div>
+          <Progress value={batchProgress} className="w-full" />
+        </div>
       </div>
 
-      <div className="space-y-2 max-h-60 overflow-y-auto">
-        {processedImages.map((image, index) => (
-          <Card key={image.id}>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0">
-                  {image.status === 'completed' && <CheckCircle className="h-5 w-5 text-green-500" />}
-                  {image.status === 'failed' && <AlertCircle className="h-5 w-5 text-red-500" />}
-                  {image.status === 'processing' && (
-                    <div className="h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                  )}
-                  {image.status === 'pending' && <div className="h-5 w-5 bg-gray-300 rounded-full" />}
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-sm">{image.title}</p>
-                  {image.status === 'completed' && (
-                    <p className="text-xs text-gray-500">
-                      {image.recognizedText.substring(0, 50)}...
-                    </p>
-                  )}
-                  {image.status === 'failed' && (
-                    <p className="text-xs text-red-500">{image.error}</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Scrollable Document List */}
+      <div className="flex-1 min-h-0 mb-4">
+        <ScrollArea className="h-full">
+          <div className="space-y-2 pr-3">
+            {processedImages.map((image, index) => (
+              <Card key={image.id} className="shadow-sm">
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0">
+                      {image.status === 'completed' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                      {image.status === 'failed' && <AlertCircle className="h-4 w-4 text-red-500" />}
+                      {image.status === 'processing' && (
+                        <div className="h-4 w-4 border-2 border-mint-500 border-t-transparent rounded-full animate-spin" />
+                      )}
+                      {image.status === 'pending' && <div className="h-4 w-4 bg-gray-300 rounded-full" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-gray-900 truncate">{image.title}</p>
+                      {image.status === 'completed' && (
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                          {image.recognizedText.substring(0, 80)}...
+                        </p>
+                      )}
+                      {image.status === 'failed' && (
+                        <p className="text-xs text-red-500 mt-1">{image.error}</p>
+                      )}
+                    </div>
+                    <div className="flex-shrink-0 text-xs text-gray-400">
+                      #{index + 1}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
 
+      {/* Fixed Save Options Section */}
       {batchProgress === 100 && completedImages.length > 0 && (
-        <div className="space-y-4 border-t pt-4">
-          <h4 className="font-medium">Save Options</h4>
+        <div className="flex-shrink-0 space-y-4 border-t border-gray-200 pt-4">
+          <h4 className="font-medium text-gray-900">Save Options</h4>
           
           <RadioGroup
             value={saveMode}
@@ -129,7 +142,7 @@ export const BatchProcessingView = ({
             {/* Separate Notes Option */}
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="separate" id="separate" />
-              <Label htmlFor="separate" className="cursor-pointer flex items-center gap-2">
+              <Label htmlFor="separate" className="cursor-pointer flex items-center gap-2 text-sm">
                 <FileText className="h-4 w-4" />
                 Save as Separate Notes ({completedImages.length} notes)
               </Label>
@@ -138,7 +151,7 @@ export const BatchProcessingView = ({
             {/* Merged Note Option */}
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="merged" id="merged" />
-              <Label htmlFor="merged" className="cursor-pointer flex items-center gap-2">
+              <Label htmlFor="merged" className="cursor-pointer flex items-center gap-2 text-sm">
                 <Files className="h-4 w-4" />
                 Merge into Single Note
               </Label>
@@ -147,55 +160,57 @@ export const BatchProcessingView = ({
 
           {/* Merged note options */}
           {saveMode === 'merged' && (
-            <div className="space-y-3 ml-6 border-l-2 border-muted pl-4">
-              <div className="space-y-2">
-                <Label htmlFor="merged-title">Document Title</Label>
-                <Input
-                  id="merged-title"
-                  value={mergedTitle}
-                  onChange={(e) => setMergedTitle(e.target.value)}
-                  placeholder={`Merged Document - ${completedImages.length} Pages`}
-                />
-              </div>
+            <div className="space-y-3 ml-6 border-l-2 border-mint-200 pl-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="merged-title" className="text-sm">Document Title</Label>
+                  <Input
+                    id="merged-title"
+                    value={mergedTitle}
+                    onChange={(e) => setMergedTitle(e.target.value)}
+                    placeholder={`Merged Document - ${completedImages.length} Pages`}
+                    className="text-sm"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="merged-subject">Subject</Label>
-                <Select value={mergedSubject} onValueChange={setMergedSubject}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Uncategorized">Uncategorized</SelectItem>
-                    {availableSubjects.map((subject) => (
-                      <SelectItem key={subject} value={subject}>
-                        {subject}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Label htmlFor="merged-subject" className="text-sm">Subject</Label>
+                  <Select value={mergedSubject} onValueChange={setMergedSubject}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Uncategorized">Uncategorized</SelectItem>
+                      {availableSubjects.map((subject) => (
+                        <SelectItem key={subject} value={subject}>
+                          {subject}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <Collapsible open={showContentPreview} onOpenChange={setShowContentPreview}>
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2 text-sm">
                     <ChevronDown className={`h-4 w-4 transition-transform ${showContentPreview ? 'rotate-180' : ''}`} />
                     {showContentPreview ? 'Hide' : 'Show'} Content Preview
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <ScrollArea className="h-32 border rounded-md p-3 mt-2">
-                    <Textarea
-                      value={generateMergedContent()}
-                      readOnly
-                      className="min-h-[100px] resize-none border-none"
-                    />
+                  <ScrollArea className="h-24 border rounded-md p-2 mt-2 bg-gray-50">
+                    <div className="text-xs text-gray-700 whitespace-pre-wrap">
+                      {generateMergedContent()}
+                    </div>
                   </ScrollArea>
                 </CollapsibleContent>
               </Collapsible>
             </div>
           )}
 
-          <div className="flex gap-2">
+          {/* Fixed Action Buttons */}
+          <div className="flex gap-2 pt-2">
             <Button 
               onClick={handleSave}
               disabled={isSaving || !canSave}
