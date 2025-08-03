@@ -45,7 +45,7 @@ export const BatchSaveOptionsDialog = ({
   isSaving,
   availableSubjects = []
 }: BatchSaveOptionsDialogProps) => {
-  console.log('BatchSaveOptionsDialog render - isOpen:', isOpen);
+  
   const [saveMode, setSaveMode] = useState<'separate' | 'merged'>('separate');
   const [mergedTitle, setMergedTitle] = useState('');
   const [mergedSubject, setMergedSubject] = useState('Uncategorized');

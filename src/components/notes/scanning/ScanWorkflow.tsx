@@ -115,10 +115,7 @@ export const ScanWorkflow = ({
   };
 
   const showBatchSaveOptions = async () => {
-    console.log('showBatchSaveOptions called - setting dialog to true');
-    console.log('Current showBatchOptionsDialog state:', showBatchOptionsDialog);
     setShowBatchOptionsDialog(true);
-    console.log('After setState call');
   };
 
   const saveBatchAsNotes = async () => {
@@ -251,121 +248,129 @@ export const ScanWorkflow = ({
     }
   };
 
-  // Show batch processing view
-  if (processingMode === 'batch') {
-    return (
-      <BatchProcessingView
-        processedImages={processedImages}
-        batchProgress={batchProgress}
-        onSaveBatch={showBatchSaveOptions}
-        onReset={resetForm}
-        isSaving={isSaving}
-      />
-    );
-  }
-
-  // Debug logging
-  console.log('ScanWorkflow render state:', {
-    capturedImage: !!capturedImage,
-    recognizedText: !!recognizedText,
-    noteTitle,
-    noteSubject,
-    showSaveButton: !!(capturedImage && recognizedText && noteTitle.trim())
-  });
-
   // Get available subjects for the dropdown
   const availableSubjects = ['Uncategorized', 'Math', 'Science', 'History', 'Literature', 'Language'];
 
-  return (
-    <>
+  // Main content area - conditionally render based on processing mode
+  const renderMainContent = () => {
+    if (processingMode === 'batch') {
+      return (
+        <BatchProcessingView
+          processedImages={processedImages}
+          batchProgress={batchProgress}
+          onSaveBatch={showBatchSaveOptions}
+          onReset={resetForm}
+          isSaving={isSaving}
+        />
+      );
+    }
+
+    // Debug logging
+    console.log('ScanWorkflow render state:', {
+      capturedImage: !!capturedImage,
+      recognizedText: !!recognizedText,
+      noteTitle,
+      noteSubject,
+      showSaveButton: !!(capturedImage && recognizedText && noteTitle.trim())
+    });
+
+    // Single image mode - render standard UI
+    return (
       <div className="flex flex-col h-full">
         {/* Global drag overlay */}
-      {isDragOver && (
-        <div className="fixed inset-0 bg-blue-100 bg-opacity-90 flex items-center justify-center z-50 pointer-events-none">
-          <div className="bg-white p-8 rounded-xl shadow-xl text-center border-2 border-blue-300 border-dashed">
-            <FileText className="h-20 w-20 text-blue-500 mx-auto mb-4 animate-pulse" />
-            <p className="text-xl font-bold text-blue-700 mb-2">
-              Drop Images to Scan
-            </p>
-            <p className="text-blue-600 max-w-sm">
-              <strong>Single image:</strong> Standard OCR processing<br/>
-              <strong>Multiple images:</strong> Batch processing (up to 10 files)
-            </p>
-            <div className="mt-4 p-2 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-700 font-medium">
-                ✨ Optimized for handwritten text recognition
+        {isDragOver && (
+          <div className="fixed inset-0 bg-blue-100 bg-opacity-90 flex items-center justify-center z-50 pointer-events-none">
+            <div className="bg-white p-8 rounded-xl shadow-xl text-center border-2 border-blue-300 border-dashed">
+              <FileText className="h-20 w-20 text-blue-500 mx-auto mb-4 animate-pulse" />
+              <p className="text-xl font-bold text-blue-700 mb-2">
+                Drop Images to Scan
               </p>
+              <p className="text-blue-600 max-w-sm">
+                <strong>Single image:</strong> Standard OCR processing<br/>
+                <strong>Multiple images:</strong> Batch processing (up to 10 files)
+              </p>
+              <div className="mt-4 p-2 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-700 font-medium">
+                  ✨ Optimized for handwritten text recognition
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Scrollable content area */}
-      <ScrollArea className="flex-1 max-h-[calc(100vh-200px)]">
-        <div className="p-1 space-y-4">
-          {!capturedImage ? (
-            <SingleImageCapture
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              onImageCaptured={handleSingleImage}
-              onMultipleImages={handleMultipleImages}
-              isDragOver={isDragOver}
-              onDragEnter={handleDragEnter}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDropEvent}
-            />
-          ) : (
-            <div className="space-y-4">
-              <ImageProcessor 
-                imageUrl={capturedImage} 
-                onReset={() => setCapturedImage(null)}
-                onTextExtracted={setRecognizedText}
-                selectedLanguage={selectedLanguage}
-                onLanguageChange={setSelectedLanguage}
-                isPremiumUser={isPremiumUser}
-                onTitleGenerated={handleTitleGenerated}
-                onSubjectGenerated={handleSubjectGenerated}
+        {/* Scrollable content area */}
+        <ScrollArea className="flex-1 max-h-[calc(100vh-200px)]">
+          <div className="p-1 space-y-4">
+            {!capturedImage ? (
+              <SingleImageCapture
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                onImageCaptured={handleSingleImage}
+                onMultipleImages={handleMultipleImages}
+                isDragOver={isDragOver}
+                onDragEnter={handleDragEnter}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDropEvent}
               />
-              
-              {recognizedText && (
-                <NoteMetadataForm 
-                  title={noteTitle}
-                  setTitle={setNoteTitle}
-                  subject={noteSubject}
-                  setSubject={setNoteSubject}
-                  isDisabled={false}
-                  detectedLanguage={getLanguageName(selectedLanguage)}
-                />
-              )}
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-      
-      {/* Fixed footer with Save button - Show when we have all required data */}
-      {capturedImage && recognizedText && noteTitle.trim() && (
-        <div className="flex-shrink-0 border-t p-4 bg-white">
-          <Button
-            onClick={handleSaveNote}
-            disabled={isSaving}
-            className="w-full bg-mint-500 hover:bg-mint-600 text-white"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
             ) : (
-              <>
-                <FileText className="mr-2 h-4 w-4" />
-                Save Note
-              </>
+              <div className="space-y-4">
+                <ImageProcessor 
+                  imageUrl={capturedImage} 
+                  onReset={() => setCapturedImage(null)}
+                  onTextExtracted={setRecognizedText}
+                  selectedLanguage={selectedLanguage}
+                  onLanguageChange={setSelectedLanguage}
+                  isPremiumUser={isPremiumUser}
+                  onTitleGenerated={handleTitleGenerated}
+                  onSubjectGenerated={handleSubjectGenerated}
+                />
+                
+                {recognizedText && (
+                  <NoteMetadataForm 
+                    title={noteTitle}
+                    setTitle={setNoteTitle}
+                    subject={noteSubject}
+                    setSubject={setNoteSubject}
+                    isDisabled={false}
+                    detectedLanguage={getLanguageName(selectedLanguage)}
+                  />
+                )}
+              </div>
             )}
-          </Button>
-        </div>
-      )}
+          </div>
+        </ScrollArea>
+        
+        {/* Fixed footer with Save button - Show when we have all required data */}
+        {capturedImage && recognizedText && noteTitle.trim() && (
+          <div className="flex-shrink-0 border-t p-4 bg-white">
+            <Button
+              onClick={handleSaveNote}
+              disabled={isSaving}
+              className="w-full bg-mint-500 hover:bg-mint-600 text-white"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Save Note
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
+    );
+  };
+
+  return (
+    <>
+      {/* Render main content based on mode */}
+      {renderMainContent()}
 
       {/* Batch Save Options Dialog */}
       <BatchSaveOptionsDialog
@@ -377,7 +382,7 @@ export const ScanWorkflow = ({
         isSaving={isSaving}
         availableSubjects={availableSubjects}
       />
-      {console.log('Rendering BatchSaveOptionsDialog with isOpen:', showBatchOptionsDialog)}
+      
 
       {/* Post Save Success Dialog */}
       <PostSaveSuccessDialog
