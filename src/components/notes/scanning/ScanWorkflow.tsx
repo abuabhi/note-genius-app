@@ -362,9 +362,9 @@ export const ScanWorkflow = ({
           </Button>
         </div>
       )}
-    </div>
+      </div>
 
-    {/* Batch Save Options Dialog */}
+      {/* Batch Save Options Dialog */}
       <BatchSaveOptionsDialog
         isOpen={showBatchOptionsDialog}
         onClose={() => setShowBatchOptionsDialog(false)}
