@@ -43,74 +43,75 @@ export const markdownToHtml = (markdown: string): string => {
     return `__HTML_TAG_${existingTags.length - 1}__`;
   });
   
-  // Normalize line breaks - convert multiple newlines to proper paragraph breaks
+  // Enhanced content (AI-generated) - process first with robust regex
+  // This handles: [ENRICHED], [AI_ENHANCED], [AI_ENRICHED], etc. with case-insensitive matching
+  const enrichedRegex = /\[(?:AI_)?(?:ENHANCED|ENRICHED)\]([\s\S]*?)\[\/(?:AI_)?(?:ENHANCED|ENRICHED)\]/gi;
+  html = html.replace(enrichedRegex, '<div class="ai-enriched-content">$1</div>');
+  
+  // Process fenced code blocks first (to avoid conflicts with other processing)
+  html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+  
+  // Process headers (# to ######)
+  html = html.replace(/^#{6}\s+(.*)$/gm, '<h6>$1</h6>');
+  html = html.replace(/^#{5}\s+(.*)$/gm, '<h5>$1</h5>');
+  html = html.replace(/^#{4}\s+(.*)$/gm, '<h4>$1</h4>');
+  html = html.replace(/^#{3}\s+(.*)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^#{2}\s+(.*)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^#{1}\s+(.*)$/gm, '<h1>$1</h1>');
+  
+  // Process inline code (after fenced code blocks)
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  
+  // Process bold and italic formatting
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  
+  // Process strikethrough
+  html = html.replace(/~~(.*?)~~/g, '<del>$1</del>');
+  
+  // Process blockquotes
+  html = html.replace(/^>\s*(.*)$/gm, '<blockquote class="simple-blockquote">$1</blockquote>');
+  
+  // Process unordered lists (bullet points)
+  html = html.replace(/^[\s]*[-•*]\s+(.*)$/gm, '<li>$1</li>');
+  
+  // Process ordered lists (numbered)
+  html = html.replace(/^\d+\.\s+(.*)$/gm, '<li>$1</li>');
+  
+  // Wrap consecutive list items in ul/ol tags
+  html = html.replace(/(<li>.*?<\/li>)(\s*<li>.*?<\/li>)*/g, (match) => {
+    return `<ul>${match}</ul>`;
+  });
+  
+  // Process Questions and Answers
+  html = html.replace(/^(Q\d+[.:\-]?\s+.*)$/gm, '<div class="question-text">$1</div>');
+  html = html.replace(/^(Question\s*\d*[.:\-]?\s+.*)$/gmi, '<div class="question-text">$1</div>');
+  html = html.replace(/^(Answer[.:\-]?\s+.*)$/gmi, '<div class="answer-text">$1</div>');
+  
+  // Process horizontal rules
+  html = html.replace(/^(---|\*\*\*|___)\s*$/gm, '<hr>');
+  
+  // Process line breaks - convert double newlines to paragraphs, single to <br>
   html = html
     .replace(/\r\n/g, '\n') // Normalize line endings
     .replace(/\n{3,}/g, '\n\n') // Max 2 consecutive newlines
     .trim();
   
-  // Split content into blocks (separated by double newlines)
-  const blocks = html.split(/\n\n+/);
-  const processedBlocks: string[] = [];
+  // Split into paragraphs and process
+  const paragraphs = html.split(/\n\n+/);
+  const processedParagraphs = paragraphs.map(para => {
+    if (!para.trim()) return '';
+    
+    // Skip if already wrapped in HTML tags
+    if (para.match(/^<(h[1-6]|div|blockquote|ul|ol|pre|hr)/)) {
+      return para.replace(/\n/g, '<br>');
+    }
+    
+    // Wrap in paragraph tags
+    return `<p>${para.replace(/\n/g, '<br>')}</p>`;
+  }).filter(para => para.length > 0);
   
-  blocks.forEach(block => {
-    if (!block.trim()) return;
-    
-    let processedBlock = block.trim();
-    
-    // Enhanced content (AI-generated) - process first with robust regex
-    // This handles: [ENRICHED], [AI_ENHANCED], [AI_ENRICHED], etc. with case-insensitive matching
-    const enrichedRegex = /\[(?:AI_)?(?:ENHANCED|ENRICHED)\]([\s\S]*?)\[\/(?:AI_)?(?:ENHANCED|ENRICHED)\]/gi;
-    processedBlock = processedBlock.replace(enrichedRegex, '<div class="ai-enriched-content">$1</div>');
-    
-    // Questions (Q1., Q2., etc.) - process after enriched content
-    if (/^(Q\d+[.:\-]?\s+.*?)$/m.test(processedBlock)) {
-      processedBlock = processedBlock.replace(/^(Q\d+[.:\-]?\s+.*?)$/gm, '<div class="question-text">$1</div>');
-    }
-    else if (/^(Question\s*\d*[.:\-]?\s+.*?)$/mi.test(processedBlock)) {
-      processedBlock = processedBlock.replace(/^(Question\s*\d*[.:\-]?\s+.*?)$/gmi, '<div class="question-text">$1</div>');
-    }
-    else if (/^(Answer[.:\-]?\s+.*?)$/mi.test(processedBlock)) {
-      processedBlock = processedBlock.replace(/^(Answer[.:\-]?\s+.*?)$/gmi, '<div class="answer-text">$1</div>');
-    }
-    // Blockquotes
-    else if (/^>\s*/.test(processedBlock)) {
-      processedBlock = processedBlock
-        .replace(/^>\s*(.*$)/gm, '$1')
-        .replace(/\n/g, '<br>');
-      processedBlock = `<blockquote class="simple-blockquote">${processedBlock}</blockquote>`;
-    }
-    // Headers
-    else if (/^#{1,6}\s+/.test(processedBlock)) {
-      processedBlock = processedBlock
-        .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
-        .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-        .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-        .replace(/^# (.*$)/gm, '<h1>$1</h1>');
-    }
-    // Lists (bullet points or numbered)
-    else if (/^[\s]*[-•]\s+/.test(processedBlock) || /^\d+\.\s+/.test(processedBlock)) {
-      processedBlock = processedBlock
-        .replace(/^[\s]*[-•]\s+(.*$)/gm, '<li>$1</li>')
-        .replace(/^(\d+)\.\s+(.*$)/gm, '<li>$2</li>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>');
-      processedBlock = `<ul>${processedBlock}</ul>`;
-    }
-    // Regular paragraphs
-    else {
-      // Handle inline formatting within paragraphs
-      processedBlock = processedBlock
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/\n/g, '<br>'); // Convert single line breaks to <br>
-      processedBlock = `<p>${processedBlock}</p>`;
-    }
-    
-    processedBlocks.push(processedBlock);
-  });
-  
-  html = processedBlocks.join('');
+  html = processedParagraphs.join('');
   
   // Restore HTML tags
   existingTags.forEach((tag, index) => {
