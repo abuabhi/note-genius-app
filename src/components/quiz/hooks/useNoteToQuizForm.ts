@@ -2,28 +2,10 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { quizFormSchema, QuizFormValues } from "../schema/quizFormSchema";
 import { useCreateQuiz } from "@/hooks/quiz/useCreateQuiz";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-
-const noteToQuizFormSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  subjectId: z.string().min(1, "Subject is required"),
-  isPublic: z.boolean().default(false),
-  questions: z.array(z.object({
-    question: z.string().min(1, "Question is required"),
-    explanation: z.string().optional(),
-    difficulty: z.number().min(1).max(5).default(3),
-    options: z.array(z.object({
-      content: z.string().min(1, "Option content is required"),
-      isCorrect: z.boolean()
-    })).min(2, "At least 2 options are required")
-  })).min(1, "At least 1 question is required")
-});
-
-type NoteToQuizFormValues = z.infer<typeof noteToQuizFormSchema>;
 
 export interface UseNoteToQuizFormProps {
   initialQuestions?: {
@@ -73,8 +55,8 @@ export const useNoteToQuizForm = ({
     }
   ];
 
-  const form = useForm<NoteToQuizFormValues>({
-    resolver: zodResolver(noteToQuizFormSchema),
+  const form = useForm<QuizFormValues>({
+    resolver: zodResolver(quizFormSchema),
     defaultValues: {
       title: initialTitle,
       description: initialDescription,
@@ -160,7 +142,7 @@ export const useNoteToQuizForm = ({
     form.setValue("questions", updatedQuestions);
   };
 
-  const onSubmit = async (data: NoteToQuizFormValues) => {
+  const onSubmit = async (data: QuizFormValues) => {
     console.log("🚀 QUIZ SUBMISSION STARTED");
     console.log("📝 Form Data:", data);
     console.log("🎯 Source Type:", sourceType);
