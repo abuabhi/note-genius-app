@@ -161,9 +161,15 @@ export const useNoteToQuizForm = ({
   };
 
   const onSubmit = async (data: NoteToQuizFormValues) => {
+    console.log("🚀 QUIZ SUBMISSION STARTED");
+    console.log("📝 Form Data:", data);
+    console.log("🎯 Source Type:", sourceType);
+    console.log("🔗 Source ID:", sourceId);
+    
     try {
       // Validate that we have a subject
       if (!data.subjectId || data.subjectId.trim() === '') {
+        console.log("❌ VALIDATION FAILED: No subject selected");
         toast({
           title: "Subject Required",
           description: "Please select a subject for your quiz.",
@@ -172,7 +178,29 @@ export const useNoteToQuizForm = ({
         return;
       }
 
-      await createQuiz({
+      console.log("✅ VALIDATION PASSED: Subject ID =", data.subjectId);
+      
+      // Check questions validation
+      const questionsValid = data.questions.every(q => 
+        q.question.trim() !== '' && 
+        q.options.length >= 2 && 
+        q.options.some(opt => opt.isCorrect) &&
+        q.options.every(opt => opt.content.trim() !== '')
+      );
+      
+      if (!questionsValid) {
+        console.log("❌ VALIDATION FAILED: Invalid questions");
+        toast({
+          title: "Questions Invalid",
+          description: "Please ensure all questions have content, at least 2 options, and one correct answer.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      console.log("✅ QUESTIONS VALIDATED");
+      
+      const quizPayload = {
         title: data.title,
         description: data.description,
         subject_id: data.subjectId,
@@ -190,7 +218,13 @@ export const useNoteToQuizForm = ({
             position: optIndex
           }))
         }))
-      });
+      };
+      
+      console.log("📤 SENDING TO API:", quizPayload);
+      
+      await createQuiz(quizPayload);
+      
+      console.log("🎉 QUIZ CREATED SUCCESSFULLY!");
 
       if (onSuccess) {
         onSuccess();
@@ -198,8 +232,15 @@ export const useNoteToQuizForm = ({
         setShowSuccessDialog(true);
       }
     } catch (error) {
-      console.error("Error creating quiz:", error);
+      console.error("💥 ERROR CREATING QUIZ:", error);
       const errorMessage = error instanceof Error ? error.message : "There was an error creating your quiz. Please try again.";
+      
+      console.log("📄 Error Details:", {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: errorMessage,
+        stack: error instanceof Error ? error.stack : 'No stack trace'
+      });
+      
       toast({
         title: "Failed to create quiz",
         description: errorMessage.includes('foreign key') 

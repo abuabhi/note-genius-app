@@ -66,10 +66,24 @@ export const NoteToQuizForm = ({
     onSuccess
   });
   
+  const handleFormSubmit = async (data: any) => {
+    console.log("🔄 FORM SUBMIT TRIGGERED");
+    console.log("📊 Form State Valid:", form.formState.isValid);
+    console.log("🚨 Form Errors:", form.formState.errors);
+    
+    if (!form.formState.isValid) {
+      console.log("❌ FORM VALIDATION FAILED");
+      console.log("🔍 Detailed Errors:", form.formState.errors);
+      return;
+    }
+    
+    await onSubmit(data);
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
           {/* Quiz Basic Info */}
           <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-mint-100 p-6 space-y-4">
             <h3 className="text-lg font-medium text-mint-800">Quiz Details</h3>
