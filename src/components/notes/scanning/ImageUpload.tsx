@@ -98,7 +98,7 @@ export const ImageUpload = ({
               isDragOver ? 'bg-mint-100 text-mint-700' : 'bg-mint-100 text-mint-600'
             }`}>
               <p className="font-medium">PNG, JPG, JPEG, WebP supported</p>
-              <p>Single image or batch processing (up to 3 files)</p>
+              <p>Single image or batch processing (up to 10 files)</p>
             </div>
           </div>
         </CardContent>

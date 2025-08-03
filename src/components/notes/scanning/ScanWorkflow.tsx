@@ -9,6 +9,8 @@ import { useImageUpload } from "./hooks/useImageUpload";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
 import { useBatchProcessing } from "./hooks/useBatchProcessing";
 import { BatchProcessingView } from "./BatchProcessingView";
+import { BatchSaveOptionsDialog } from "./BatchSaveOptionsDialog";
+import { PostSaveSuccessDialog } from "./PostSaveSuccessDialog";
 import { SingleImageCapture } from "./SingleImageCapture";
 import { Note } from "@/types/note";
 import { getOrCreateSubjectId } from "@/utils/subjectHelpers";
@@ -34,6 +36,9 @@ export const ScanWorkflow = ({
   const [noteSubject, setNoteSubject] = useState("Uncategorized");
   const [isSaving, setIsSaving] = useState(false);
   const [processingMode, setProcessingMode] = useState<'single' | 'batch'>('single');
+  const [showBatchOptionsDialog, setShowBatchOptionsDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [lastSaveResult, setLastSaveResult] = useState<{ count: number; mode: 'separate' | 'merged' }>({ count: 0, mode: 'separate' });
   
   const { 
     capturedImage, 
@@ -71,6 +76,8 @@ export const ScanWorkflow = ({
     setProcessingMode('single');
     resetBatchProcessing();
     resetDragState();
+    setShowBatchOptionsDialog(false);
+    setShowSuccessDialog(false);
   };
 
   const handleSingleImage = (imageUrl: string) => {
@@ -107,6 +114,10 @@ export const ScanWorkflow = ({
     }
   };
 
+  const showBatchSaveOptions = async () => {
+    setShowBatchOptionsDialog(true);
+  };
+
   const saveBatchAsNotes = async () => {
     setIsSaving(true);
     const completedImages = processedImages.filter(img => img.status === 'completed');
@@ -117,7 +128,7 @@ export const ScanWorkflow = ({
           title: image.title,
           description: image.recognizedText.substring(0, 100) + (image.recognizedText.length > 100 ? "..." : ""),
           date: new Date().toISOString().split('T')[0],
-          subject: image.subject, // Changed from image.category to image.subject - This maps to the subject field in the database
+          subject: image.subject,
           content: image.recognizedText,
           sourceType: 'scan',
           scanData: {
@@ -131,13 +142,53 @@ export const ScanWorkflow = ({
         await onSaveNote(note);
       }
 
-      resetForm();
-      onClose();
+      setLastSaveResult({ count: completedImages.length, mode: 'separate' });
+      setShowBatchOptionsDialog(false);
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error("Error saving batch notes:", error);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const saveBatchAsMergedNote = async (title: string, subject: string, content: string) => {
+    setIsSaving(true);
+    const completedImages = processedImages.filter(img => img.status === 'completed');
+
+    try {
+      const mergedNote: Omit<Note, 'id'> = {
+        title,
+        description: content.substring(0, 100) + (content.length > 100 ? "..." : ""),
+        date: new Date().toISOString().split('T')[0],
+        subject,
+        content,
+        sourceType: 'scan',
+        scanData: {
+          originalImageUrl: completedImages[0]?.imageUrl || '',
+          recognizedText: content,
+          confidence: 0.8,
+          language: selectedLanguage
+        }
+      };
+
+      await onSaveNote(mergedNote);
+      setLastSaveResult({ count: completedImages.length, mode: 'merged' });
+      setShowBatchOptionsDialog(false);
+      setShowSuccessDialog(true);
+    } catch (error) {
+      console.error("Error saving merged note:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleViewNotes = () => {
+    window.location.href = '/notes';
+  };
+
+  const handleScanMore = () => {
+    resetForm();
   };
 
   const handleSaveNote = async () => {
@@ -203,7 +254,7 @@ export const ScanWorkflow = ({
       <BatchProcessingView
         processedImages={processedImages}
         batchProgress={batchProgress}
-        onSaveBatch={saveBatchAsNotes}
+        onSaveBatch={showBatchSaveOptions}
         onReset={resetForm}
         isSaving={isSaving}
       />
@@ -219,9 +270,13 @@ export const ScanWorkflow = ({
     showSaveButton: !!(capturedImage && recognizedText && noteTitle.trim())
   });
 
+  // Get available subjects for the dropdown
+  const availableSubjects = ['Uncategorized', 'Math', 'Science', 'History', 'Literature', 'Language'];
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Global drag overlay */}
+    <>
+      <div className="flex flex-col h-full">
+        {/* Global drag overlay */}
       {isDragOver && (
         <div className="fixed inset-0 bg-blue-100 bg-opacity-90 flex items-center justify-center z-50 pointer-events-none">
           <div className="bg-white p-8 rounded-xl shadow-xl text-center border-2 border-blue-300 border-dashed">
@@ -231,7 +286,7 @@ export const ScanWorkflow = ({
             </p>
             <p className="text-blue-600 max-w-sm">
               <strong>Single image:</strong> Standard OCR processing<br/>
-              <strong>Multiple images:</strong> Batch processing (up to 3 concurrent)
+              <strong>Multiple images:</strong> Batch processing (up to 10 files)
             </p>
             <div className="mt-4 p-2 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-700 font-medium">
@@ -308,6 +363,28 @@ export const ScanWorkflow = ({
         </div>
       )}
     </div>
+
+    {/* Batch Save Options Dialog */}
+      <BatchSaveOptionsDialog
+        isOpen={showBatchOptionsDialog}
+        onClose={() => setShowBatchOptionsDialog(false)}
+        processedImages={processedImages}
+        onSaveSeparate={saveBatchAsNotes}
+        onSaveMerged={saveBatchAsMergedNote}
+        isSaving={isSaving}
+        availableSubjects={availableSubjects}
+      />
+
+      {/* Post Save Success Dialog */}
+      <PostSaveSuccessDialog
+        isOpen={showSuccessDialog}
+        onClose={() => setShowSuccessDialog(false)}
+        savedCount={lastSaveResult.count}
+        saveMode={lastSaveResult.mode}
+        onScanMore={handleScanMore}
+        onViewNotes={handleViewNotes}
+      />
+    </>
   );
 };
 

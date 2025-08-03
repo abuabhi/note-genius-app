@@ -94,7 +94,7 @@ export const BatchProcessingView = ({
             ) : (
               <>
                 <FileText className="mr-2 h-4 w-4" />
-                Save {processedImages.filter(img => img.status === 'completed').length} Notes
+                Choose Save Options
               </>
             )}
           </Button>
