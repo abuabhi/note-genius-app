@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { FileText, Loader2 } from 'lucide-react';
 import { getOrCreateSubjectId } from "@/utils/subjectHelpers";
 import { useToast } from "@/hooks/use-toast";
-import { BatchSaveOptionsDialog } from "../../scanning/BatchSaveOptionsDialog";
 import { PostSaveSuccessDialog } from "../../scanning/PostSaveSuccessDialog";
 
 interface ScanImportTabProps {
@@ -27,7 +26,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
   const [noteTitle, setNoteTitle] = React.useState("");
   const [noteSubject, setNoteSubject] = React.useState("Uncategorized");
   const [isSaving, setIsSaving] = React.useState(false);
-  const [showBatchOptionsDialog, setShowBatchOptionsDialog] = React.useState(false);
+  
   const [showSuccessDialog, setShowSuccessDialog] = React.useState(false);
   const [lastSaveResult, setLastSaveResult] = React.useState<{ count: number; mode: 'separate' | 'merged' }>({ count: 0, mode: 'separate' });
   const [processingMode, setProcessingMode] = React.useState<'single' | 'batch'>('single');
@@ -67,13 +66,9 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     setProcessingMode('single');
     resetBatchProcessing();
     resetDragState();
-    setShowBatchOptionsDialog(false);
     setShowSuccessDialog(false);
   };
 
-  const showBatchSaveOptions = async () => {
-    setShowBatchOptionsDialog(true);
-  };
 
   const handleSingleImage = (imageUrl: string) => {
     handleImageCaptured(imageUrl);
@@ -130,6 +125,8 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         await onSaveNote(note);
       }
 
+      setLastSaveResult({ count: completedImages.length, mode: 'separate' });
+      setShowSuccessDialog(true);
       toast({
         title: "Success!",
         description: `Successfully saved ${completedImages.length} notes from scanned documents.`,
@@ -141,6 +138,51 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
       toast({
         title: "Error",
         description: "Failed to save some notes. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const saveBatchAsMergedNote = async (title: string, subject: string, content: string) => {
+    setIsSaving(true);
+    const completedImages = processedImages.filter(img => img.status === 'completed');
+
+    try {
+      const subjectId = await getOrCreateSubjectId(subject);
+      
+      const mergedNote = {
+        title,
+        description: content.substring(0, 100) + (content.length > 100 ? "..." : ""),
+        date: new Date().toISOString().split('T')[0],
+        category: subject,
+        subject_id: subjectId,
+        content,
+        sourceType: 'scan',
+        scanData: {
+          originalImageUrl: completedImages[0]?.imageUrl || '',
+          recognizedText: content,
+          confidence: 0.8,
+          language: selectedLanguage
+        }
+      };
+
+      await onSaveNote(mergedNote);
+      setLastSaveResult({ count: completedImages.length, mode: 'merged' });
+      setShowSuccessDialog(true);
+      
+      toast({
+        title: "Success!",
+        description: "Successfully merged and saved your scanned documents.",
+      });
+
+      resetForm();
+    } catch (error) {
+      console.error("Error saving merged note:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save the merged note. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -208,9 +250,11 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         <BatchProcessingView
           processedImages={processedImages}
           batchProgress={batchProgress}
-          onSaveBatch={showBatchSaveOptions}
+          onSaveSeparate={saveBatchAsNotes}
+          onSaveMerged={saveBatchAsMergedNote}
           onReset={resetForm}
           isSaving={isSaving}
+          availableSubjects={['Uncategorized', 'Math', 'Science', 'History', 'Literature', 'Language']}
         />
     );
   }
@@ -287,29 +331,6 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
       )}
 
       {/* Dialogs */}
-      <BatchSaveOptionsDialog
-        isOpen={showBatchOptionsDialog}
-        onClose={() => setShowBatchOptionsDialog(false)}
-        processedImages={processedImages}
-        onSaveSeparate={saveBatchAsNotes}
-        onSaveMerged={async (title, subject, content) => {
-          // Implementation for merged save
-          const note = {
-            title,
-            description: content.substring(0, 100) + "...",
-            content,
-            date: new Date().toISOString().split('T')[0],
-            subject,
-            sourceType: 'scan' as const
-          };
-          await onSaveNote(note);
-          setShowBatchOptionsDialog(false);
-          setShowSuccessDialog(true);
-        }}
-        isSaving={isSaving}
-        availableSubjects={['Uncategorized', 'Math', 'Science']}
-      />
-
       <PostSaveSuccessDialog
         isOpen={showSuccessDialog}
         onClose={() => setShowSuccessDialog(false)}

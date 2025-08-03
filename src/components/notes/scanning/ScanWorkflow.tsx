@@ -9,7 +9,7 @@ import { useImageUpload } from "./hooks/useImageUpload";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
 import { useBatchProcessing } from "./hooks/useBatchProcessing";
 import { BatchProcessingView } from "./BatchProcessingView";
-import { BatchSaveOptionsDialog } from "./BatchSaveOptionsDialog";
+
 import { PostSaveSuccessDialog } from "./PostSaveSuccessDialog";
 import { SingleImageCapture } from "./SingleImageCapture";
 import { Note } from "@/types/note";
@@ -36,7 +36,7 @@ export const ScanWorkflow = ({
   const [noteSubject, setNoteSubject] = useState("Uncategorized");
   const [isSaving, setIsSaving] = useState(false);
   const [processingMode, setProcessingMode] = useState<'single' | 'batch'>('single');
-  const [showBatchOptionsDialog, setShowBatchOptionsDialog] = useState(false);
+  
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [lastSaveResult, setLastSaveResult] = useState<{ count: number; mode: 'separate' | 'merged' }>({ count: 0, mode: 'separate' });
   
@@ -76,7 +76,6 @@ export const ScanWorkflow = ({
     setProcessingMode('single');
     resetBatchProcessing();
     resetDragState();
-    setShowBatchOptionsDialog(false);
     setShowSuccessDialog(false);
   };
 
@@ -114,9 +113,6 @@ export const ScanWorkflow = ({
     }
   };
 
-  const showBatchSaveOptions = async () => {
-    setShowBatchOptionsDialog(true);
-  };
 
   const saveBatchAsNotes = async () => {
     setIsSaving(true);
@@ -143,7 +139,6 @@ export const ScanWorkflow = ({
       }
 
       setLastSaveResult({ count: completedImages.length, mode: 'separate' });
-      setShowBatchOptionsDialog(false);
       setShowSuccessDialog(true);
     } catch (error) {
       console.error("Error saving batch notes:", error);
@@ -174,7 +169,6 @@ export const ScanWorkflow = ({
 
       await onSaveNote(mergedNote);
       setLastSaveResult({ count: completedImages.length, mode: 'merged' });
-      setShowBatchOptionsDialog(false);
       setShowSuccessDialog(true);
     } catch (error) {
       console.error("Error saving merged note:", error);
@@ -258,9 +252,11 @@ export const ScanWorkflow = ({
         <BatchProcessingView
           processedImages={processedImages}
           batchProgress={batchProgress}
-          onSaveBatch={showBatchSaveOptions}
+          onSaveSeparate={saveBatchAsNotes}
+          onSaveMerged={saveBatchAsMergedNote}
           onReset={resetForm}
           isSaving={isSaving}
+          availableSubjects={availableSubjects}
         />
       );
     }
@@ -371,18 +367,6 @@ export const ScanWorkflow = ({
     <>
       {/* Render main content based on mode */}
       {renderMainContent()}
-
-      {/* Batch Save Options Dialog */}
-      <BatchSaveOptionsDialog
-        isOpen={showBatchOptionsDialog}
-        onClose={() => setShowBatchOptionsDialog(false)}
-        processedImages={processedImages}
-        onSaveSeparate={saveBatchAsNotes}
-        onSaveMerged={saveBatchAsMergedNote}
-        isSaving={isSaving}
-        availableSubjects={availableSubjects}
-      />
-      
 
       {/* Post Save Success Dialog */}
       <PostSaveSuccessDialog
