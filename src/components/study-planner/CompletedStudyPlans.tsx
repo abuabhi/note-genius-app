@@ -1,10 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Calendar, Clock, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { BookOpen, Calendar, Clock, CheckCircle, Trash2 } from 'lucide-react';
 import { useCompletedStudyPlans } from '@/hooks/useCompletedStudyPlans';
+import { useDeleteStudyPlan } from '@/hooks/useDeleteStudyPlan';
 import { StudyPlan } from '@/types/studyPlanner';
+import { UnifiedDeleteDialog } from '@/components/ui/unified/UnifiedDeleteDialog';
 
 export const CompletedStudyPlans = () => {
   const { studyPlans, isLoading } = useCompletedStudyPlans();
@@ -53,12 +56,19 @@ export const CompletedStudyPlans = () => {
 };
 
 const CompletedStudyPlanCard = ({ plan }: { plan: StudyPlan }) => {
+  const { deleteStudyPlan, isLoading: isDeleting } = useDeleteStudyPlan();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
   const completedDate = new Date(plan.updated_at);
   const formattedDate = completedDate.toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric'
   });
+
+  const handleDeletePlan = async () => {
+    await deleteStudyPlan(plan.id);
+  };
 
   return (
     <Card className="border-green-200 bg-gradient-to-br from-green-50/30 to-white shadow-sm hover:shadow-md transition-shadow">
@@ -80,6 +90,15 @@ const CompletedStudyPlanCard = ({ plan }: { plan: StudyPlan }) => {
               )}
             </div>
           </div>
+          <Button
+            onClick={() => setShowDeleteDialog(true)}
+            variant="outline"
+            size="sm"
+            disabled={isDeleting}
+            className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all duration-200 rounded-lg h-8 w-8 p-0"
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
         </div>
       </CardHeader>
       
@@ -106,6 +125,17 @@ const CompletedStudyPlanCard = ({ plan }: { plan: StudyPlan }) => {
           </p>
         </div>
       </CardContent>
+
+      {/* Delete Confirmation Dialog */}
+      <UnifiedDeleteDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDeletePlan}
+        title="Delete Completed Study Plan"
+        itemName={plan.title}
+        itemType="study plan"
+        description={`Are you sure you want to delete "${plan.title}"? This will permanently remove the completed study plan and all associated data.`}
+      />
     </Card>
   );
 };

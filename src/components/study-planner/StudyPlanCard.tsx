@@ -8,10 +8,12 @@ import { useStudyPlanSession } from '@/hooks/useStudyPlanSession';
 import { useConvertStudyPlanToGoal } from '@/hooks/useConvertStudyPlanToGoal';
 import { useStudyPlannerAnalytics } from '@/hooks/useStudyPlannerAnalytics';
 import { useStudyPlanActions } from '@/hooks/useStudyPlanActions';
-import { Play, Settings, Target, Calendar, Clock, BookOpen, TrendingUp, Hash, AlertTriangle, RotateCcw, CheckCircle } from 'lucide-react';
+import { useDeleteStudyPlan } from '@/hooks/useDeleteStudyPlan';
+import { Play, Settings, Target, Calendar, Clock, BookOpen, TrendingUp, Hash, AlertTriangle, RotateCcw, CheckCircle, Trash2 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
 import { SessionSettingsDialog } from './SessionSettingsDialog';
+import { UnifiedDeleteDialog } from '@/components/ui/unified/UnifiedDeleteDialog';
 
 interface StudyPlanCardProps {
   studyPlan: StudyPlan;
@@ -22,8 +24,10 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
   const { convertToGoal, isLoading: isConverting } = useConvertStudyPlanToGoal();
   const { analytics } = useStudyPlannerAnalytics(studyPlan.id); // Get plan-specific analytics
   const { extendPlan, completePlan, isExtending, isCompleting } = useStudyPlanActions();
+  const { deleteStudyPlan, isLoading: isDeleting } = useDeleteStudyPlan();
   const [showGoalDialog, setShowGoalDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const isActive = isStudyPlanActive(studyPlan.id);
   const daysLeft = differenceInDays(new Date(studyPlan.end_date), new Date());
@@ -59,6 +63,10 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
 
   const handleCompletePlan = () => {
     completePlan(studyPlan.id);
+  };
+
+  const handleDeletePlan = async () => {
+    await deleteStudyPlan(studyPlan.id);
   };
 
   // Format time display - show hours and minutes for better readability
@@ -253,6 +261,16 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
               >
                 <Settings className="h-3 w-3" />
               </Button>
+              
+              <Button
+                onClick={() => setShowDeleteDialog(true)}
+                variant="outline"
+                size="sm"
+                disabled={isDeleting}
+                className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all duration-200 rounded-lg h-8 w-8 p-0"
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
             </div>
           )}
         </CardContent>
@@ -281,6 +299,17 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
         open={showSettingsDialog}
         onOpenChange={setShowSettingsDialog}
         studyPlan={studyPlan}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <UnifiedDeleteDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDeletePlan}
+        title="Delete Study Plan"
+        itemName={studyPlan.title}
+        itemType="study plan"
+        description={`Are you sure you want to delete "${studyPlan.title}"? This will permanently remove the study plan and all associated session data.`}
       />
     </>
   );

@@ -19,7 +19,7 @@ interface UnifiedDeleteDialogProps {
   onConfirm: () => Promise<void>;
   title: string;
   itemName: string;
-  itemType: 'note' | 'quiz' | 'flashcard' | 'flashcard set';
+  itemType: 'note' | 'quiz' | 'flashcard' | 'flashcard set' | 'study plan';
   description?: string;
   isDestructive?: boolean;
 }
