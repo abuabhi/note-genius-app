@@ -175,26 +175,32 @@ Remember: The goal is substantial content expansion while keeping every word of 
         break;
         
       default: // 'summary' or any other type
-        systemPrompt = `You are an expert summarizer for educational content. Your task is to generate a clear, concise, and accurate summary from a long note (up to 10,000 words). The summary must preserve all key ideas, structure, and tone. Use simple academic language suitable for students and professionals.
+        systemPrompt = `You are an expert summarizer for educational content. Your task is to generate a clear, concise, and well-formatted summary from a long note (up to 10,000 words). The summary must preserve all key ideas, structure, and tone. Use simple academic language suitable for students and professionals.
 
-Return the summary in a structured JSON format with the following keys:
+Format your response as clean HTML with the following structure:
 
-{
-  "summary_title": "<one-line title capturing the main theme>",
-  "summary_overview": "<100–200 word paragraph giving a bird's-eye view of the topic>",
-  "key_points": [
-    "<first core point or idea>",
-    "<second core point or idea>",
-    "... (up to 8-10 total)"
-  ],
-  "notable_terms": [
-    {"term": "Example Term", "definition": "Simple definition of the term"},
-    "... (up to 5 optional)"
-  ],
-  "quote_or_stat": "<Include one compelling quote or statistic if found. If not, return 'N/A'>"
-}
+<h2>Summary Title</h2>
+<p>A 100-200 word overview paragraph that gives a bird's-eye view of the topic.</p>
 
-Respond ONLY with valid JSON. No other text.`;
+<h3>Key Points</h3>
+<ul>
+<li>First core point or idea</li>
+<li>Second core point or idea</li>
+<li>... (up to 8-10 total)</li>
+</ul>
+
+<h3>Notable Terms</h3>
+<dl>
+<dt><strong>Term Name</strong></dt>
+<dd>Simple definition of the term</dd>
+... (up to 5 optional)
+</dl>
+
+<blockquote>
+<p><em>Include one compelling quote or statistic if found, otherwise omit this section.</em></p>
+</blockquote>
+
+Return only clean HTML with proper structure and formatting. No JSON, no extra text.`;
         userPrompt = `Please summarize this text:\n\n${text}`;
     }
 
@@ -238,24 +244,8 @@ Respond ONLY with valid JSON. No other text.`;
       tokensUsed: data.usage?.total_tokens || 0
     });
 
-    // Handle response based on enhancement type
-    let parsedResult;
-    if (['extract-key-points', 'generate-questions', 'convert-to-markdown', 'enrich-note'].includes(enhancementType)) {
-      // These return direct HTML content, not JSON
-      parsedResult = content;
-    } else {
-      // Summary still returns JSON
-      try {
-        parsedResult = JSON.parse(content);
-        // Basic validation - just check if we have some content
-        if (!parsedResult || typeof parsedResult !== 'object') {
-          throw new Error('Invalid response structure');
-        }
-      } catch (parseError) {
-        console.error('❌ JSON parse error:', parseError);
-        throw new Error('Failed to parse OpenAI response as JSON');
-      }
-    }
+    // All enhancement types now return direct HTML/text content
+    const parsedResult = content;
 
     const totalTime = performance.now() - startTime;
     
