@@ -55,16 +55,22 @@ export const QuizMetadataForm = ({ form, userSubjects }: QuizMetadataFormProps) 
             <FormLabel>Subject *</FormLabel>
             <Select onValueChange={field.onChange} value={field.value || ""}>
               <FormControl>
-                <SelectTrigger>
+                <SelectTrigger className={!field.value ? "text-muted-foreground" : ""}>
                   <SelectValue placeholder="Select a subject" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {userSubjects?.map((subject) => (
-                  <SelectItem key={subject.id} value={subject.id}>
-                    {subject.name}
+                {userSubjects && userSubjects.length > 0 ? (
+                  userSubjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.id}>
+                      {subject.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="" disabled>
+                    No subjects available
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
             <FormMessage />

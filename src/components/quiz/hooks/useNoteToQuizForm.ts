@@ -181,10 +181,21 @@ export const useNoteToQuizForm = ({
       
       console.log("✅ QUESTIONS VALIDATED");
       
+      // Validate subject selection
+      if (!data.subjectId || data.subjectId === "unknown" || data.subjectId.trim() === "") {
+        console.error("❌ INVALID SUBJECT ID:", data.subjectId);
+        toast({
+          variant: "destructive",
+          title: "Subject Required",
+          description: "Please select a subject before creating the quiz.",
+        });
+        return;
+      }
+
       const quizPayload = {
         title: data.title,
         description: data.description,
-        subject_id: data.subjectId,
+        user_subject_id: data.subjectId, // Use user_subject_id instead of subject_id
         source_type: sourceType,
         source_id: sourceId,
         is_public: false,

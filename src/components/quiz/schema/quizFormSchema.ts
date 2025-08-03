@@ -20,7 +20,9 @@ const QuizQuestionSchema = z.object({
 export const quizFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  subjectId: z.string().min(1, "Subject is required"),
+  subjectId: z.string()
+    .min(1, "Subject is required")
+    .refine((val) => val !== "unknown", "Please select a valid subject"),
   questions: z.array(QuizQuestionSchema).min(1, "At least one question is required"),
 });
 

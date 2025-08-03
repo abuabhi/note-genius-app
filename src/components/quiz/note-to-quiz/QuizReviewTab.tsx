@@ -3,6 +3,10 @@ import { NoteToQuizForm } from "../NoteToQuizForm";
 import { analyzeSelectedNotesSubjects } from '@/utils/subjectAnalyzer';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
+import { useUserSubjects } from '@/hooks/useUserSubjects';
+import { useEffect, useState } from 'react';
+import { ensureUserSubjectExists } from '@/utils/subjectHelpers';
+import { useAuth } from '@/contexts/auth';
 
 interface QuizReviewTabProps {
   generatedQuestions: {
@@ -20,38 +24,73 @@ export const QuizReviewTab = ({
   onSuccess,
 }: QuizReviewTabProps) => {
   const subjectAnalysis = analyzeSelectedNotesSubjects(selectedNotes);
+  const { subjects: userSubjects, addSubject } = useUserSubjects();
+  const { user } = useAuth();
+  const [autoSelectedSubject, setAutoSelectedSubject] = useState<string>('');
 
-  // Auto-detect subject from selected notes
-  const getAutoSelectedSubject = () => {
-    if (selectedNotes.length === 0) return '';
+  // Auto-detect and create subject from selected notes
+  const processAutoSelectedSubject = async () => {
+    console.log("🔍 Getting auto-selected subject...");
+    console.log("📝 Selected notes:", selectedNotes);
+    console.log("👥 User subjects:", userSubjects);
     
-    // First try to get subjects by subject_id
-    const subjectIds = selectedNotes
-      .map(note => note.subject_id)
-      .filter(Boolean);
-    
-    if (subjectIds.length > 0) {
-      // Find the most common subject_id
-      const subjectCounts = subjectIds.reduce((acc: Record<string, number>, subjectId: string) => {
-        acc[subjectId] = (acc[subjectId] || 0) + 1;
-        return acc;
-      }, {});
-      
-      const mostCommonSubject = Object.entries(subjectCounts)
-        .sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0];
-      
-      return mostCommonSubject || '';
+    if (selectedNotes.length === 0) {
+      setAutoSelectedSubject('');
+      return;
     }
     
-    // If no subject_id, try to use the primary subject from analysis
-    if (subjectAnalysis.primarySubject?.subjectId) {
-      return subjectAnalysis.primarySubject.subjectId;
+    const firstNote = selectedNotes[0];
+    console.log("📋 First note:", firstNote);
+    
+    // First try to get subjects by subject_id if it exists in user subjects
+    if (firstNote.subject_id && userSubjects) {
+      const matchingSubject = userSubjects.find(subject => subject.id === firstNote.subject_id);
+      if (matchingSubject) {
+        console.log("✅ Found matching subject by ID:", matchingSubject);
+        setAutoSelectedSubject(firstNote.subject_id);
+        return;
+      }
     }
     
-    return '';
+    // If no subject_id or not found, try to match by name
+    if (firstNote.subject && userSubjects) {
+      const matchingSubject = userSubjects.find(
+        subject => subject.name.toLowerCase() === firstNote.subject?.toLowerCase()
+      );
+      if (matchingSubject) {
+        console.log("✅ Found matching subject by name:", matchingSubject);
+        setAutoSelectedSubject(matchingSubject.id);
+        return;
+      }
+      
+      // Subject exists in note but not in user subjects - auto-create it
+      console.log("🔄 Creating missing subject:", firstNote.subject);
+      if (user?.id) {
+        try {
+          const subjectId = await ensureUserSubjectExists(firstNote.subject, user.id);
+          if (subjectId) {
+            console.log("✅ Created subject with ID:", subjectId);
+            setAutoSelectedSubject(subjectId);
+            // Refresh user subjects to include the new one
+            await addSubject(firstNote.subject);
+            return;
+          }
+        } catch (error) {
+          console.error("❌ Failed to create subject:", error);
+        }
+      }
+    }
+    
+    console.log("❌ No auto-selected subject found");
+    setAutoSelectedSubject('');
   };
 
-  const autoSelectedSubject = getAutoSelectedSubject();
+  // Process subject selection when component mounts or dependencies change
+  useEffect(() => {
+    if (selectedNotes.length > 0 && userSubjects) {
+      processAutoSelectedSubject();
+    }
+  }, [selectedNotes, userSubjects, user?.id]);
 
   return (
     <div className="space-y-6">
