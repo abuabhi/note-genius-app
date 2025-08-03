@@ -71,9 +71,50 @@ export const NoteToQuizForm = ({
     console.log("📊 Form State Valid:", form.formState.isValid);
     console.log("🚨 Form Errors:", form.formState.errors);
     
-    if (!form.formState.isValid) {
+    // Force validation to update form state
+    const isValid = await form.trigger();
+    console.log("🔍 Manual validation result:", isValid);
+    console.log("🔍 All form errors after trigger:", form.formState.errors);
+    
+    if (!isValid) {
       console.log("❌ FORM VALIDATION FAILED");
       console.log("🔍 Detailed Errors:", form.formState.errors);
+      
+      // Show specific validation errors
+      const errorMessages = [];
+      const errors = form.formState.errors;
+      
+      if (errors.title) errorMessages.push("Title is required");
+      if (errors.subjectId) errorMessages.push("Subject is required");
+      if (errors.questions) {
+        if (Array.isArray(errors.questions)) {
+          errors.questions.forEach((questionError: any, index: number) => {
+            if (questionError?.question) errorMessages.push(`Question ${index + 1} content is required`);
+            if (questionError?.options) {
+              if (Array.isArray(questionError.options)) {
+                questionError.options.forEach((optionError: any, optIndex: number) => {
+                  if (optionError?.content) errorMessages.push(`Question ${index + 1}, Option ${optIndex + 1} content is required`);
+                });
+              } else if (questionError.options.message) {
+                errorMessages.push(`Question ${index + 1}: ${questionError.options.message}`);
+              }
+            }
+          });
+        } else if (errors.questions.message) {
+          errorMessages.push(errors.questions.message);
+        }
+      }
+      
+      if (errorMessages.length > 0) {
+        import("@/hooks/use-toast").then(({ toast }) => {
+          toast({
+            title: "Form Validation Failed",
+            description: errorMessages.slice(0, 3).join(". ") + (errorMessages.length > 3 ? "..." : ""),
+            variant: "destructive"
+          });
+        });
+      }
+      
       return;
     }
     
