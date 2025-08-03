@@ -110,7 +110,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
           title: image.title,
           description: image.recognizedText.substring(0, 100) + (image.recognizedText.length > 100 ? "..." : ""),
           date: new Date().toISOString().split('T')[0],
-          category: image.subject, // Keep for backward compatibility - maps to subject
+          subject: image.subject, // Use subject instead of category
           subject_id: subjectId, // Use proper subject ID
           content: image.recognizedText,
           sourceType: 'scan',
@@ -156,7 +156,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         title,
         description: content.substring(0, 100) + (content.length > 100 ? "..." : ""),
         date: new Date().toISOString().split('T')[0],
-        category: subject,
+        subject: subject, // Use subject instead of category
         subject_id: subjectId,
         content,
         sourceType: 'scan',
@@ -213,7 +213,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
         title: noteTitle,
         description: recognizedText.substring(0, 100) + (recognizedText.length > 100 ? "..." : ""),
         date: dateString,
-        category: noteSubject, // Keep for backward compatibility
+        subject: noteSubject, // Use subject instead of category
         subject_id: subjectId, // Use proper subject ID
         content: recognizedText,
         sourceType: 'scan',

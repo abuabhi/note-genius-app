@@ -4,6 +4,7 @@ import { Note } from '@/types/note';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useRequireAuth } from './useRequireAuth';
+import { addScanDataToDatabase } from '@/contexts/notes/operations/scanOperations';
 
 // Helper function to map database response to Note interface
 const mapDbToNote = (dbNote: any): Note => ({
@@ -92,9 +93,14 @@ export const useNotes = () => {
     mutationFn: async (noteData: Omit<Note, 'id'>) => {
       if (!user?.id) throw new Error('User not authenticated');
       
+      // Extract scan data if present
+      const scanData = (noteData as any).scanData;
+      
       // Map camelCase to snake_case for database
       const dbData = { ...noteData };
       delete (dbData as any).sourceType;
+      delete (dbData as any).scanData; // Remove scanData from main note object
+      delete (dbData as any).category; // Remove category field to use subject properly
       
       const { data, error } = await supabase
         .from('notes')
@@ -109,6 +115,16 @@ export const useNotes = () => {
         .single();
 
       if (error) throw error;
+      
+      // If this is a scanned note, save the scan data separately
+      if (scanData && data.id) {
+        try {
+          await addScanDataToDatabase(data.id, scanData);
+        } catch (scanError) {
+          console.error('Failed to save scan data:', scanError);
+          // Don't fail the entire operation if scan data save fails
+        }
+      }
       
       // Map response back to camelCase
       return mapDbToNote(data);
