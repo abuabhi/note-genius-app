@@ -4,6 +4,7 @@ import { QueryProvider } from './components/app/QueryProvider';
 import { AuthProvider } from './contexts/auth/AuthProvider';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import { HelpProvider } from './contexts/HelpContext';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import SidebarLayout from '@/components/layout/SidebarLayout';
 import { ProductionOptimizationProvider } from '@/components/performance/ProductionOptimizationProvider';
 import AppRoutes from './components/app/AppRoutes';
@@ -17,9 +18,11 @@ function AppContent() {
   }, []);
 
   return (
-    <SidebarLayout>
-      <AppRoutes />
-    </SidebarLayout>
+    <SidebarProvider>
+      <SidebarLayout>
+        <AppRoutes />
+      </SidebarLayout>
+    </SidebarProvider>
   );
 }
 
