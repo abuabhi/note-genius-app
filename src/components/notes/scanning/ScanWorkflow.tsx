@@ -242,8 +242,6 @@ export const ScanWorkflow = ({
     }
   };
 
-  // Get available subjects for the dropdown
-  const availableSubjects = ['Uncategorized', 'Math', 'Science', 'History', 'Literature', 'Language'];
 
   // Main content area - conditionally render based on processing mode
   const renderMainContent = () => {
@@ -256,7 +254,6 @@ export const ScanWorkflow = ({
           onSaveMerged={saveBatchAsMergedNote}
           onReset={resetForm}
           isSaving={isSaving}
-          availableSubjects={availableSubjects}
         />
       );
     }

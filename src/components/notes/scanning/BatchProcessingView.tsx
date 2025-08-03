@@ -2,16 +2,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2, X, CheckCircle, AlertCircle, Files } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
+import { useUserSubjects } from "@/hooks/useUserSubjects";
 import { Note } from "@/types/note";
 
 interface ProcessedImage {
@@ -31,7 +29,6 @@ interface BatchProcessingViewProps {
   onSaveMerged: (title: string, subject: string, content: string) => Promise<void>;
   onReset: () => void;
   isSaving: boolean;
-  availableSubjects: string[];
 }
 
 export const BatchProcessingView = ({
@@ -40,14 +37,15 @@ export const BatchProcessingView = ({
   onSaveSeparate,
   onSaveMerged,
   onReset,
-  isSaving,
-  availableSubjects = []
+  isSaving
 }: BatchProcessingViewProps) => {
   const [saveMode, setSaveMode] = useState<'separate' | 'merged'>('separate');
   const [mergedTitle, setMergedTitle] = useState('');
-  const [mergedSubject, setMergedSubject] = useState('Uncategorized');
+  const [mergedSubject, setMergedSubject] = useState('');
   const [showContentPreview, setShowContentPreview] = useState(false);
 
+  const { subjects, isLoading } = useUserSubjects();
+  const availableSubjects = subjects.map(s => s.name);
   const completedImages = processedImages.filter(img => img.status === 'completed');
 
   // Generate merged content preview
@@ -68,74 +66,62 @@ export const BatchProcessingView = ({
     }
   };
 
-  const canSave = saveMode === 'separate' || (saveMode === 'merged' && mergedTitle.trim());
+  const canSave = saveMode === 'separate' || (saveMode === 'merged' && mergedTitle.trim() && mergedSubject.trim());
+  const isComplete = batchProgress === 100;
+
+  // Split documents into two columns
+  const midPoint = Math.ceil(processedImages.length / 2);
+  const leftColumn = processedImages.slice(0, midPoint);
+  const rightColumn = processedImages.slice(midPoint);
   
   return (
     <div className="flex flex-col h-full">
-      {/* Fixed Header Section */}
-      <div className="flex-shrink-0 space-y-4 border-b border-gray-200 pb-4 mb-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium">Batch Processing ({processedImages.length} images)</h3>
-          <Button variant="outline" size="sm" onClick={onReset}>
-            <X className="h-4 w-4 mr-2" />
-            Cancel
-          </Button>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm text-gray-600">
-            <span>Overall Progress</span>
-            <span>{Math.round(batchProgress)}%</span>
+      {/* Header Section - Hide when complete */}
+      {!isComplete && (
+        <div className="flex-shrink-0 space-y-4 border-b pb-4 mb-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium">Batch Processing ({processedImages.length} images)</h3>
+            <Button variant="outline" size="sm" onClick={onReset}>
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
           </div>
-          <Progress value={batchProgress} className="w-full" />
-        </div>
-      </div>
 
-      {/* Compact Document List - Table Style */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Overall Progress</span>
+              <span>{Math.round(batchProgress)}%</span>
+            </div>
+            <Progress value={batchProgress} className="w-full" />
+          </div>
+        </div>
+      )}
+
+      {/* Two-Column Document Grid */}
       <div className="flex-1 min-h-0 mb-4">
         <ScrollArea className="h-full">
-          <div className="space-y-1 pr-2">
-            {processedImages.map((image, index) => (
-              <div key={image.id} className="flex items-center gap-2 p-2 border rounded bg-card hover:bg-muted/50 transition-colors">
-                {/* Status Icon */}
-                <div className="flex-shrink-0">
-                  {image.status === 'completed' && <CheckCircle className="h-4 w-4 text-green-500" />}
-                  {image.status === 'failed' && <AlertCircle className="h-4 w-4 text-red-500" />}
-                  {image.status === 'processing' && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
-                  {image.status === 'pending' && <div className="h-4 w-4 bg-muted rounded-full" />}
-                </div>
+          <div className="grid grid-cols-2 gap-4 pr-2">
+            {/* Left Column */}
+            <div className="space-y-1">
+              {leftColumn.map((image, index) => (
+                <DocumentRow key={image.id} image={image} displayIndex={index + 1} />
+              ))}
+            </div>
 
-                {/* Document Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm truncate">{image.title}</span>
-                    <span className="text-xs text-muted-foreground">•</span>
-                    <span className="text-xs text-muted-foreground truncate">{image.subject}</span>
-                  </div>
-                  {image.status === 'completed' && image.recognizedText && (
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">
-                      {image.recognizedText.substring(0, 60)}...
-                    </p>
-                  )}
-                  {image.status === 'failed' && (
-                    <p className="text-xs text-red-500 truncate mt-0.5">{image.error}</p>
-                  )}
-                </div>
-
-                {/* Page Number */}
-                <div className="flex-shrink-0 text-xs text-muted-foreground font-mono">
-                  {index + 1}
-                </div>
-              </div>
-            ))}
+            {/* Right Column */}
+            <div className="space-y-1">
+              {rightColumn.map((image, index) => (
+                <DocumentRow key={image.id} image={image} displayIndex={midPoint + index + 1} />
+              ))}
+            </div>
           </div>
         </ScrollArea>
       </div>
 
-      {/* Fixed Save Options Section */}
-      {batchProgress === 100 && completedImages.length > 0 && (
-        <div className="flex-shrink-0 space-y-4 border-t border-gray-200 pt-4">
-          <h4 className="font-medium text-gray-900">Save Options</h4>
+      {/* Save Options Section - Only when complete */}
+      {isComplete && completedImages.length > 0 && (
+        <div className="flex-shrink-0 space-y-4 border-t pt-4">
+          <h4 className="font-medium">Save Options</h4>
           
           <RadioGroup
             value={saveMode}
@@ -171,12 +157,11 @@ export const BatchProcessingView = ({
                   placeholder="Title"
                   className="text-sm h-8"
                 />
-                <Select value={mergedSubject} onValueChange={setMergedSubject}>
+                <Select value={mergedSubject} onValueChange={setMergedSubject} disabled={isLoading}>
                   <SelectTrigger className="text-sm h-8">
-                    <SelectValue />
+                    <SelectValue placeholder={isLoading ? "Loading..." : "Select subject"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Uncategorized">Uncategorized</SelectItem>
                     {availableSubjects.map((subject) => (
                       <SelectItem key={subject} value={subject}>
                         {subject}
@@ -210,7 +195,7 @@ export const BatchProcessingView = ({
             <Button 
               onClick={handleSave}
               disabled={isSaving || !canSave}
-              className="bg-mint-500 hover:bg-mint-600 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isSaving ? (
                 <>
@@ -230,6 +215,53 @@ export const BatchProcessingView = ({
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+// Single document row component
+interface DocumentRowProps {
+  image: ProcessedImage;
+  displayIndex: number;
+}
+
+const DocumentRow = ({ image, displayIndex }: DocumentRowProps) => {
+  const getStatusIcon = () => {
+    switch (image.status) {
+      case 'completed':
+        return <CheckCircle className="h-3 w-3 text-green-500" />;
+      case 'failed':
+        return <AlertCircle className="h-3 w-3 text-red-500" />;
+      case 'processing':
+        return <Loader2 className="h-3 w-3 animate-spin text-blue-500" />;
+      default:
+        return <div className="h-3 w-3 bg-muted rounded-full" />;
+    }
+  };
+
+  const getStatusText = () => {
+    switch (image.status) {
+      case 'completed':
+        return 'Completed';
+      case 'failed':
+        return 'Failed';
+      case 'processing':
+        return 'Processing';
+      default:
+        return 'Pending';
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 p-2 border rounded text-xs hover:bg-muted/50 transition-colors">
+      {getStatusIcon()}
+      <span className="font-medium truncate flex-1">{image.title}</span>
+      <span className="text-muted-foreground">-</span>
+      <span className="text-muted-foreground truncate">{image.subject}</span>
+      <span className="text-muted-foreground">-</span>
+      <span className={`font-medium ${image.status === 'failed' ? 'text-red-500' : ''}`}>
+        {getStatusText()}
+      </span>
     </div>
   );
 };

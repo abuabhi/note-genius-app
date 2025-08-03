@@ -254,7 +254,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
           onSaveMerged={saveBatchAsMergedNote}
           onReset={resetForm}
           isSaving={isSaving}
-          availableSubjects={['Uncategorized', 'Math', 'Science', 'History', 'Literature', 'Language']}
+          
         />
     );
   }
