@@ -41,15 +41,21 @@ export const useSessionPersistence = () => {
   };
 
   const recoverActiveSession = async () => {
-    if (!user || recoveryAttempted.current) return null;
+    if (!user || recoveryAttempted.current) {
+      console.log('🔄 [SESSION PERSISTENCE] Skipping recovery - user:', !!user, 'already attempted:', recoveryAttempted.current);
+      return null;
+    }
     
     recoveryAttempted.current = true;
+    console.log('🔄 [SESSION PERSISTENCE] Starting session recovery for user:', user.id);
     
     try {
       // First check localStorage
       const persistedSession = getPersistedSession();
+      console.log('🔄 [SESSION PERSISTENCE] LocalStorage session:', persistedSession);
       
       // Then check database for active sessions
+      console.log('🔄 [SESSION PERSISTENCE] Querying database for active sessions...');
       const { data: activeSessions, error } = await supabase
         .from('study_sessions')
         .select('*')
@@ -59,13 +65,16 @@ export const useSessionPersistence = () => {
         .limit(1);
 
       if (error) {
-        console.error('Error checking for active sessions:', error);
+        console.error('❌ [SESSION PERSISTENCE] Error checking for active sessions:', error);
         return null;
       }
+
+      console.log('🔄 [SESSION PERSISTENCE] Database query result:', activeSessions);
 
       // If we have an active session in DB, return it
       if (activeSessions && activeSessions.length > 0) {
         const dbSession = activeSessions[0];
+        console.log('✅ [SESSION PERSISTENCE] Found active session in DB:', dbSession.id);
         
         // Calculate elapsed time since start
         const startTime = new Date(dbSession.start_time);
@@ -81,6 +90,8 @@ export const useSessionPersistence = () => {
           elapsedSeconds
         };
 
+        console.log('🔄 [SESSION PERSISTENCE] Recovered session data:', recoveredSession);
+        
         // Update localStorage with recovered session
         saveSessionState(recoveredSession);
         
@@ -89,12 +100,14 @@ export const useSessionPersistence = () => {
 
       // If no DB session but we have persisted data, clean it up
       if (persistedSession) {
+        console.log('🔄 [SESSION PERSISTENCE] Cleaning up stale localStorage data');
         clearPersistedSession();
       }
 
+      console.log('ℹ️ [SESSION PERSISTENCE] No active session found');
       return null;
     } catch (error) {
-      console.error('Error recovering session:', error);
+      console.error('❌ [SESSION PERSISTENCE] Error recovering session:', error);
       return null;
     }
   };

@@ -58,38 +58,56 @@ export const useUnifiedSessionTracker = () => {
   // Session recovery on app load
   useEffect(() => {
     const attemptRecovery = async () => {
-      if (!user || recoveryAttempted.current) return;
+      if (!user || recoveryAttempted.current) {
+        console.log('🔄 [SESSION RECOVERY] Skipping recovery - user:', !!user, 'already attempted:', recoveryAttempted.current);
+        return;
+      }
       
       recoveryAttempted.current = true;
-      console.log('🔄 [SESSION RECOVERY] Attempting to recover active session...');
+      console.log('🔄 [SESSION RECOVERY] Attempting to recover active session for user:', user.id);
       
-      const recoveredSession = await recoverActiveSession();
-      
-      if (recoveredSession) {
-        console.log('✅ [SESSION RECOVERY] Session recovered:', recoveredSession.sessionId);
+      try {
+        const recoveredSession = await recoverActiveSession();
         
-        setSessionState({
-          isActive: true,
-          currentSessionId: recoveredSession.sessionId,
-          startTime: new Date(recoveredSession.startTime),
-          elapsedSeconds: recoveredSession.elapsedSeconds,
-          isPaused: false,
-          activityType: recoveredSession.activityType,
-          currentTitle: recoveredSession.title,
-          currentSubject: recoveredSession.subject || null,
-          studyPlanId: recoveredSession.studyPlanId || null,
-          showInactivityWarning: false,
-          isRecovering: false
-        });
-        
-        toast.success('Study session resumed');
-      } else {
-        console.log('ℹ️ [SESSION RECOVERY] No active session found');
+        if (recoveredSession) {
+          console.log('✅ [SESSION RECOVERY] Session recovered:', {
+            sessionId: recoveredSession.sessionId,
+            title: recoveredSession.title,
+            elapsedSeconds: recoveredSession.elapsedSeconds,
+            activityType: recoveredSession.activityType
+          });
+          
+          const recoveredState = {
+            isActive: true,
+            currentSessionId: recoveredSession.sessionId,
+            startTime: new Date(recoveredSession.startTime),
+            elapsedSeconds: recoveredSession.elapsedSeconds,
+            isPaused: false,
+            activityType: recoveredSession.activityType,
+            currentTitle: recoveredSession.title,
+            currentSubject: recoveredSession.subject || null,
+            studyPlanId: recoveredSession.studyPlanId || null,
+            showInactivityWarning: false,
+            isRecovering: false
+          };
+          
+          console.log('🔄 [SESSION RECOVERY] Setting session state:', recoveredState);
+          setSessionState(recoveredState);
+          
+          toast.success('Study session resumed');
+        } else {
+          console.log('ℹ️ [SESSION RECOVERY] No active session found');
+          setSessionState(prev => ({ ...prev, isRecovering: false }));
+        }
+      } catch (error) {
+        console.error('❌ [SESSION RECOVERY] Error during recovery:', error);
         setSessionState(prev => ({ ...prev, isRecovering: false }));
       }
     };
 
-    attemptRecovery();
+    // Add a small delay to ensure auth is fully loaded
+    const timeout = setTimeout(attemptRecovery, 100);
+    return () => clearTimeout(timeout);
   }, [user, recoverActiveSession]);
 
   // Persist session state changes

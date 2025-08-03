@@ -24,6 +24,16 @@ export const SessionTimer = ({ isCollapsed }: SessionTimerProps) => {
     dismissInactivityWarning
   } = useUnifiedSessionTracker();
 
+  // Debug logging to see what's happening with the session state
+  console.log('🔧 [SESSION TIMER] Component state:', {
+    isActive,
+    isRecovering,
+    elapsedSeconds,
+    currentTitle,
+    activityType,
+    currentSubject
+  });
+
   // Show loading state during recovery
   if (isRecovering) {
     return (
