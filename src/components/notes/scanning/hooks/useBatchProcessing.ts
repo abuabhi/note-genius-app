@@ -28,7 +28,7 @@ export const useBatchProcessing = ({ selectedLanguage, isPremiumUser, uploadImag
       imageUrl: '',
       recognizedText: '',
       title: file.name.replace(/\.[^/.]+$/, ''),
-      subject: 'Scanned Documents', // Changed from category to subject
+      subject: '', // Subject will be set by user selection
       status: 'pending'
     }));
 

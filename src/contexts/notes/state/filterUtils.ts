@@ -148,11 +148,15 @@ export const paginateNotes = (notes: Note[], currentPage: number, notesPerPage: 
 export const extractSubjects = (notes: Note[]): string[] => {
   if (!notes.length) return [];
   
+  // System-generated subjects that shouldn't appear in dropdowns
+  const systemSubjects = ['Scanned Documents', 'Uncategorized'];
+  
   return notes
     .map(note => note.subject)
     .filter((subject, index, self) => 
-      // Remove empty subjects and duplicates
+      // Remove empty subjects, system subjects, and duplicates
       subject && subject.trim() !== '' && 
+      !systemSubjects.includes(subject) &&
       self.indexOf(subject) === index
     )
     .sort();
