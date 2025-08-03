@@ -12,7 +12,7 @@ import SectionsFilter from "./SectionsFilter";
 
 const SectionsContent = () => {
   const { sections, isLoading, createSection, updateSection, deleteSection } = useSections();
-  const { academicSubjects, fetchAcademicSubjects } = useFlashcards();
+  const { userSubjects, fetchUserSubjects } = useFlashcards();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [name, setName] = useState("");
@@ -23,8 +23,8 @@ const SectionsContent = () => {
   const [filterSubject, setFilterSubject] = useState("");
 
   useEffect(() => {
-    fetchAcademicSubjects();
-  }, [fetchAcademicSubjects]);
+    fetchUserSubjects();
+  }, [fetchUserSubjects]);
 
   const resetForm = () => {
     setName("");
@@ -126,7 +126,7 @@ const SectionsContent = () => {
         description={description}
         setDescription={setDescription}
         onSubmit={handleSubmit}
-        categories={academicSubjects}
+        categories={userSubjects}
       />
 
       <DeleteSectionDialog

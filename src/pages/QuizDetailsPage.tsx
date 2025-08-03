@@ -17,7 +17,7 @@ const QuizDetailsPage = () => {
   const navigate = useNavigate();
   const { userProfile } = useRequireAuth();
   const { data: quiz, isLoading, error } = useQuizDetails(quizId);
-  const { academicSubjects } = useSubjects();
+  const { userSubjects } = useSubjects();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   if (isLoading) {
@@ -47,7 +47,7 @@ const QuizDetailsPage = () => {
   }
 
   const isOwner = userProfile?.id === quiz.user_id;
-  const subject = academicSubjects?.find(s => s.id === quiz.subject_id);
+  const subject = userSubjects?.find(s => s.id === quiz.subject_id);
 
   return (
     <div className="container mx-auto p-6 space-y-6">

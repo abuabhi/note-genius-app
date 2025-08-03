@@ -20,7 +20,7 @@ const SectionsFilter = ({
   filterSubject,
   setFilterSubject,
 }: SectionsFilterProps) => {
-  const { academicSubjects } = useSubjects();
+  const { userSubjects } = useSubjects();
 
   return (
     <div className="mb-4">
@@ -33,7 +33,7 @@ const SectionsFilter = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Subjects</SelectItem>
-            {academicSubjects?.map((subject) => (
+            {userSubjects?.map((subject) => (
               <SelectItem key={subject.id} value={subject.id}>
                 {subject.name}
               </SelectItem>

@@ -30,7 +30,7 @@ interface FiltersProps {
 }
 
 export function LibraryFilters({ filters, setFilters }: FiltersProps) {
-  const { academicSubjects } = useSubjects();
+  const { userSubjects } = useSubjects();
   
   const gradeLevels = [
     "Elementary",
@@ -64,7 +64,7 @@ export function LibraryFilters({ filters, setFilters }: FiltersProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="_all">All Subjects</SelectItem>
-              {academicSubjects?.map((subject) => (
+              {userSubjects?.map((subject) => (
                 <SelectItem key={subject.id} value={subject.name}>
                   {subject.name}
                 </SelectItem>

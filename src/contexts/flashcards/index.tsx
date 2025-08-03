@@ -41,13 +41,13 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const contextValue: FlashcardContextType = {
     ...state,
     ...operations,
-    isLoading: state.loading.flashcards || state.loading.sets || state.loading.academicSubjects,
+    isLoading: state.loading.flashcards || state.loading.sets || state.loading.userSubjects,
     isReady,
   };
 
   console.log('FlashcardProvider: Rendering with context value', {
     flashcardSetsCount: state.flashcardSets.length,
-    academicSubjectsCount: state.academicSubjects.length,
+    userSubjectsCount: state.userSubjects.length,
     currentSetId: state.currentSet?.id,
     userId: state.user?.id,
     isReady,

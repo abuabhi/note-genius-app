@@ -3,32 +3,32 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CSVSubjectRow } from "@/types/admin";
-import { AcademicSubject } from "@/types/flashcard";
+import { UserSubject } from "@/types/flashcard";
 import { toast } from "sonner";
 
 export const useSubjects = () => {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
 
-  // Fetch all academic subjects with grade information
-  const { data: academicSubjects = [], isLoading } = useQuery({
-    queryKey: ["academicSubjects"],
+  // Fetch all user subjects
+  const { data: userSubjects = [], isLoading } = useQuery({
+    queryKey: ["userSubjects"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("academic_subjects") // Changed from subject_categories to academic_subjects
-        .select("*, grades(*)");
+        .from("user_subjects")
+        .select("*");
 
       if (error) throw error;
-      return data as (AcademicSubject & { grades: any })[];
+      return data as UserSubject[];
     },
   });
 
-  // Create academic subject
-  const createAcademicSubject = useMutation({
-    mutationFn: async (newSubject: Omit<AcademicSubject, "id" | "created_at" | "updated_at">) => {
+  // Create user subject
+  const createUserSubject = useMutation({
+    mutationFn: async (newSubject: { name: string; description?: string }) => {
       const { data, error } = await supabase
-        .from("academic_subjects") // Changed from subject_categories to academic_subjects
-        .insert(newSubject)
+        .from("user_subjects")
+        .insert({ ...newSubject, user_id: (await supabase.auth.getUser()).data.user?.id })
         .select()
         .single();
 
@@ -36,7 +36,7 @@ export const useSubjects = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["academicSubjects"] });
+      queryClient.invalidateQueries({ queryKey: ["userSubjects"] });
       toast.success("Subject created successfully");
     },
     onError: (error) => {
@@ -45,11 +45,11 @@ export const useSubjects = () => {
     }
   });
 
-  // Update academic subject
-  const updateAcademicSubject = useMutation({
-    mutationFn: async ({ id, ...updatedSubject }: AcademicSubject) => {
+  // Update user subject
+  const updateUserSubject = useMutation({
+    mutationFn: async ({ id, ...updatedSubject }: UserSubject) => {
       const { data, error } = await supabase
-        .from("academic_subjects") // Changed from subject_categories to academic_subjects
+        .from("user_subjects")
         .update(updatedSubject)
         .eq("id", id)
         .select()
@@ -59,7 +59,7 @@ export const useSubjects = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["academicSubjects"] });
+      queryClient.invalidateQueries({ queryKey: ["userSubjects"] });
       toast.success("Subject updated successfully");
     },
     onError: (error) => {
@@ -68,11 +68,11 @@ export const useSubjects = () => {
     }
   });
 
-  // Delete academic subject
-  const deleteAcademicSubject = useMutation({
+  // Delete user subject
+  const deleteUserSubject = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("academic_subjects") // Changed from subject_categories to academic_subjects
+        .from("user_subjects")
         .delete()
         .eq("id", id);
 
@@ -80,7 +80,7 @@ export const useSubjects = () => {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["academicSubjects"] });
+      queryClient.invalidateQueries({ queryKey: ["userSubjects"] });
       toast.success("Subject deleted successfully");
     },
     onError: (error) => {
@@ -154,15 +154,16 @@ export const useSubjects = () => {
       }
       
       // Insert valid rows
+      const user = await supabase.auth.getUser();
       const { data, error } = await supabase
-        .from("academic_subjects") // Changed from subject_categories to academic_subjects
-        .insert(validRows)
+        .from("user_subjects")
+        .insert(validRows.map(row => ({ ...row, user_id: user.data.user?.id })))
         .select();
         
       if (error) throw error;
       
       // Refresh subjects data
-      queryClient.invalidateQueries({ queryKey: ["academicSubjects"] });
+      queryClient.invalidateQueries({ queryKey: ["userSubjects"] });
       
       return { 
         success: true, 
@@ -182,12 +183,12 @@ export const useSubjects = () => {
   };
 
   return {
-    academicSubjects, // Changed from subjects to academicSubjects
+    userSubjects,
     isLoading,
     loading,
-    createAcademicSubject, // Changed from createSubject
-    updateAcademicSubject, // Changed from updateSubject
-    deleteAcademicSubject, // Changed from deleteSubject
+    createUserSubject,
+    updateUserSubject,
+    deleteUserSubject,
     importSubjectsFromCSV
   };
 };

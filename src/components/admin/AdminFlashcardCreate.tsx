@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export function AdminFlashcardCreate() {
-  const { academicSubjects, createFlashcardSet, createFlashcard } = useFlashcards();
+  const { userSubjects, createFlashcardSet, createFlashcard } = useFlashcards();
   const [isCreatingSet, setIsCreatingSet] = useState(true);
   const { toast } = useToast();
   
@@ -226,7 +226,7 @@ export function AdminFlashcardCreate() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="_none">None</SelectItem>
-                    {academicSubjects.map((subject) => (
+                    {userSubjects.map((subject) => (
                       <SelectItem key={subject.id} value={subject.id}>
                         {subject.name}
                       </SelectItem>
