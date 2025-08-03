@@ -35,23 +35,17 @@ export const markdownToHtml = (markdown: string): string => {
   
   let html = markdown;
   
-  // First, handle any existing HTML tags by preserving them
-  const htmlTagPattern = /<[^>]+>/g;
-  const existingTags: string[] = [];
-  html = html.replace(htmlTagPattern, (match) => {
-    existingTags.push(match);
-    return `__HTML_TAG_${existingTags.length - 1}__`;
-  });
-  
-  // Enhanced content (AI-generated) - process first with robust regex
-  // This handles: [ENRICHED], [AI_ENHANCED], [AI_ENRICHED], etc. with case-insensitive matching
+  // Process AI enhancement tags first
   const enrichedRegex = /\[(?:AI_)?(?:ENHANCED|ENRICHED)\]([\s\S]*?)\[\/(?:AI_)?(?:ENHANCED|ENRICHED)\]/gi;
   html = html.replace(enrichedRegex, '<div class="ai-enriched-content">$1</div>');
   
-  // Process fenced code blocks first (to avoid conflicts with other processing)
+  // Process fenced code blocks first (to avoid conflicts)
   html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
   
-  // Process headers (# to ######)
+  // Process inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  
+  // Process headers (# to ######) - most specific first
   html = html.replace(/^#{6}\s+(.*)$/gm, '<h6>$1</h6>');
   html = html.replace(/^#{5}\s+(.*)$/gm, '<h5>$1</h5>');
   html = html.replace(/^#{4}\s+(.*)$/gm, '<h4>$1</h4>');
@@ -59,8 +53,60 @@ export const markdownToHtml = (markdown: string): string => {
   html = html.replace(/^#{2}\s+(.*)$/gm, '<h2>$1</h2>');
   html = html.replace(/^#{1}\s+(.*)$/gm, '<h1>$1</h1>');
   
-  // Process inline code (after fenced code blocks)
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // Process blockquotes
+  html = html.replace(/^>\s*(.*)$/gm, '<blockquote class="simple-blockquote">$1</blockquote>');
+  
+  // Process horizontal rules
+  html = html.replace(/^(---|\*\*\*|___)\s*$/gm, '<hr>');
+  
+  // Process Questions and Answers
+  html = html.replace(/^(Q\d+[.:\-]?\s+.*)$/gm, '<div class="question-text">$1</div>');
+  html = html.replace(/^(Question\s*\d*[.:\-]?\s+.*)$/gmi, '<div class="question-text">$1</div>');
+  html = html.replace(/^(Answer[.:\-]?\s+.*)$/gmi, '<div class="answer-text">$1</div>');
+  
+  // Process lists - handle both bullet and numbered lists
+  const lines = html.split('\n');
+  const processedLines: string[] = [];
+  let inList = false;
+  let listType = '';
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const isBulletList = /^[\s]*[-•*]\s+(.*)$/.test(line);
+    const isNumberedList = /^\d+\.\s+(.*)$/.test(line);
+    
+    if (isBulletList || isNumberedList) {
+      const content = line.replace(/^[\s]*[-•*]\s+|^\d+\.\s+/, '');
+      
+      if (!inList) {
+        // Start new list
+        listType = isBulletList ? 'ul' : 'ol';
+        processedLines.push(`<${listType}>`);
+        inList = true;
+      } else if ((isBulletList && listType === 'ol') || (isNumberedList && listType === 'ul')) {
+        // Switch list type
+        processedLines.push(`</${listType}>`);
+        listType = isBulletList ? 'ul' : 'ol';
+        processedLines.push(`<${listType}>`);
+      }
+      
+      processedLines.push(`<li>${content}</li>`);
+    } else {
+      // Not a list item
+      if (inList) {
+        processedLines.push(`</${listType}>`);
+        inList = false;
+      }
+      processedLines.push(line);
+    }
+  }
+  
+  // Close any open list
+  if (inList) {
+    processedLines.push(`</${listType}>`);
+  }
+  
+  html = processedLines.join('\n');
   
   // Process bold and italic formatting
   html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -69,56 +115,24 @@ export const markdownToHtml = (markdown: string): string => {
   // Process strikethrough
   html = html.replace(/~~(.*?)~~/g, '<del>$1</del>');
   
-  // Process blockquotes
-  html = html.replace(/^>\s*(.*)$/gm, '<blockquote class="simple-blockquote">$1</blockquote>');
+  // Handle line breaks and paragraphs
+  html = html.replace(/\r\n/g, '\n').trim();
   
-  // Process unordered lists (bullet points)
-  html = html.replace(/^[\s]*[-•*]\s+(.*)$/gm, '<li>$1</li>');
-  
-  // Process ordered lists (numbered)
-  html = html.replace(/^\d+\.\s+(.*)$/gm, '<li>$1</li>');
-  
-  // Wrap consecutive list items in ul/ol tags
-  html = html.replace(/(<li>.*?<\/li>)(\s*<li>.*?<\/li>)*/g, (match) => {
-    return `<ul>${match}</ul>`;
-  });
-  
-  // Process Questions and Answers
-  html = html.replace(/^(Q\d+[.:\-]?\s+.*)$/gm, '<div class="question-text">$1</div>');
-  html = html.replace(/^(Question\s*\d*[.:\-]?\s+.*)$/gmi, '<div class="question-text">$1</div>');
-  html = html.replace(/^(Answer[.:\-]?\s+.*)$/gmi, '<div class="answer-text">$1</div>');
-  
-  // Process horizontal rules
-  html = html.replace(/^(---|\*\*\*|___)\s*$/gm, '<hr>');
-  
-  // Process line breaks - convert double newlines to paragraphs, single to <br>
-  html = html
-    .replace(/\r\n/g, '\n') // Normalize line endings
-    .replace(/\n{3,}/g, '\n\n') // Max 2 consecutive newlines
-    .trim();
-  
-  // Split into paragraphs and process
-  const paragraphs = html.split(/\n\n+/);
-  const processedParagraphs = paragraphs.map(para => {
-    if (!para.trim()) return '';
+  // Split by double newlines for paragraphs
+  const blocks = html.split(/\n\s*\n/);
+  const processedBlocks = blocks.map(block => {
+    if (!block.trim()) return '';
     
-    // Skip if already wrapped in HTML tags
-    if (para.match(/^<(h[1-6]|div|blockquote|ul|ol|pre|hr)/)) {
-      return para.replace(/\n/g, '<br>');
+    // Don't wrap blocks that are already HTML elements
+    if (block.match(/^<(h[1-6]|div|blockquote|ul|ol|pre|hr|li)/)) {
+      return block.replace(/\n/g, '<br>');
     }
     
-    // Wrap in paragraph tags
-    return `<p>${para.replace(/\n/g, '<br>')}</p>`;
-  }).filter(para => para.length > 0);
+    // Wrap plain text in paragraph tags
+    return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+  }).filter(block => block.length > 0);
   
-  html = processedParagraphs.join('');
-  
-  // Restore HTML tags
-  existingTags.forEach((tag, index) => {
-    html = html.replace(`__HTML_TAG_${index}__`, tag);
-  });
-  
-  return html;
+  return processedBlocks.join('\n');
 };
 
 // Process any content to ensure consistent markdown formatting
