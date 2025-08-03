@@ -207,10 +207,15 @@ export const useNoteToQuizForm = ({
       
       console.log("🎉 QUIZ CREATED SUCCESSFULLY!");
 
+      // Always show the success dialog for note-to-quiz flow
+      console.log("📋 Setting showSuccessDialog to true");
+      setShowSuccessDialog(true);
+      
+      // If there's an onSuccess callback (for resetting parent state), call it
       if (onSuccess) {
-        onSuccess();
-      } else {
-        setShowSuccessDialog(true);
+        console.log("🔄 Calling onSuccess callback for state reset");
+        // Call it after a delay to ensure dialog shows first
+        setTimeout(() => onSuccess(), 100);
       }
     } catch (error) {
       console.error("💥 ERROR CREATING QUIZ:", error);

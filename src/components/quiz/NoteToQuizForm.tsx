@@ -43,6 +43,9 @@ export const NoteToQuizForm = ({
   const { subjects: userSubjects } = useUserSubjects();
   const navigate = useNavigate();
   
+  console.log("NoteToQuizForm - onSuccess prop:", onSuccess);
+  
+  // Override the onSuccess to show dialog instead of calling callback
   const { 
     form, 
     onSubmit, 
@@ -54,7 +57,7 @@ export const NoteToQuizForm = ({
     isSubmitting,
     showSuccessDialog,
     setShowSuccessDialog,
-    handleCreateAnother,
+    handleCreateAnother: originalHandleCreateAnother,
     handleGoToQuizzes
   } = useNoteToQuizForm({
     initialQuestions,
@@ -63,8 +66,17 @@ export const NoteToQuizForm = ({
     initialSubjectId,
     sourceType,
     sourceId,
-    onSuccess
+    onSuccess: undefined // Don't use the callback, show dialog instead
   });
+  
+  console.log("NoteToQuizForm - showSuccessDialog:", showSuccessDialog);
+  
+  const handleCreateAnother = () => {
+    originalHandleCreateAnother();
+    if (onSuccess) {
+      onSuccess(); // Reset the parent state
+    }
+  };
   
   const handleFormSubmit = async (data: any) => {
     console.log("🔄 FORM SUBMIT TRIGGERED");

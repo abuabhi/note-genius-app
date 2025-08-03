@@ -106,6 +106,8 @@ export const useNoteToQuizState = () => {
   };
 
   const handleSuccess = () => {
+    console.log("🎉 Quiz creation success callback triggered in useNoteToQuizState");
+    
     // Reset the form state after successful creation
     setGeneratedQuestions([]);
     setSelectedNotes([]);

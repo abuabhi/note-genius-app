@@ -23,6 +23,8 @@ export const useQuizFormSubmission = ({
   const onSubmit = async (data: QuizFormValues) => {
     try {
       console.log("Submitting quiz data:", data);
+      console.log("onSuccess prop:", onSuccess);
+      console.log("showSuccessDialog state before:", showSuccessDialog);
       
       const quizData = {
         title: data.title,
@@ -53,9 +55,18 @@ export const useQuizFormSubmission = ({
       console.log("Quiz created successfully");
       
       if (onSuccess) {
+        console.log("Calling onSuccess callback");
         onSuccess();
       } else {
+        console.log("Setting showSuccessDialog to true");
         setShowSuccessDialog(true);
+        console.log("showSuccessDialog state after:", true);
+        
+        // Add fallback toast
+        toast({
+          title: "Quiz Created Successfully! 🎉",
+          description: "Your quiz has been created and is ready to use.",
+        });
       }
     } catch (error) {
       console.error("Error creating quiz:", error);
