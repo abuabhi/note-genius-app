@@ -27,6 +27,7 @@ const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
 const HelpPage = lazy(() => import('@/pages/HelpPage'));
 const FAQPage = lazy(() => import('@/pages/FAQPage'));
 const StudyPlannerPage = lazy(() => import('@/pages/StudyPlannerPage'));
+const QuizDetailsPage = lazy(() => import('@/pages/QuizDetailsPage'));
 const InfluencerDashboardPage = lazy(() => import('@/pages/InfluencerDashboardPage'));
 
 // Legacy route redirects
@@ -77,6 +78,10 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/quiz/:id/take',
     element: <SidebarLayout><TakeQuizPage /></SidebarLayout>
+  },
+  {
+    path: '/quiz/:id',
+    element: <SidebarLayout><QuizDetailsPage /></SidebarLayout>
   },
   {
     path: '/note-to-flashcard',
