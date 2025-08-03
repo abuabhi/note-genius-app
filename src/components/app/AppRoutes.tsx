@@ -9,6 +9,8 @@ import { miscRoutes } from '@/routes/miscRoutes';
 import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
 import { Suspense } from 'react';
 import { useAuth } from '@/contexts/auth';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import SidebarLayout from '@/components/layout/SidebarLayout';
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
@@ -23,7 +25,13 @@ const AppRoutes = () => {
         </div>
       );
     }
-    return user ? <>{children}</> : <Navigate to="/login" />;
+    return user ? (
+      <SidebarProvider>
+        <SidebarLayout>
+          {children}
+        </SidebarLayout>
+      </SidebarProvider>
+    ) : <Navigate to="/login" />;
   };
 
   const LoadingSkeleton = () => (

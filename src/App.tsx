@@ -4,8 +4,6 @@ import { QueryProvider } from './components/app/QueryProvider';
 import { AuthProvider } from './contexts/auth/AuthProvider';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import { HelpProvider } from './contexts/HelpContext';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import SidebarLayout from '@/components/layout/SidebarLayout';
 import { ProductionOptimizationProvider } from '@/components/performance/ProductionOptimizationProvider';
 import AppRoutes from './components/app/AppRoutes';
 import { useNotificationToasts } from '@/hooks/useNotificationToasts';
@@ -17,13 +15,7 @@ function AppContent() {
     document.title = 'PrepGenie';
   }, []);
 
-  return (
-    <SidebarProvider>
-      <SidebarLayout>
-        <AppRoutes />
-      </SidebarLayout>
-    </SidebarProvider>
-  );
+  return <AppRoutes />;
 }
 
 function App() {
