@@ -3943,6 +3943,10 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: boolean
       }
+      log_quiz_creation_debug: {
+        Args: { quiz_data: Json; context?: string }
+        Returns: undefined
+      }
       process_referral_signup: {
         Args: { referred_user_id: string; referral_code_used: string }
         Returns: boolean

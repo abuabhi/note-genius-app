@@ -195,7 +195,8 @@ export const useNoteToQuizForm = ({
       const quizPayload = {
         title: data.title,
         description: data.description,
-        user_subject_id: data.subjectId, // Use user_subject_id instead of subject_id
+        user_subject_id: data.subjectId, // Primary field for subject mapping
+        subject_id: data.subjectId, // Legacy field for backward compatibility
         source_type: sourceType,
         source_id: sourceId,
         is_public: false,

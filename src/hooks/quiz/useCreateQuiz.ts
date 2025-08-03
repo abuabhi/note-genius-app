@@ -10,7 +10,8 @@ export const useCreateQuiz = () => {
     mutationFn: async (newQuiz: {
       title: string;
       description?: string;
-      subject_id?: string; // This should now reference user_subjects.id
+      user_subject_id?: string; // Primary field for user subjects
+      subject_id?: string; // Legacy field for backward compatibility
       section_id?: string;
       grade_id?: string;
       country_id?: string;
@@ -31,13 +32,29 @@ export const useCreateQuiz = () => {
         }[];
       }[];
     }) => {
-      // First insert the quiz with user_subject reference
+      // Determine which subject ID to use (prioritize user_subject_id)
+      const subjectId = newQuiz.user_subject_id || newQuiz.subject_id;
+      
+      console.log('🎯 QUIZ CREATION - Subject mapping:', {
+        user_subject_id: newQuiz.user_subject_id,
+        subject_id: newQuiz.subject_id,
+        final_subject_id: subjectId,
+        title: newQuiz.title
+      });
+
+      // Validate subject ID before proceeding
+      if (!subjectId) {
+        throw new Error('Quiz must have a valid subject ID');
+      }
+
+      // First insert the quiz with proper subject mapping
       const { data: quiz, error: quizError } = await supabase
         .from('quizzes')
         .insert({
           title: newQuiz.title,
           description: newQuiz.description || null,
-          user_subject_id: newQuiz.subject_id || null, // Now properly references user_subjects.id
+          user_subject_id: subjectId, // Use the determined subject ID
+          subject_id: subjectId, // Keep legacy field in sync for backward compatibility
           section_id: newQuiz.section_id || null,
           grade_id: newQuiz.grade_id || null,
           country_id: newQuiz.country_id || null,

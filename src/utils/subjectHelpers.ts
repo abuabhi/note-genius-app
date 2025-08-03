@@ -3,55 +3,78 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Ensures a subject exists in user_subjects table and returns its ID
+ * Includes retry logic for better reliability
  */
-export const ensureUserSubjectExists = async (subjectName: string, userId: string): Promise<string | null> => {
+export const ensureUserSubjectExists = async (subjectName: string, userId: string, retryCount = 3): Promise<string | null> => {
   if (!subjectName || !userId) {
-    console.error('Missing subjectName or userId');
+    console.error('❌ SUBJECT_HELPER: Missing subjectName or userId');
     return null;
   }
 
   try {
-    console.log('Ensuring subject exists:', { subjectName, userId });
+    console.log(`🔍 SUBJECT_HELPER: Ensuring subject exists (attempt ${4 - retryCount}):`, { subjectName, userId });
+
+    const trimmedSubjectName = subjectName.trim();
 
     // First, check if the subject already exists for this user
     const { data: existingSubject, error: fetchError } = await supabase
       .from('user_subjects')
       .select('id')
       .eq('user_id', userId)
-      .eq('name', subjectName)
-      .single();
+      .eq('name', trimmedSubjectName)
+      .maybeSingle(); // Use maybeSingle to avoid errors when not found
 
-    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "not found" error
-      console.error('Error checking existing subject:', fetchError);
+    if (fetchError) {
+      console.error('❌ SUBJECT_HELPER: Error checking existing subject:', fetchError);
+      if (retryCount > 1) {
+        console.log(`🔄 SUBJECT_HELPER: Retrying fetch... (${retryCount - 1} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return ensureUserSubjectExists(subjectName, userId, retryCount - 1);
+      }
       return null;
     }
 
     if (existingSubject) {
-      console.log('Subject already exists:', existingSubject.id);
+      console.log('✅ SUBJECT_HELPER: Subject already exists:', existingSubject.id);
       return existingSubject.id;
     }
 
     // Subject doesn't exist, create it
-    console.log('Creating new subject:', subjectName);
+    console.log('🔨 SUBJECT_HELPER: Creating new subject:', trimmedSubjectName);
     const { data: newSubject, error: createError } = await supabase
       .from('user_subjects')
       .insert({
         user_id: userId,
-        name: subjectName
+        name: trimmedSubjectName
       })
       .select('id')
       .single();
 
     if (createError) {
-      console.error('Error creating subject:', createError);
+      console.error('❌ SUBJECT_HELPER: Error creating subject:', createError);
+      if (retryCount > 1) {
+        console.log(`🔄 SUBJECT_HELPER: Retrying creation... (${retryCount - 1} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return ensureUserSubjectExists(subjectName, userId, retryCount - 1);
+      }
       return null;
     }
 
-    console.log('Successfully created subject:', newSubject.id);
+    if (!newSubject?.id) {
+      console.error('❌ SUBJECT_HELPER: Subject created but no ID returned');
+      return null;
+    }
+
+    console.log('✅ SUBJECT_HELPER: Successfully created subject:', newSubject.id);
     return newSubject.id;
 
   } catch (error) {
-    console.error('Error in ensureUserSubjectExists:', error);
+    console.error(`❌ SUBJECT_HELPER: Error in ensureUserSubjectExists (attempt ${4 - retryCount}):`, error);
+    if (retryCount > 1) {
+      console.log(`🔄 SUBJECT_HELPER: Final retry... (${retryCount - 1} attempts left)`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return ensureUserSubjectExists(subjectName, userId, retryCount - 1);
+    }
     return null;
   }
 };
