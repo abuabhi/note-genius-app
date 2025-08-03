@@ -22,7 +22,7 @@ export const useFlashcardsImport = () => {
     errorCount: number;
     errors: { row: number; message: string }[];
   } | null>(null);
-  const { fetchAcademicSubjects, createFlashcardSet, addFlashcard } = useFlashcards();
+  const { fetchUserSubjects, createFlashcardSet, addFlashcard } = useFlashcards();
 
   const importFlashcards = async (file: File) => {
     setIsImporting(true);
@@ -50,8 +50,8 @@ export const useFlashcardsImport = () => {
     try {
       console.log('Processing CSV data with', csvData.length, 'rows');
       
-      // Fetch academic subjects for mapping
-      await fetchAcademicSubjects();
+      // Fetch user subjects for mapping
+      await fetchUserSubjects();
       
       // Group flashcards by set
       const flashcardsBySet = new Map<string, CSVFlashcardRow[]>();
@@ -74,14 +74,14 @@ export const useFlashcardsImport = () => {
       for (const [setName, cards] of flashcardsBySet) {
         console.log(`Processing set: ${setName} with ${cards.length} cards`);
         
-        // Find or create academic subject
+        // Find or create user subject
         let subjectId = null;
         const firstCard = cards[0];
         
         if (firstCard.subject) {
           const { data: subjects, error } = await supabase
-            .from('academic_subjects')
-            .select('id, name, grade_id, country_id')
+            .from('user_subjects')
+            .select('id, name')
             .ilike('name', `%${firstCard.subject}%`);
             
           if (error) {

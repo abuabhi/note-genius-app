@@ -1,96 +1,96 @@
 
 import { useCallback } from 'react';
-import { AcademicSubject } from '@/types/flashcard';
+import { UserSubject } from '@/types/flashcard';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 /**
- * Hook that provides academic subject-related operations for flashcards
+ * Hook that provides user subject-related operations for flashcards
  */
-export const useAcademicSubjectOperations = (
-  academicSubjects: AcademicSubject[], 
-  setAcademicSubjects: React.Dispatch<React.SetStateAction<AcademicSubject[]>>
+export const useUserSubjectOperations = (
+  userSubjects: UserSubject[], 
+  setUserSubjects: React.Dispatch<React.SetStateAction<UserSubject[]>>
 ) => {
   
-  const fetchAcademicSubjects = useCallback(async (): Promise<AcademicSubject[]> => {
+  const fetchUserSubjects = useCallback(async (): Promise<UserSubject[]> => {
     try {
       const { data, error } = await supabase
-        .from('academic_subjects')
+        .from('user_subjects')
         .select('*')
         .order('name');
         
       if (error) throw error;
       
-      setAcademicSubjects(data);
+      setUserSubjects(data);
       return data;
     } catch (error) {
-      console.error('fetchAcademicSubjects: Error fetching academic subjects:', error);
-      toast.error('Failed to load academic subjects');
+      console.error('fetchUserSubjects: Error fetching user subjects:', error);
+      toast.error('Failed to load user subjects');
       return [];
     }
-  }, [setAcademicSubjects]);
+  }, [setUserSubjects]);
 
-  const createAcademicSubject = useCallback(async (name: string, parentId?: string): Promise<void> => {
+  const createUserSubject = useCallback(async (name: string): Promise<void> => {
     try {
       const { data, error } = await supabase
-        .from('academic_subjects')
+        .from('user_subjects')
         .insert({
           name,
-          parent_id: parentId
+          user_id: (await supabase.auth.getUser()).data.user?.id
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      setAcademicSubjects(prev => [...prev, data]);
-      toast.success('Academic subject created successfully');
+      setUserSubjects(prev => [...prev, data]);
+      toast.success('Subject created successfully');
     } catch (error) {
-      console.error('createAcademicSubject: Error creating academic subject:', error);
-      toast.error('Failed to create academic subject');
+      console.error('createUserSubject: Error creating user subject:', error);
+      toast.error('Failed to create subject');
     }
-  }, [setAcademicSubjects]);
+  }, [setUserSubjects]);
 
-  const updateAcademicSubject = useCallback(async (id: string, name: string): Promise<void> => {
+  const updateUserSubject = useCallback(async (id: string, name: string): Promise<void> => {
     try {
       const { error } = await supabase
-        .from('academic_subjects')
+        .from('user_subjects')
         .update({ name })
         .eq('id', id);
 
       if (error) throw error;
 
-      setAcademicSubjects(prev => 
+      setUserSubjects(prev => 
         prev.map(subject => subject.id === id ? { ...subject, name } : subject)
       );
-      toast.success('Academic subject updated successfully');
+      toast.success('Subject updated successfully');
     } catch (error) {
-      console.error('updateAcademicSubject: Error updating academic subject:', error);
-      toast.error('Failed to update academic subject');
+      console.error('updateUserSubject: Error updating user subject:', error);
+      toast.error('Failed to update subject');
     }
-  }, [setAcademicSubjects]);
+  }, [setUserSubjects]);
 
-  const deleteAcademicSubject = useCallback(async (id: string): Promise<void> => {
+  const deleteUserSubject = useCallback(async (id: string): Promise<void> => {
     try {
       const { error } = await supabase
-        .from('academic_subjects')
+        .from('user_subjects')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
 
-      setAcademicSubjects(prev => prev.filter(subject => subject.id !== id));
-      toast.success('Academic subject deleted successfully');
+      setUserSubjects(prev => prev.filter(subject => subject.id !== id));
+      toast.success('Subject deleted successfully');
     } catch (error) {
-      console.error('deleteAcademicSubject: Error deleting academic subject:', error);
-      toast.error('Failed to delete academic subject');
+      console.error('deleteUserSubject: Error deleting user subject:', error);
+      toast.error('Failed to delete subject');
     }
-  }, [setAcademicSubjects]);
+  }, [setUserSubjects]);
 
   return {
-    fetchAcademicSubjects,
-    createAcademicSubject,
-    updateAcademicSubject,
-    deleteAcademicSubject
+    fetchUserSubjects,
+    createUserSubject,
+    updateUserSubject,
+    deleteUserSubject
   };
 };

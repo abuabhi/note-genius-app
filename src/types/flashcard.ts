@@ -56,6 +56,15 @@ export interface FlashcardProgress {
   updated_at: string;
 }
 
+export interface UserSubject {
+  id: string;
+  name: string;
+  description?: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface AcademicSubject {
   id: string;
   name: string;

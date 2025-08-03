@@ -23,26 +23,26 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { AcademicSubject } from "@/types/flashcard";
+import { UserSubject } from "@/types/flashcard";
 import { supabase } from "@/integrations/supabase/client";
 
 export function AdminSubjectList() {
-  const { academicSubjects, setAcademicSubjects, fetchAcademicSubjects } = useFlashcards();
+  const { userSubjects, setUserSubjects, fetchUserSubjects } = useFlashcards();
   const [loading, setLoading] = useState(true);
   const [newSubject, setNewSubject] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    const loadAcademicSubjects = async () => {
+    const loadUserSubjects = async () => {
       setLoading(true);
       try {
-        await fetchAcademicSubjects();
+        await fetchUserSubjects();
       } catch (error) {
-        console.error("Error loading academic subjects:", error);
+        console.error("Error loading user subjects:", error);
         toast({
           title: "Error",
-          description: "Failed to load academic subjects",
+          description: "Failed to load user subjects",
           variant: "destructive"
         });
       } finally {
@@ -50,8 +50,8 @@ export function AdminSubjectList() {
       }
     };
     
-    loadAcademicSubjects();
-  }, [fetchAcademicSubjects, toast]);
+    loadUserSubjects();
+  }, [fetchUserSubjects, toast]);
 
   const handleAddSubject = async () => {
     if (!newSubject.trim()) {
@@ -65,8 +65,8 @@ export function AdminSubjectList() {
     
     try {
       const { data, error } = await supabase
-        .from('academic_subjects')
-        .insert({ name: newSubject.trim() })
+        .from('user_subjects')
+        .insert({ name: newSubject.trim(), user_id: (await supabase.auth.getUser()).data.user?.id })
         .select()
         .single();
         
@@ -74,14 +74,14 @@ export function AdminSubjectList() {
       
       toast({
         title: "Success",
-        description: "Academic subject added successfully",
+        description: "Subject added successfully",
       });
       
       setNewSubject("");
       setDialogOpen(false);
       
-      // Refresh academic subjects
-      fetchAcademicSubjects();
+      // Refresh user subjects
+      fetchUserSubjects();
     } catch (error) {
       console.error("Error adding subject:", error);
       toast({
@@ -100,7 +100,7 @@ export function AdminSubjectList() {
     <Card>
       <CardContent className="p-4">
         <div className="flex justify-between mb-4">
-          <h2 className="text-xl font-semibold">Academic Subjects</h2>
+          <h2 className="text-xl font-semibold">User Subjects</h2>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button>Add Subject</Button>
@@ -140,14 +140,14 @@ export function AdminSubjectList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {academicSubjects.length === 0 ? (
+              {userSubjects.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center">
-                    No academic subjects found
+                    No subjects found
                   </TableCell>
                 </TableRow>
               ) : (
-                academicSubjects.map((subject) => (
+                userSubjects.map((subject) => (
                   <SubjectRow key={subject.id} subject={subject} />
                 ))
               )}
@@ -160,11 +160,11 @@ export function AdminSubjectList() {
 }
 
 interface SubjectRowProps {
-  subject: AcademicSubject;
+  subject: UserSubject;
 }
 
 function SubjectRow({ subject }: SubjectRowProps) {
-  const renderSubjects = (subcategories?: AcademicSubject[]) => {
+  const renderSubjects = (subcategories?: UserSubject[]) => {
     if (!subcategories || subcategories.length === 0) {
       return null;
     }
@@ -182,15 +182,15 @@ function SubjectRow({ subject }: SubjectRowProps) {
     <>
       <TableRow>
         <TableCell>{subject.name}</TableCell>
-        <TableCell>{subject.level}</TableCell>
-        <TableCell>{subject.parent_id || "Root"}</TableCell>
+        <TableCell>N/A</TableCell>
+        <TableCell>N/A</TableCell>
         <TableCell>
           <Button variant="outline" size="sm">
             Edit
           </Button>
         </TableCell>
       </TableRow>
-      {renderSubjects(subject.subcategories)}
+      
     </>
   );
 }
