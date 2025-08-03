@@ -194,29 +194,6 @@ export const NoteToQuizForm = ({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="isPublic"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="border-mint-300 data-[state=checked]:bg-mint-600 data-[state=checked]:border-mint-600"
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="text-mint-700">
-                        Make this quiz public
-                      </FormLabel>
-                      <p className="text-xs text-mint-600">
-                        Other users will be able to see and take this quiz
-                      </p>
-                    </div>
-                  </FormItem>
-                )}
-              />
             </div>
           </div>
           

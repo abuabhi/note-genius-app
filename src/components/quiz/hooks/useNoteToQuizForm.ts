@@ -61,7 +61,6 @@ export const useNoteToQuizForm = ({
       title: initialTitle,
       description: initialDescription,
       subjectId: initialSubjectId,
-      isPublic: false,
       questions: transformedQuestions,
     },
   });
@@ -188,7 +187,7 @@ export const useNoteToQuizForm = ({
         subject_id: data.subjectId,
         source_type: sourceType,
         source_id: sourceId,
-        is_public: data.isPublic,
+        is_public: false,
         questions: data.questions.map((q, index) => ({
           question: q.question,
           explanation: q.explanation,
@@ -239,7 +238,6 @@ export const useNoteToQuizForm = ({
       title: '',
       description: '',
       subjectId: initialSubjectId,
-      isPublic: false,
       questions: [{
         question: "",
         explanation: "",

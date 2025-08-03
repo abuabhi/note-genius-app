@@ -2,6 +2,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NoteSelectionTab } from "./note-to-quiz/NoteSelectionTab";
 import { QuizReviewTab } from "./note-to-quiz/QuizReviewTab";
+import { QuizGenerationOverlay } from "./note-to-quiz/QuizGenerationOverlay";
 import { useNoteToQuizState } from "./note-to-quiz/useNoteToQuizState";
 
 export const NoteToQuiz = () => {
@@ -53,6 +54,12 @@ export const NoteToQuiz = () => {
           />
         </TabsContent>
       </Tabs>
+      
+      <QuizGenerationOverlay
+        isOpen={isGenerating}
+        selectedNotesCount={selectedNotes.length}
+        numberOfQuestions={numberOfQuestions}
+      />
     </div>
   );
 };

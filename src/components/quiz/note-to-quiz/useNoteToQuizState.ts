@@ -110,6 +110,12 @@ export const useNoteToQuizState = () => {
     setGeneratedQuestions([]);
     setSelectedNotes([]);
     setActiveTab("select");
+    
+    // Show success toast
+    toast({
+      title: "Quiz Created Successfully! 🎉",
+      description: "Your quiz has been created and is ready to use.",
+    });
   };
 
   return {

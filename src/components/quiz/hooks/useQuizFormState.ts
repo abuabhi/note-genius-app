@@ -30,7 +30,6 @@ export const useQuizFormState = ({
       title: initialTitle,
       description: initialDescription,
       subjectId: initialSubjectId,
-      isPublic: false,
       questions: initialQuestions || [
         {
           question: "",

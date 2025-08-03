@@ -21,7 +21,6 @@ export const quizFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   subjectId: z.string().min(1, "Subject is required"),
-  isPublic: z.boolean().default(false),
   questions: z.array(QuizQuestionSchema).min(1, "At least one question is required"),
 });
 

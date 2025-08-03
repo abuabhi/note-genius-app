@@ -107,9 +107,16 @@ export const NoteSelectionTab = ({
           <Button
             onClick={onGenerateQuiz}
             disabled={selectedNotes.length === 0 || isGenerating}
-            className="w-full"
+            className="w-full bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 transition-all duration-200"
           >
-            {isGenerating ? 'Generating...' : `Generate Quiz from ${selectedNotes.length} Notes`}
+            {isGenerating ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                <span className="animate-pulse">Generating Quiz Questions...</span>
+              </div>
+            ) : (
+              `Generate Quiz from ${selectedNotes.length} Notes`
+            )}
           </Button>
         </div>
       )}

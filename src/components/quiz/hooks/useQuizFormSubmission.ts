@@ -34,7 +34,7 @@ export const useQuizFormSubmission = ({
         education_system: null,
         source_type: sourceType,
         source_id: sourceId,
-        is_public: data.isPublic,
+        is_public: false,
         questions: data.questions.map(q => ({
           question: q.question,
           explanation: q.explanation || null,

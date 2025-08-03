@@ -66,7 +66,7 @@ export const CreateQuizForm = ({
       title: '',
       description: '',
       subjectId: '',
-      isPublic: false,
+      
       questions: [{
         question: "",
         explanation: "",
