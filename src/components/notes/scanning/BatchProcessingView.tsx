@@ -91,39 +91,42 @@ export const BatchProcessingView = ({
         </div>
       </div>
 
-      {/* Scrollable Document List */}
+      {/* Compact Document List - Table Style */}
       <div className="flex-1 min-h-0 mb-4">
         <ScrollArea className="h-full">
-          <div className="space-y-2 pr-3">
+          <div className="space-y-1 pr-2">
             {processedImages.map((image, index) => (
-              <Card key={image.id} className="shadow-sm">
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0">
-                      {image.status === 'completed' && <CheckCircle className="h-4 w-4 text-green-500" />}
-                      {image.status === 'failed' && <AlertCircle className="h-4 w-4 text-red-500" />}
-                      {image.status === 'processing' && (
-                        <div className="h-4 w-4 border-2 border-mint-500 border-t-transparent rounded-full animate-spin" />
-                      )}
-                      {image.status === 'pending' && <div className="h-4 w-4 bg-gray-300 rounded-full" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-gray-900 truncate">{image.title}</p>
-                      {image.status === 'completed' && (
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                          {image.recognizedText.substring(0, 80)}...
-                        </p>
-                      )}
-                      {image.status === 'failed' && (
-                        <p className="text-xs text-red-500 mt-1">{image.error}</p>
-                      )}
-                    </div>
-                    <div className="flex-shrink-0 text-xs text-gray-400">
-                      #{index + 1}
-                    </div>
+              <div key={image.id} className="flex items-center gap-2 p-2 border rounded bg-card hover:bg-muted/50 transition-colors">
+                {/* Status Icon */}
+                <div className="flex-shrink-0">
+                  {image.status === 'completed' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                  {image.status === 'failed' && <AlertCircle className="h-4 w-4 text-red-500" />}
+                  {image.status === 'processing' && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
+                  {image.status === 'pending' && <div className="h-4 w-4 bg-muted rounded-full" />}
+                </div>
+
+                {/* Document Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm truncate">{image.title}</span>
+                    <span className="text-xs text-muted-foreground">•</span>
+                    <span className="text-xs text-muted-foreground truncate">{image.subject}</span>
                   </div>
-                </CardContent>
-              </Card>
+                  {image.status === 'completed' && image.recognizedText && (
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      {image.recognizedText.substring(0, 60)}...
+                    </p>
+                  )}
+                  {image.status === 'failed' && (
+                    <p className="text-xs text-red-500 truncate mt-0.5">{image.error}</p>
+                  )}
+                </div>
+
+                {/* Page Number */}
+                <div className="flex-shrink-0 text-xs text-muted-foreground font-mono">
+                  {index + 1}
+                </div>
+              </div>
             ))}
           </div>
         </ScrollArea>
@@ -137,14 +140,14 @@ export const BatchProcessingView = ({
           <RadioGroup
             value={saveMode}
             onValueChange={(value) => setSaveMode(value as 'separate' | 'merged')}
-            className="space-y-3"
+            className="flex gap-6"
           >
             {/* Separate Notes Option */}
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="separate" id="separate" />
               <Label htmlFor="separate" className="cursor-pointer flex items-center gap-2 text-sm">
                 <FileText className="h-4 w-4" />
-                Save as Separate Notes ({completedImages.length} notes)
+                Separate ({completedImages.length})
               </Label>
             </div>
 
@@ -153,54 +156,47 @@ export const BatchProcessingView = ({
               <RadioGroupItem value="merged" id="merged" />
               <Label htmlFor="merged" className="cursor-pointer flex items-center gap-2 text-sm">
                 <Files className="h-4 w-4" />
-                Merge into Single Note
+                Merge into one
               </Label>
             </div>
           </RadioGroup>
 
           {/* Merged note options */}
           {saveMode === 'merged' && (
-            <div className="space-y-3 ml-6 border-l-2 border-mint-200 pl-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="merged-title" className="text-sm">Document Title</Label>
-                  <Input
-                    id="merged-title"
-                    value={mergedTitle}
-                    onChange={(e) => setMergedTitle(e.target.value)}
-                    placeholder={`Merged Document - ${completedImages.length} Pages`}
-                    className="text-sm"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="merged-subject" className="text-sm">Subject</Label>
-                  <Select value={mergedSubject} onValueChange={setMergedSubject}>
-                    <SelectTrigger className="text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Uncategorized">Uncategorized</SelectItem>
-                      {availableSubjects.map((subject) => (
-                        <SelectItem key={subject} value={subject}>
-                          {subject}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                <Input
+                  value={mergedTitle}
+                  onChange={(e) => setMergedTitle(e.target.value)}
+                  placeholder="Title"
+                  className="text-sm h-8"
+                />
+                <Select value={mergedSubject} onValueChange={setMergedSubject}>
+                  <SelectTrigger className="text-sm h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Uncategorized">Uncategorized</SelectItem>
+                    {availableSubjects.map((subject) => (
+                      <SelectItem key={subject} value={subject}>
+                        {subject}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Collapsible open={showContentPreview} onOpenChange={setShowContentPreview}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 text-xs">
+                      {showContentPreview ? 'Hide' : 'Preview'}
+                    </Button>
+                  </CollapsibleTrigger>
+                </Collapsible>
               </div>
-
+              
               <Collapsible open={showContentPreview} onOpenChange={setShowContentPreview}>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="flex items-center gap-2 text-sm">
-                    <ChevronDown className={`h-4 w-4 transition-transform ${showContentPreview ? 'rotate-180' : ''}`} />
-                    {showContentPreview ? 'Hide' : 'Show'} Content Preview
-                  </Button>
-                </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <ScrollArea className="h-24 border rounded-md p-2 mt-2 bg-gray-50">
-                    <div className="text-xs text-gray-700 whitespace-pre-wrap">
+                  <ScrollArea className="h-20 border rounded p-2 bg-muted/50">
+                    <div className="text-xs whitespace-pre-wrap">
                       {generateMergedContent()}
                     </div>
                   </ScrollArea>
