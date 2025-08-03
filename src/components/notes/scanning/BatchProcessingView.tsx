@@ -25,7 +25,7 @@ interface ProcessedImage {
 interface BatchProcessingViewProps {
   processedImages: ProcessedImage[];
   batchProgress: number;
-  onSaveSeparate: () => Promise<void>;
+  onSaveSeparate: (batchSubject?: string) => Promise<void>;
   onSaveMerged: (title: string, subject: string, content: string) => Promise<void>;
   onReset: () => void;
   isSaving: boolean;
@@ -42,6 +42,7 @@ export const BatchProcessingView = ({
   const [saveMode, setSaveMode] = useState<'separate' | 'merged'>('separate');
   const [mergedTitle, setMergedTitle] = useState('');
   const [mergedSubject, setMergedSubject] = useState('');
+  const [batchSubject, setBatchSubject] = useState('');
   const [showContentPreview, setShowContentPreview] = useState(false);
 
   const { subjects, isLoading } = useUserSubjects();
@@ -59,14 +60,14 @@ export const BatchProcessingView = ({
 
   const handleSave = async () => {
     if (saveMode === 'separate') {
-      await onSaveSeparate();
+      await onSaveSeparate(batchSubject);
     } else {
       const mergedContent = generateMergedContent();
       await onSaveMerged(mergedTitle || `Merged Document - ${completedImages.length} Pages`, mergedSubject, mergedContent);
     }
   };
 
-  const canSave = saveMode === 'separate' || (saveMode === 'merged' && mergedTitle.trim() && mergedSubject.trim());
+  const canSave = (saveMode === 'separate' && batchSubject.trim()) || (saveMode === 'merged' && mergedTitle.trim() && mergedSubject.trim());
   const isComplete = batchProgress === 100;
 
   // Split documents into two columns
@@ -146,6 +147,25 @@ export const BatchProcessingView = ({
               </Label>
             </div>
           </RadioGroup>
+
+          {/* Separate notes subject selection */}
+          {saveMode === 'separate' && (
+            <div className="space-y-2">
+              <Label className="text-sm">Subject for all notes</Label>
+              <Select value={batchSubject} onValueChange={setBatchSubject} disabled={isLoading}>
+                <SelectTrigger className="text-sm h-8">
+                  <SelectValue placeholder={isLoading ? "Loading..." : "Select subject for all notes"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableSubjects.map((subject) => (
+                    <SelectItem key={subject} value={subject}>
+                      {subject}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Merged note options */}
           {saveMode === 'merged' && (
@@ -256,8 +276,12 @@ const DocumentRow = ({ image, displayIndex }: DocumentRowProps) => {
     <div className="flex items-center gap-2 p-2 border rounded text-xs hover:bg-muted/50 transition-colors">
       {getStatusIcon()}
       <span className="font-medium truncate flex-1">{image.title}</span>
-      <span className="text-muted-foreground">-</span>
-      <span className="text-muted-foreground truncate">{image.subject}</span>
+      {image.subject && (
+        <>
+          <span className="text-muted-foreground">-</span>
+          <span className="text-muted-foreground truncate">{image.subject}</span>
+        </>
+      )}
       <span className="text-muted-foreground">-</span>
       <span className={`font-medium ${image.status === 'failed' ? 'text-red-500' : ''}`}>
         {getStatusText()}

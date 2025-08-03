@@ -97,20 +97,21 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
     }
   };
 
-  const saveBatchAsNotes = async () => {
+  const saveBatchAsNotes = async (batchSubject?: string) => {
     setIsSaving(true);
     const completedImages = processedImages.filter(img => img.status === 'completed');
 
     try {
       for (const image of completedImages) {
-        // Get or create subject ID for each image
-        const subjectId = await getOrCreateSubjectId(image.subject); // Changed from image.category to image.subject
+        // Use batch subject if provided, otherwise fall back to image subject
+        const subjectToUse = batchSubject || image.subject || "Uncategorized";
+        const subjectId = await getOrCreateSubjectId(subjectToUse);
         
         const note = {
           title: image.title,
           description: image.recognizedText.substring(0, 100) + (image.recognizedText.length > 100 ? "..." : ""),
           date: new Date().toISOString().split('T')[0],
-          subject: image.subject, // Use subject instead of category
+          subject: subjectToUse, // Use batch subject or image subject
           subject_id: subjectId, // Use proper subject ID
           content: image.recognizedText,
           sourceType: 'scan',

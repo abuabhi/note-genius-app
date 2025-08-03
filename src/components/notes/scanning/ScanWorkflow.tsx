@@ -114,17 +114,19 @@ export const ScanWorkflow = ({
   };
 
 
-  const saveBatchAsNotes = async () => {
+  const saveBatchAsNotes = async (batchSubject?: string) => {
     setIsSaving(true);
     const completedImages = processedImages.filter(img => img.status === 'completed');
 
     try {
       for (const image of completedImages) {
+        // Use batch subject if provided, otherwise fall back to image subject
+        const subjectToUse = batchSubject || image.subject || "Uncategorized";
         const note: Omit<Note, 'id'> = {
           title: image.title,
           description: image.recognizedText.substring(0, 100) + (image.recognizedText.length > 100 ? "..." : ""),
           date: new Date().toISOString().split('T')[0],
-          subject: image.subject,
+          subject: subjectToUse,
           content: image.recognizedText,
           sourceType: 'scan',
           scanData: {
