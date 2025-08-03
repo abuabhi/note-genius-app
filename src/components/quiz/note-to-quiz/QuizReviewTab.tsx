@@ -23,7 +23,7 @@ export const QuizReviewTab = ({
 
   // Auto-detect subject from selected notes
   const getAutoSelectedSubject = () => {
-    if (selectedNotes.length === 0) return undefined;
+    if (selectedNotes.length === 0) return '';
     
     // First try to get subjects by subject_id
     const subjectIds = selectedNotes
@@ -40,7 +40,7 @@ export const QuizReviewTab = ({
       const mostCommonSubject = Object.entries(subjectCounts)
         .sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0];
       
-      return mostCommonSubject;
+      return mostCommonSubject || '';
     }
     
     // If no subject_id, try to use the primary subject from analysis
@@ -48,7 +48,7 @@ export const QuizReviewTab = ({
       return subjectAnalysis.primarySubject.subjectId;
     }
     
-    return undefined;
+    return '';
   };
 
   const autoSelectedSubject = getAutoSelectedSubject();

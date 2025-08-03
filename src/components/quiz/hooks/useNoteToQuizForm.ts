@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 const noteToQuizFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  subjectId: z.string().optional(),
+  subjectId: z.string().min(1, "Subject is required"),
   isPublic: z.boolean().default(false),
   questions: z.array(z.object({
     question: z.string().min(1, "Question is required"),
@@ -162,6 +162,16 @@ export const useNoteToQuizForm = ({
 
   const onSubmit = async (data: NoteToQuizFormValues) => {
     try {
+      // Validate that we have a subject
+      if (!data.subjectId || data.subjectId.trim() === '') {
+        toast({
+          title: "Subject Required",
+          description: "Please select a subject for your quiz.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       await createQuiz({
         title: data.title,
         description: data.description,
@@ -189,9 +199,12 @@ export const useNoteToQuizForm = ({
       }
     } catch (error) {
       console.error("Error creating quiz:", error);
+      const errorMessage = error instanceof Error ? error.message : "There was an error creating your quiz. Please try again.";
       toast({
         title: "Failed to create quiz",
-        description: "There was an error creating your quiz. Please try again.",
+        description: errorMessage.includes('foreign key') 
+          ? "Please ensure you have selected a valid subject for your quiz."
+          : errorMessage,
         variant: "destructive"
       });
     }
