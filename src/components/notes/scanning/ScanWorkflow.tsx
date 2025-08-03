@@ -115,7 +115,10 @@ export const ScanWorkflow = ({
   };
 
   const showBatchSaveOptions = async () => {
+    console.log('showBatchSaveOptions called - setting dialog to true');
+    console.log('Current showBatchOptionsDialog state:', showBatchOptionsDialog);
     setShowBatchOptionsDialog(true);
+    console.log('After setState call');
   };
 
   const saveBatchAsNotes = async () => {
@@ -374,6 +377,7 @@ export const ScanWorkflow = ({
         isSaving={isSaving}
         availableSubjects={availableSubjects}
       />
+      {console.log('Rendering BatchSaveOptionsDialog with isOpen:', showBatchOptionsDialog)}
 
       {/* Post Save Success Dialog */}
       <PostSaveSuccessDialog
