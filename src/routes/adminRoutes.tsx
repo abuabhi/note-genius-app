@@ -1,6 +1,6 @@
 
 import React from 'react';
-import SidebarLayout from "@/components/layout/SidebarLayout";
+// import SidebarLayout from "@/components/layout/SidebarLayout"; // Not needed - using global SidebarProvider
 import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import AdminUsersPage from "@/pages/AdminUsersPage";
 import AdminFlashcardPage from "@/pages/AdminFlashcardPage";
@@ -23,22 +23,22 @@ import { RouteConfig } from './publicRoutes';
 
 // Admin routes - wrapped with SidebarLayout for sidebar/header
 export const adminRoutes: RouteConfig[] = [
-  { path: "/admin", element: <SidebarLayout><AdminDashboardPage /></SidebarLayout> },
-  { path: "/admin/system-monitoring", element: <SidebarLayout><AdminSystemMonitoringPage /></SidebarLayout> },
-  { path: "/admin/users", element: <SidebarLayout><AdminUsersPage /></SidebarLayout> },
-  { path: "/admin/influencers", element: <SidebarLayout><AdminInfluencersPage /></SidebarLayout> },
-  { path: "/admin/contact-submissions", element: <SidebarLayout><AdminContactSubmissionsPage /></SidebarLayout> },
-  { path: "/admin/feedback", element: <SidebarLayout><AdminFeedbackPage /></SidebarLayout> },
-  { path: "/admin/feedback/settings", element: <SidebarLayout><AdminFeedbackSettingsPage /></SidebarLayout> },
-  { path: "/admin/analytics", element: <SidebarLayout><AdminAnalyticsPage /></SidebarLayout> },
-  { path: "/admin/announcements", element: <SidebarLayout><AdminAnnouncementsPage /></SidebarLayout> },
-  { path: "/admin/flashcards", element: <SidebarLayout><AdminFlashcardPage /></SidebarLayout> },
-  { path: "/admin/sections", element: <SidebarLayout><AdminSectionsPage /></SidebarLayout> },
-  { path: "/admin/grades", element: <SidebarLayout><AdminGradesPage /></SidebarLayout> },
-  { path: "/admin/subjects", element: <SidebarLayout><AdminSubjectsPage /></SidebarLayout> },
-  { path: "/admin/csv-import", element: <SidebarLayout><AdminCSVImportPage /></SidebarLayout> },
-  { path: "/admin/tier-limits", element: <SidebarLayout><AdminTierLimitsPage /></SidebarLayout> },
-  { path: "/admin/help", element: <SidebarLayout><AdminHelpManagementPage /></SidebarLayout> },
-  { path: "/admin/coupons", element: <SidebarLayout><AdminCouponsPage /></SidebarLayout> },
-  { path: "/admin/payouts", element: <SidebarLayout><AdminPayoutsPage /></SidebarLayout> },
+  { path: "/admin", element: <AdminDashboardPage /> },
+  { path: "/admin/system-monitoring", element: <AdminSystemMonitoringPage /> },
+  { path: "/admin/users", element: <AdminUsersPage /> },
+  { path: "/admin/influencers", element: <AdminInfluencersPage /> },
+  { path: "/admin/contact-submissions", element: <AdminContactSubmissionsPage /> },
+  { path: "/admin/feedback", element: <AdminFeedbackPage /> },
+  { path: "/admin/feedback/settings", element: <AdminFeedbackSettingsPage /> },
+  { path: "/admin/analytics", element: <AdminAnalyticsPage /> },
+  { path: "/admin/announcements", element: <AdminAnnouncementsPage /> },
+  { path: "/admin/flashcards", element: <AdminFlashcardPage /> },
+  { path: "/admin/sections", element: <AdminSectionsPage /> },
+  { path: "/admin/grades", element: <AdminGradesPage /> },
+  { path: "/admin/subjects", element: <AdminSubjectsPage /> },
+  { path: "/admin/csv-import", element: <AdminCSVImportPage /> },
+  { path: "/admin/tier-limits", element: <AdminTierLimitsPage /> },
+  { path: "/admin/help", element: <AdminHelpManagementPage /> },
+  { path: "/admin/coupons", element: <AdminCouponsPage /> },
+  { path: "/admin/payouts", element: <AdminPayoutsPage /> },
 ];
