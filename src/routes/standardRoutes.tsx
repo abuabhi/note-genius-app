@@ -67,6 +67,22 @@ export const standardRoutes: RouteConfig[] = [
     element: <SidebarLayout><NotesPage /></SidebarLayout>
   },
   {
+    path: '/quiz/create',
+    element: <SidebarLayout><CreateQuizPage /></SidebarLayout>
+  },
+  {
+    path: '/create-quiz',
+    element: <SidebarLayout><CreateQuizPage /></SidebarLayout>
+  },
+  {
+    path: '/quiz/:id/take',
+    element: <SidebarLayout><TakeQuizPage /></SidebarLayout>
+  },
+  {
+    path: '/note-to-flashcard',
+    element: <SidebarLayout><NoteToFlashcardPage /></SidebarLayout>
+  },
+  {
     path: '/quiz/*',
     element: <SidebarLayout><QuizPage /></SidebarLayout>
   },
@@ -77,22 +93,6 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/quizzes',
     element: <SidebarLayout><QuizPage /></SidebarLayout>
-  },
-  {
-    path: '/quiz/create',
-    element: <SidebarLayout><CreateQuizPage /></SidebarLayout>
-  },
-  {
-    path: '/create-quiz',
-    element: <SidebarLayout><CreateQuizPage /></SidebarLayout>
-  },
-  {
-    path: '/note-to-flashcard',
-    element: <SidebarLayout><NoteToFlashcardPage /></SidebarLayout>
-  },
-  {
-    path: '/quiz/:id/take',
-    element: <SidebarLayout><TakeQuizPage /></SidebarLayout>
   },
   {
     path: '/analytics',
