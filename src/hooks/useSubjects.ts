@@ -6,6 +6,10 @@ import { CSVSubjectRow } from "@/types/admin";
 import { UserSubject } from "@/types/flashcard";
 import { toast } from "sonner";
 
+/**
+ * @deprecated This hook is deprecated. Use useUserSubjects from '@/hooks/useUserSubjects' instead.
+ * This hook remains for backward compatibility but will be removed in a future version.
+ */
 export const useSubjects = () => {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
