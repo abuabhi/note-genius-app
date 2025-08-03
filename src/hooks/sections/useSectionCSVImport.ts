@@ -13,12 +13,8 @@ export const useSectionCSVImport = () => {
     try {
       setLoading(true);
       
-      // Get current subject categories for reference
-      const { data: subjects, error: subjectsError } = await supabase
-        .from("academic_subjects")
-        .select("id, name, grade_id");
-        
-      if (subjectsError) throw subjectsError;
+      // Since academic_subjects table was removed, we'll skip subject validation
+      // Users can create sections without subject references
       
       // Get grades for reference
       const { data: grades, error: gradesError } = await supabase
@@ -42,43 +38,10 @@ export const useSectionCSVImport = () => {
           continue;
         }
         
-        if (!row.subject_name) {
-          errors.push({ row: i + 1, message: "Subject name is required" });
-          continue;
-        }
-        
-        if (!row.grade_name) {
-          errors.push({ row: i + 1, message: "Grade name is required" });
-          continue;
-        }
-        
-        // Find grade id
-        const gradeName = row.grade_name.trim().toLowerCase();
-        const gradeId = gradeMap.get(gradeName);
-        
-        if (!gradeId) {
-          errors.push({ row: i + 1, message: `Grade "${row.grade_name}" not found` });
-          continue;
-        }
-        
-        // Find subject id
-        const subject = subjects?.find(s => 
-          s.name.toLowerCase() === row.subject_name.trim().toLowerCase() && 
-          s.grade_id === gradeId
-        );
-        
-        if (!subject) {
-          errors.push({ 
-            row: i + 1, 
-            message: `Subject "${row.subject_name}" not found for grade "${row.grade_name}"` 
-          });
-          continue;
-        }
-        
-        // Add to valid rows
+        // Add to valid rows (simplified without subject/grade validation)
         validRows.push({
           name: row.name.trim(),
-          academic_subject_id: subject.id,
+          academic_subject_id: null, // No longer linking to academic subjects
           description: row.description || null
         });
       }

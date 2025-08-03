@@ -10,18 +10,15 @@ export const useFetchSections = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sections")
-        .select(`
-          *,
-          subject:academic_subjects!academic_subject_id(*)
-        `);
+        .select("*");
 
       if (error) throw error;
       
-      // Transform the data to match our Section type
+      // Return sections without subject relations since academic_subjects table was removed
       return data.map(section => ({
         ...section,
         subject_id: section.academic_subject_id,
-        subject: section.subject,
+        subject: null, // No longer have subject relations
       })) as Section[];
     },
   });

@@ -3,13 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const seedDatabase = async () => {
   try {
-    // Check if academic subjects already exist
-    const { data: existingSubjects } = await supabase
-      .from('academic_subjects')
+    // Check if countries already exist (since academic_subjects table was removed)
+    const { data: existingCountries } = await supabase
+      .from('countries')
       .select('id')
       .limit(1);
 
-    if (existingSubjects && existingSubjects.length > 0) {
+    if (existingCountries && existingCountries.length > 0) {
       console.log('Database already seeded');
       return;
     }
@@ -41,19 +41,8 @@ export const seedDatabase = async () => {
       .insert(grades)
       .select();
 
-    // Seed academic subjects
-    if (countryData && gradeData) {
-      const subjects = [
-        { name: 'Mathematics', grade_id: gradeData[0].id, country_id: countryData[0].id },
-        { name: 'Science', grade_id: gradeData[0].id, country_id: countryData[0].id },
-        { name: 'English', grade_id: gradeData[0].id, country_id: countryData[0].id },
-        { name: 'History', grade_id: gradeData[0].id, country_id: countryData[0].id }
-      ];
-
-      await supabase
-        .from('academic_subjects')
-        .insert(subjects);
-    }
+    // Academic subjects table was removed - users now create their own subjects
+    console.log('Skipping academic subjects seeding - users create their own subjects');
 
     console.log('Database seeded successfully');
   } catch (error) {
@@ -65,13 +54,13 @@ export const runDatabaseSeed = async () => {
   try {
     await seedDatabase();
     return {
-      categories: { success: true, message: "Academic subjects seeded successfully" },
+      categories: { success: true, message: "Countries and grades seeded successfully" },
       sets: { success: true, message: "Database initialization completed" }
     };
   } catch (error) {
     console.error('Error running database seed:', error);
     return {
-      categories: { success: false, message: "Failed to seed academic subjects" },
+      categories: { success: false, message: "Failed to seed database" },
       sets: { success: false, message: "Database initialization failed" }
     };
   }

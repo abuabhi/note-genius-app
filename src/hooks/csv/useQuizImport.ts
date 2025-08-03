@@ -46,15 +46,34 @@ export const useQuizImport = () => {
           // Get the first row for quiz metadata
           const firstRow = quizRows[0];
           
-          // Find subject category
-          const { data: subjects } = await supabase
-            .from('academic_subjects')
+          // Find or create user subject
+          const user = await supabase.auth.getUser();
+          if (!user.data.user) {
+            throw new Error('User not authenticated');
+          }
+          
+          let { data: subjects } = await supabase
+            .from('user_subjects')
             .select('id')
             .eq('name', firstRow.subject_name)
+            .eq('user_id', user.data.user.id)
             .limit(1);
           
+          // Create subject if it doesn't exist
           if (!subjects || !subjects.length) {
-            throw new Error(`Subject "${firstRow.subject_name}" not found`);
+            const { data: newSubject, error: subjectError } = await supabase
+              .from('user_subjects')
+              .insert({
+                name: firstRow.subject_name,
+                user_id: user.data.user.id
+              })
+              .select()
+              .single();
+              
+            if (subjectError || !newSubject) {
+              throw new Error(`Failed to create subject "${firstRow.subject_name}"`);
+            }
+            subjects = [newSubject];
           }
           
           // Find grade if provided
@@ -91,12 +110,12 @@ export const useQuizImport = () => {
             .insert({
               title: quizTitle,
               description: firstRow.quiz_description || null,
-              subject_id: subjects[0].id,
+              user_subject_id: subjects[0].id,
               grade_id: gradeId,
               section_id: sectionId,
               source_type: 'prebuilt',
               is_public: true,
-              user_id: (await supabase.auth.getUser()).data.user?.id
+              user_id: user.data.user.id
             })
             .select()
             .single();
