@@ -65,18 +65,61 @@ export const useEnhancementManager = (note: Note, onNoteUpdate?: () => void) => 
   }, [updateNote]);
 
   const processEnhancementContent = useCallback((enhancementType: string, data: any): string => {
-    // NUCLEAR FIX: Return raw AI content without any processing
-    // Let SimpleContentRenderer handle HTML vs markdown detection
     console.log("🚀 RAW AI CONTENT:", data);
     
-    // Return the raw result from AI, preserving HTML styling
-    if (data && typeof data === 'object' && data.result) {
-      console.log("🚀 RETURNING RAW RESULT:", data.result);
-      return data.result;
+    // Get the raw result
+    const rawResult = data && typeof data === 'object' && data.result ? data.result : data;
+    
+    // Special handling for summary enhancement type
+    if (enhancementType === 'summary' && typeof rawResult === 'string') {
+      try {
+        const summaryData = JSON.parse(rawResult);
+        
+        // Format summary JSON into readable HTML
+        let formattedHtml = '';
+        
+        if (summaryData.summary_title) {
+          formattedHtml += `<h2>${summaryData.summary_title}</h2>`;
+        }
+        
+        if (summaryData.summary_overview) {
+          formattedHtml += `<p>${summaryData.summary_overview}</p>`;
+        }
+        
+        if (summaryData.key_points && Array.isArray(summaryData.key_points)) {
+          formattedHtml += '<h3>Key Points</h3><ul>';
+          summaryData.key_points.forEach((point: string) => {
+            formattedHtml += `<li>${point}</li>`;
+          });
+          formattedHtml += '</ul>';
+        }
+        
+        if (summaryData.notable_terms && Array.isArray(summaryData.notable_terms)) {
+          formattedHtml += '<h3>Notable Terms</h3><dl>';
+          summaryData.notable_terms.forEach((term: any) => {
+            if (typeof term === 'object' && term.term && term.definition) {
+              formattedHtml += `<dt><strong>${term.term}</strong></dt><dd>${term.definition}</dd>`;
+            }
+          });
+          formattedHtml += '</dl>';
+        }
+        
+        if (summaryData.quote_or_stat) {
+          formattedHtml += `<blockquote><p><em>${summaryData.quote_or_stat}</em></p></blockquote>`;
+        }
+        
+        console.log("🚀 FORMATTED SUMMARY HTML:", formattedHtml);
+        return formattedHtml;
+      } catch (error) {
+        console.log("🚀 Failed to parse summary JSON, returning raw:", rawResult);
+        // Fallback to raw content if JSON parsing fails
+        return typeof rawResult === 'string' ? rawResult : JSON.stringify(rawResult, null, 2);
+      }
     }
     
-    // Fallback for direct string content
-    return typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    // For non-summary types, return raw content
+    console.log("🚀 RETURNING RAW RESULT:", rawResult);
+    return typeof rawResult === 'string' ? rawResult : JSON.stringify(rawResult, null, 2);
   }, []);
 
   const generateEnhancement = useCallback(async (enhancementType: string, column: string, statusColumn?: string): Promise<EnhancementResult> => {
