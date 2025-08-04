@@ -17,10 +17,18 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser, onImportComplete }: Ap
 
   const handleConnection = (accessToken: string) => {
     console.log("Connected with token:", accessToken);
+    // Don't call onImportComplete here - only after actual import
   };
 
   const handleBackToGrid = () => {
     setSelectedService(null);
+  };
+
+  const handleImportComplete = () => {
+    // Only call this after successful import, not after authentication
+    if (onImportComplete) {
+      onImportComplete();
+    }
   };
 
   const renderServiceConnection = () => {
@@ -33,7 +41,7 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser, onImportComplete }: Ap
             onConnected={handleConnection} 
             onBack={handleBackToGrid}
             onSaveNote={onSaveNote}
-            onImportComplete={onImportComplete}
+            onImportComplete={handleImportComplete}
           />
         );
       default:
