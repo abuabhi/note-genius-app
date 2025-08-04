@@ -246,6 +246,10 @@ export const DedicatedGoogleDocsImport = ({
         setSelectedDocs([]);
         
         // Don't auto-close dialog, let user import more documents or close manually
+        // Call onImportComplete only to refresh the notes list, not to close dialog
+        if (onImportComplete) {
+          onImportComplete();
+        }
         
       } else if (successCount > 0 && failureCount > 0) {
         toast.warning(`Imported ${successCount} document${successCount > 1 ? 's' : ''}, ${failureCount} failed`);

@@ -25,10 +25,9 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser, onImportComplete }: Ap
   };
 
   const handleImportComplete = () => {
-    // Only call this after successful import, not after authentication
-    if (onImportComplete) {
-      onImportComplete();
-    }
+    // Don't close the dialog, just refresh the notes list in the background
+    // Users can keep importing more documents or close manually
+    console.log('📥 Import completed, keeping dialog open for more imports');
   };
 
   const renderServiceConnection = () => {

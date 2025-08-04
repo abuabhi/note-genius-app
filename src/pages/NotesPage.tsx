@@ -124,7 +124,7 @@ const NotesPageContent = () => {
       const result = await addNote({ ...noteData, sourceType: noteData.sourceType || 'import' });
       if (result) {
         console.log('✅ [NOTES PAGE] Note imported successfully:', result.id);
-        setIsImportDialogOpen(false);
+        // Don't close dialog after import - let user import multiple documents
         return true;
       }
       return false;
