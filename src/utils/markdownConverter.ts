@@ -35,6 +35,9 @@ export const markdownToHtml = (markdown: string): string => {
   
   let html = markdown;
   
+  // Clean up malformed/truncated AI enhancement tags before processing
+  html = html.replace(/\[(?:AI_)?(?:ENHANCED|ENRICHED)\](?![\s\S]*?\[\/(?:AI_)?(?:ENHANCED|ENRICHED)\])/gi, '');
+  
   // Process AI enhancement tags first
   const enrichedRegex = /\[(?:AI_)?(?:ENHANCED|ENRICHED)\]([\s\S]*?)\[\/(?:AI_)?(?:ENHANCED|ENRICHED)\]/gi;
   html = html.replace(enrichedRegex, '<div class="ai-enriched-content">$1</div>');
