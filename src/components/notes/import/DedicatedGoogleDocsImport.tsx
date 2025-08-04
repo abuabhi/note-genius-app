@@ -301,6 +301,11 @@ export const DedicatedGoogleDocsImport = ({
               loading,
               error
             });
+            
+            // Clear any previous error state before connecting
+            setDetailedError(null);
+            setShowErrorDetails(false);
+            
             connect();
           }}
           isImporting={isImporting}

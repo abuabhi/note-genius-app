@@ -46,20 +46,42 @@ export const GoogleDocsAuthCallback = () => {
       console.log('✅ Popup communication: Sending auth data to parent window');
       try {
         window.opener.postMessage(authData, window.location.origin);
+        console.log('📤 Message sent successfully, waiting for confirmation...');
+        
+        // Add retry logic for critical communication
+        let retryCount = 0;
+        const maxRetries = 3;
+        const retryInterval = setInterval(() => {
+          if (retryCount < maxRetries && window.opener && !window.opener.closed) {
+            console.log(`🔄 Retry ${retryCount + 1}/${maxRetries}: Resending auth data`);
+            window.opener.postMessage(authData, window.location.origin);
+            retryCount++;
+          } else {
+            clearInterval(retryInterval);
+          }
+        }, 1000);
         
         // Clean up the stored state
         localStorage.removeItem('googleDocs_auth_state');
         
-        // Close this popup window after a small delay to ensure message is received
+        // Close this popup window after a longer delay to ensure message is received
         setTimeout(() => {
-          console.log('🔒 Closing popup window');
+          clearInterval(retryInterval);
+          console.log('🔒 Closing popup window after extended delay');
           window.close();
-        }, 500);
+        }, 3000);
         
       } catch (err) {
         console.error('❌ Failed to send message to parent window:', err);
-        // Still try to close the popup
-        setTimeout(() => window.close(), 1000);
+        // Fallback to localStorage method
+        const authResult = {
+          ...authData,
+          timestamp: Date.now(),
+          fallbackUsed: true
+        };
+        localStorage.setItem('googleDocs_auth_result', JSON.stringify(authResult));
+        console.log('💾 Fallback: Stored auth result in localStorage');
+        setTimeout(() => window.close(), 2000);
       }
     } else {
       console.log('⚠️ No valid opener window found - storing auth data for retrieval');

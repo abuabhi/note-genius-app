@@ -138,6 +138,7 @@ export const useGoogleDocsAuth = () => {
   const exchangeCodeForTokens = async (code: string) => {
     try {
       setAuthState(prev => ({ ...prev, loading: true }));
+      const exchangeStartTime = Date.now();
       console.log('🔄 Exchanging authorization code for tokens...');
       
       // Exchange the code for tokens using our edge function
@@ -149,17 +150,23 @@ export const useGoogleDocsAuth = () => {
         }
       });
       
-      console.log('📊 Token exchange response:', response);
+      const exchangeDuration = Date.now() - exchangeStartTime;
+      console.log(`📊 Token exchange response received in ${exchangeDuration}ms:`, {
+        hasData: !!response.data,
+        hasError: !!response.error
+      });
       
       if (response.error) {
         console.error('❌ Token exchange error:', response.error);
-        throw new Error(response.error.message || 'Failed to exchange authorization code');
+        const errorMessage = response.error.message || 'Failed to exchange authorization code';
+        throw new Error(`Token exchange failed: ${errorMessage}`);
       }
       
       const { access_token, expires_in, token_type } = response.data;
       
       if (!access_token) {
-        throw new Error('No access token received');
+        console.error('❌ No access token in response:', response.data);
+        throw new Error('No access token received from Google - authentication incomplete');
       }
       
       console.log('✅ Received access token:', {
@@ -170,6 +177,8 @@ export const useGoogleDocsAuth = () => {
       
       // Test the token immediately by getting user info
       console.log('🧪 Testing token with user info endpoint...');
+      const userTestStartTime = Date.now();
+      
       const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -177,14 +186,25 @@ export const useGoogleDocsAuth = () => {
         }
       });
       
+      const userTestDuration = Date.now() - userTestStartTime;
+      console.log(`📡 User info request completed in ${userTestDuration}ms`);
+      
       if (!userResponse.ok) {
         const errorText = await userResponse.text();
-        console.error('❌ Token validation failed:', errorText);
+        console.error('❌ Token validation failed:', {
+          status: userResponse.status,
+          statusText: userResponse.statusText,
+          response: errorText
+        });
         throw new Error(`Token validation failed: ${userResponse.status} - ${errorText}`);
       }
       
       const userData = await userResponse.json();
-      console.log('✅ Token validation successful:', userData);
+      console.log('✅ Token validation successful:', {
+        email: userData.email,
+        name: userData.name,
+        verified_email: userData.verified_email
+      });
       const userName = userData?.name || userData?.email || 'Google User';
       
       // Calculate expiry time
@@ -196,7 +216,8 @@ export const useGoogleDocsAuth = () => {
       localStorage.setItem('googleDocs_user_name', userName);
       localStorage.setItem('googleDocs_expires_at', expiresAt.toISOString());
       
-      console.log('💾 Stored credentials:', {
+      const totalAuthTime = Date.now() - exchangeStartTime;
+      console.log(`💾 Stored credentials successfully! Total auth time: ${totalAuthTime}ms`, {
         userName,
         expiresAt: expiresAt.toISOString()
       });
@@ -211,10 +232,11 @@ export const useGoogleDocsAuth = () => {
       
     } catch (error) {
       console.error('❌ Google Docs auth error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
       setAuthState(prev => ({
         ...prev,
         loading: false,
-        error: error instanceof Error ? error.message : 'Authentication failed'
+        error: `Authentication failed: ${errorMessage}`
       }));
     }
   };
@@ -222,6 +244,7 @@ export const useGoogleDocsAuth = () => {
   const connect = useCallback(async () => {
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
+      const connectStartTime = Date.now();
       console.log('🚀 Starting Google OAuth connection...');
       
       // Get the client ID from our edge function
@@ -230,7 +253,8 @@ export const useGoogleDocsAuth = () => {
       });
       
       if (configError || !configData?.client_id) {
-        throw new Error('Unable to get Google OAuth configuration');
+        console.error('❌ Failed to get OAuth config:', configError);
+        throw new Error('Unable to get Google OAuth configuration. Please check server configuration.');
       }
       
       console.log('🔑 Got client ID:', configData.client_id.substring(0, 20) + '...');
@@ -244,23 +268,32 @@ export const useGoogleDocsAuth = () => {
       
       console.log('🌐 Opening auth URL with scopes:', SCOPE);
       
-      // Open popup for authentication
+      // Open popup for authentication with improved positioning
       const popupWidth = 700;
       const popupHeight = 700;
       const left = window.screenX + (window.outerWidth - popupWidth) / 2;
       const top = window.screenY + (window.outerHeight - popupHeight) / 2;
       
-      window.open(
+      const popup = window.open(
         authUrl,
         'GoogleDocsAuthPopup',
-        `width=${popupWidth},height=${popupHeight},left=${left},top=${top}`
+        `width=${popupWidth},height=${popupHeight},left=${left},top=${top},scrollbars=yes,resizable=yes`
       );
+      
+      if (!popup) {
+        throw new Error('Failed to open authentication popup. Please allow popups for this site.');
+      }
+      
+      const connectDuration = Date.now() - connectStartTime;
+      console.log(`✅ Popup opened successfully in ${connectDuration}ms`);
+      
     } catch (error) {
       console.error('❌ Error initiating Google auth:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start authentication';
       setAuthState(prev => ({
         ...prev,
         loading: false,
-        error: error instanceof Error ? error.message : 'Failed to start authentication'
+        error: `Connection failed: ${errorMessage}`
       }));
     }
   }, []);
