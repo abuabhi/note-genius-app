@@ -13,7 +13,7 @@ import { NotesFilters } from '@/components/notes/NotesFilters';
 import { NotesGrid } from '@/components/notes/NotesGrid';
 import { useNotes } from '@/hooks/useNotes';
 import { toast } from 'sonner';
-import { SubjectCleanup } from '@/components/notes/SubjectCleanup';
+
 
 // Enhanced error fallback component with better debugging
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => {
@@ -88,21 +88,29 @@ const NotesPageContent = () => {
     if (isCreating) return null;
     
     try {
-      const result = await addNote(noteData);
+      // Add timeout to prevent infinite hanging
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Note creation timed out')), 15000)
+      );
+      
+      const result = await Promise.race([addNote(noteData), timeoutPromise]);
       console.log('📄 [NOTES PAGE] addNote result:', result);
+      
       if (result) {
         console.log('📄 [NOTES PAGE] ✅ Note saved successfully - closing dialog');
         setIsManualDialogOpen(false);
+        setIsImportDialogOpen(false);
         toast.success('Note created successfully!');
         return result;
       } else {
         console.log('❌ [NOTES PAGE] Note save failed - result was null');
-        toast.error('Failed to create note');
+        toast.error('Failed to create note - no data returned');
         return null;
       }
     } catch (error) {
       console.error("❌ [NOTES PAGE] Error saving note:", error);
-      toast.error('Failed to create note');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to create note: ${errorMessage}`);
       setIsManualDialogOpen(false);
       return null;
     }
@@ -128,7 +136,7 @@ const NotesPageContent = () => {
 
   return (
     <div className="h-full">
-      <SubjectCleanup />
+      
       <NotesPageHeader
         loading={false}
         viewMode={convertedViewMode}

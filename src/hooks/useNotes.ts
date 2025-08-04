@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useRequireAuth } from './useRequireAuth';
 import { addScanDataToDatabase } from '@/contexts/notes/operations/scanOperations';
+import { getOrCreateSubjectId } from '@/utils/subjectHelpers';
 
 // Helper function to map database response to Note interface
 const mapDbToNote = (dbNote: any): Note => ({
@@ -88,7 +89,7 @@ export const useNotes = () => {
     return (queryResult as any).total_count || 0;
   }, [queryResult]);
 
-  // Create note mutation
+  // Create note mutation  
   const createNoteMutation = useMutation({
     mutationFn: async (noteData: Omit<Note, 'id'>) => {
       if (!user?.id) throw new Error('User not authenticated');
@@ -96,26 +97,53 @@ export const useNotes = () => {
       console.log('🔄 [useNotes] createNoteMutation called with:', noteData);
       console.log('🔄 [useNotes] User ID:', user.id);
       
+      // Validate required fields
+      if (!noteData.title?.trim()) {
+        throw new Error('Title is required');
+      }
+      if (!noteData.content?.trim()) {
+        throw new Error('Content is required');
+      }
+      if (!noteData.subject?.trim()) {
+        throw new Error('Subject is required');
+      }
+      
+      // Get or create subject_id using the helper function
+      let subjectId = noteData.subject_id;
+      if (!subjectId && noteData.subject) {
+        console.log('🔄 [useNotes] Getting/creating subject ID for:', noteData.subject);
+        subjectId = await getOrCreateSubjectId(noteData.subject);
+        console.log('🔄 [useNotes] Subject ID result:', subjectId);
+        
+        if (!subjectId) {
+          throw new Error('Failed to create or find subject');
+        }
+      }
+      
       // Extract scan data if present
       const scanData = (noteData as any).scanData;
       
-      // Map camelCase to snake_case for database
-      const dbData = { ...noteData };
-      delete (dbData as any).sourceType;
-      delete (dbData as any).scanData; // Remove scanData from main note object
-      delete (dbData as any).category; // Remove category field to use subject properly
+      // Prepare clean data for database
+      const dbData = {
+        user_id: user.id,
+        title: noteData.title.trim(),
+        description: noteData.description?.trim() || '',
+        content: noteData.content.trim(),
+        date: noteData.date || new Date().toISOString().split('T')[0],
+        subject: noteData.subject.trim(),
+        subject_id: subjectId,
+        source_type: noteData.sourceType || 'manual',
+        archived: noteData.archived || false,
+        pinned: noteData.pinned || false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
       
       console.log('🔄 [useNotes] Prepared dbData for insert:', dbData);
       
       const { data, error } = await supabase
         .from('notes')
-        .insert({
-          ...dbData,
-          user_id: user.id,
-          source_type: noteData.sourceType || 'manual',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
+        .insert(dbData)
         .select()
         .single();
 

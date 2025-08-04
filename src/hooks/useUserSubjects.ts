@@ -31,7 +31,14 @@ export const useUserSubjects = () => {
 
       console.log("useUserSubjects: Successfully fetched", data?.length || 0, "subjects");
       
-      return (data || []) as UserSubject[];
+      // Filter out system subjects like "Scanned Documents"
+      const filteredData = (data || []).filter(subject => 
+        subject.name !== 'Scanned Documents' && 
+        subject.name !== 'scanned documents' &&
+        subject.name?.trim() !== ''
+      );
+      
+      return filteredData as UserSubject[];
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
@@ -94,21 +101,11 @@ export const useUserSubjects = () => {
     }
   };
 
-  // Remove "Scanned Documents" subject if it exists
-  const removeScannedDocumentsSubject = async () => {
-    const scannedSubject = subjects.find(s => s.name === 'Scanned Documents');
-    if (scannedSubject) {
-      console.log('🗑️ Removing unwanted "Scanned Documents" subject:', scannedSubject.id);
-      await removeSubject(scannedSubject.id);
-    }
-  };
-
   return {
     subjects,
     isLoading,
     error,
     addSubject,
-    removeSubject,
-    removeScannedDocumentsSubject
+    removeSubject
   };
 };
