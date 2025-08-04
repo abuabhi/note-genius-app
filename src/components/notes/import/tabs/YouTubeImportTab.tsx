@@ -320,7 +320,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
               <Button
                 onClick={handleTranscribe}
                 disabled={!youtubeUrl.trim() || transcriptionState.status === 'processing'}
-                className="w-full bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800"
+                className="w-full bg-mint-500 hover:bg-mint-600"
                 size="lg"
               >
                 {transcriptionState.status === 'processing' ? (
@@ -389,7 +389,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
               <div className="space-y-6">
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-3 mb-2">
-                    <div className="w-10 h-10 bg-gradient-to-r from-mint-500 to-mint-600 rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-mint-500 rounded-full flex items-center justify-center">
                       <FileText className="h-5 w-5 text-white" />
                     </div>
                     <div>
@@ -443,7 +443,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
                   <Button
                     onClick={handleSaveNote}
                     disabled={!noteTitle.trim() || !noteContent.trim()}
-                    className="flex-1 h-12 text-base font-semibold bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 shadow-lg"
+                    className="flex-1 h-12 text-base font-semibold bg-mint-500 hover:bg-mint-600 shadow-lg"
                     size="lg"
                   >
                     <FileText className="mr-2 h-5 w-5" />

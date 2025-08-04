@@ -79,7 +79,33 @@ export const FileImportTab = ({ onSaveNote, onClose }: FileImportTabProps) => {
   return (
     <div className="space-y-4">
       {!selectedFile && !processedText && (
-        <FileDropZone onFileSelected={handleFileSelected} />
+        <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-mint-400 transition-colors bg-gradient-to-br from-gray-50 to-white">
+          <div className="space-y-4">
+            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-mint-100 to-mint-200 rounded-xl flex items-center justify-center shadow-sm">
+              <Upload className="h-8 w-8 text-mint-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Drop your document here or click to browse</h3>
+              <p className="text-sm text-gray-600 max-w-sm mx-auto">
+                Supports PDF, Word documents, text files, and images
+              </p>
+            </div>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp"
+              onChange={(e) => e.target.files && handleFileSelected(e.target.files[0])}
+              className="hidden"
+              id="file-input"
+            />
+            <label
+              htmlFor="file-input"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-mint-500 text-white rounded-lg cursor-pointer hover:bg-mint-600 transition-colors text-sm font-medium shadow-sm hover:shadow-md"
+            >
+              <Upload className="h-4 w-4" />
+              Select Files
+            </label>
+          </div>
+        </div>
       )}
 
       {selectedFile && !processedText && (

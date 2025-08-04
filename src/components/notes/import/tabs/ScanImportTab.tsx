@@ -9,7 +9,7 @@ import { BatchProcessingView } from '../../scanning/BatchProcessingView';
 import { ImageProcessor } from '../../scanning/ImageProcessor';
 import { NoteMetadataForm } from '../../scanning/NoteMetadataForm';
 import { Button } from '@/components/ui/button';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText, Loader2, Camera } from 'lucide-react';
 import { getOrCreateSubjectId } from "@/utils/subjectHelpers";
 import { useToast } from "@/hooks/use-toast";
 import { PostSaveSuccessDialog } from "../../scanning/PostSaveSuccessDialog";
@@ -262,24 +262,37 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
 
   return (
     <div className="flex flex-col h-full max-h-[calc(70vh-120px)]">
-      <div className="mb-4">
-        <p className="text-sm text-gray-600">
-          Capture or upload photos of handwritten notes and documents
-        </p>
-      </div>
-      
       <ScrollArea className="flex-1">
         <div className="space-y-4">
           {!capturedImage ? (
-            <ImageUpload 
-              onImageUploaded={handleSingleImage} 
-              onMultipleImagesUploaded={handleMultipleImages}
-              isDragOver={isDragOver}
-              onDragEnter={handleDragEnter}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDropEvent}
-            />
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-mint-400 transition-colors bg-gradient-to-br from-gray-50 to-white">
+              <div className="space-y-4">
+                <div className="mx-auto w-16 h-16 bg-gradient-to-br from-mint-100 to-mint-200 rounded-xl flex items-center justify-center shadow-sm">
+                  <Camera className="h-8 w-8 text-mint-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Upload Images</h3>
+                  <p className="text-sm text-gray-600 max-w-sm mx-auto">
+                    Click to select or drag and drop images. PNG, JPG, JPEG, WebP supported. Single image or batch processing (up to 10 files)
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => e.target.files && handleMultipleImages(Array.from(e.target.files))}
+                  className="hidden"
+                  id="image-input"
+                />
+                <label
+                  htmlFor="image-input"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-mint-500 text-white rounded-lg cursor-pointer hover:bg-mint-600 transition-colors text-sm font-medium shadow-sm hover:shadow-md"
+                >
+                  <Camera className="h-4 w-4" />
+                  Upload Images
+                </label>
+              </div>
+            </div>
           ) : (
             <div className="space-y-4">
               <ImageProcessor 
