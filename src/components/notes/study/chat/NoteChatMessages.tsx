@@ -199,7 +199,7 @@ export const NoteChatMessages = ({
                         aria-label="Create flashcard automatically"
                       >
                         <BookOpen className="h-3 w-3 mr-1" aria-hidden="true" />
-                        {isGenerating ? 'Creating...' : 'Quick Create'}
+                        {isGenerating ? 'Creating...' : 'Create Flashcard'}
                       </Button>
 
                       <DropdownMenu>

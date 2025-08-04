@@ -109,7 +109,7 @@ export const FlashcardGeneration = ({
                 ) : (
                   <Plus className="h-3 w-3" />
                 )}
-                Quick Create
+                Create Flashcard
               </Button>
             </div>
             <p className="text-sm text-slate-600 line-clamp-2">
