@@ -13,12 +13,11 @@ export const ImportServiceGrid = ({
 }: ImportServiceGridProps) => {
   const services = [
     { id: 'onenote', name: 'OneNote', icon: FileText, comingSoon: false },
-    { id: 'googledocs', name: 'Google Docs', icon: GoogleDocsIcon, comingSoon: false },
-    { id: 'notion', name: 'Notion', icon: Book, comingSoon: true }
+    { id: 'googledocs', name: 'Google Docs', icon: GoogleDocsIcon, comingSoon: false }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
       {services.map(service => (
         <ImportServiceCard 
           key={service.id}

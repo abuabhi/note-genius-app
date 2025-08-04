@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ImportServiceGrid } from "../services/ImportServiceGrid";
 import { OneNoteConnection } from "../OneNoteConnection";
 import { DedicatedGoogleDocsImport } from "../DedicatedGoogleDocsImport";
-import { NotionConnection } from "../NotionConnection";
+
 
 interface ApiImportTabProps {
   onSaveNote: (note: any) => Promise<boolean>;
@@ -36,8 +36,6 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser, onImportComplete }: Ap
             onImportComplete={onImportComplete}
           />
         );
-      case 'notion':
-        return <NotionConnection onConnected={handleConnection} />;
       default:
         return null;
     }
