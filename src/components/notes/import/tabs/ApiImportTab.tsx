@@ -41,10 +41,10 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser, onImportComplete }: Ap
     }
   };
 
-  // If a service is selected, show full-height dedicated interface
+  // If a service is selected, show dedicated interface
   if (selectedService) {
     return (
-      <div className="h-full">
+      <div className="space-y-6 max-h-full overflow-y-auto">
         {renderServiceConnection()}
       </div>
     );

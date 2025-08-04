@@ -29,7 +29,7 @@ export const ImportServiceCard = ({
       }`}
       onClick={comingSoon ? undefined : onSelect}
     >
-      <CardContent className="p-6 flex flex-col items-center text-center min-h-[120px]">
+      <CardContent className="p-4 flex flex-col items-center text-center min-h-[100px]">
         {comingSoon && (
           <Badge 
             variant="outline" 
@@ -39,19 +39,19 @@ export const ImportServiceCard = ({
           </Badge>
         )}
         
-        <div className={`p-4 rounded-lg mb-4 transition-colors ${
+        <div className={`p-3 rounded-lg mb-3 transition-colors ${
           comingSoon
-            ? 'bg-gray-200'
+            ? 'bg-muted'
             : isSelected 
-              ? 'bg-green-500 shadow-sm' 
-              : 'bg-gray-100 group-hover:bg-green-500'
+              ? 'bg-primary shadow-sm' 
+              : 'bg-muted group-hover:bg-primary'
         }`}>
-          <Icon className={`h-6 w-6 transition-colors ${
+          <Icon className={`h-5 w-5 transition-colors ${
             comingSoon
-              ? 'text-gray-500'
+              ? 'text-muted-foreground'
               : isSelected 
-                ? 'text-white' 
-                : 'text-gray-600 group-hover:text-white'
+                ? 'text-primary-foreground' 
+                : 'text-muted-foreground group-hover:text-primary-foreground'
           }`} />
         </div>
         
