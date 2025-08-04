@@ -57,6 +57,13 @@ export const useNoteStudyEditor = (note: Note, forceRefresh: () => void) => {
       
       toast.success('Note saved successfully!');
       setIsEditing(false);
+      
+      // Update the local note object immediately to reflect changes
+      note.title = editableTitle;
+      note.content = editableContent;
+      note.subject = editableSubject;
+      note.tags = selectedTags;
+      
       forceRefresh();
     } catch (error) {
       console.error('Error saving note:', error);
