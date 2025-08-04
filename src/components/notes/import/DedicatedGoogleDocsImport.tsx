@@ -245,10 +245,7 @@ export const DedicatedGoogleDocsImport = ({
         // Reset selection so user can import more documents
         setSelectedDocs([]);
         
-        // Call onImportComplete to close dialog only after successful import
-        if (onImportComplete) {
-          onImportComplete();
-        }
+        // Don't auto-close dialog, let user import more documents or close manually
         
       } else if (successCount > 0 && failureCount > 0) {
         toast.warning(`Imported ${successCount} document${successCount > 1 ? 's' : ''}, ${failureCount} failed`);

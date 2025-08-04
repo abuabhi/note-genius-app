@@ -89,7 +89,7 @@ export const EnhancedImportDialog = ({
                 </TabsContent>
 
                 <TabsContent value="api" className="h-full mt-0">
-                  <ApiImportTab onSaveNote={onSaveNote} isPremiumUser={isPremiumUser} onImportComplete={onClose} />
+                  <ApiImportTab onSaveNote={onSaveNote} isPremiumUser={isPremiumUser} />
                 </TabsContent>
 
                 <TabsContent value="scan" className="h-full mt-0">
