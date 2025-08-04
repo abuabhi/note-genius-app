@@ -242,18 +242,13 @@ export const DedicatedGoogleDocsImport = ({
       if (successCount > 0 && failureCount === 0) {
         toast.success(`Successfully imported ${successCount} document${successCount > 1 ? 's' : ''}!`);
         
-        // Close dialog and notify parent
+        // Reset selection so user can import more documents
+        setSelectedDocs([]);
+        
+        // Call onImportComplete to close dialog only after successful import
         if (onImportComplete) {
           onImportComplete();
         }
-        
-        // Reset selection
-        setSelectedDocs([]);
-        
-        // Go back to previous screen
-        setTimeout(() => {
-          onBack();
-        }, 1000);
         
       } else if (successCount > 0 && failureCount > 0) {
         toast.warning(`Imported ${successCount} document${successCount > 1 ? 's' : ''}, ${failureCount} failed`);
