@@ -93,6 +93,9 @@ export const useNotes = () => {
     mutationFn: async (noteData: Omit<Note, 'id'>) => {
       if (!user?.id) throw new Error('User not authenticated');
       
+      console.log('🔄 [useNotes] createNoteMutation called with:', noteData);
+      console.log('🔄 [useNotes] User ID:', user.id);
+      
       // Extract scan data if present
       const scanData = (noteData as any).scanData;
       
@@ -101,6 +104,8 @@ export const useNotes = () => {
       delete (dbData as any).sourceType;
       delete (dbData as any).scanData; // Remove scanData from main note object
       delete (dbData as any).category; // Remove category field to use subject properly
+      
+      console.log('🔄 [useNotes] Prepared dbData for insert:', dbData);
       
       const { data, error } = await supabase
         .from('notes')
@@ -114,7 +119,12 @@ export const useNotes = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      console.log('🔄 [useNotes] Supabase insert response:', { data, error });
+
+      if (error) {
+        console.error('❌ [useNotes] Database insert error:', error);
+        throw error;
+      }
       
       // If this is a scanned note, save the scan data separately
       if (scanData && data.id) {
@@ -127,7 +137,9 @@ export const useNotes = () => {
       }
       
       // Map response back to camelCase
-      return mapDbToNote(data);
+      const mappedNote = mapDbToNote(data);
+      console.log('🔄 [useNotes] ✅ Note created successfully:', mappedNote);
+      return mappedNote;
     },
     onSuccess: (newNote) => {
       // More targeted invalidation for better performance
@@ -208,11 +220,13 @@ export const useNotes = () => {
 
   // Actions
   const addNote = useCallback(async (noteData: Omit<Note, 'id'>) => {
+    console.log('📝 [useNotes] addNote called with:', noteData);
     try {
       const result = await createNoteMutation.mutateAsync(noteData);
+      console.log('📝 [useNotes] ✅ createNoteMutation completed with result:', result);
       return result;
     } catch (error) {
-      console.error('Add note error:', error);
+      console.error('❌ [useNotes] Add note error:', error);
       return null;
     }
   }, [createNoteMutation]);

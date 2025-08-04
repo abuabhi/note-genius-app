@@ -94,11 +94,21 @@ export const useUserSubjects = () => {
     }
   };
 
+  // Remove "Scanned Documents" subject if it exists
+  const removeScannedDocumentsSubject = async () => {
+    const scannedSubject = subjects.find(s => s.name === 'Scanned Documents');
+    if (scannedSubject) {
+      console.log('🗑️ Removing unwanted "Scanned Documents" subject:', scannedSubject.id);
+      await removeSubject(scannedSubject.id);
+    }
+  };
+
   return {
     subjects,
     isLoading,
     error,
     addSubject,
-    removeSubject
+    removeSubject,
+    removeScannedDocumentsSubject
   };
 };

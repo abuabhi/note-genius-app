@@ -12,6 +12,8 @@ import { EnhancedImportDialog } from '@/components/notes/import/EnhancedImportDi
 import { NotesFilters } from '@/components/notes/NotesFilters';
 import { NotesGrid } from '@/components/notes/NotesGrid';
 import { useNotes } from '@/hooks/useNotes';
+import { toast } from 'sonner';
+import { SubjectCleanup } from '@/components/notes/SubjectCleanup';
 
 // Enhanced error fallback component with better debugging
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => {
@@ -82,19 +84,25 @@ const NotesPageContent = () => {
 
   // Note creation handlers using simplified architecture
   const handleSaveNote = useCallback(async (noteData: Omit<Note, 'id'>): Promise<Note | null> => {
+    console.log('📄 [NOTES PAGE] handleSaveNote called with:', noteData);
     if (isCreating) return null;
     
     try {
-      console.log('📝 [NOTES PAGE] Creating note:', noteData.title);
       const result = await addNote(noteData);
+      console.log('📄 [NOTES PAGE] addNote result:', result);
       if (result) {
-        console.log('✅ [NOTES PAGE] Note created successfully:', result.id);
+        console.log('📄 [NOTES PAGE] ✅ Note saved successfully - closing dialog');
         setIsManualDialogOpen(false);
+        toast.success('Note created successfully!');
         return result;
+      } else {
+        console.log('❌ [NOTES PAGE] Note save failed - result was null');
+        toast.error('Failed to create note');
+        return null;
       }
-      return null;
     } catch (error) {
-      console.error('❌ [NOTES PAGE] Error creating note:', error);
+      console.error("❌ [NOTES PAGE] Error saving note:", error);
+      toast.error('Failed to create note');
       setIsManualDialogOpen(false);
       return null;
     }
@@ -120,6 +128,7 @@ const NotesPageContent = () => {
 
   return (
     <div className="h-full">
+      <SubjectCleanup />
       <NotesPageHeader
         loading={false}
         viewMode={convertedViewMode}
