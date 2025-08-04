@@ -12,4 +12,5 @@ export const authCallbackRoutes: RouteConfig[] = [
   { path: "/auth/notion/callback", element: <NotionAuthCallback /> },
   { path: "/auth/google-docs/callback", element: <GoogleDocsAuthCallback /> },
   { path: "/auth/microsoft/callback", element: <MicrosoftAuthCallback /> },
+  { path: "/oauth2callback", element: <GoogleDocsAuthCallback /> },
 ];
