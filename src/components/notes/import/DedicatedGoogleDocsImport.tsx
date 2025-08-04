@@ -288,7 +288,17 @@ export const DedicatedGoogleDocsImport = ({
           loading={loading || isImporting}
           onRefresh={fetchDocuments}
           onImport={importSelectedDocs}
-          onConnect={connect}
+          onConnect={() => {
+            console.log('🔗 User clicked connect button');
+            console.log('📊 Current auth state before connect:', {
+              isAuthenticated,
+              hasAccessToken: !!accessToken,
+              userName,
+              loading,
+              error
+            });
+            connect();
+          }}
           isImporting={isImporting}
         />
       </div>

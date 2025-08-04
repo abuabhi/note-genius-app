@@ -93,8 +93,46 @@ export const useGoogleDocsAuth = () => {
       }
     };
     
+    // Also check for stored auth result (fallback for when popup communication fails)
+    const checkStoredAuthResult = () => {
+      const storedResult = localStorage.getItem('googleDocs_auth_result');
+      if (storedResult) {
+        try {
+          const authData = JSON.parse(storedResult);
+          console.log('💾 Found stored auth result:', authData);
+          
+          // Remove the stored result to prevent reprocessing
+          localStorage.removeItem('googleDocs_auth_result');
+          
+          // Process like a regular callback
+          if (authData.error) {
+            console.error('❌ Stored OAuth error:', authData.error);
+            setAuthState(prev => ({
+              ...prev,
+              loading: false,
+              error: `Authentication failed: ${authData.error}`
+            }));
+          } else if (authData.code) {
+            console.log('🔄 Processing stored authorization code');
+            exchangeCodeForTokens(authData.code);
+          }
+        } catch (err) {
+          console.error('❌ Failed to parse stored auth result:', err);
+          localStorage.removeItem('googleDocs_auth_result');
+        }
+      }
+    };
+    
+    // Check for stored result immediately and set up polling
+    checkStoredAuthResult();
+    const pollInterval = setInterval(checkStoredAuthResult, 1000);
+    
     window.addEventListener('message', handleAuthCallback);
-    return () => window.removeEventListener('message', handleAuthCallback);
+    
+    return () => {
+      window.removeEventListener('message', handleAuthCallback);
+      clearInterval(pollInterval);
+    };
   }, []);
 
   const exchangeCodeForTokens = async (code: string) => {
