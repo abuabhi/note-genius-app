@@ -29,7 +29,6 @@ const FAQPage = lazy(() => import('@/pages/FAQPage'));
 const StudyPlannerPage = lazy(() => import('@/pages/StudyPlannerPage'));
 const QuizDetailsPage = lazy(() => import('@/pages/QuizDetailsPage'));
 const InfluencerDashboardPage = lazy(() => import('@/pages/InfluencerDashboardPage'));
-const GoogleDocsTestPage = lazy(() => import('@/pages/GoogleDocsTestPage'));
 
 
 // Legacy route redirects
@@ -157,9 +156,5 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/influencer',
     element: <InfluencerDashboardPage />
-  },
-  {
-    path: '/google-docs-test',
-    element: <GoogleDocsTestPage />
   },
 ];
