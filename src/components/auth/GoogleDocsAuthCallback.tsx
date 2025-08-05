@@ -58,7 +58,7 @@ export const GoogleDocsAuthCallback = () => {
         console.log('❌ [GOOGLE DOCS CALLBACK] OAuth error:', errorDescription || error);
         
         // Store error for parent window in localStorage for better persistence
-        localStorage.setItem('googleDocs_auth_pending', JSON.stringify({
+        localStorage.setItem('googledocs_auth_pending', JSON.stringify({
           error: errorDescription || error || 'Authentication failed',
           timestamp: Date.now()
         }));
@@ -89,7 +89,7 @@ export const GoogleDocsAuthCallback = () => {
         console.log('✅ [GOOGLE DOCS CALLBACK] Authorization code received');
         
         // Store auth result for the main window in localStorage
-        localStorage.setItem('googleDocs_auth_pending', JSON.stringify({
+        localStorage.setItem('googledocs_auth_pending', JSON.stringify({
           code,
           state: urlParams.get('state'),
           timestamp: Date.now()
@@ -147,7 +147,7 @@ export const GoogleDocsAuthCallback = () => {
         console.log('❌ [GOOGLE DOCS CALLBACK] No code or error received');
         
         // Store error for parent window in localStorage
-        localStorage.setItem('googleDocs_auth_pending', JSON.stringify({
+        localStorage.setItem('googledocs_auth_pending', JSON.stringify({
           error: 'Authorization failed - no code received',
           timestamp: Date.now()
         }));

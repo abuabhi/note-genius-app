@@ -31,21 +31,27 @@ export const EnhancedImportDialog = ({
     console.log('🔍 [IMPORT DIALOG] Dialog visibility changed:', { isVisible, activeTab, isProcessing, isAuthenticating });
   }, [isVisible, activeTab, isProcessing, isAuthenticating]);
 
-  // Listen for OAuth authentication events with improved state management
+  // Enhanced authentication event listeners - simplified
   useEffect(() => {
     const handleAuthStart = () => {
       console.log('🔍 [IMPORT DIALOG] OAuth authentication started');
       setIsAuthenticating(true);
     };
 
-    const handleAuthEnd = (event: CustomEvent) => {
-      console.log('🔍 [IMPORT DIALOG] OAuth authentication ended:', event.detail);
+    const handleAuthEnd = (event: any) => {
+      console.log('🔍 [IMPORT DIALOG] OAuth authentication ended', event.detail);
       setIsAuthenticating(false);
+      
+      // Don't auto-close dialog on successful auth - let user continue importing
+      if (event.detail?.success) {
+        console.log('🔍 [IMPORT DIALOG] Auth successful, keeping dialog open for document selection');
+      }
     };
 
+    // Listen for custom OAuth events
     window.addEventListener('googledocs:auth:start', handleAuthStart);
     window.addEventListener('googledocs:auth:end', handleAuthEnd);
-    
+
     return () => {
       window.removeEventListener('googledocs:auth:start', handleAuthStart);
       window.removeEventListener('googledocs:auth:end', handleAuthEnd);

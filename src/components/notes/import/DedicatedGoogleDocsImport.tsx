@@ -1,16 +1,11 @@
-import { useGoogleDocsAuth } from "@/integrations/google/googleDocsOAuth";
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { GoogleDocsHeader } from "./google-docs/GoogleDocsHeader";
-import { GoogleDocsErrorDisplay } from "./google-docs/GoogleDocsErrorDisplay";
-import { GoogleDocsActionBar } from "./google-docs/GoogleDocsActionBar";
-import { GoogleDocsList } from "./google-docs/GoogleDocsList";
-import { GoogleDocsEmptyState } from "./google-docs/GoogleDocsEmptyState";
-import { GoogleDocsImporter } from "@/services/googleDocsImporter";
-import { DocumentContentProcessor } from "@/utils/documentContentProcessor";
-import { SubjectClassifier } from "@/utils/subjectClassifier";
-import { useUserSubjects } from "@/hooks/useUserSubjects";
-import { getOrCreateSubjectId } from "@/utils/subjectHelpers";
+import React from 'react';
+import { GoogleDocsAuthService } from '@/services/auth/GoogleDocsAuthService';
+import { DocumentImportManager, DocumentItem } from './DocumentImportManager';
+import { GoogleDocsImporter } from '@/services/googleDocsImporter';
+import { DocumentContentProcessor } from '@/utils/documentContentProcessor';
+import { SubjectClassifier } from '@/utils/subjectClassifier';
+import { useUserSubjects } from '@/hooks/useUserSubjects';
+import { getOrCreateSubjectId } from '@/utils/subjectHelpers';
 
 interface DedicatedGoogleDocsImportProps {
   onConnected: (accessToken: string) => void;
@@ -29,353 +24,149 @@ export const DedicatedGoogleDocsImport = ({
   onAuthStart,
   onAuthEnd 
 }: DedicatedGoogleDocsImportProps) => {
-  const { isAuthenticated, accessToken, userName, loading, error, connect, disconnect } = useGoogleDocsAuth();
-  const [isRefreshingDocs, setIsRefreshingDocs] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
-  const [detailedError, setDetailedError] = useState<string | null>(null);
-  const [showErrorDetails, setShowErrorDetails] = useState(false);
   const { subjects } = useUserSubjects();
+  const authService = GoogleDocsAuthService.getInstance();
 
-  // Debug logging for auth state changes with enhanced details
-  useEffect(() => {
-    console.log('🔍 [GOOGLE DOCS] Auth state changed:', {
-      isAuthenticated,
-      hasAccessToken: !!accessToken,
-      userName,
-      loading,
-      error,
-      documentsCount: documents.length,
-      isRefreshingDocs,
-      isImporting,
-      selectedDocsCount: selectedDocs.length
+  const fetchGoogleDocs = async (accessToken: string): Promise<DocumentItem[]> => {
+    // Validate token first
+    const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
     });
-    
-    // Log detailed error information if present
-    if (error) {
-      console.error('🔍 [GOOGLE DOCS] Detailed error state:', {
-        error,
-        detailedError,
-        showErrorDetails
-      });
+
+    if (!userInfoResponse.ok) {
+      throw new Error(`Token validation failed: ${userInfoResponse.statusText}`);
     }
-  }, [isAuthenticated, accessToken, userName, loading, error, documents.length, isRefreshingDocs, isImporting, selectedDocs.length, detailedError, showErrorDetails]);
-  
-  useEffect(() => {
-    if (isAuthenticated && accessToken) {
-      console.log('🔍 [GOOGLE DOCS] Authentication successful, fetching documents...');
-      onConnected(accessToken);
-      fetchDocuments();
-      // Signal auth completion
+
+    // Fetch documents from Google Drive
+    const driveApiUrl = 'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
+      q: "mimeType='application/vnd.google-apps.document'",
+      fields: 'files(id,name,createdTime,modifiedTime,owners,permissions)',
+      orderBy: 'modifiedTime desc',
+      pageSize: '20'
+    });
+
+    const driveResponse = await fetch(driveApiUrl, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!driveResponse.ok) {
+      const errorText = await driveResponse.text();
+      let errorMessage = `Google Drive API Error: ${driveResponse.statusText}`;
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.error?.message) {
+          errorMessage += ` - ${errorData.error.message}`;
+        }
+      } catch (e) {
+        // Ignore parsing errors
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const data = await driveResponse.json();
+    return data.files || [];
+  };
+
+  const handleImport = async (documents: DocumentItem[], accessToken: string) => {
+    if (!onSaveNote) {
+      throw new Error('Save function not available');
+    }
+
+    const importer = new GoogleDocsImporter(accessToken);
+    const results = await importer.importDocuments(documents.map(doc => doc.id));
+    
+    const subjectClassifier = new SubjectClassifier(subjects || []);
+    let successCount = 0;
+    let failureCount = 0;
+
+    for (const result of results) {
+      if (result.success) {
+        try {
+          const processed = DocumentContentProcessor.processDocument(result.document);
+          
+          const finalSubject = subjectClassifier.classifyContent(
+            processed.content + ' ' + processed.title, 
+            processed.suggestedSubject
+          );
+          
+          const subjectId = await getOrCreateSubjectId(finalSubject);
+          
+          const noteData = {
+            title: processed.title,
+            description: processed.description,
+            content: processed.content,
+            subject: finalSubject,
+            subject_id: subjectId,
+            date: new Date().toISOString().split('T')[0],
+            sourceType: 'import' as const,
+            importData: {
+              originalFileUrl: `https://docs.google.com/document/d/${result.document.id}`,
+              fileType: 'google-docs',
+              importedAt: new Date().toISOString()
+            }
+          };
+          
+          const success = await onSaveNote(noteData);
+          
+          if (success) {
+            successCount++;
+            console.log(`✅ Successfully saved note: ${noteData.title}`);
+          } else {
+            failureCount++;
+            console.error(`❌ Failed to save note: ${noteData.title}`);
+          }
+          
+        } catch (error) {
+          console.error('Error processing document:', error);
+          failureCount++;
+        }
+      } else {
+        failureCount++;
+        console.error('Import failed for document:', result.error);
+      }
+    }
+
+    // Notify parent of successful imports
+    if (successCount > 0 && onImportComplete) {
+      onImportComplete();
+    }
+
+    if (failureCount > 0) {
+      throw new Error(`Import completed with ${failureCount} failures`);
+    }
+  };
+
+  const handleAuthStateChange = (isAuthenticated: boolean) => {
+    if (isAuthenticated) {
+      // Get current credentials and notify parent
+      authService.getAuthState().then(state => {
+        if (state.credentials?.accessToken) {
+          onConnected(state.credentials.accessToken);
+        }
+      });
+      
       if (onAuthEnd) {
         onAuthEnd();
       }
-    } else if (!isAuthenticated && !loading) {
-      console.log('🔍 [GOOGLE DOCS] Not authenticated, showing connect interface');
-    }
-  }, [isAuthenticated, accessToken, loading, onConnected, onAuthEnd]);
-
-  const fetchDocuments = async () => {
-    if (!accessToken) {
-      setDetailedError('No access token available. Please reconnect.');
-      return;
-    }
-    
-    setIsRefreshingDocs(true);
-    setDetailedError(null);
-    
-    try {
-      console.log('🔍 Fetching Google Docs with token:', accessToken.substring(0, 20) + '...');
-      
-      // Validate token with userinfo
-      const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (!userInfoResponse.ok) {
-        const errorText = await userInfoResponse.text();
-        throw new Error(`Token validation failed (${userInfoResponse.status}): ${errorText}`);
-      }
-      
-      const userInfo = await userInfoResponse.json();
-      console.log('✅ Token validated successfully for user:', userInfo.email);
-      
-      // Fetch documents from Google Drive API
-      const driveApiUrl = 'https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({
-        q: "mimeType='application/vnd.google-apps.document'",
-        fields: 'files(id,name,createdTime,modifiedTime,owners,permissions)',
-        orderBy: 'modifiedTime desc',
-        pageSize: '20'
-      });
-      
-      const driveResponse = await fetch(driveApiUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
-
-      if (!driveResponse.ok) {
-        const errorText = await driveResponse.text();
-        let errorMessage = `Google Drive API Error (${driveResponse.status}): ${driveResponse.statusText}`;
-        
-        try {
-          const errorData = JSON.parse(errorText);
-          if (errorData.error) {
-            errorMessage = `${errorMessage}\n\nDetails: ${errorData.error.message || errorData.error}`;
-            
-            if (errorData.error.code === 403) {
-              errorMessage += '\n\n🔧 Troubleshooting:\n• Enable Google Drive API in Google Cloud Console\n• Verify OAuth consent screen includes required scopes\n• Try disconnecting and reconnecting your account';
-            }
-          }
-        } catch (e) {
-          errorMessage += `\n\nRaw Response: ${errorText}`;
-        }
-        
-        setDetailedError(errorMessage);
-        throw new Error(errorMessage);
-      }
-
-      const driveData = await driveResponse.json();
-      
-      if (driveData.files && Array.isArray(driveData.files)) {
-        setDocuments(driveData.files);
-        toast.success(`Found ${driveData.files.length} Google Docs`);
-        
-        if (driveData.files.length === 0) {
-          setDetailedError('No Google Docs found in your account. Create some documents in Google Drive first.');
-        }
-      } else {
-        setDocuments([]);
-        setDetailedError('Unexpected response format from Google Drive API');
-      }
-    } catch (error) {
-      console.error('💥 Error fetching Google Docs:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      setDetailedError(errorMessage);
-      toast.error(`Failed to fetch Google Docs: ${errorMessage}`);
-      setDocuments([]);
-    } finally {
-      setIsRefreshingDocs(false);
-    }
-  };
-
-  const toggleDocSelection = (docId: string) => {
-    console.log('Toggling selection for doc:', docId);
-    setSelectedDocs(prev => {
-      const newSelection = prev.includes(docId) 
-        ? prev.filter(id => id !== docId)
-        : [...prev, docId];
-      console.log('New selection:', newSelection);
-      return newSelection;
-    });
-  };
-
-  const handleSelectionChange = (docId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedDocs(prev => [...prev, docId]);
-    } else {
-      setSelectedDocs(prev => prev.filter(id => id !== docId));
-    }
-  };
-
-  const importSelectedDocs = async () => {
-    if (selectedDocs.length === 0) {
-      toast.error('Please select at least one document to import');
-      return;
-    }
-
-    if (!accessToken) {
-      toast.error('Authentication required. Please reconnect.');
-      return;
-    }
-
-    if (!onSaveNote) {
-      toast.error('Import function not available');
-      return;
-    }
-
-    setIsImporting(true);
-    const toastId = toast.loading(`Importing ${selectedDocs.length} document${selectedDocs.length > 1 ? 's' : ''}...`);
-    
-    try {
-      console.log('🚀 Starting import process for documents:', selectedDocs);
-      
-      const importer = new GoogleDocsImporter(accessToken);
-      const results = await importer.importDocuments(selectedDocs);
-      
-      let successCount = 0;
-      let failureCount = 0;
-      
-      const subjectClassifier = new SubjectClassifier(subjects || []);
-      
-      for (const result of results) {
-        if (result.success) {
-          try {
-            // Process the document content
-            const processed = DocumentContentProcessor.processDocument(result.document);
-            
-            // Classify subject based on user's existing subjects
-            const finalSubject = subjectClassifier.classifyContent(
-              processed.content + ' ' + processed.title, 
-              processed.suggestedSubject
-            );
-            
-            // Get or create subject ID
-            const subjectId = await getOrCreateSubjectId(finalSubject);
-            
-            // Create note object
-            const noteData = {
-              title: processed.title,
-              description: processed.description,
-              content: processed.content,
-              subject: finalSubject,
-              subject_id: subjectId,
-              date: new Date().toISOString().split('T')[0],
-              sourceType: 'import' as const,
-              importData: {
-                originalFileUrl: `https://docs.google.com/document/d/${result.document.id}`,
-                fileType: 'google-docs',
-                importedAt: new Date().toISOString()
-              }
-            };
-            
-            console.log('📝 Creating note:', noteData.title);
-            
-            // Save the note
-            const success = await onSaveNote(noteData);
-            
-            if (success) {
-              successCount++;
-              console.log(`✅ Successfully saved note: ${noteData.title}`);
-            } else {
-              failureCount++;
-              console.error(`❌ Failed to save note: ${noteData.title}`);
-            }
-            
-          } catch (error) {
-            console.error('Error processing document:', error);
-            failureCount++;
-          }
-        } else {
-          failureCount++;
-          console.error('Import failed for document:', result.error);
-        }
-      }
-      
-      toast.dismiss(toastId);
-      
-      // Show results
-      if (successCount > 0 && failureCount === 0) {
-        toast.success(`Successfully imported ${successCount} document${successCount > 1 ? 's' : ''}!`);
-        
-        // Reset selection so user can import more documents
-        setSelectedDocs([]);
-        
-        // Don't auto-close dialog, let user import more documents or close manually
-        // Call onImportComplete only to refresh the notes list, not to close dialog
-        if (onImportComplete) {
-          onImportComplete();
-        }
-        
-      } else if (successCount > 0 && failureCount > 0) {
-        toast.warning(`Imported ${successCount} document${successCount > 1 ? 's' : ''}, ${failureCount} failed`);
-      } else {
-        toast.error(`Failed to import documents. Please try again.`);
-      }
-      
-    } catch (error) {
-      console.error('💥 Import process failed:', error);
-      toast.dismiss(toastId);
-      toast.error(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsImporting(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Compact Header */}
-      <div className="flex-shrink-0 space-y-4">
-        <GoogleDocsHeader 
-          isAuthenticated={isAuthenticated}
-          userName={userName}
-          onBack={onBack}
-          onDisconnect={disconnect}
-        />
-
-        <GoogleDocsErrorDisplay 
-          error={error}
-          detailedError={detailedError}
-          showErrorDetails={showErrorDetails}
-          onToggleErrorDetails={setShowErrorDetails}
-        />
-
-        <GoogleDocsActionBar 
-          isAuthenticated={isAuthenticated}
-          documentsCount={documents.length}
-          selectedDocsCount={selectedDocs.length}
-          isRefreshing={isRefreshingDocs}
-          loading={loading || isImporting}
-          onRefresh={fetchDocuments}
-          onImport={importSelectedDocs}
-          onConnect={() => {
-            console.log('🔗 [GOOGLE DOCS] User clicked connect button');
-            console.log('📊 [GOOGLE DOCS] Current auth state before connect:', {
-              isAuthenticated,
-              hasAccessToken: !!accessToken,
-              userName,
-              loading,
-              error
-            });
-            
-            // Clear any previous error state before connecting
-            setDetailedError(null);
-            setShowErrorDetails(false);
-            
-            // Signal auth start to parent dialog
-            if (onAuthStart) {
-              onAuthStart();
-            }
-            
-            // Dispatch custom event to notify the dialog
-            window.dispatchEvent(new CustomEvent('googledocs:auth:start'));
-            
-            // Ensure we're in loading state during auth
-            console.log('🚀 [GOOGLE DOCS] Starting OAuth connection...');
-            connect();
-          }}
-          isImporting={isImporting}
-        />
-      </div>
-
-      {/* Document List - Takes Remaining Space */}
-      {isAuthenticated && (
-        <div className="flex-1 mt-4 min-h-0 overflow-hidden">
-          {documents.length > 0 ? (
-            <GoogleDocsList 
-              documents={documents}
-              selectedDocs={selectedDocs}
-              onToggleSelection={toggleDocSelection}
-              onSelectionChange={handleSelectionChange}
-            />
-          ) : (
-            <GoogleDocsEmptyState 
-              isRefreshing={isRefreshingDocs}
-              hasDetailedError={!!detailedError}
-              onRefresh={fetchDocuments}
-            />
-          )}
-        </div>
-      )}
-    </div>
+    <DocumentImportManager
+      authService={authService}
+      provider="googledocs"
+      onBack={onBack}
+      onImport={handleImport}
+      fetchDocuments={fetchGoogleDocs}
+      onAuthStateChange={handleAuthStateChange}
+    />
   );
 };
