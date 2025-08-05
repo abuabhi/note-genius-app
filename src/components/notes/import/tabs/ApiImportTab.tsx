@@ -60,7 +60,7 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser, onImportComplete, onAu
   // If a service is selected, show dedicated interface
   if (selectedService) {
     return (
-      <div className="space-y-6 max-h-full overflow-y-auto">
+      <div className="space-y-6 h-full">
         {renderServiceConnection()}
       </div>
     );
