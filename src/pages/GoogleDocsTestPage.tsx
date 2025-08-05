@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -38,13 +38,39 @@ export default function GoogleDocsTestPage() {
   const [logs, setLogs] = useState<string[]>([]);
   const [importResults, setImportResults] = useState<ImportResult[]>([]);
 
-  const authService = new GoogleDocsAuthService();
+  const authService = GoogleDocsAuthService.getInstance();
 
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
     setLogs(prev => [...prev, `[${timestamp}] ${message}`]);
     console.log(`[GoogleDocsTest] ${message}`);
   };
+
+  // Check for existing authentication on mount
+  useEffect(() => {
+    const checkExistingAuth = async () => {
+      try {
+        addLog('Checking existing authentication...');
+        const authState = await authService.getAuthState();
+        
+        if (authState.isAuthenticated && authState.credentials) {
+          setAuthState({
+            isAuthenticated: true,
+            accessToken: authState.credentials.accessToken,
+            error: null
+          });
+          addLog('✅ Found existing authentication');
+          addLog(`✅ User: ${authState.credentials.userName} (${authState.credentials.email})`);
+        } else {
+          addLog('ℹ️ No existing authentication found');
+        }
+      } catch (error) {
+        addLog(`❌ Auth check error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    };
+
+    checkExistingAuth();
+  }, []);
 
   const handleAuth = async () => {
     try {
