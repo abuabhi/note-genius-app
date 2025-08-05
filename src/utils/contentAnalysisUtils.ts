@@ -46,7 +46,11 @@ export const analyzeContentForTitleAndSubject = (text: string): ContentAnalysis 
       "calculus", "statistics", "probability", "derivative", "integral", "theorem", 
       "proof", "variable", "function", "graph", "matrix", "vector", "logarithm",
       "sine", "cosine", "tangent", "polynomial", "quadratic", "linear", "exponential",
-      "+", "-", "×", "÷", "=", "∑", "∆", "π", "∞"
+      "circle", "unit circle", "radian", "degree", "angle", "arc", "circumference",
+      "radius", "diameter", "secant", "cosecant", "cotangent", "hyperbolic",
+      "parabola", "ellipse", "hyperbola", "coordinate", "axis", "origin", "slope",
+      "intercept", "domain", "range", "asymptote", "periodic", "amplitude", "phase",
+      "+", "-", "×", "÷", "=", "∑", "∆", "π", "∞", "θ", "α", "β", "γ"
     ],
     "Science": [
       "experiment", "hypothesis", "theory", "chemistry", "physics", "biology", 

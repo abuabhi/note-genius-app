@@ -87,49 +87,9 @@ export class DocumentContentProcessor {
   }
 
   private static suggestSubject(content: string): string {
-    const textLower = content.toLowerCase();
-    
-    // Subject keyword mapping (expanded from contentAnalysisUtils)
-    const subjectKeywords = {
-      "Mathematics": [
-        "math", "equation", "formula", "calculate", "algebra", "geometry", "trigonometry", 
-        "calculus", "statistics", "probability", "derivative", "integral", "theorem"
-      ],
-      "Science": [
-        "experiment", "hypothesis", "theory", "chemistry", "physics", "biology", 
-        "molecule", "atom", "cell", "lab", "scientific", "research"
-      ],
-      "Technology": [
-        "technology", "computer", "programming", "code", "software", "hardware",
-        "algorithm", "database", "network", "internet"
-      ],
-      "English": [
-        "essay", "paragraph", "grammar", "literature", "poem", "novel", "author", 
-        "writing", "analysis", "rhetoric"
-      ],
-      "History": [
-        "history", "war", "ancient", "century", "empire", "revolution", "timeline", 
-        "historical", "period", "civilization"
-      ]
-    };
-
-    let maxMatches = 0;
-    let bestMatch = "General";
-    
-    for (const [subject, keywords] of Object.entries(subjectKeywords)) {
-      let matches = 0;
-      for (const keyword of keywords) {
-        if (textLower.includes(keyword)) {
-          matches++;
-        }
-      }
-      
-      if (matches > maxMatches) {
-        maxMatches = matches;
-        bestMatch = subject;
-      }
-    }
-
-    return bestMatch;
+    // Use the comprehensive content analysis utility instead of duplicate logic
+    const { analyzeContentForTitleAndSubject } = require('@/utils/contentAnalysisUtils');
+    const analysis = analyzeContentForTitleAndSubject(content);
+    return analysis.suggestedSubject;
   }
 }
