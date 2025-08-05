@@ -45,7 +45,7 @@ export const useNotes = () => {
   ].filter(Boolean), [user?.id, searchTerm, selectedSubject, sortType, showArchived]);
 
   // Fetch notes with server-side filtering
-  const { data: queryResult, isLoading: queryLoading, error, refetch } = useQuery({
+  const { data: queryResult, isInitialLoading, error, refetch } = useQuery({
     queryKey,
     queryFn: async () => {
       if (!user?.id) throw new Error('User not authenticated');
@@ -73,9 +73,7 @@ export const useNotes = () => {
       return response;
     },
     enabled: !!user?.id && !authLoading,
-    staleTime: 5000, // 5 seconds - much more responsive for navigation
     gcTime: 30000, // Keep in cache for 30 seconds for back navigation
-    refetchOnMount: 'always', // Always refetch when mounting to ensure fresh data
   });
 
   // Extract data from query result
@@ -307,7 +305,7 @@ export const useNotes = () => {
     // Data
     notes,
     totalCount,
-    loading: authLoading || queryLoading, // Combined loading state
+    loading: authLoading || isInitialLoading, // Combined loading state
     error: error?.message || null,
     
     // Filter state
