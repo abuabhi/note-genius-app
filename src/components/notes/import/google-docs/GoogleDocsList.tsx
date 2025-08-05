@@ -20,8 +20,8 @@ export const GoogleDocsList = ({
 
   return (
     <div className="flex-1 border rounded-lg overflow-hidden bg-white">
-      <ScrollArea className="h-[600px]">
-        <div className="p-1">
+      <ScrollArea className="h-[400px] w-full">
+        <div className="p-1 space-y-1">
           {documents.map((doc) => (
             <div 
               key={doc.id} 
