@@ -112,6 +112,12 @@ export class GoogleDocsAuthService extends DocumentAuthService {
 
         console.log('📨 [GOOGLE DOCS] OAuth callback received:', event.data);
 
+        // Close the popup immediately after receiving the message
+        if (!popup.closed) {
+          console.log('🔚 [GOOGLE DOCS] Closing popup after receiving callback');
+          popup.close();
+        }
+
         if (event.data.error) {
           reject(new Error(event.data.error));
           return;
@@ -130,16 +136,25 @@ export class GoogleDocsAuthService extends DocumentAuthService {
         }
       };
 
-      // Fallback: Check localStorage for auth result
+      // Fallback: Check localStorage for auth result (check both possible keys)
       const pollForResult = () => {
-        const pendingResult = localStorage.getItem(`${this.storagePrefix}auth_pending`);
+        // Check for callback result with the exact key used by callback component
+        const pendingResult = localStorage.getItem('googledocs_auth_pending') || localStorage.getItem(`${this.storagePrefix}auth_pending`);
         if (pendingResult && !resolved) {
           try {
             const authData = JSON.parse(pendingResult);
+            // Clean up both possible keys
+            localStorage.removeItem('googledocs_auth_pending');
             localStorage.removeItem(`${this.storagePrefix}auth_pending`);
 
             resolved = true;
             cleanup();
+
+            // Close popup if still open
+            if (!popup.closed) {
+              console.log('🔚 [GOOGLE DOCS] Closing popup after polling result');
+              popup.close();
+            }
 
             if (authData.error) {
               reject(new Error(authData.error));
@@ -150,6 +165,7 @@ export class GoogleDocsAuthService extends DocumentAuthService {
             }
           } catch (error) {
             console.error('❌ Failed to parse auth result:', error);
+            localStorage.removeItem('googledocs_auth_pending');
             localStorage.removeItem(`${this.storagePrefix}auth_pending`);
           }
         }

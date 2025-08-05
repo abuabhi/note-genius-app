@@ -81,7 +81,12 @@ export const GoogleDocsAuthCallback = () => {
         }
         
         setMessage('Authentication failed. Please wait...');
-        // Don't auto-close - let parent handle it
+        
+        // Auto-close after posting error message
+        setTimeout(() => {
+          console.log('🔚 [GOOGLE DOCS CALLBACK] Auto-closing popup after error');
+          window.close();
+        }, 2000);
         return;
       }
       
@@ -142,7 +147,12 @@ export const GoogleDocsAuthCallback = () => {
         }
         
         setMessage('Authorization successful! Please wait...');
-        // Don't auto-close - let parent handle it
+        
+        // Auto-close after posting success message
+        setTimeout(() => {
+          console.log('🔚 [GOOGLE DOCS CALLBACK] Auto-closing popup after success');
+          window.close();
+        }, 1500);
       } else {
         console.log('❌ [GOOGLE DOCS CALLBACK] No code or error received');
         
@@ -170,7 +180,12 @@ export const GoogleDocsAuthCallback = () => {
         }
         
         setMessage('Authorization failed. Please wait...');
-        // Don't auto-close - let parent handle it
+        
+        // Auto-close after posting no-code error
+        setTimeout(() => {
+          console.log('🔚 [GOOGLE DOCS CALLBACK] Auto-closing popup after no-code error');
+          window.close();
+        }, 2000);
       }
     };
     
