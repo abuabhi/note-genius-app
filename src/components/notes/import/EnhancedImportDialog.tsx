@@ -24,11 +24,38 @@ export const EnhancedImportDialog = ({
 }: EnhancedImportDialogProps) => {
   const [activeTab, setActiveTab] = useState('file');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   // Debug logging for dialog state changes
   useEffect(() => {
-    console.log('🔍 [IMPORT DIALOG] Dialog visibility changed:', { isVisible, activeTab });
-  }, [isVisible, activeTab]);
+    console.log('🔍 [IMPORT DIALOG] Dialog visibility changed:', { isVisible, activeTab, isProcessing, isAuthenticating });
+  }, [isVisible, activeTab, isProcessing, isAuthenticating]);
+
+  // Listen for OAuth authentication events
+  useEffect(() => {
+    const handleOAuthMessage = (event: MessageEvent) => {
+      if (
+        event.origin === window.location.origin &&
+        event.data?.type === 'googledocs_oauth_callback'
+      ) {
+        console.log('🔍 [IMPORT DIALOG] OAuth callback received, clearing auth state');
+        setIsAuthenticating(false);
+      }
+    };
+
+    const handleAuthStart = () => {
+      console.log('🔍 [IMPORT DIALOG] OAuth authentication started');
+      setIsAuthenticating(true);
+    };
+
+    window.addEventListener('message', handleOAuthMessage);
+    window.addEventListener('googledocs:auth:start', handleAuthStart);
+    
+    return () => {
+      window.removeEventListener('message', handleOAuthMessage);
+      window.removeEventListener('googledocs:auth:start', handleAuthStart);
+    };
+  }, []);
 
   const handleImport = async (noteData: any): Promise<boolean> => {
     if (isProcessing) return false;
@@ -82,12 +109,12 @@ export const EnhancedImportDialog = ({
   return (
     <>
       <Dialog open={isVisible} onOpenChange={(open) => {
-        // Prevent dialog from closing during import processing
-        if (!open && !isProcessing) {
-          console.log('📝 [IMPORT DIALOG] Dialog close requested, processing:', isProcessing);
+        // Prevent dialog from closing during import processing or OAuth authentication
+        if (!open && !isProcessing && !isAuthenticating) {
+          console.log('📝 [IMPORT DIALOG] Dialog close requested, processing:', isProcessing, 'authenticating:', isAuthenticating);
           onClose();
-        } else if (!open && isProcessing) {
-          console.log('⚠️ [IMPORT DIALOG] Prevented close during processing');
+        } else if (!open && (isProcessing || isAuthenticating)) {
+          console.log('⚠️ [IMPORT DIALOG] Prevented close during processing or authentication', { isProcessing, isAuthenticating });
         }
       }}>
         <DialogContent className="max-w-4xl max-h-[90vh] h-[90vh] flex flex-col bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
@@ -136,7 +163,12 @@ export const EnhancedImportDialog = ({
                 </TabsContent>
 
                 <TabsContent value="api" className="h-full mt-0">
-                  <ApiImportTab onSaveNote={handleImport} isPremiumUser={isPremiumUser} />
+                  <ApiImportTab 
+                    onSaveNote={handleImport} 
+                    isPremiumUser={isPremiumUser}
+                    onAuthStart={() => setIsAuthenticating(true)}
+                    onAuthEnd={() => setIsAuthenticating(false)}
+                  />
                 </TabsContent>
 
                 <TabsContent value="scan" className="h-full mt-0">

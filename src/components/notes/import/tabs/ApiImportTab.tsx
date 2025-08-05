@@ -10,9 +10,11 @@ interface ApiImportTabProps {
   onSaveNote: (note: any) => Promise<boolean>;
   isPremiumUser?: boolean;
   onImportComplete?: () => void;
+  onAuthStart?: () => void;
+  onAuthEnd?: () => void;
 }
 
-export const ApiImportTab = ({ onSaveNote, isPremiumUser, onImportComplete }: ApiImportTabProps) => {
+export const ApiImportTab = ({ onSaveNote, isPremiumUser, onImportComplete, onAuthStart, onAuthEnd }: ApiImportTabProps) => {
   const [selectedService, setSelectedService] = useState<string | null>(null);
 
   const handleConnection = (accessToken: string) => {
@@ -46,6 +48,8 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser, onImportComplete }: Ap
             onBack={handleBackToGrid}
             onSaveNote={onSaveNote}
             onImportComplete={handleImportComplete}
+            onAuthStart={onAuthStart}
+            onAuthEnd={onAuthEnd}
           />
         );
       default:

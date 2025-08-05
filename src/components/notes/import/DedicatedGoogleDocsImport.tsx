@@ -17,13 +17,17 @@ interface DedicatedGoogleDocsImportProps {
   onBack: () => void;
   onSaveNote?: (note: any) => Promise<boolean>;
   onImportComplete?: () => void;
+  onAuthStart?: () => void;
+  onAuthEnd?: () => void;
 }
 
 export const DedicatedGoogleDocsImport = ({ 
   onConnected, 
   onBack, 
   onSaveNote,
-  onImportComplete 
+  onImportComplete,
+  onAuthStart,
+  onAuthEnd 
 }: DedicatedGoogleDocsImportProps) => {
   const { isAuthenticated, accessToken, userName, loading, error, connect, disconnect } = useGoogleDocsAuth();
   const [isRefreshingDocs, setIsRefreshingDocs] = useState(false);
@@ -62,8 +66,12 @@ export const DedicatedGoogleDocsImport = ({
     if (isAuthenticated && accessToken) {
       onConnected(accessToken);
       fetchDocuments();
+      // Signal auth completion
+      if (onAuthEnd) {
+        onAuthEnd();
+      }
     }
-  }, [isAuthenticated, accessToken, onConnected]);
+  }, [isAuthenticated, accessToken, onConnected, onAuthEnd]);
 
   const fetchDocuments = async () => {
     if (!accessToken) {
@@ -329,6 +337,14 @@ export const DedicatedGoogleDocsImport = ({
             // Clear any previous error state before connecting
             setDetailedError(null);
             setShowErrorDetails(false);
+            
+            // Signal auth start to parent dialog
+            if (onAuthStart) {
+              onAuthStart();
+            }
+            
+            // Dispatch custom event to notify the dialog
+            window.dispatchEvent(new CustomEvent('googledocs:auth:start'));
             
             // Ensure we're in loading state during auth
             console.log('🚀 [GOOGLE DOCS] Starting OAuth connection...');

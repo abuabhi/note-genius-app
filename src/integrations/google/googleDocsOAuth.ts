@@ -83,6 +83,8 @@ export const useGoogleDocsAuth = () => {
             loading: false,
             error: `Authentication failed: ${event.data.error}`
           }));
+          // Dispatch auth end event
+          window.dispatchEvent(new CustomEvent('googledocs:auth:end', { detail: { success: false } }));
           return;
         }
         
@@ -93,6 +95,8 @@ export const useGoogleDocsAuth = () => {
             loading: false,
             error: 'No authorization code received'
           }));
+          // Dispatch auth end event
+          window.dispatchEvent(new CustomEvent('googledocs:auth:end', { detail: { success: false } }));
           return;
         }
         
@@ -256,6 +260,9 @@ export const useGoogleDocsAuth = () => {
         loading: false,
         error: null
       });
+
+      // Dispatch auth success event
+      window.dispatchEvent(new CustomEvent('googledocs:auth:end', { detail: { success: true } }));
       
     } catch (error) {
       console.error('❌ Google Docs auth error:', error);
@@ -265,6 +272,8 @@ export const useGoogleDocsAuth = () => {
         loading: false,
         error: `Authentication failed: ${errorMessage}`
       }));
+      // Dispatch auth end event
+      window.dispatchEvent(new CustomEvent('googledocs:auth:end', { detail: { success: false } }));
     }
   };
 
