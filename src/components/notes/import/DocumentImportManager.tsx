@@ -272,7 +272,7 @@ export const DocumentImportManager: React.FC<DocumentImportManagerProps> = ({
               <span className="ml-2">Loading documents...</span>
             </div>
           ) : documents.length > 0 ? (
-            <ScrollArea className="h-full">
+            <ScrollArea className="h-[300px]">
               <div className="space-y-2 pr-4">
                 {documents.map((doc) => (
                   <div
