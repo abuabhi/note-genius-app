@@ -14,7 +14,7 @@ serve(async (req) => {
     // Handle getting OAuth authorization URL
     if (body.action === 'get_auth_url') {
       const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
-      const redirectUri = body.redirect_uri;
+      const redirectUri = body.redirect_uri || 'https://14231a2c-d8f5-4f39-85e0-e0a985f179f6.lovableproject.com/oauth2callback';
       
       if (!clientId) {
         throw new Error('Google Client ID not configured');
@@ -82,6 +82,9 @@ serve(async (req) => {
       throw new Error('Authorization code is required');
     }
     
+    // Use correct redirect URI
+    const finalRedirectUri = redirect_uri || 'https://14231a2c-d8f5-4f39-85e0-e0a985f179f6.lovableproject.com/oauth2callback';
+    
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
     
@@ -100,7 +103,7 @@ serve(async (req) => {
         client_secret: clientSecret,
         code: code,
         grant_type: grant_type || 'authorization_code',
-        redirect_uri: redirect_uri,
+        redirect_uri: finalRedirectUri,
       }),
     });
     

@@ -1,6 +1,5 @@
 
 import { useCallback, useEffect, useState } from 'react';
-import { supabase } from '../supabase/client';
 
 // Configuration for Google OAuth
 const REDIRECT_URI = `${window.location.origin}/oauth2callback`;
@@ -24,11 +23,11 @@ export const useGoogleDocsAuth = () => {
     error: null
   });
 
-  // Check for existing tokens in localStorage
+  // Check for existing tokens in sessionStorage (isolated from main app)
   useEffect(() => {
-    const storedToken = localStorage.getItem('googleDocs_access_token');
-    const storedUserName = localStorage.getItem('googleDocs_user_name');
-    const expiresAt = localStorage.getItem('googleDocs_expires_at');
+    const storedToken = sessionStorage.getItem('googleDocs_access_token');
+    const storedUserName = sessionStorage.getItem('googleDocs_user_name');
+    const expiresAt = sessionStorage.getItem('googleDocs_expires_at');
     
     console.log('🔍 Checking stored credentials:', {
       hasToken: !!storedToken,
@@ -49,9 +48,9 @@ export const useGoogleDocsAuth = () => {
     } else if (storedToken && expiresAt && new Date(expiresAt) <= new Date()) {
       console.log('🔄 Token expired, clearing storage');
       // Clear expired tokens
-      localStorage.removeItem('googleDocs_access_token');
-      localStorage.removeItem('googleDocs_user_name');
-      localStorage.removeItem('googleDocs_expires_at');
+      sessionStorage.removeItem('googleDocs_access_token');
+      sessionStorage.removeItem('googleDocs_user_name');
+      sessionStorage.removeItem('googleDocs_expires_at');
     }
   }, []);
 
@@ -95,14 +94,14 @@ export const useGoogleDocsAuth = () => {
     
     // Also check for stored auth result (fallback for when popup communication fails)
     const checkStoredAuthResult = () => {
-      const storedResult = localStorage.getItem('googleDocs_auth_result');
+      const storedResult = sessionStorage.getItem('googleDocs_auth_result');
       if (storedResult) {
         try {
           const authData = JSON.parse(storedResult);
           console.log('💾 Found stored auth result:', authData);
           
           // Remove the stored result to prevent reprocessing
-          localStorage.removeItem('googleDocs_auth_result');
+          sessionStorage.removeItem('googleDocs_auth_result');
           
           // Process like a regular callback
           if (authData.error) {
@@ -118,7 +117,7 @@ export const useGoogleDocsAuth = () => {
           }
         } catch (err) {
           console.error('❌ Failed to parse stored auth result:', err);
-          localStorage.removeItem('googleDocs_auth_result');
+          sessionStorage.removeItem('googleDocs_auth_result');
         }
       }
     };
@@ -141,31 +140,42 @@ export const useGoogleDocsAuth = () => {
       const exchangeStartTime = Date.now();
       console.log('🔄 Exchanging authorization code for tokens...');
       
-      // Exchange the code for tokens using our edge function
-      const response = await supabase.functions.invoke('googledocs-auth', {
-        body: {
+      // Exchange the code for tokens using direct fetch to avoid Supabase auth interference
+      const response = await fetch(`https://zuhcmwujzfddmafozubd.supabase.co/functions/v1/googledocs-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1aGNtd3VqemZkZG1hZm96dWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MjUxOTQsImV4cCI6MjA2MjEwMTE5NH0.oz_MnWdGGh76eOjQ2k69OhQhqBh4KXG0Wq_cN-VJwzw'
+        },
+        body: JSON.stringify({
           code,
           redirect_uri: REDIRECT_URI,
           grant_type: 'authorization_code'
-        }
+        })
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const responseData = await response.json();
       
       const exchangeDuration = Date.now() - exchangeStartTime;
       console.log(`📊 Token exchange response received in ${exchangeDuration}ms:`, {
-        hasData: !!response.data,
-        hasError: !!response.error
+        hasData: !!responseData,
+        status: response.status
       });
       
-      if (response.error) {
-        console.error('❌ Token exchange error:', response.error);
-        const errorMessage = response.error.message || 'Failed to exchange authorization code';
+      if (responseData.error) {
+        console.error('❌ Token exchange error:', responseData.error);
+        const errorMessage = responseData.error || 'Failed to exchange authorization code';
         throw new Error(`Token exchange failed: ${errorMessage}`);
       }
       
-      const { access_token, expires_in, token_type } = response.data;
+      const { access_token, expires_in, token_type } = responseData;
       
       if (!access_token) {
-        console.error('❌ No access token in response:', response.data);
+        console.error('❌ No access token in response:', responseData);
         throw new Error('No access token received from Google - authentication incomplete');
       }
       
@@ -211,10 +221,10 @@ export const useGoogleDocsAuth = () => {
       const expiresAt = new Date();
       expiresAt.setSeconds(expiresAt.getSeconds() + (expires_in || 3600));
       
-      // Store tokens and user info
-      localStorage.setItem('googleDocs_access_token', access_token);
-      localStorage.setItem('googleDocs_user_name', userName);
-      localStorage.setItem('googleDocs_expires_at', expiresAt.toISOString());
+      // Store tokens and user info in sessionStorage (isolated from main app)
+      sessionStorage.setItem('googleDocs_access_token', access_token);
+      sessionStorage.setItem('googleDocs_user_name', userName);
+      sessionStorage.setItem('googleDocs_expires_at', expiresAt.toISOString());
       
       const totalAuthTime = Date.now() - exchangeStartTime;
       console.log(`💾 Stored credentials successfully! Total auth time: ${totalAuthTime}ms`, {
@@ -247,13 +257,24 @@ export const useGoogleDocsAuth = () => {
       const connectStartTime = Date.now();
       console.log('🚀 Starting Google OAuth connection...');
       
-      // Get the client ID from our edge function
-      const { data: configData, error: configError } = await supabase.functions.invoke('googledocs-auth', {
-        body: { action: 'get_client_id' }
+      // Get the client ID from our edge function using direct fetch
+      const configResponse = await fetch(`https://zuhcmwujzfddmafozubd.supabase.co/functions/v1/googledocs-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1aGNtd3VqemZkZG1hZm96dWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MjUxOTQsImV4cCI6MjA2MjEwMTE5NH0.oz_MnWdGGh76eOjQ2k69OhQhqBh4KXG0Wq_cN-VJwzw'
+        },
+        body: JSON.stringify({ action: 'get_client_id' })
       });
       
-      if (configError || !configData?.client_id) {
-        console.error('❌ Failed to get OAuth config:', configError);
+      if (!configResponse.ok) {
+        throw new Error(`Failed to get OAuth config: ${configResponse.statusText}`);
+      }
+      
+      const configData = await configResponse.json();
+      
+      if (!configData?.client_id) {
+        console.error('❌ No client ID in response:', configData);
         throw new Error('Unable to get Google OAuth configuration. Please check server configuration.');
       }
       
@@ -261,7 +282,7 @@ export const useGoogleDocsAuth = () => {
       
       // Generate a random state value for security
       const state = Math.random().toString(36).substring(2);
-      localStorage.setItem('googleDocs_auth_state', state);
+      sessionStorage.setItem('googleDocs_auth_state', state);
       
       // Create auth URL with the actual client ID and proper scopes
       const authUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${configData.client_id}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPE)}&response_type=code&access_type=offline&prompt=consent&state=${state}`;
@@ -300,11 +321,11 @@ export const useGoogleDocsAuth = () => {
 
   const disconnect = useCallback(() => {
     console.log('🔌 Disconnecting Google Docs...');
-    // Clear stored tokens and state
-    localStorage.removeItem('googleDocs_access_token');
-    localStorage.removeItem('googleDocs_user_name');
-    localStorage.removeItem('googleDocs_expires_at');
-    localStorage.removeItem('googleDocs_auth_state');
+    // Clear stored tokens and state from sessionStorage
+    sessionStorage.removeItem('googleDocs_access_token');
+    sessionStorage.removeItem('googleDocs_user_name');
+    sessionStorage.removeItem('googleDocs_expires_at');
+    sessionStorage.removeItem('googleDocs_auth_state');
     
     setAuthState({
       isAuthenticated: false,
