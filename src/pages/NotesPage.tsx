@@ -97,9 +97,9 @@ const NotesPageContent = () => {
       console.log('📄 [NOTES PAGE] addNote result:', result);
       
       if (result) {
-        console.log('📄 [NOTES PAGE] ✅ Note saved successfully - closing dialog');
+        console.log('📄 [NOTES PAGE] ✅ Note saved successfully');
+        // Only close manual dialog for manual note creation, not imports
         setIsManualDialogOpen(false);
-        setIsImportDialogOpen(false);
         toast.success('Note created successfully!');
         return result;
       } else {
