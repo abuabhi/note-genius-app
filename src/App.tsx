@@ -7,9 +7,11 @@ import { HelpProvider } from './contexts/HelpContext';
 import { ProductionOptimizationProvider } from '@/components/performance/ProductionOptimizationProvider';
 import AppRoutes from './components/app/AppRoutes';
 import { useNotificationToasts } from '@/hooks/useNotificationToasts';
+import { useVersionLogger } from '@/hooks/useVersionLogger';
 
 function AppContent() {
   useNotificationToasts(); // Move this inside the providers
+  useVersionLogger(); // Log version info on app load
   
   useEffect(() => {
     document.title = 'PrepGenie';

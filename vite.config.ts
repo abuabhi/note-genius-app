@@ -4,9 +4,42 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { visualizer } from 'rollup-plugin-visualizer';
+import fs from 'fs';
+
+// Read package.json to get version
+const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+
+// Generate build information
+const generateBuildInfo = () => {
+  const now = new Date();
+  const buildTime = now.toISOString();
+  const buildHash = now.toISOString().replace(/[^0-9]/g, '').substring(0, 12);
+  
+  // Try to get git commit hash (optional)
+  let gitCommit;
+  try {
+    gitCommit = require('child_process')
+      .execSync('git rev-parse HEAD', { encoding: 'utf8' })
+      .trim();
+  } catch (e) {
+    // Git not available or not a git repo
+    gitCommit = undefined;
+  }
+  
+  return { buildTime, buildHash, gitCommit };
+};
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+  const buildInfo = generateBuildInfo();
+  
+  return {
+  define: {
+    __VERSION__: JSON.stringify(packageJson.version),
+    __BUILD_TIME__: JSON.stringify(buildInfo.buildTime),
+    __BUILD_HASH__: JSON.stringify(buildInfo.buildHash),
+    __GIT_COMMIT__: JSON.stringify(buildInfo.gitCommit),
+  },
   server: {
     host: "::",
     port: 8080,
@@ -104,4 +137,5 @@ export default defineConfig(({ mode }) => ({
       '@supabase/supabase-js'
     ]
   }
-}));
+};
+});

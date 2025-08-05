@@ -3,7 +3,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HealthCheck } from '@/components/monitoring/HealthCheck';
 import { LightweightPerformanceOverlay } from '@/components/performance/LightweightPerformanceOverlay';
-import { Activity, Database, Zap } from 'lucide-react';
+import { VersionDisplay } from '@/components/version/VersionDisplay';
+import { Activity, Database, Zap, Info } from 'lucide-react';
 
 export const ProductionHealthDashboard = () => {
   return (
@@ -28,29 +29,12 @@ export const ProductionHealthDashboard = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Database className="h-5 w-5 mr-2" />
-              System Overview
+              <Info className="h-5 w-5 mr-2" />
+              Version Information
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Environment</span>
-                <span className="text-sm text-muted-foreground">
-                  {process.env.NODE_ENV === 'production' ? 'Production' : 'Development'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Build Version</span>
-                <span className="text-sm text-muted-foreground">v1.0.0</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Deployment</span>
-                <span className="text-sm text-muted-foreground">
-                  {new Date().toLocaleDateString()}
-                </span>
-              </div>
-            </div>
+            <VersionDisplay variant="full" />
           </CardContent>
         </Card>
       </div>
