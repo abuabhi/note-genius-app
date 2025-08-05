@@ -80,8 +80,8 @@ export const GoogleDocsAuthCallback = () => {
           console.warn('⚠️ [GOOGLE DOCS CALLBACK] No valid opener window for error posting');
         }
         
-        setMessage('Authentication failed. You can close this window.');
-        setTimeout(() => window.close(), 2000);
+        setMessage('Authentication failed. Please wait...');
+        // Don't auto-close - let parent handle it
         return;
       }
       
@@ -141,8 +141,8 @@ export const GoogleDocsAuthCallback = () => {
           console.warn('⚠️ [GOOGLE DOCS CALLBACK] No valid opener window for success posting');
         }
         
-        setMessage('Authorization successful! You can close this window.');
-        setTimeout(() => window.close(), 2000);
+        setMessage('Authorization successful! Please wait...');
+        // Don't auto-close - let parent handle it
       } else {
         console.log('❌ [GOOGLE DOCS CALLBACK] No code or error received');
         
@@ -169,8 +169,8 @@ export const GoogleDocsAuthCallback = () => {
           console.warn('⚠️ [GOOGLE DOCS CALLBACK] No valid opener window for no-code error posting');
         }
         
-        setMessage('Authorization failed. You can close this window.');
-        setTimeout(() => window.close(), 2000);
+        setMessage('Authorization failed. Please wait...');
+        // Don't auto-close - let parent handle it
       }
     };
     

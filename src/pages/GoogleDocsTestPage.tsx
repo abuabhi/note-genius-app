@@ -50,6 +50,7 @@ export default function GoogleDocsTestPage() {
     try {
       setLoading(true);
       addLog('Starting authentication...');
+      addLog('Opening Google OAuth popup...');
       
       const credentials = await authService.authenticate();
       
@@ -60,6 +61,7 @@ export default function GoogleDocsTestPage() {
       });
       addLog(`✅ Authentication successful! Token: ${credentials.accessToken.substring(0, 20)}...`);
       addLog(`✅ User: ${credentials.userName} (${credentials.email})`);
+      addLog(`✅ Token expires at: ${credentials.expiresAt}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setAuthState({
@@ -68,8 +70,10 @@ export default function GoogleDocsTestPage() {
         error: errorMessage
       });
       addLog(`❌ Authentication error: ${errorMessage}`);
+      addLog(`❌ Error details: ${JSON.stringify(error)}`);
     } finally {
       setLoading(false);
+      addLog('Authentication process completed');
     }
   };
 
