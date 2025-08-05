@@ -1,5 +1,4 @@
 
-import { useNavigate } from 'react-router-dom';
 import { Book, FileText, File as GoogleDocsIcon } from "lucide-react";
 import { ImportServiceCard } from "./ImportServiceCard";
 
@@ -12,7 +11,6 @@ export const ImportServiceGrid = ({
   selectedService, 
   onSelectService 
 }: ImportServiceGridProps) => {
-  const navigate = useNavigate();
   const services = [
     { id: 'onenote', name: 'OneNote', icon: FileText, comingSoon: false },
     { id: 'googledocs', name: 'Google Docs', icon: GoogleDocsIcon, comingSoon: false }
@@ -27,13 +25,7 @@ export const ImportServiceGrid = ({
               icon={service.icon}
               name={service.name}
               isSelected={selectedService === service.id}
-              onSelect={() => {
-                if (service.id === 'googledocs') {
-                  navigate('/import/google-docs');
-                } else {
-                  onSelectService(service.id);
-                }
-              }}
+              onSelect={() => onSelectService(service.id)}
               comingSoon={service.comingSoon}
             />
           </div>
