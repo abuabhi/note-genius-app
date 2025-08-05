@@ -33,6 +33,18 @@ export const DedicatedGoogleDocsImport = ({
   const [detailedError, setDetailedError] = useState<string | null>(null);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const { subjects } = useUserSubjects();
+
+  // Debug logging for auth state changes
+  useEffect(() => {
+    console.log('🔍 [GOOGLE DOCS] Auth state changed:', {
+      isAuthenticated,
+      hasAccessToken: !!accessToken,
+      userName,
+      loading,
+      error,
+      documentsCount: documents.length
+    });
+  }, [isAuthenticated, accessToken, userName, loading, error, documents.length]);
   
   useEffect(() => {
     if (isAuthenticated && accessToken) {
@@ -293,8 +305,8 @@ export const DedicatedGoogleDocsImport = ({
           onRefresh={fetchDocuments}
           onImport={importSelectedDocs}
           onConnect={() => {
-            console.log('🔗 User clicked connect button');
-            console.log('📊 Current auth state before connect:', {
+            console.log('🔗 [GOOGLE DOCS] User clicked connect button');
+            console.log('📊 [GOOGLE DOCS] Current auth state before connect:', {
               isAuthenticated,
               hasAccessToken: !!accessToken,
               userName,
@@ -306,6 +318,8 @@ export const DedicatedGoogleDocsImport = ({
             setDetailedError(null);
             setShowErrorDetails(false);
             
+            // Ensure we're in loading state during auth
+            console.log('🚀 [GOOGLE DOCS] Starting OAuth connection...');
             connect();
           }}
           isImporting={isImporting}

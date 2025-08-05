@@ -27,7 +27,12 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser, onImportComplete }: Ap
   const handleImportComplete = () => {
     // Don't close the dialog, just refresh the notes list in the background
     // Users can keep importing more documents or close manually
-    console.log('📥 Import completed, keeping dialog open for more imports');
+    console.log('📥 [API IMPORT] Import completed, keeping dialog open for more imports');
+    
+    // Notify parent if callback provided but don't close dialog
+    if (onImportComplete) {
+      onImportComplete();
+    }
   };
 
   const renderServiceConnection = () => {

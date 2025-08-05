@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileImportTab } from './tabs/FileImportTab';
@@ -23,13 +23,33 @@ export const EnhancedImportDialog = ({
   isPremiumUser = false
 }: EnhancedImportDialogProps) => {
   const [activeTab, setActiveTab] = useState('file');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Debug logging for dialog state changes
+  useEffect(() => {
+    console.log('🔍 [IMPORT DIALOG] Dialog visibility changed:', { isVisible, activeTab });
+  }, [isVisible, activeTab]);
 
   const handleImport = async (noteData: any): Promise<boolean> => {
-    const success = await onSaveNote(noteData);
-    if (success) {
-      onClose();
+    console.log('🔍 [IMPORT DIALOG] Handling import for:', noteData?.title || 'unknown');
+    setIsProcessing(true);
+    
+    try {
+      const success = await onSaveNote(noteData);
+      
+      // Only close dialog for single-file imports (YouTube, file uploads, etc.)
+      // Do NOT close for Google Docs or other service imports that support multiple documents
+      if (success && activeTab !== 'api') {
+        console.log('🚪 [IMPORT DIALOG] Closing dialog after successful import');
+        onClose();
+      } else if (success) {
+        console.log('🔄 [IMPORT DIALOG] Keeping dialog open for more imports (service tab)');
+      }
+      
+      return success;
+    } finally {
+      setIsProcessing(false);
     }
-    return success;
   };
 
   const tabs = [
@@ -42,7 +62,15 @@ export const EnhancedImportDialog = ({
 
   return (
     <>
-      <Dialog open={isVisible} onOpenChange={(open) => !open && onClose()}>
+      <Dialog open={isVisible} onOpenChange={(open) => {
+        // Prevent dialog from closing during import processing
+        if (!open && !isProcessing) {
+          console.log('🚪 [IMPORT DIALOG] User requested dialog close');
+          onClose();
+        } else if (!open && isProcessing) {
+          console.log('⚠️ [IMPORT DIALOG] Prevented close during processing');
+        }
+      }}>
         <DialogContent className="max-w-4xl max-h-[90vh] h-[90vh] flex flex-col bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
           {/* Compact Header */}
           <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">

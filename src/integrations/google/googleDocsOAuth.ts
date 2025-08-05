@@ -63,13 +63,13 @@ export const useGoogleDocsAuth = () => {
         event.data &&
         event.data.type === 'googledocs_oauth_callback'
       ) {
-        console.log('📨 Received OAuth callback:', event.data);
+        console.log('📨 [GOOGLE DOCS AUTH] Received OAuth callback:', event.data);
         
-        // Clear any previous errors
-        setAuthState(prev => ({ ...prev, error: null }));
+        // Clear any previous errors and ensure we stay in loading state
+        setAuthState(prev => ({ ...prev, error: null, loading: true }));
         
         if (event.data.error) {
-          console.error('❌ OAuth callback error:', event.data.error);
+          console.error('❌ [GOOGLE DOCS AUTH] OAuth callback error:', event.data.error);
           setAuthState(prev => ({
             ...prev,
             loading: false,
@@ -79,7 +79,7 @@ export const useGoogleDocsAuth = () => {
         }
         
         if (!event.data.code) {
-          console.error('❌ No authorization code received');
+          console.error('❌ [GOOGLE DOCS AUTH] No authorization code received');
           setAuthState(prev => ({
             ...prev,
             loading: false,
@@ -88,6 +88,7 @@ export const useGoogleDocsAuth = () => {
           return;
         }
         
+        console.log('🔄 [GOOGLE DOCS AUTH] Processing authorization code...');
         // We have a code, exchange it for tokens
         exchangeCodeForTokens(event.data.code);
       }

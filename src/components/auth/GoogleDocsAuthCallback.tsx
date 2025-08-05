@@ -11,6 +11,8 @@ import React, { useEffect, useState } from 'react';
  * 1. Extract authorization code or error from URL parameters
  * 2. Store result in sessionStorage for parent window to process
  * 3. Post message to parent window and close popup
+ * 
+ * This component is isolated and should NEVER show main app content.
  */
 
 export const GoogleDocsAuthCallback = () => {
@@ -18,6 +20,8 @@ export const GoogleDocsAuthCallback = () => {
 
   useEffect(() => {
     const handleCallback = async () => {
+      console.log('🔄 [GOOGLE DOCS CALLBACK] OAuth callback component mounted');
+      console.log('🔄 [GOOGLE DOCS CALLBACK] Current URL:', window.location.href);
       console.log('🔄 [GOOGLE DOCS CALLBACK] Processing OAuth callback...');
       
       const urlParams = new URLSearchParams(window.location.search);
@@ -93,10 +97,11 @@ export const GoogleDocsAuthCallback = () => {
   }, []);
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-        <p className="text-muted-foreground">{message}</p>
+    <div className="flex items-center justify-center min-h-screen bg-white">
+      <div className="text-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600 text-sm">{message}</p>
+        <p className="text-gray-400 text-xs mt-2">Google Docs Authentication</p>
       </div>
     </div>
   );
