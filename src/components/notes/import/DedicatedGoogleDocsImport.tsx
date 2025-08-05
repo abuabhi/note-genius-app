@@ -34,7 +34,7 @@ export const DedicatedGoogleDocsImport = ({
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const { subjects } = useUserSubjects();
 
-  // Debug logging for auth state changes
+  // Debug logging for auth state changes with enhanced details
   useEffect(() => {
     console.log('🔍 [GOOGLE DOCS] Auth state changed:', {
       isAuthenticated,
@@ -42,9 +42,21 @@ export const DedicatedGoogleDocsImport = ({
       userName,
       loading,
       error,
-      documentsCount: documents.length
+      documentsCount: documents.length,
+      isRefreshingDocs,
+      isImporting,
+      selectedDocsCount: selectedDocs.length
     });
-  }, [isAuthenticated, accessToken, userName, loading, error, documents.length]);
+    
+    // Log detailed error information if present
+    if (error) {
+      console.error('🔍 [GOOGLE DOCS] Detailed error state:', {
+        error,
+        detailedError,
+        showErrorDetails
+      });
+    }
+  }, [isAuthenticated, accessToken, userName, loading, error, documents.length, isRefreshingDocs, isImporting, selectedDocs.length, detailedError, showErrorDetails]);
   
   useEffect(() => {
     if (isAuthenticated && accessToken) {

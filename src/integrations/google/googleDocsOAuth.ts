@@ -58,12 +58,20 @@ export const useGoogleDocsAuth = () => {
   // Listen for the OAuth callback from the popup window
   useEffect(() => {
     const handleAuthCallback = (event: MessageEvent) => {
+      console.log('📨 [GOOGLE DOCS AUTH] Received message:', {
+        origin: event.origin,
+        expectedOrigin: window.location.origin,
+        type: event.data?.type,
+        hasData: !!event.data,
+        timestamp: event.data?.timestamp
+      });
+      
       if (
         event.origin === window.location.origin &&
         event.data &&
         event.data.type === 'googledocs_oauth_callback'
       ) {
-        console.log('📨 [GOOGLE DOCS AUTH] Received OAuth callback:', event.data);
+        console.log('✅ [GOOGLE DOCS AUTH] Valid OAuth callback received:', event.data);
         
         // Clear any previous errors and ensure we stay in loading state
         setAuthState(prev => ({ ...prev, error: null, loading: true }));
@@ -100,7 +108,7 @@ export const useGoogleDocsAuth = () => {
       if (storedResult) {
         try {
           const authData = JSON.parse(storedResult);
-          console.log('💾 Found stored auth result:', authData);
+          console.log('💾 [GOOGLE DOCS AUTH] Found stored auth result:', authData);
           
           // Remove the stored result to prevent reprocessing
           sessionStorage.removeItem('googleDocs_auth_result');
@@ -126,7 +134,7 @@ export const useGoogleDocsAuth = () => {
     
     // Check for stored result immediately and set up polling
     checkStoredAuthResult();
-    const pollInterval = setInterval(checkStoredAuthResult, 1000);
+    const pollInterval = setInterval(checkStoredAuthResult, 500); // Faster polling for better responsiveness
     
     window.addEventListener('message', handleAuthCallback);
     

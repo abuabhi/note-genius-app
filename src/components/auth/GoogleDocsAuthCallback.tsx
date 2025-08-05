@@ -22,14 +22,26 @@ export const GoogleDocsAuthCallback = () => {
     const handleCallback = async () => {
       console.log('🔄 [GOOGLE DOCS CALLBACK] OAuth callback component mounted');
       console.log('🔄 [GOOGLE DOCS CALLBACK] Current URL:', window.location.href);
+      console.log('🔄 [GOOGLE DOCS CALLBACK] Window properties:', {
+        origin: window.location.origin,
+        hasOpener: !!window.opener,
+        referrer: document.referrer
+      });
       console.log('🔄 [GOOGLE DOCS CALLBACK] Processing OAuth callback...');
       
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       const error = urlParams.get('error');
       const errorDescription = urlParams.get('error_description');
+      const state = urlParams.get('state');
       
-      console.log('🔄 [GOOGLE DOCS CALLBACK] URL params:', { code: !!code, error, errorDescription });
+      console.log('🔄 [GOOGLE DOCS CALLBACK] URL params:', { 
+        code: !!code, 
+        error, 
+        errorDescription,
+        state,
+        fullParams: Object.fromEntries(urlParams)
+      });
       
       if (error) {
         console.log('❌ [GOOGLE DOCS CALLBACK] OAuth error:', errorDescription || error);
@@ -39,12 +51,21 @@ export const GoogleDocsAuthCallback = () => {
           error: errorDescription || error || 'Authentication failed'
         }));
         
-        // Post message to parent window
-        if (window.opener) {
-          window.opener.postMessage({
-            type: 'googledocs_oauth_callback',
-            error: errorDescription || error
-          }, window.location.origin);
+        // Post message to parent window with enhanced error handling
+        if (window.opener && !window.opener.closed) {
+          try {
+            console.log('📤 [GOOGLE DOCS CALLBACK] Posting error message to parent');
+            window.opener.postMessage({
+              type: 'googledocs_oauth_callback',
+              error: errorDescription || error,
+              timestamp: Date.now()
+            }, window.location.origin);
+            console.log('✅ [GOOGLE DOCS CALLBACK] Error message posted successfully');
+          } catch (postError) {
+            console.error('❌ [GOOGLE DOCS CALLBACK] Failed to post error message:', postError);
+          }
+        } else {
+          console.warn('⚠️ [GOOGLE DOCS CALLBACK] No valid opener window for error posting');
         }
         
         setMessage('Authentication failed. You can close this window.');
@@ -61,13 +82,22 @@ export const GoogleDocsAuthCallback = () => {
           state: urlParams.get('state')
         }));
         
-        // Post message to parent window
-        if (window.opener) {
-          window.opener.postMessage({
-            type: 'googledocs_oauth_callback',
-            code,
-            state: urlParams.get('state')
-          }, window.location.origin);
+        // Post message to parent window with enhanced success handling
+        if (window.opener && !window.opener.closed) {
+          try {
+            console.log('📤 [GOOGLE DOCS CALLBACK] Posting success message to parent');
+            window.opener.postMessage({
+              type: 'googledocs_oauth_callback',
+              code,
+              state: urlParams.get('state'),
+              timestamp: Date.now()
+            }, window.location.origin);
+            console.log('✅ [GOOGLE DOCS CALLBACK] Success message posted successfully');
+          } catch (postError) {
+            console.error('❌ [GOOGLE DOCS CALLBACK] Failed to post success message:', postError);
+          }
+        } else {
+          console.warn('⚠️ [GOOGLE DOCS CALLBACK] No valid opener window for success posting');
         }
         
         setMessage('Authorization successful! You can close this window.');
@@ -80,12 +110,21 @@ export const GoogleDocsAuthCallback = () => {
           error: 'Authorization failed - no code received'
         }));
         
-        // Post message to parent window
-        if (window.opener) {
-          window.opener.postMessage({
-            type: 'googledocs_oauth_callback',
-            error: 'Authorization failed - no code received'
-          }, window.location.origin);
+        // Post message to parent window for no-code scenario
+        if (window.opener && !window.opener.closed) {
+          try {
+            console.log('📤 [GOOGLE DOCS CALLBACK] Posting no-code error to parent');
+            window.opener.postMessage({
+              type: 'googledocs_oauth_callback',
+              error: 'Authorization failed - no code received',
+              timestamp: Date.now()
+            }, window.location.origin);
+            console.log('✅ [GOOGLE DOCS CALLBACK] No-code error posted successfully');
+          } catch (postError) {
+            console.error('❌ [GOOGLE DOCS CALLBACK] Failed to post no-code error:', postError);
+          }
+        } else {
+          console.warn('⚠️ [GOOGLE DOCS CALLBACK] No valid opener window for no-code error posting');
         }
         
         setMessage('Authorization failed. You can close this window.');

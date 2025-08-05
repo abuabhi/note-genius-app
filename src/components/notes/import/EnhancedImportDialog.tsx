@@ -31,22 +31,41 @@ export const EnhancedImportDialog = ({
   }, [isVisible, activeTab]);
 
   const handleImport = async (noteData: any): Promise<boolean> => {
-    console.log('🔍 [IMPORT DIALOG] Handling import for:', noteData?.title || 'unknown');
+    if (isProcessing) return false;
+    
+    console.log('📝 [IMPORT DIALOG] Starting import process for:', { 
+      source: noteData?.source || 'unknown',
+      hasTitle: !!noteData?.title,
+      hasContent: !!noteData?.content,
+      activeTab
+    });
+    
     setIsProcessing(true);
     
     try {
       const success = await onSaveNote(noteData);
       
-      // Only close dialog for single-file imports (YouTube, file uploads, etc.)
-      // Do NOT close for Google Docs or other service imports that support multiple documents
-      if (success && activeTab !== 'api') {
-        console.log('🚪 [IMPORT DIALOG] Closing dialog after successful import');
+      // Only close dialog for single-file imports, keep open for service imports (like Google Docs)
+      const shouldCloseDialog = !['googledocs', 'notion', 'evernote'].includes(noteData?.source);
+      
+      console.log('📝 [IMPORT DIALOG] Import result:', { 
+        success, 
+        shouldCloseDialog,
+        source: noteData?.source,
+        activeTab
+      });
+      
+      if (success && shouldCloseDialog) {
+        console.log('📝 [IMPORT DIALOG] Closing dialog after successful single-file import');
         onClose();
-      } else if (success) {
-        console.log('🔄 [IMPORT DIALOG] Keeping dialog open for more imports (service tab)');
+      } else if (success && !shouldCloseDialog) {
+        console.log('📝 [IMPORT DIALOG] Keeping dialog open for service import');
       }
       
       return success;
+    } catch (error) {
+      console.error('❌ [IMPORT DIALOG] Import failed:', error);
+      return false;
     } finally {
       setIsProcessing(false);
     }
@@ -65,7 +84,7 @@ export const EnhancedImportDialog = ({
       <Dialog open={isVisible} onOpenChange={(open) => {
         // Prevent dialog from closing during import processing
         if (!open && !isProcessing) {
-          console.log('🚪 [IMPORT DIALOG] User requested dialog close');
+          console.log('📝 [IMPORT DIALOG] Dialog close requested, processing:', isProcessing);
           onClose();
         } else if (!open && isProcessing) {
           console.log('⚠️ [IMPORT DIALOG] Prevented close during processing');
@@ -117,7 +136,7 @@ export const EnhancedImportDialog = ({
                 </TabsContent>
 
                 <TabsContent value="api" className="h-full mt-0">
-                  <ApiImportTab onSaveNote={onSaveNote} isPremiumUser={isPremiumUser} />
+                  <ApiImportTab onSaveNote={handleImport} isPremiumUser={isPremiumUser} />
                 </TabsContent>
 
                 <TabsContent value="scan" className="h-full mt-0">
