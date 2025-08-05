@@ -59,7 +59,7 @@ export const Header = () => {
           </div>
           
           <div className="flex items-center space-x-3">
-            <VersionDisplay variant="badge" />
+            <VersionDisplay variant="badge" className="bg-primary/10 border-primary/20" />
             {user && <NotificationPopover />}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

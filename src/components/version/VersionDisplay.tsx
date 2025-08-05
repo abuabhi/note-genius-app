@@ -60,7 +60,7 @@ export const VersionDisplay: React.FC<VersionDisplayProps> = ({
         <TooltipTrigger asChild>
           <Badge 
             variant="outline" 
-            className={`text-xs cursor-help ${className}`}
+            className={`text-xs cursor-help border-primary/30 text-primary hover:bg-primary/5 ${className}`}
           >
             v{versionInfo.version}
           </Badge>

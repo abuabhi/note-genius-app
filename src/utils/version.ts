@@ -17,10 +17,11 @@ declare const __GIT_COMMIT__: string | undefined;
  * Get comprehensive version information for the application
  */
 export const getVersionInfo = (): VersionInfo => {
+  // Fallback values for development when build-time variables aren't available
   const version = typeof __VERSION__ !== 'undefined' ? __VERSION__ : '1.0.0';
   const buildTime = typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : new Date().toISOString();
-  const buildHash = typeof __BUILD_HASH__ !== 'undefined' ? __BUILD_HASH__ : 'dev-build';
-  const gitCommit = typeof __GIT_COMMIT__ !== 'undefined' ? __GIT_COMMIT__ : undefined;
+  const buildHash = typeof __BUILD_HASH__ !== 'undefined' ? __BUILD_HASH__ : 'dev-' + Date.now().toString(36);
+  const gitCommit = typeof __GIT_COMMIT__ !== 'undefined' && __GIT_COMMIT__ !== null ? __GIT_COMMIT__ : undefined;
   
   const environment = import.meta.env.MODE || 'development';
   
