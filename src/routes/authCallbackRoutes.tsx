@@ -10,12 +10,25 @@ import { AuthCallbackErrorBoundary } from '@/components/auth/AuthCallbackErrorBo
 // Wrapper component for debug logging
 const RouteDebugWrapper = ({ children, routeName }: { children: React.ReactNode; routeName: string }) => {
   React.useEffect(() => {
-    console.log(`🛣️ [ROUTE DEBUG] ${routeName} component mounted`);
+    const mountTime = Date.now();
+    console.log(`🛣️ [ROUTE DEBUG] ${routeName} component mounted at ${mountTime}`);
     console.log(`🛣️ [ROUTE DEBUG] Current URL: ${window.location.href}`);
     console.log(`🛣️ [ROUTE DEBUG] Search params:`, Object.fromEntries(new URLSearchParams(window.location.search)));
+    console.log(`🛣️ [ROUTE DEBUG] Hash params:`, window.location.hash);
+    console.log(`🛣️ [ROUTE DEBUG] Document ready state:`, document.readyState);
+    console.log(`🛣️ [ROUTE DEBUG] Window properties:`, {
+      hasOpener: !!window.opener,
+      openerClosed: window.opener?.closed,
+      screenX: window.screenX,
+      screenY: window.screenY,
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight
+    });
     
     return () => {
-      console.log(`🛣️ [ROUTE DEBUG] ${routeName} component unmounting`);
+      const unmountTime = Date.now();
+      const lifespan = unmountTime - mountTime;
+      console.log(`🛣️ [ROUTE DEBUG] ${routeName} component unmounting after ${lifespan}ms`);
     };
   }, [routeName]);
   

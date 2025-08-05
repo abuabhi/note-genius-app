@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from 'react';
 
+// Immediate file load verification
+console.log('🚀 [GOOGLE DOCS CALLBACK] Component file loaded at:', new Date().toISOString());
+console.log('🚀 [GOOGLE DOCS CALLBACK] Current URL at file load:', window.location.href);
+console.log('🚀 [GOOGLE DOCS CALLBACK] Window properties at file load:', {
+  origin: window.location.origin,
+  hasOpener: !!window.opener,
+  openerClosed: window.opener?.closed,
+  referrer: document.referrer
+});
+
 /**
  * GoogleDocsAuthCallback Component
  * 
@@ -16,6 +26,7 @@ import React, { useEffect, useState } from 'react';
  */
 
 export const GoogleDocsAuthCallback = () => {
+  console.log('🎯 [GOOGLE DOCS CALLBACK] Component function called');
   const [message, setMessage] = useState('Processing authorization...');
 
   useEffect(() => {
@@ -86,13 +97,41 @@ export const GoogleDocsAuthCallback = () => {
         if (window.opener && !window.opener.closed) {
           try {
             console.log('📤 [GOOGLE DOCS CALLBACK] Posting success message to parent');
-            window.opener.postMessage({
-              type: 'googledocs_oauth_callback',
-              code,
-              state: urlParams.get('state'),
-              timestamp: Date.now()
-            }, window.location.origin);
-            console.log('✅ [GOOGLE DOCS CALLBACK] Success message posted successfully');
+            
+            // Try multiple postMessage attempts with different origins
+            const origins = [window.location.origin, '*'];
+            for (const origin of origins) {
+              try {
+                window.opener.postMessage({
+                  type: 'googledocs_oauth_callback',
+                  code,
+                  state: urlParams.get('state'),
+                  timestamp: Date.now()
+                }, origin);
+                console.log(`✅ [GOOGLE DOCS CALLBACK] Success message posted with origin: ${origin}`);
+              } catch (originError) {
+                console.warn(`⚠️ [GOOGLE DOCS CALLBACK] Failed to post with origin ${origin}:`, originError);
+              }
+            }
+            
+            // Additional retry mechanism
+            setTimeout(() => {
+              if (window.opener && !window.opener.closed) {
+                try {
+                  window.opener.postMessage({
+                    type: 'googledocs_oauth_callback',
+                    code,
+                    state: urlParams.get('state'),
+                    timestamp: Date.now(),
+                    retry: true
+                  }, window.location.origin);
+                  console.log('🔄 [GOOGLE DOCS CALLBACK] Retry message posted successfully');
+                } catch (retryError) {
+                  console.error('❌ [GOOGLE DOCS CALLBACK] Retry message failed:', retryError);
+                }
+              }
+            }, 500);
+            
           } catch (postError) {
             console.error('❌ [GOOGLE DOCS CALLBACK] Failed to post success message:', postError);
           }

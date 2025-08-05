@@ -283,6 +283,9 @@ export const useGoogleDocsAuth = () => {
       const connectStartTime = Date.now();
       console.log('🚀 Starting Google OAuth connection...');
       
+      // Dispatch auth start event
+      window.dispatchEvent(new CustomEvent('googledocs:auth:start', { detail: { timestamp: Date.now() } }));
+      
       // Get current session for authorization
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -341,6 +344,17 @@ export const useGoogleDocsAuth = () => {
       const connectDuration = Date.now() - connectStartTime;
       console.log(`✅ Popup opened successfully in ${connectDuration}ms`);
       
+      // Monitor popup status for debugging
+      const popupMonitor = setInterval(() => {
+        if (popup.closed) {
+          console.log('📝 [GOOGLE DOCS AUTH] Popup was closed');
+          clearInterval(popupMonitor);
+        }
+      }, 1000);
+      
+      // Stop monitoring after 5 minutes
+      setTimeout(() => clearInterval(popupMonitor), 5 * 60 * 1000);
+      
     } catch (error) {
       console.error('❌ Error initiating Google auth:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to start authentication';
@@ -349,6 +363,8 @@ export const useGoogleDocsAuth = () => {
         loading: false,
         error: `Connection failed: ${errorMessage}`
       }));
+      // Dispatch auth end event on error
+      window.dispatchEvent(new CustomEvent('googledocs:auth:end', { detail: { success: false } }));
     }
   }, []);
 
