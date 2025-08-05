@@ -1,146 +1,93 @@
+import React, { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+/**
+ * GoogleDocsAuthCallback Component
+ * 
+ * This component handles the OAuth 2.0 callback from Google's authorization server.
+ * It processes the authorization code and redirects back to the import page with
+ * the result.
+ * 
+ * Simplified Flow:
+ * 1. Extract authorization code or error from URL parameters
+ * 2. Exchange code for tokens via edge function
+ * 3. Redirect to import page with success/error status
+ */
 
 export const GoogleDocsAuthCallback = () => {
-  const navigate = useNavigate();
-  
+  const [message, setMessage] = useState('Processing authorization...');
+
   useEffect(() => {
-    console.log('🔄 GoogleDocsAuthCallback: Starting OAuth callback processing');
-    
-    // Get the query parameters from the URL
-    const params = new URLSearchParams(window.location.search);
-    
-    const code = params.get('code');
-    const state = params.get('state');
-    const error = params.get('error');
-    const errorDescription = params.get('error_description');
-    
-    console.log('📝 OAuth params:', { 
-      hasCode: !!code, 
-      hasState: !!state, 
-      error, 
-      errorDescription,
-      currentUrl: window.location.href
-    });
-    
-    // Verify state parameter to prevent CSRF attacks
-    const storedState = localStorage.getItem('googleDocs_auth_state');
-    console.log('🔐 State verification:', { 
-      receivedState: state, 
-      storedState: storedState, 
-      stateValid: state === storedState 
-    });
-    
-    const authData = {
-      type: 'googledocs_oauth_callback',
-      code,
-      state,
-      error,
-      errorDescription,
-      stateValid: state === storedState
+    const handleCallback = async () => {
+      console.log('🔄 [GOOGLE DOCS CALLBACK] Processing OAuth callback...');
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const error = urlParams.get('error');
+      const errorDescription = urlParams.get('error_description');
+      
+      console.log('🔄 [GOOGLE DOCS CALLBACK] URL params:', { code: !!code, error, errorDescription });
+      
+      if (error) {
+        // Redirect back to import page with error
+        const redirectUrl = `/import/google-docs?error=${encodeURIComponent(errorDescription || error)}`;
+        console.log('❌ [GOOGLE DOCS CALLBACK] Redirecting with error:', redirectUrl);
+        window.location.href = redirectUrl;
+        return;
+      }
+      
+      if (code) {
+        try {
+          console.log('🔄 [GOOGLE DOCS CALLBACK] Processing authorization code...');
+          
+          // Exchange code for tokens via edge function
+          const { data, error: exchangeError } = await supabase.functions.invoke('googledocs-auth', {
+            body: {
+              code,
+              redirect_uri: `${window.location.origin}/auth/google-docs/callback`,
+              grant_type: 'authorization_code'
+            }
+          });
+          
+          if (exchangeError) {
+            throw exchangeError;
+          }
+          
+          console.log('✅ [GOOGLE DOCS CALLBACK] Token exchange successful');
+          
+          // Store tokens securely (you might want to use HTTP-only cookies in production)
+          sessionStorage.setItem('google_access_token', data.access_token);
+          if (data.refresh_token) {
+            sessionStorage.setItem('google_refresh_token', data.refresh_token);
+          }
+          
+          // Redirect back to import page with success
+          const redirectUrl = `/import/google-docs?success=true`;
+          console.log('✅ [GOOGLE DOCS CALLBACK] Redirecting with success:', redirectUrl);
+          window.location.href = redirectUrl;
+          
+        } catch (error) {
+          console.error('❌ [GOOGLE DOCS CALLBACK] Token exchange failed:', error);
+          const redirectUrl = `/import/google-docs?error=${encodeURIComponent('Failed to complete authorization')}`;
+          window.location.href = redirectUrl;
+        }
+      } else {
+        // No code or error, redirect with generic error
+        const redirectUrl = `/import/google-docs?error=${encodeURIComponent('Authorization failed')}`;
+        console.log('❌ [GOOGLE DOCS CALLBACK] No code received, redirecting:', redirectUrl);
+        window.location.href = redirectUrl;
+      }
     };
     
-    // Try to send data back to the opener window
-    if (window.opener && !window.opener.closed) {
-      console.log('✅ Popup communication: Sending auth data to parent window');
-      try {
-        window.opener.postMessage(authData, window.location.origin);
-        console.log('📤 Message sent successfully, waiting for confirmation...');
-        
-        // Add retry logic for critical communication
-        let retryCount = 0;
-        const maxRetries = 3;
-        const retryInterval = setInterval(() => {
-          if (retryCount < maxRetries && window.opener && !window.opener.closed) {
-            console.log(`🔄 Retry ${retryCount + 1}/${maxRetries}: Resending auth data`);
-            window.opener.postMessage(authData, window.location.origin);
-            retryCount++;
-          } else {
-            clearInterval(retryInterval);
-          }
-        }, 1000);
-        
-        // Clean up the stored state
-        localStorage.removeItem('googleDocs_auth_state');
-        
-        // Close this popup window after a longer delay to ensure message is received
-        setTimeout(() => {
-          clearInterval(retryInterval);
-          console.log('🔒 Closing popup window after extended delay');
-          window.close();
-        }, 3000);
-        
-      } catch (err) {
-        console.error('❌ Failed to send message to parent window:', err);
-        // Fallback to localStorage method
-        const authResult = {
-          ...authData,
-          timestamp: Date.now(),
-          fallbackUsed: true
-        };
-        localStorage.setItem('googleDocs_auth_result', JSON.stringify(authResult));
-        console.log('💾 Fallback: Stored auth result in localStorage');
-        setTimeout(() => window.close(), 2000);
-      }
-    } else {
-      console.log('⚠️ No valid opener window found - storing auth data for retrieval');
-      
-      // Store auth result for parent window to retrieve
-      const authResult = {
-        ...authData,
-        timestamp: Date.now()
-      };
-      
-      try {
-        localStorage.setItem('googleDocs_auth_result', JSON.stringify(authResult));
-        console.log('💾 Stored auth result in localStorage for parent retrieval');
-        
-        // Clean up the stored state
-        localStorage.removeItem('googleDocs_auth_state');
-        
-        // Instead of navigating (which would refresh the page and close dialogs),
-        // show a message and attempt to close
-        setTimeout(() => {
-          console.log('🔒 Attempting to close callback window');
-          if (window.close) {
-            window.close();
-          } else {
-            // If we can't close, show instructions
-            document.body.innerHTML = `
-              <div style="text-align: center; padding: 40px; font-family: system-ui;">
-                <h2>Authentication Complete</h2>
-                <p>You can close this window and return to the application.</p>
-                <button onclick="window.close()" style="padding: 10px 20px; margin-top: 20px;">Close Window</button>
-              </div>
-            `;
-          }
-        }, 1000);
-        
-      } catch (storageErr) {
-        console.error('❌ Failed to store auth result:', storageErr);
-        // Last resort - show completion message
-        setTimeout(() => {
-          document.body.innerHTML = `
-            <div style="text-align: center; padding: 40px; font-family: system-ui;">
-              <h2>Authentication Complete</h2>
-              <p>Please close this window and try the import again.</p>
-              <button onclick="window.close()" style="padding: 10px 20px; margin-top: 20px;">Close Window</button>
-            </div>
-          `;
-        }, 1000);
-      }
-    }
-  }, [navigate]);
-  
+    handleCallback();
+  }, []);
+
   return (
-    <div className="flex items-center justify-center h-screen">
+    <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
-        <h1 className="text-xl font-semibold mb-2">Authenticating with Google...</h1>
-        <p className="text-muted-foreground">Please wait, you will be redirected automatically.</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">{message}</p>
       </div>
     </div>
   );
 };
-
-export default GoogleDocsAuthCallback;

@@ -11,7 +11,37 @@ serve(async (req) => {
   try {
     const body = await req.json();
     
-    // Handle getting client ID for auth URL
+    // Handle getting OAuth authorization URL
+    if (body.action === 'get_auth_url') {
+      const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
+      const redirectUri = body.redirect_uri;
+      
+      if (!clientId) {
+        throw new Error('Google Client ID not configured');
+      }
+      
+      const scopes = [
+        'https://www.googleapis.com/auth/drive.readonly',
+        'https://www.googleapis.com/auth/documents.readonly',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile'
+      ].join(' ');
+      
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${encodeURIComponent(clientId)}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `scope=${encodeURIComponent(scopes)}&` +
+        `response_type=code&` +
+        `access_type=offline&` +
+        `prompt=consent`;
+      
+      return new Response(
+        JSON.stringify({ auth_url: authUrl }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Handle getting client ID for auth URL (legacy support)
     if (body.action === 'get_client_id') {
       const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
       
@@ -21,6 +51,26 @@ serve(async (req) => {
       
       return new Response(
         JSON.stringify({ client_id: clientId }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Handle listing Google Documents
+    if (body.action === 'list_documents') {
+      // Implementation for listing documents would go here
+      // For now, return empty array
+      return new Response(
+        JSON.stringify({ documents: [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Handle importing a document
+    if (body.action === 'import_document') {
+      // Implementation for importing document content would go here
+      // For now, return placeholder content
+      return new Response(
+        JSON.stringify({ content: 'Document content would be imported here' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
