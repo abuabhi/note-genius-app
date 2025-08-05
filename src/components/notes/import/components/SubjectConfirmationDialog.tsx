@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -35,13 +35,18 @@ export const SubjectConfirmationDialog = ({
   onConfirm,
   onCancel
 }: SubjectConfirmationDialogProps) => {
-  const [selectedSubjects, setSelectedSubjects] = useState<Record<string, string>>(() => {
+  const [selectedSubjects, setSelectedSubjects] = useState<Record<string, string>>({});
+
+  // Sync selectedSubjects state when documents prop changes
+  useEffect(() => {
+    console.log('📋 SubjectConfirmationDialog: documents changed', documents.length);
     const initial: Record<string, string> = {};
     documents.forEach(doc => {
       initial[doc.id] = doc.suggestedSubject;
+      console.log(`📋 Setting subject for ${doc.title}: ${doc.suggestedSubject}`);
     });
-    return initial;
-  });
+    setSelectedSubjects(initial);
+  }, [documents]);
 
   const handleSubjectChange = (docId: string, subject: string) => {
     setSelectedSubjects(prev => ({
@@ -51,10 +56,12 @@ export const SubjectConfirmationDialog = ({
   };
 
   const handleConfirm = () => {
+    console.log('📋 SubjectConfirmationDialog: confirming import', selectedSubjects);
     const updatedDocs = documents.map(doc => ({
       id: doc.id,
       subject: selectedSubjects[doc.id] || doc.suggestedSubject
     }));
+    console.log('📋 SubjectConfirmationDialog: final documents for import', updatedDocs);
     onConfirm(updatedDocs);
   };
 
