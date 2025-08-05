@@ -19,7 +19,7 @@ export const useAuthRedirects = ({
   const location = useLocation();
   
   // Define which routes are public
-  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup', '/tier-selection', '/payment'];
+  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup', '/tier-selection', '/payment', '/oauth2callback', '/auth/google-docs/callback', '/auth/evernote/callback', '/auth/notion/callback', '/auth/microsoft/callback'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   
   useEffect(() => {
