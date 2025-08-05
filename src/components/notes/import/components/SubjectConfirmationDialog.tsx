@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { SubjectSelector } from './SubjectSelector';
 import { Card, CardContent } from '@/components/ui/card';
 import { BookOpen, FileText, Target } from 'lucide-react';
+import { stripHtmlAndDecode } from "@/components/notes/conversion/utils/contentProcessingUtils";
 
 export interface DocumentToConfirm {
   id: string;
@@ -101,8 +102,8 @@ export const SubjectConfirmationDialog = ({
                     
                     <div className="bg-muted/50 rounded-md p-3 text-xs text-muted-foreground">
                       <p className="line-clamp-3">
-                        {doc.content.substring(0, 200)}
-                        {doc.content.length > 200 && '...'}
+                        {stripHtmlAndDecode(doc.content).substring(0, 200)}
+                        {stripHtmlAndDecode(doc.content).length > 200 && '...'}
                       </p>
                     </div>
 
