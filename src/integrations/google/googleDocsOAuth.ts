@@ -24,11 +24,85 @@ export const useGoogleDocsAuth = () => {
     error: null
   });
 
-  // Check for existing tokens in sessionStorage (isolated from main app)
+  // Helper functions
+  const clearStoredTokens = useCallback(() => {
+    localStorage.removeItem('googleDocs_access_token');
+    localStorage.removeItem('googleDocs_user_name');
+    localStorage.removeItem('googleDocs_expires_at');
+    localStorage.removeItem('googleDocs_refresh_token');
+    sessionStorage.removeItem('googleDocs_auth_state');
+    sessionStorage.removeItem('googleDocs_auth_result');
+  }, []);
+
+  const refreshAccessToken = useCallback(async (refreshToken: string) => {
+    try {
+      console.log('🔄 Refreshing access token...');
+      setAuthState(prev => ({ ...prev, loading: true }));
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('User session not found');
+      }
+
+      const response = await fetch(`https://zuhcmwujzfddmafozubd.supabase.co/functions/v1/googledocs-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1aGNtd3VqemZkZG1hZm96dWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MjUxOTQsImV4cCI6MjA2MjEwMTE5NH0.oz_MnWdGGh76eOjQ2k69OhQhqBh4KXG0Wq_cN-VJwzw',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          refresh_token: refreshToken,
+          grant_type: 'refresh_token'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Token refresh failed');
+      }
+
+      const data = await response.json();
+      
+      if (data.access_token) {
+        const expiresAt = new Date();
+        expiresAt.setSeconds(expiresAt.getSeconds() + (data.expires_in || 3600));
+        
+        localStorage.setItem('googleDocs_access_token', data.access_token);
+        localStorage.setItem('googleDocs_expires_at', expiresAt.toISOString());
+        
+        const storedUserName = localStorage.getItem('googleDocs_user_name');
+        
+        setAuthState({
+          isAuthenticated: true,
+          accessToken: data.access_token,
+          userName: storedUserName,
+          loading: false,
+          error: null
+        });
+        
+        console.log('✅ Token refreshed successfully');
+      } else {
+        throw new Error('No access token in refresh response');
+      }
+    } catch (error) {
+      console.error('❌ Token refresh failed:', error);
+      clearStoredTokens();
+      setAuthState({
+        isAuthenticated: false,
+        accessToken: null,
+        userName: null,
+        loading: false,
+        error: null
+      });
+    }
+  }, [clearStoredTokens]);
+
+  // Check for existing tokens in localStorage for persistence across sessions
   useEffect(() => {
-    const storedToken = sessionStorage.getItem('googleDocs_access_token');
-    const storedUserName = sessionStorage.getItem('googleDocs_user_name');
-    const expiresAt = sessionStorage.getItem('googleDocs_expires_at');
+    const storedToken = localStorage.getItem('googleDocs_access_token');
+    const storedUserName = localStorage.getItem('googleDocs_user_name');
+    const expiresAt = localStorage.getItem('googleDocs_expires_at');
+    const refreshToken = localStorage.getItem('googleDocs_refresh_token');
     
     console.log('🔍 Checking stored credentials:', {
       hasToken: !!storedToken,
@@ -47,13 +121,16 @@ export const useGoogleDocsAuth = () => {
         error: null
       });
     } else if (storedToken && expiresAt && new Date(expiresAt) <= new Date()) {
-      console.log('🔄 Token expired, clearing storage');
-      // Clear expired tokens
-      sessionStorage.removeItem('googleDocs_access_token');
-      sessionStorage.removeItem('googleDocs_user_name');
-      sessionStorage.removeItem('googleDocs_expires_at');
+      console.log('🔄 Token expired, attempting refresh...');
+      if (refreshToken) {
+        // Try to refresh the token
+        refreshAccessToken(refreshToken);
+      } else {
+        // Clear expired tokens
+        clearStoredTokens();
+      }
     }
-  }, []);
+  }, [refreshAccessToken, clearStoredTokens]);
 
   // Listen for the OAuth callback from the popup window
   useEffect(() => {
@@ -106,39 +183,38 @@ export const useGoogleDocsAuth = () => {
       }
     };
     
-    // Also check for stored auth result (fallback for when popup communication fails)
-    const checkStoredAuthResult = () => {
-      const storedResult = sessionStorage.getItem('googleDocs_auth_result');
+    // Simplified popup communication with localStorage fallback
+    const checkAuthResult = () => {
+      const storedResult = localStorage.getItem('googleDocs_auth_pending');
       if (storedResult) {
         try {
           const authData = JSON.parse(storedResult);
-          console.log('💾 [GOOGLE DOCS AUTH] Found stored auth result:', authData);
+          console.log('💾 [GOOGLE DOCS AUTH] Found pending auth result:', authData);
           
-          // Remove the stored result to prevent reprocessing
-          sessionStorage.removeItem('googleDocs_auth_result');
+          // Remove the pending result
+          localStorage.removeItem('googleDocs_auth_pending');
           
-          // Process like a regular callback
           if (authData.error) {
-            console.error('❌ Stored OAuth error:', authData.error);
+            console.error('❌ OAuth error from storage:', authData.error);
             setAuthState(prev => ({
               ...prev,
               loading: false,
               error: `Authentication failed: ${authData.error}`
             }));
           } else if (authData.code) {
-            console.log('🔄 Processing stored authorization code');
+            console.log('🔄 Processing authorization code from storage');
             exchangeCodeForTokens(authData.code);
           }
         } catch (err) {
-          console.error('❌ Failed to parse stored auth result:', err);
-          sessionStorage.removeItem('googleDocs_auth_result');
+          console.error('❌ Failed to parse auth result:', err);
+          localStorage.removeItem('googleDocs_auth_pending');
         }
       }
     };
     
-    // Check for stored result immediately and set up polling
-    checkStoredAuthResult();
-    const pollInterval = setInterval(checkStoredAuthResult, 500); // Faster polling for better responsiveness
+    // Check immediately and poll for auth results
+    checkAuthResult();
+    const pollInterval = setInterval(checkAuthResult, 1000);
     
     window.addEventListener('message', handleAuthCallback);
     
@@ -242,10 +318,15 @@ export const useGoogleDocsAuth = () => {
       const expiresAt = new Date();
       expiresAt.setSeconds(expiresAt.getSeconds() + (expires_in || 3600));
       
-      // Store tokens and user info in sessionStorage (isolated from main app)
-      sessionStorage.setItem('googleDocs_access_token', access_token);
-      sessionStorage.setItem('googleDocs_user_name', userName);
-      sessionStorage.setItem('googleDocs_expires_at', expiresAt.toISOString());
+      // Store tokens and user info in localStorage for persistence
+      localStorage.setItem('googleDocs_access_token', access_token);
+      localStorage.setItem('googleDocs_user_name', userName);
+      localStorage.setItem('googleDocs_expires_at', expiresAt.toISOString());
+      
+      // Store refresh token if available
+      if (responseData.refresh_token) {
+        localStorage.setItem('googleDocs_refresh_token', responseData.refresh_token);
+      }
       
       const totalAuthTime = Date.now() - exchangeStartTime;
       console.log(`💾 Stored credentials successfully! Total auth time: ${totalAuthTime}ms`, {
@@ -368,13 +449,10 @@ export const useGoogleDocsAuth = () => {
     }
   }, []);
 
+
   const disconnect = useCallback(() => {
     console.log('🔌 Disconnecting Google Docs...');
-    // Clear stored tokens and state from sessionStorage
-    sessionStorage.removeItem('googleDocs_access_token');
-    sessionStorage.removeItem('googleDocs_user_name');
-    sessionStorage.removeItem('googleDocs_expires_at');
-    sessionStorage.removeItem('googleDocs_auth_state');
+    clearStoredTokens();
     
     setAuthState({
       isAuthenticated: false,
@@ -383,7 +461,7 @@ export const useGoogleDocsAuth = () => {
       loading: false,
       error: null
     });
-  }, []);
+  }, [clearStoredTokens]);
 
   return {
     ...authState,

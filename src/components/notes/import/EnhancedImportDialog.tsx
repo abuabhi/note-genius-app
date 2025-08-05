@@ -31,29 +31,24 @@ export const EnhancedImportDialog = ({
     console.log('🔍 [IMPORT DIALOG] Dialog visibility changed:', { isVisible, activeTab, isProcessing, isAuthenticating });
   }, [isVisible, activeTab, isProcessing, isAuthenticating]);
 
-  // Listen for OAuth authentication events
+  // Listen for OAuth authentication events with improved state management
   useEffect(() => {
-    const handleOAuthMessage = (event: MessageEvent) => {
-      if (
-        event.origin === window.location.origin &&
-        event.data?.type === 'googledocs_oauth_callback'
-      ) {
-        console.log('🔍 [IMPORT DIALOG] OAuth callback received, clearing auth state');
-        setIsAuthenticating(false);
-      }
-    };
-
     const handleAuthStart = () => {
       console.log('🔍 [IMPORT DIALOG] OAuth authentication started');
       setIsAuthenticating(true);
     };
 
-    window.addEventListener('message', handleOAuthMessage);
+    const handleAuthEnd = (event: CustomEvent) => {
+      console.log('🔍 [IMPORT DIALOG] OAuth authentication ended:', event.detail);
+      setIsAuthenticating(false);
+    };
+
     window.addEventListener('googledocs:auth:start', handleAuthStart);
+    window.addEventListener('googledocs:auth:end', handleAuthEnd);
     
     return () => {
-      window.removeEventListener('message', handleOAuthMessage);
       window.removeEventListener('googledocs:auth:start', handleAuthStart);
+      window.removeEventListener('googledocs:auth:end', handleAuthEnd);
     };
   }, []);
 

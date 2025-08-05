@@ -64,14 +64,17 @@ export const DedicatedGoogleDocsImport = ({
   
   useEffect(() => {
     if (isAuthenticated && accessToken) {
+      console.log('🔍 [GOOGLE DOCS] Authentication successful, fetching documents...');
       onConnected(accessToken);
       fetchDocuments();
       // Signal auth completion
       if (onAuthEnd) {
         onAuthEnd();
       }
+    } else if (!isAuthenticated && !loading) {
+      console.log('🔍 [GOOGLE DOCS] Not authenticated, showing connect interface');
     }
-  }, [isAuthenticated, accessToken, onConnected, onAuthEnd]);
+  }, [isAuthenticated, accessToken, loading, onConnected, onAuthEnd]);
 
   const fetchDocuments = async () => {
     if (!accessToken) {

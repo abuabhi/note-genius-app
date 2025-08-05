@@ -57,9 +57,10 @@ export const GoogleDocsAuthCallback = () => {
       if (error) {
         console.log('❌ [GOOGLE DOCS CALLBACK] OAuth error:', errorDescription || error);
         
-        // Store error for parent window
-        sessionStorage.setItem('googleDocs_auth_result', JSON.stringify({
-          error: errorDescription || error || 'Authentication failed'
+        // Store error for parent window in localStorage for better persistence
+        localStorage.setItem('googleDocs_auth_pending', JSON.stringify({
+          error: errorDescription || error || 'Authentication failed',
+          timestamp: Date.now()
         }));
         
         // Post message to parent window with enhanced error handling
@@ -87,10 +88,11 @@ export const GoogleDocsAuthCallback = () => {
       if (code) {
         console.log('✅ [GOOGLE DOCS CALLBACK] Authorization code received');
         
-        // Store auth result for the main window
-        sessionStorage.setItem('googleDocs_auth_result', JSON.stringify({
+        // Store auth result for the main window in localStorage
+        localStorage.setItem('googleDocs_auth_pending', JSON.stringify({
           code,
-          state: urlParams.get('state')
+          state: urlParams.get('state'),
+          timestamp: Date.now()
         }));
         
         // Post message to parent window with enhanced success handling
@@ -144,9 +146,10 @@ export const GoogleDocsAuthCallback = () => {
       } else {
         console.log('❌ [GOOGLE DOCS CALLBACK] No code or error received');
         
-        // Store error for parent window
-        sessionStorage.setItem('googleDocs_auth_result', JSON.stringify({
-          error: 'Authorization failed - no code received'
+        // Store error for parent window in localStorage
+        localStorage.setItem('googleDocs_auth_pending', JSON.stringify({
+          error: 'Authorization failed - no code received',
+          timestamp: Date.now()
         }));
         
         // Post message to parent window for no-code scenario

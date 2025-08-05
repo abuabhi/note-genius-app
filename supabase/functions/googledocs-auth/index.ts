@@ -75,6 +75,49 @@ serve(async (req) => {
       );
     }
     
+    // Handle token refresh
+    if (body.grant_type === 'refresh_token') {
+      const { refresh_token } = body;
+      
+      if (!refresh_token) {
+        throw new Error('Refresh token is required');
+      }
+      
+      const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
+      const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
+      
+      if (!clientId || !clientSecret) {
+        throw new Error('Google OAuth credentials not configured');
+      }
+      
+      // Refresh the access token
+      const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          refresh_token: refresh_token,
+          grant_type: 'refresh_token',
+        }),
+      });
+      
+      if (!refreshResponse.ok) {
+        const errorText = await refreshResponse.text();
+        console.error('Google token refresh failed:', errorText);
+        throw new Error(`Token refresh failed: ${refreshResponse.status}`);
+      }
+      
+      const refreshData = await refreshResponse.json();
+      
+      return new Response(
+        JSON.stringify(refreshData),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Handle token exchange
     const { code, redirect_uri, grant_type } = body;
     
