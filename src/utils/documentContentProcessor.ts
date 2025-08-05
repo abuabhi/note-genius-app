@@ -1,4 +1,5 @@
 import { GoogleDocContent } from "@/services/googleDocsImporter";
+import { analyzeContentForTitleAndSubject } from "@/utils/contentAnalysisUtils";
 
 export interface ProcessedDocument {
   title: string;
@@ -88,7 +89,6 @@ export class DocumentContentProcessor {
 
   private static suggestSubject(content: string): string {
     // Use the comprehensive content analysis utility instead of duplicate logic
-    const { analyzeContentForTitleAndSubject } = require('@/utils/contentAnalysisUtils');
     const analysis = analyzeContentForTitleAndSubject(content);
     return analysis.suggestedSubject;
   }
