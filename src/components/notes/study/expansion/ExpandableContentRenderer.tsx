@@ -51,15 +51,8 @@ export const ExpandableContentRenderer = ({
         // Convert markdown to HTML for Original++ tab
         return markdownToHtml(content);
       
-      case 'enriched':
-        // Process [AI_ENHANCED] tags for Enriched Note tab
-        return content.replace(
-          /\[AI_ENHANCED\](.*?)\[\/AI_ENHANCED\]/gs,
-          '<span class="ai-enhanced-text">$1</span>'
-        );
-      
       default:
-        // Return as-is for original content (already HTML)
+        // Return as-is for enriched/original content (let existing system handle it)
         return content;
     }
   };
@@ -356,14 +349,6 @@ ${cleanExpandedContent}
           transform: scale(1.1);
         }
         
-        .ai-enhanced-text {
-          background: linear-gradient(135deg, #fef3c7, #fde68a);
-          border-radius: 0.25rem;
-          padding: 0.125rem 0.25rem;
-          font-weight: 500;
-          color: #92400e;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
         
         .content-expansion {
           animation: expansion-fadeIn 0.4s ease-out forwards;
