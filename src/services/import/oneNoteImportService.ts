@@ -46,103 +46,11 @@ export const importOneNoteDocuments = async (
   accessToken: string,
   onSaveNote: (note: any) => Promise<boolean>
 ): Promise<void> => {
-  console.log(`🚀 [ONENOTE] Starting import of ${documents.length} documents`);
-
-  let successCount = 0;
-  let failureCount = 0;
-
-  for (const doc of documents) {
-    try {
-      console.log(`📄 [ONENOTE] Processing document: ${doc.name}`);
-      
-      // Fetch the page content
-      const contentResponse = await fetch(`https://graph.microsoft.com/v1.0/me/onenote/pages/${doc.id}/content`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!contentResponse.ok) {
-        throw new Error(`Failed to fetch page content: ${contentResponse.statusText}`);
-      }
-
-      const htmlContent = await contentResponse.text();
-      
-      // Process the HTML content to extract plain text
-      const plainText = extractTextFromHtml(htmlContent);
-      
-      if (!plainText.trim()) {
-        console.warn(`⚠️ [ONENOTE] Page "${doc.name}" appears to be empty, skipping`);
-        continue;
-      }
-
-      // Create note object
-      const note = {
-        title: doc.name || 'Imported OneNote Page',
-        content: plainText,
-        subject: 'OneNote Import',
-        tags: ['imported', 'onenote'],
-        source: 'onenote_import',
-        metadata: {
-          originalId: doc.id,
-          createdTime: doc.createdTime,
-          modifiedTime: doc.modifiedTime,
-          importedAt: new Date().toISOString()
-        }
-      };
-
-      const success = await onSaveNote(note);
-      if (success) {
-        successCount++;
-        console.log(`✅ [ONENOTE] Successfully imported: ${doc.name}`);
-      } else {
-        failureCount++;
-        console.error(`❌ [ONENOTE] Failed to save note: ${doc.name}`);
-      }
-
-    } catch (error) {
-      failureCount++;
-      console.error(`❌ [ONENOTE] Error processing document "${doc.name}":`, error);
-    }
-  }
-
-  console.log(`📊 [ONENOTE] Import completed: ${successCount} success, ${failureCount} failed`);
-  
-  if (failureCount > 0 && successCount === 0) {
-    throw new Error(`Failed to import any documents (${failureCount} failures)`);
-  } else if (failureCount > 0) {
-    throw new Error(`Partially successful: ${successCount} imported, ${failureCount} failed`);
-  }
+  // This function is now deprecated as the import logic has been moved
+  // to OneNoteImportManager for consistency with Google Docs
+  // and to support subject confirmation dialog
+  console.log(`🚀 [ONENOTE] Legacy import function called for ${documents.length} documents`);
+  throw new Error('Legacy import function - use OneNoteImportManager instead');
 };
 
-// Helper function to extract plain text from HTML content
-const extractTextFromHtml = (htmlContent: string): string => {
-  try {
-    // Create a temporary DOM element to parse HTML
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlContent;
-    
-    // Remove script and style elements
-    const scripts = tempDiv.querySelectorAll('script, style');
-    scripts.forEach(el => el.remove());
-    
-    // Get text content and clean it up
-    const textContent = tempDiv.textContent || tempDiv.innerText || '';
-    
-    // Clean up excessive whitespace
-    return textContent
-      .replace(/\s+/g, ' ')
-      .replace(/\n\s*\n/g, '\n\n')
-      .trim();
-  } catch (error) {
-    console.error('Error extracting text from HTML:', error);
-    // Fallback: strip basic HTML tags with regex
-    return htmlContent
-      .replace(/<script[^>]*>.*?<\/script>/gis, '')
-      .replace(/<style[^>]*>.*?<\/style>/gis, '')
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-};
+// Helper function moved to OneNoteImportManager to avoid duplication
