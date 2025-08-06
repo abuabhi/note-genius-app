@@ -6,6 +6,7 @@ import { TextAlignType } from '../hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { SimpleContentRenderer } from '../SimpleContentRenderer';
+import { markdownToHtml } from '@/utils/markdownConverter';
 
 interface ExpandableContentRendererProps {
   content: string;
@@ -43,11 +44,34 @@ export const ExpandableContentRenderer = ({
     removeExpansion
   } = useContentExpansion(noteId, content, contentType, noteTitle);
 
+  // Preprocess content based on type to ensure proper HTML for text selection
+  const preprocessContent = (content: string, contentType: string): string => {
+    switch (contentType) {
+      case 'markdown':
+        // Convert markdown to HTML for Original++ tab
+        return markdownToHtml(content);
+      
+      case 'enriched':
+        // Process [AI_ENHANCED] tags for Enriched Note tab
+        return content.replace(
+          /\[AI_ENHANCED\](.*?)\[\/AI_ENHANCED\]/gs,
+          '<span class="ai-enhanced-text">$1</span>'
+        );
+      
+      default:
+        // Return as-is for original content (already HTML)
+        return content;
+    }
+  };
+
   // Process content with expansions inserted at correct positions
   const processedContent = useMemo(() => {
-    if (expansions.length === 0) return content;
+    // First preprocess the content for the specific content type
+    const preprocessedContent = preprocessContent(content, contentType);
+    
+    if (expansions.length === 0) return preprocessedContent;
 
-    let processedText = content;
+    let processedText = preprocessedContent;
     
     // Sort expansions by position to process them in order
     const sortedExpansions = [...expansions].sort((a, b) => {
@@ -98,7 +122,7 @@ ${cleanExpandedContent}
     }
 
     return processedText;
-  }, [content, expansions]);
+  }, [content, expansions, contentType]);
 
   // DEBOUNCED selection handler to prevent multiple rapid calls
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -330,6 +354,15 @@ ${cleanExpandedContent}
         .expansion-remove-btn:hover {
           opacity: 1;
           transform: scale(1.1);
+        }
+        
+        .ai-enhanced-text {
+          background: linear-gradient(135deg, #fef3c7, #fde68a);
+          border-radius: 0.25rem;
+          padding: 0.125rem 0.25rem;
+          font-weight: 500;
+          color: #92400e;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
         
         .content-expansion {
