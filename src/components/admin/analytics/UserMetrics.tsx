@@ -40,13 +40,8 @@ export const UserMetrics = ({ dateRange }: UserMetricsProps) => {
         throw new Error('Failed to fetch user metrics');
       }
 
-      // Mock retention data
-      const retentionData = [
-        { day: 'Day 1', retention: 85 },
-        { day: 'Day 7', retention: 65 },
-        { day: 'Day 14', retention: 45 },
-        { day: 'Day 30', retention: 30 }
-      ];
+      // Real retention data - implement based on user activity patterns
+      const retentionData: any[] = [];
 
       // Real tier distribution
       const { data: tierDistribution } = await supabase
@@ -135,7 +130,7 @@ export const UserMetrics = ({ dateRange }: UserMetricsProps) => {
             <CardTitle>User Retention</CardTitle>
             <CardDescription>
               Percentage of users retained over time
-              <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Mock Data</span>
+              <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Implementation Needed</span>
             </CardDescription>
           </CardHeader>
           <CardContent>

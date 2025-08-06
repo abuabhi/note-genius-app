@@ -70,11 +70,8 @@ export const InfluencerManagementTable: React.FC<InfluencerManagementTableProps>
     selectedInfluencer?.id || ''
   );
 
-  const mockSocialStats: Record<string, any> = {
-    instagram: { handle: '@james_study', followers: 15200 },
-    tiktok: { handle: '@jameslearns', followers: 8900 },
-    youtube: { handle: 'James Study Channel', subscribers: 3400 }
-  };
+  // Remove mock social stats - implement real social media API integration
+  const socialStats: Record<string, any> = {};
 
   if (influencers.length === 0) {
     return (
@@ -249,35 +246,14 @@ export const InfluencerManagementTable: React.FC<InfluencerManagementTableProps>
               </TabsContent>
 
               <TabsContent value="social" className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
-                  {Object.entries(mockSocialStats).map(([platform, data]) => (
-                    <Card key={platform}>
-                      <CardContent className="flex items-center justify-between p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
-                            {platform[0].toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="font-medium capitalize">{platform}</div>
-                            <div className="text-sm text-muted-foreground">{data.handle}</div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-bold">
-                            {'followers' in data ? data.followers?.toLocaleString() : 
-                             'subscribers' in data ? data.subscribers?.toLocaleString() :
-                             'connections' in data ? data.connections?.toLocaleString() : '0'}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {'followers' in data ? 'followers' : 
-                             'subscribers' in data ? 'subscribers' :
-                             'connections' in data ? 'connections' : 'count'}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <div className="text-muted-foreground">
+                      <h3 className="text-lg font-semibold mb-2">Social Media Integration Required</h3>
+                      <p>Connect social media APIs to display influencer statistics.</p>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="payouts" className="space-y-4">

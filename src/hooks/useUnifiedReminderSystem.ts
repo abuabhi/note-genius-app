@@ -94,7 +94,7 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
     },
     enabled: !!user?.id,
     staleTime: 1000 * 30, // 30 seconds
-    refetchInterval: enableRealtime ? 1000 * 60 : false, // 1 minute if realtime enabled
+    refetchInterval: enableRealtime ? (process.env.NODE_ENV === 'production' ? 1000 * 300 : 1000 * 60) : false, // 5 minutes in production, 1 minute in dev
   });
 
   // Set up realtime subscription

@@ -136,13 +136,14 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [user]);
 
-  // Auto-refresh subscription status every 30 seconds
+  // Auto-refresh subscription status - optimized for production
   useEffect(() => {
     if (!user) return;
 
+    const refreshInterval = process.env.NODE_ENV === 'production' ? 600000 : 30000; // 10 minutes in production, 30s in dev
     const interval = setInterval(() => {
       checkSubscriptionStatus();
-    }, 30000);
+    }, refreshInterval);
 
     return () => clearInterval(interval);
   }, [user]);

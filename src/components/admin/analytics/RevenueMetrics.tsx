@@ -29,28 +29,16 @@ export const RevenueMetrics = ({ dateRange }: RevenueMetricsProps) => {
         throw new Error('Failed to fetch revenue metrics');
       }
 
-      // Mock historical data for charts
-      const mockMrrHistory = Array.from({ length: 12 }, (_, i) => ({
-        month: new Date(Date.now() - (11 - i) * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short' }),
-        mrr: Math.max(0, (mrr || 0) - Math.random() * 1000 + (i * 200))
-      }));
-
-      const mockPlanDistribution = [
-        { plan: 'Basic', customers: 35, revenue: 35 * 9.99 },
-        { plan: 'Premium', customers: 12, revenue: 12 * 19.99 },
-        { plan: 'Enterprise', customers: 3, revenue: 3 * 49.99 }
-      ];
-
       return {
         mrr: mrr || 0,
         arr: arr || 0,
         churnRate: churnRate || 0,
-        mrrHistory: mockMrrHistory,
-        planDistribution: mockPlanDistribution,
-        // Mock CAC and LTV for demo
-        cac: 45.67,
-        ltv: 234.89,
-        ltvCacRatio: 5.14
+        // Remove mock data - implement real Stripe integration
+        mrrHistory: [],
+        planDistribution: [],
+        cac: 0,
+        ltv: 0,
+        ltvCacRatio: 0
       };
     }
   });
@@ -63,14 +51,14 @@ export const RevenueMetrics = ({ dateRange }: RevenueMetricsProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Mock Data Warning Banner */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+      {/* Stripe Integration Required Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-yellow-600" />
+          <AlertTriangle className="h-5 w-5 text-blue-600" />
           <div>
-            <h3 className="font-semibold text-yellow-800">⚠️ MOCK STRIPE DATA</h3>
-            <p className="text-sm text-yellow-700">
-              All revenue metrics shown below are simulated data. Replace with real Stripe integration to see actual subscription revenue, MRR, ARR, and churn rates.
+            <h3 className="font-semibold text-blue-800">🔌 Stripe Integration Required</h3>
+            <p className="text-sm text-blue-700">
+              Connect your Stripe account to view real subscription revenue, MRR, ARR, and churn rates. Mock data has been removed for production.
             </p>
           </div>
         </div>
@@ -85,7 +73,7 @@ export const RevenueMetrics = ({ dateRange }: RevenueMetricsProps) => {
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(revenueData?.mrr || 0)}</div>
             <p className="text-xs text-muted-foreground">
-              <Badge variant="secondary">Mock Stripe Data</Badge>
+              <Badge variant="secondary">Stripe Integration Needed</Badge>
             </p>
           </CardContent>
         </Card>
@@ -98,7 +86,7 @@ export const RevenueMetrics = ({ dateRange }: RevenueMetricsProps) => {
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(revenueData?.arr || 0)}</div>
             <p className="text-xs text-muted-foreground">
-              <Badge variant="secondary">Mock Stripe Data</Badge>
+              <Badge variant="secondary">Stripe Integration Needed</Badge>
             </p>
           </CardContent>
         </Card>
@@ -111,7 +99,7 @@ export const RevenueMetrics = ({ dateRange }: RevenueMetricsProps) => {
           <CardContent>
             <div className="text-2xl font-bold">{(revenueData?.churnRate || 0).toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground">
-              <Badge variant="secondary">Mock Stripe Data</Badge>
+              <Badge variant="secondary">Stripe Integration Needed</Badge>
             </p>
           </CardContent>
         </Card>
@@ -124,7 +112,7 @@ export const RevenueMetrics = ({ dateRange }: RevenueMetricsProps) => {
           <CardContent>
             <div className="text-2xl font-bold">{revenueData?.ltvCacRatio.toFixed(1)}:1</div>
             <p className="text-xs text-muted-foreground">
-              <Badge variant="secondary">Mock Stripe Data</Badge>
+              <Badge variant="secondary">Stripe Integration Needed</Badge>
             </p>
           </CardContent>
         </Card>

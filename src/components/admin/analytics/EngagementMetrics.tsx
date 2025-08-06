@@ -60,11 +60,8 @@ export const EngagementMetrics = ({ dateRange }: EngagementMetricsProps) => {
         { feature: 'Study Sessions', usage: studySessions?.length || 0 }
       ];
 
-      // Mock session frequency data
-      const sessionFrequency = Array.from({ length: 7 }, (_, i) => ({
-        day: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'short' }),
-        sessions: Math.floor(Math.random() * 50) + 10
-      }));
+      // Real session frequency data - implement based on study_sessions table
+      const sessionFrequency: any[] = [];
 
       return {
         avgSessionLength: (avgSessionLength || 0) / 60, // Convert to minutes
@@ -162,7 +159,7 @@ export const EngagementMetrics = ({ dateRange }: EngagementMetricsProps) => {
             <CardTitle>Daily Session Frequency</CardTitle>
             <CardDescription>
               Number of study sessions per day
-              <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Mock Data</span>
+              <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Implementation Needed</span>
             </CardDescription>
           </CardHeader>
           <CardContent>
