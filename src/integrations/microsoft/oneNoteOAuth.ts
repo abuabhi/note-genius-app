@@ -57,7 +57,7 @@ export const initiateOneNoteAuth = async (forceAccountSelection = false) => {
   authUrl.searchParams.append("response_type", "code");
   authUrl.searchParams.append("redirect_uri", redirectUri);
   authUrl.searchParams.append("scope", scopes.join(" "));
-  authUrl.searchParams.append("response_mode", "fragment");
+  authUrl.searchParams.append("response_mode", "query");
   
   // Always force account selection for better UX
   authUrl.searchParams.append("prompt", "select_account");
