@@ -104,10 +104,7 @@ ${cleanExpandedContent}
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const selectionRef = useRef<Range | null>(null);
 
-  const handleTextSelection = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    // Prevent event from bubbling up
-    event.stopPropagation();
-    
+  const handleTextSelection = React.useCallback((event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     console.log("🎯 SELECTION: Text selection handler triggered");
     
     // Clear existing timeout
@@ -168,7 +165,7 @@ ${cleanExpandedContent}
       setIsMenuVisible(true);
       
       console.log("✅ SELECTION: Menu positioned at:", menuPosition, "Selection preserved");
-    }, 100); // 100ms debounce
+    }, 50); // 50ms debounce for faster response
   }, []);
 
   const handleExpand = async (text: string) => {
@@ -226,11 +223,12 @@ ${cleanExpandedContent}
           position: 'relative'
         }}
         onMouseUp={handleTextSelection}
+        onTouchEnd={handleTextSelection as any}
       >
-        {/* FIXED: Use SimpleContentRenderer with consistent font size */}
+        {/* Use SimpleContentRenderer with dynamic font size */}
         <SimpleContentRenderer
           content={processedContent}
-          fontSize={16} // Fixed font size for consistency
+          fontSize={fontSize} // Use dynamic font size from props
           textAlign={textAlign}
           className="w-full"
         />
