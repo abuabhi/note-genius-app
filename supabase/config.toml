@@ -48,5 +48,11 @@ verify_jwt = true
 [functions.simple-enhance-note]
 verify_jwt = true
 
+[functions.googledocs-auth]
+verify_jwt = true
+
+[functions.microsoft-auth]
+verify_jwt = true
+
 [analytics]
 enabled = false

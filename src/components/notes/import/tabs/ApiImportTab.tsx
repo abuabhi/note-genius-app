@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ImportServiceGrid } from "../services/ImportServiceGrid";
-import { OneNoteConnection } from "../OneNoteConnection";
+import { OneNoteImportManager } from "../OneNoteImportManager";
 import { DedicatedGoogleDocsImport } from "../DedicatedGoogleDocsImport";
 
 
@@ -40,7 +40,15 @@ export const ApiImportTab = ({ onSaveNote, isPremiumUser, onImportComplete, onAu
   const renderServiceConnection = () => {
     switch (selectedService) {
       case 'onenote':
-        return <OneNoteConnection onConnected={handleConnection} />;
+        return (
+          <OneNoteImportManager 
+            onBack={handleBackToGrid}
+            onSaveNote={onSaveNote}
+            onImportComplete={handleImportComplete}
+            onAuthStart={onAuthStart}
+            onAuthEnd={onAuthEnd}
+          />
+        );
       case 'googledocs':
         return (
           <DedicatedGoogleDocsImport 
