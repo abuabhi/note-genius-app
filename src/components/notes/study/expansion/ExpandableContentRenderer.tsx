@@ -114,6 +114,12 @@ ${cleanExpandedContent}
       }
     }
 
+    // If content has [AI_ENHANCED] tags (from expansions or original content), 
+    // reprocess through markdownToHtml to ensure proper formatting
+    if (processedText.includes('[AI_ENHANCED]')) {
+      processedText = markdownToHtml(processedText);
+    }
+
     return processedText;
   }, [content, expansions, contentType]);
 
