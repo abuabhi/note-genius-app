@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Sparkles, FileText, List, HelpCircle, Code, RefreshCw, Clock } from 'lucide-react';
 import { EnhancementType } from '@/types/enhancement';
-import { SimpleContentRenderer } from './SimpleContentRenderer';
+import { ExpandableContentRenderer } from './expansion/ExpandableContentRenderer';
 import { useEnhancementManager } from '@/hooks/useEnhancementManager';
 
 // Utility function for content statistics
@@ -222,10 +222,13 @@ export const SimpleEnhancementTabs = React.memo(({
                         const displayContent = generatedContent[tab.column!] || tab.content;
                         
                         return displayContent ? (
-                          <SimpleContentRenderer
+                          <ExpandableContentRenderer
                             content={displayContent}
                             fontSize={fontSize}
                             textAlign={textAlign}
+                            contentType={tab.value}
+                            noteTitle={note.title}
+                            noteId={note.id}
                           />
                         ) : (
                           <div className="flex items-center justify-center h-full text-muted-foreground">
