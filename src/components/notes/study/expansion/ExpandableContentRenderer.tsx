@@ -140,22 +140,28 @@ ${cleanExpandedContent}
       // Store the actual range to preserve selection
       selectionRef.current = range.cloneRange();
       
-      // Calculate position next to the selection (to the right, or below if no space)
+      // Calculate position using viewport coordinates (for fixed positioning)
       const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
       const menuWidth = 320; // Approximate menu width
+      const menuHeight = 120; // Approximate menu height
       
-      let x = rect.right + 10; // Position to the right of selection
-      let y = rect.top + window.scrollY;
+      // Position menu below selection by default
+      let x = Math.min(
+        Math.max(10, rect.left + rect.width / 2 - menuWidth / 2), // Center menu on selection
+        viewportWidth - menuWidth - 10 // Keep within right edge
+      );
       
-      // If menu would go off-screen on the right, position it to the left
-      if (x + menuWidth > viewportWidth) {
-        x = rect.left - menuWidth - 10;
+      let y = rect.bottom + 10; // Position below selection
+      
+      // If menu would go off bottom of viewport, position above
+      if (y + menuHeight > viewportHeight) {
+        y = rect.top - menuHeight - 10;
       }
       
-      // If still off-screen on the left, position it below the selection
-      if (x < 16) {
-        x = Math.max(16, rect.left);
-        y = rect.bottom + window.scrollY + 10;
+      // If still off top of viewport, position in center
+      if (y < 10) {
+        y = Math.max(10, viewportHeight / 2 - menuHeight / 2);
       }
       
       const menuPosition = { x, y };
