@@ -60,12 +60,7 @@ export const ExpandableContentRenderer = ({
   // Process content with expansions inserted at correct positions
   const processedContent = useMemo(() => {
     // First preprocess the content for the specific content type
-    let preprocessedContent = preprocessContent(content, contentType);
-    
-    // Process [AI_ENHANCED] tags in the BASE content only (before expansions)
-    if (preprocessedContent.includes('[AI_ENHANCED]')) {
-      preprocessedContent = markdownToHtml(preprocessedContent);
-    }
+    const preprocessedContent = preprocessContent(content, contentType);
     
     if (expansions.length === 0) return preprocessedContent;
 
