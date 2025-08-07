@@ -137,53 +137,30 @@
   line-height: 1.6;
 }
 
-/* AI Enriched Content Styling */
-.simple-content .ai-enriched-content {
-  background: linear-gradient(135deg, hsl(152, 55%, 96%), hsl(152, 55%, 98%));
-  border-left: 4px solid #236248;
-  padding: 1.2rem;
-  margin: 1.5rem 0;
-  border-radius: 8px;
-  position: relative;
-  box-shadow: 0 2px 8px hsla(152, 55%, 20%, 0.08);
+/* AI Enhanced Content styling - Simple & PDF-friendly */
+.simple-content .ai-enhanced-simple {
+  border-left: 3px solid #236248;
+  background-color: hsl(152, 55%, 98%);
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-style: italic;
 }
 
-.simple-content .ai-enriched-content::before {
-  content: "✨ AI Enhanced";
-  position: absolute;
-  top: -8px;
-  left: 12px;
-  background: #236248;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
+.simple-content .ai-enhanced-simple p {
+  margin: 8px 0;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.simple-content .ai-enhanced-simple h1,
+.simple-content .ai-enhanced-simple h2,
+.simple-content .ai-enhanced-simple h3,
+.simple-content .ai-enhanced-simple h4,
+.simple-content .ai-enhanced-simple h5,
+.simple-content .ai-enhanced-simple h6 {
+  color: #236248 !important;
+  font-style: normal;
   font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.simple-content .ai-enriched-content h1,
-.simple-content .ai-enriched-content h2,
-.simple-content .ai-enriched-content h3,
-.simple-content .ai-enriched-content h4,
-.simple-content .ai-enriched-content h5,
-.simple-content .ai-enriched-content h6 {
-  color: #1a4c37 !important;
-  margin-top: 1rem;
-}
-
-.simple-content .ai-enriched-content p {
-  color: hsl(var(--foreground));
-  margin-bottom: 1rem;
-}
-
-.simple-content .ai-enriched-content ul,
-.simple-content .ai-enriched-content ol {
-  margin-left: 1rem;
-}
-
-.simple-content .ai-enriched-content li::marker {
-  color: #236248;
 }
 
 /* Fix for any HTML content that might have specific styling */
