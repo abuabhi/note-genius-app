@@ -90,30 +90,30 @@ export const SessionTimer = ({ isCollapsed, hideIcon = false, hideSubject = fals
   const getSessionTheme = () => {
     if (showInactivityWarning) {
       return {
-        background: 'bg-red-50 border-red-200',
-        text: 'text-red-800',
-        timeText: 'text-red-900',
-        iconColor: 'text-red-600',
-        indicator: 'bg-red-500'
+        background: 'bg-destructive/10 border-destructive/30',
+        text: 'text-destructive',
+        timeText: 'text-destructive',
+        iconColor: 'text-destructive',
+        indicator: 'bg-destructive'
       };
     }
-    
+
     if (isPaused) {
       return {
-        background: 'bg-orange-50 border-orange-200',
-        text: 'text-orange-800',
-        timeText: 'text-orange-900',
-        iconColor: 'text-orange-600',
-        indicator: 'bg-orange-500'
+        background: 'bg-muted/50 border-border',
+        text: 'text-muted-foreground',
+        timeText: 'text-foreground',
+        iconColor: 'text-muted-foreground',
+        indicator: 'bg-muted-foreground'
       };
     }
-    
+
     return {
-      background: 'bg-mint-50 border-mint-200',
-      text: 'text-mint-800',
-      timeText: 'text-mint-900',
-      iconColor: 'text-mint-600',
-      indicator: 'bg-mint-500'
+      background: 'bg-primary/5 border-primary/20',
+      text: 'text-foreground',
+      timeText: 'text-primary',
+      iconColor: 'text-primary',
+      indicator: 'bg-primary'
     };
   };
 
@@ -131,7 +131,7 @@ const theme = getSessionTheme();
     // Collapsed state - enhanced minimal indicator
     return (
       <div className={cn(
-        "bg-white border rounded-xl shadow-lg p-3 backdrop-blur-sm transition-all duration-300 hover:shadow-xl",
+        "bg-background border border-border rounded-md shadow-md p-2 backdrop-blur-sm ring-1 ring-primary/10 transition-all duration-300",
         theme.background
       )}>
         <div className="flex flex-col items-center gap-2">
@@ -162,90 +162,75 @@ const theme = getSessionTheme();
   // Expanded state - enhanced full timer
   return (
     <div className={cn(
-      "bg-white border rounded-xl shadow-lg p-4 backdrop-blur-sm transition-all duration-300 hover:shadow-xl min-w-64",
+      "bg-background border border-border rounded-md shadow-md ring-1 ring-primary/10 px-3 py-2 backdrop-blur-sm transition-all duration-300 min-w-64",
       theme.background
     )}>
-      {/* Inactivity Warning */}
+      {/* Inactivity Warning - compact */}
       {showInactivityWarning && (
-        <div className="mb-3 p-2 bg-red-100 border border-red-200 rounded-lg text-xs text-red-800">
-          <div className="flex items-center gap-2">
-            <span>⚠️ Session will auto-stop in 2 minutes</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={dismissInactivityWarning}
-              className="h-4 w-4 p-0 text-red-600 hover:text-red-800"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
+        <div className="mb-2 px-2 py-1 rounded-sm border border-destructive/30 bg-destructive/10 text-[11px] text-destructive flex items-center justify-between">
+          <span className="leading-snug">Session inactive — auto-stop soon.</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={dismissInactivityWarning}
+            className="h-6 w-6 text-destructive hover:text-destructive"
+            aria-label="Dismiss inactivity warning"
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
         </div>
       )}
 
-      {/* Main Timer Display */}
-      <div className="flex items-center gap-3 mb-4">
-        {!hideIcon && (
-          <div className="relative">
-            <div className={cn("h-6 w-6", theme.iconColor)}>
-              {getActivityIcon()}
-            </div>
-            {!isPaused && !showInactivityWarning && (
-              <div className={cn(
-                "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse",
-                theme.indicator
-              )} />
-            )}
-          </div>
-        )}
+      {/* Compact single-row bar */}
+      <div className="flex items-center gap-3">
+        {/* Status */}
+        <div className="flex items-center gap-2">
+          {!isPaused && !showInactivityWarning && <span className={cn("inline-block h-2 w-2 rounded-full animate-pulse", theme.indicator)} />}
+          {(isPaused || showInactivityWarning) && <span className={cn("inline-block h-2 w-2 rounded-full", theme.indicator)} />}
+          <span className={cn("text-xs", theme.text)}>{isPaused ? 'Paused' : showInactivityWarning ? 'Inactive' : 'Active Session'}</span>
+        </div>
+
+        <span className="h-4 w-px bg-border" />
+
+        {/* Timer */}
+        <div className={cn(emphasizeTime ? "text-base sm:text-lg md:text-xl font-mono font-bold" : "text-sm font-mono font-semibold", theme.timeText)}>
+          {formatTime(elapsedSeconds)}
+        </div>
+
+        <span className="h-4 w-px bg-border" />
+
+        {/* Title */}
         <div className="flex-1 min-w-0">
-          <div className={cn(emphasizeTime ? "text-2xl sm:text-3xl font-mono font-bold" : "text-xl font-mono font-bold", theme.timeText)}>
-            {formatTime(elapsedSeconds)}
-          </div>
-          <div className={cn("text-sm font-medium", theme.text)}>
-            {isPaused ? 'Paused' : showInactivityWarning ? 'Inactive' : 'Active Session'}
+          <div className={cn("truncate text-sm", theme.text)} title={titleToShow}>
+            {titleToShow}
           </div>
         </div>
-      </div>
 
-      {/* Session Info */}
-      <div className="mb-4">
-        <div className={cn("text-sm font-semibold truncate", theme.text)}>
-          {titleToShow}
+        {/* Controls */}
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={togglePause}
+            className="h-7 w-7"
+            aria-label={isPaused ? 'Resume session' : 'Pause session'}
+          >
+            {isPaused ? (
+              <Play className="h-4 w-4" />
+            ) : (
+              <Pause className="h-4 w-4" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleEndSession}
+            className="h-7 w-7 text-destructive hover:text-destructive"
+            aria-label="End session"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
-        {currentSubject && !hideSubject && (
-          <div className={cn("text-xs opacity-75 truncate mt-1", theme.text)}>
-            {currentSubject}
-          </div>
-        )}
-      </div>
-
-      {/* Controls */}
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={togglePause}
-          className={cn(
-            "flex-1 h-9 text-sm font-medium",
-            "hover:bg-white/70 border-current/30 transition-all duration-200"
-          )}
-        >
-          {isPaused ? (
-            <Play className="h-4 w-4 mr-2" />
-          ) : (
-            <Pause className="h-4 w-4 mr-2" />
-          )}
-          {isPaused ? 'Resume' : 'Pause'}
-        </Button>
-        
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleEndSession}
-          className="h-9 w-9 p-0 hover:bg-red-50 hover:border-red-200 transition-all duration-200"
-        >
-          <X className="h-4 w-4 text-red-500" />
-        </Button>
       </div>
     </div>
   );
