@@ -160,6 +160,12 @@ export const markdownToHtml = (markdown: string): string => {
 export const processContentForDisplay = (content: string): string => {
   if (!content) return '';
   
+  // Check if content has expansion blocks - if so, preserve them
+  if (content.includes('ai-expansion-content')) {
+    // Content has expansion blocks, process it directly as HTML without conversion
+    return content;
+  }
+  
   // If content has HTML tags, convert to clean markdown first, then back to HTML
   if (content.includes('<') && content.includes('>')) {
     const cleanMarkdown = htmlToMarkdown(content);
