@@ -131,6 +131,10 @@ export const markdownToHtml = (markdown: string): string => {
     
     // Don't wrap blocks that are already HTML elements
     if (block.match(/^<(h[1-6]|div|blockquote|ul|ol|pre|hr|li)/)) {
+      // Special handling for lists - don't add br tags between list items
+      if (block.match(/^<(ul|ol)/)) {
+        return block; // Return list blocks as-is without adding br tags
+      }
       return block.replace(/\n/g, '<br>');
     }
     
