@@ -44,27 +44,13 @@ export const ExpandableContentRenderer = ({
     removeExpansion
   } = useContentExpansion(noteId, content, contentType, noteTitle);
 
-  // Preprocess content based on type to ensure proper HTML for text selection
-  const preprocessContent = (content: string, contentType: string): string => {
-    switch (contentType) {
-      case 'markdown':
-        // Convert markdown to HTML for Original++ tab
-        return markdownToHtml(content);
-      
-      default:
-        // Return as-is for enriched/original content (let existing system handle it)
-        return content;
-    }
-  };
-
   // Process content with expansions inserted at correct positions
   const processedContent = useMemo(() => {
-    // First preprocess the content for the specific content type
-    const preprocessedContent = preprocessContent(content, contentType);
+    // Let SimpleContentRenderer handle all processing - no preprocessing needed
     
-    if (expansions.length === 0) return preprocessedContent;
+    if (expansions.length === 0) return content;
 
-    let processedText = preprocessedContent;
+    let processedText = content;
     
     // Sort expansions by position to process them in order
     const sortedExpansions = [...expansions].sort((a, b) => {
