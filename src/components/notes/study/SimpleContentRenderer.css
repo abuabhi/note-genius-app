@@ -61,9 +61,9 @@
 .simple-content ul li,
 .simple-content ol li,
 .simple-li {
-  margin-bottom: 0.25rem !important;
+  margin-bottom: 0 !important;
   margin-top: 0 !important;
-  line-height: 1.4 !important;
+  line-height: 1.2 !important;
   padding-left: 0 !important;
   display: list-item !important;
 }
