@@ -45,30 +45,37 @@
   margin-top: 0;
 }
 
-.simple-ul,
-.simple-ol,
+/* Lists - Override Tailwind Preflight with high specificity */
 .simple-content ul,
-.simple-content ol {
-  margin-bottom: 0.8rem;
-  margin-top: 0;
-  padding-left: 1.5rem;
-  list-style-type: disc;
+.simple-content ol,
+.simple-ul,
+.simple-ol {
+  margin-bottom: 0.8rem !important;
+  margin-top: 0 !important;
+  padding-left: 1.5rem !important;
+  list-style-type: disc !important;
+  list-style-position: inside !important;
 }
 
+/* List items - Maximum specificity to override Tailwind */
 .simple-content ul li,
 .simple-content ol li,
 .simple-li {
-  margin-bottom: 0.1rem;
-  margin-top: 0;
-  line-height: 1.4;
-  padding-left: 0.2rem;
+  margin-bottom: 0.25rem !important;
+  margin-top: 0 !important;
+  line-height: 1.4 !important;
+  padding-left: 0 !important;
+  display: list-item !important;
 }
 
-/* Remove margins from paragraphs inside list items */
+/* Remove ALL margins from paragraphs inside list items - Maximum specificity */
+.simple-content ul li p,
+.simple-content ol li p,
 .simple-content li p {
   margin: 0 !important;
   padding: 0 !important;
-  line-height: 1.4;
+  line-height: 1.4 !important;
+  display: inline !important;
 }
 
 /* Green bullet points */
