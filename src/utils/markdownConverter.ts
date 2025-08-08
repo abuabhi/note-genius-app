@@ -162,7 +162,7 @@ export const processContentForDisplay = (content: string): string => {
   
   // Check if content has expansion blocks - if so, preserve them
   if (content.includes('ai-expansion-content')) {
-    // Content has expansion blocks, process it directly as HTML without conversion
+    // Content has expansion blocks and is already processed HTML, return as-is
     return content;
   }
   

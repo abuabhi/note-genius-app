@@ -46,28 +46,39 @@ export const ExpandableContentRenderer = ({
 
   // Process content with expansions inserted at correct positions
   const processedContent = useMemo(() => {
-    // Let SimpleContentRenderer handle all processing - no preprocessing needed
+    // Pre-process the original content to convert AI-enhanced tags to HTML
+    // This ensures consistent formatting before combining with expansions
+    const baseProcessedContent = markdownToHtml(content);
     
-    if (expansions.length === 0) return content;
+    if (expansions.length === 0) return baseProcessedContent;
 
-    let processedText = content;
+    let processedText = baseProcessedContent;
     
     // Sort expansions by position to process them in order
+    // For HTML content, we need to find text positions more carefully
     const sortedExpansions = [...expansions].sort((a, b) => {
-      // Find position using position marker
-      const aPos = processedText.indexOf(a.originalText);
-      const bPos = processedText.indexOf(b.originalText);
+      // Create a temporary div to find text positions in HTML
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = processedText;
+      const textContent = tempDiv.textContent || tempDiv.innerText || '';
+      
+      const aPos = textContent.indexOf(a.originalText);
+      const bPos = textContent.indexOf(b.originalText);
       return aPos - bPos;
     });
 
     // Insert expansions from end to beginning to maintain position accuracy
     for (let i = sortedExpansions.length - 1; i >= 0; i--) {
       const expansion = sortedExpansions[i];
-      const position = processedText.indexOf(expansion.originalText);
       
-      if (position !== -1) {
-        const beforeText = processedText.substring(0, position + expansion.originalText.length);
-        const afterText = processedText.substring(position + expansion.originalText.length);
+      // For HTML content, we need to find and replace the text more carefully
+      // We'll look for the original text in the HTML and insert after it
+      const textToFind = expansion.originalText;
+      const textIndex = processedText.indexOf(textToFind);
+      
+      if (textIndex !== -1) {
+        const beforeText = processedText.substring(0, textIndex + textToFind.length);
+        const afterText = processedText.substring(textIndex + textToFind.length);
         
         // Clean the expanded content - keep as plain text but format for italics
         const cleanExpandedContent = expansion.expandedContent
