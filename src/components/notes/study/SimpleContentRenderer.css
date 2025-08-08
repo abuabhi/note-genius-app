@@ -52,9 +52,9 @@
 .simple-ol {
   margin-bottom: 0.8rem !important;
   margin-top: 0 !important;
-  padding-left: 1.5rem !important;
+  padding-left: 1.2rem !important;
   list-style-type: disc !important;
-  list-style-position: inside !important;
+  list-style-position: outside !important;
 }
 
 /* List items - Maximum specificity to override Tailwind */
