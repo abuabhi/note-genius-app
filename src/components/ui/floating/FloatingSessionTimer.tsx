@@ -24,6 +24,17 @@ export const FloatingSessionTimer = () => {
     isRecovering
   } = useUnifiedSessionTracker();
 
+  // Debug logging
+  console.log('🔍 [FLOATING TIMER DEBUG]', {
+    isActive,
+    isRecovering,
+    elapsedSeconds,
+    currentTitle,
+    currentSubject,
+    isPaused,
+    showInactivityWarning
+  });
+
   // Get default bottom-left position
   const getDefaultPosition = useCallback((): Position => {
     const timerHeight = 180; // Approximate timer height
