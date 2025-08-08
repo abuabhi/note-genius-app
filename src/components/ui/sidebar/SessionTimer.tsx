@@ -27,8 +27,7 @@ export const SessionTimer = ({
     currentSubject,
     isRecovering,
     togglePause,
-    endSession,
-    dismissInactivityWarning
+    endSession
   } = useUnifiedSessionTracker();
 
   // Debug logging to see what's happening with the session state
@@ -43,12 +42,10 @@ export const SessionTimer = ({
 
   // Show loading state during recovery
   if (isRecovering) {
-    return <div className="bg-background border border-success rounded-xl shadow-lg p-3 backdrop-blur-sm">
+    return <div className="relative overflow-hidden bg-gradient-to-r from-success to-primary border border-white/10 rounded-xl shadow-lg p-3 backdrop-blur-sm ring-1 ring-white/10">
         <div className="flex items-center gap-2">
-          {isCollapsed ? <Loader className="h-4 w-4 text-success animate-spin" /> : <>
-              <Loader className="h-4 w-4 text-success animate-spin" />
-              <span className="text-base text-success font-medium">Loading session...</span>
-            </>}
+          <Loader className="h-4 w-4 text-white animate-spin" />
+          {!isCollapsed && <span className="text-base text-white font-medium">Loading session...</span>}
         </div>
       </div>;
   }
@@ -117,11 +114,8 @@ export const SessionTimer = ({
   // Expanded state - enhanced full timer
   return <div className={cn("relative overflow-hidden bg-gradient-to-r from-success to-primary border border-white/10 rounded-xl shadow-lg ring-1 ring-white/10 px-4 py-3 backdrop-blur-sm transition-all duration-300 min-w-72 min-h-14 before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-white/40", theme.background)}>
       {/* Inactivity Warning - compact */}
-      {showInactivityWarning && <div className="mb-2 px-2 py-1 rounded-sm border border-white/20 bg-white/10 text-base text-white flex items-center justify-between">
-          <span className="leading-snug">Session inactive — auto-stop soon.</span>
-          <Button variant="ghost" size="icon" onClick={dismissInactivityWarning} className="h-6 w-6 text-white hover:text-white" aria-label="Dismiss inactivity warning">
-            <X className="h-3.5 w-3.5" />
-          </Button>
+      {showInactivityWarning && <div className="mb-2 px-2 py-1 rounded-sm border border-white/20 bg-white/10 text-xs md:text-sm text-white">
+          Auto pause protection: you're inactive — session will auto-pause soon.
         </div>}
 
       {/* Compact single-row bar */}

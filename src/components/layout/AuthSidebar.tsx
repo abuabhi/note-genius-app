@@ -2,7 +2,7 @@
 import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
 import { Navigation } from "@/components/ui/sidebar/Navigation";
 import { useSidebar } from "@/components/ui/sidebar";
-import { FloatingSessionTimer } from "@/components/ui/floating/FloatingSessionTimer";
+
 
 const AuthSidebar = () => {
   const { state } = useSidebar();
@@ -16,8 +16,6 @@ const AuthSidebar = () => {
         </SidebarContent>
       </Sidebar>
       
-      {/* Floating Session Timer */}
-      <FloatingSessionTimer isCollapsed={isCollapsed} />
     </div>
   );
 };
