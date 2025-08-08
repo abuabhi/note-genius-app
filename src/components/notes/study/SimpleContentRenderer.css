@@ -146,6 +146,19 @@
   font-style: italic;
 }
 
+/* Hide coloring when toggle is off */
+.simple-content.hide-coloring .ai-enhanced-simple {
+  border-left: none;
+  background-color: transparent;
+  padding: 12px 0;
+}
+
+.simple-content.hide-coloring .ai-expansion-content {
+  border-left: none;
+  background-color: transparent;
+  padding: 12px 0;
+}
+
 .simple-content .ai-enhanced-simple p {
   margin: 8px 0;
   line-height: 1.6;

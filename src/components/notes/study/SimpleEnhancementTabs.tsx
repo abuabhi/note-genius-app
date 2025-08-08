@@ -4,7 +4,7 @@ import { TextAlignType } from './hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Sparkles, FileText, List, HelpCircle, Code, RefreshCw, Clock } from 'lucide-react';
+import { Loader2, Sparkles, FileText, List, HelpCircle, Code, RefreshCw, Clock, Palette, PaletteIcon } from 'lucide-react';
 import { EnhancementType } from '@/types/enhancement';
 import { ExpandableContentRenderer } from './expansion/ExpandableContentRenderer';
 import { useEnhancementManager } from '@/hooks/useEnhancementManager';
@@ -31,6 +31,7 @@ export const SimpleEnhancementTabs = React.memo(({
   onNoteUpdate
 }: SimpleEnhancementTabsProps) => {
   const [activeTab, setActiveTab] = useState<EnhancementType>('original');
+  const [hideColoring, setHideColoring] = useState(false);
   const { generatedContent, generateEnhancement, regenerateAll, isLoading, isAnyLoading } = useEnhancementManager(note, onNoteUpdate);
 
   const hasContent = useCallback((content: string) => content && content.trim().length > 0, []);
@@ -192,27 +193,48 @@ export const SimpleEnhancementTabs = React.memo(({
                           </div>
                         </div>
                         
-                        {tab.canGenerate && (
-                          <Button
-                            onClick={() => generateEnhancement(tab.enhancementType!, tab.column!, tab.statusColumn)}
-                            disabled={isLoading(tab.enhancementType!)}
-                            variant="outline"
-                            size="sm"
-                            className="border-mint-200 bg-white hover:bg-mint-50 text-mint-700 hover:text-mint-800"
-                          >
-                            {isLoading(tab.enhancementType!) ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                Generating...
-                              </>
-                            ) : (
-                              <>
-                                <RefreshCw className="h-4 w-4 mr-2" />
-                                {tab.hasContent ? 'ReGenerate' : 'Generate'}
-                              </>
-                            )}
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {tab.value === 'enriched' && (
+                            <Button
+                              onClick={() => setHideColoring(!hideColoring)}
+                              variant="ghost"
+                              size="sm"
+                              className={`transition-all duration-200 ${
+                                hideColoring 
+                                  ? 'text-muted-foreground hover:text-foreground' 
+                                  : 'text-mint-600 hover:text-mint-700 bg-mint-50/50 hover:bg-mint-100/50'
+                              }`}
+                              title={hideColoring ? 'Show enhanced content coloring' : 'Hide enhanced content coloring'}
+                            >
+                              {hideColoring ? (
+                                <PaletteIcon className="h-4 w-4" />
+                              ) : (
+                                <Palette className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
+                          {tab.canGenerate && (
+                            <Button
+                              onClick={() => generateEnhancement(tab.enhancementType!, tab.column!, tab.statusColumn)}
+                              disabled={isLoading(tab.enhancementType!)}
+                              variant="outline"
+                              size="sm"
+                              className="border-mint-200 bg-white hover:bg-mint-50 text-mint-700 hover:text-mint-800"
+                            >
+                              {isLoading(tab.enhancementType!) ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                  Generating...
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCw className="h-4 w-4 mr-2" />
+                                  {tab.hasContent ? 'ReGenerate' : 'Generate'}
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -229,6 +251,7 @@ export const SimpleEnhancementTabs = React.memo(({
                             contentType={tab.value}
                             noteTitle={note.title}
                             noteId={note.id}
+                            hideColoring={hideColoring}
                           />
                         ) : (
                           <div className="flex items-center justify-center h-full text-muted-foreground">

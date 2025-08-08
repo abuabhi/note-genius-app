@@ -32,7 +32,6 @@ export const ExpandableContentRenderer = ({
   const [selectedText, setSelectedText] = useState('');
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [isMenuVisible, setIsMenuVisible] = useState(false);
-  const [localHideColoring, setLocalHideColoring] = useState(hideColoring);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -94,7 +93,7 @@ export const ExpandableContentRenderer = ({
           .filter(line => line.length > 0)
           .join('\n\n');
 
-        const expansionClass = localHideColoring ? 'ai-expansion-content-neutral' : 'ai-expansion-content';
+        const expansionClass = hideColoring ? 'ai-expansion-content-neutral' : 'ai-expansion-content';
         const expansionBlock = `
 
 <div class="${expansionClass}">
@@ -112,7 +111,7 @@ ${cleanExpandedContent}
     }
 
     return processedText;
-  }, [content, expansions, contentType, localHideColoring]);
+  }, [content, expansions, contentType, hideColoring]);
 
   // DEBOUNCED selection handler to prevent multiple rapid calls
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -250,7 +249,7 @@ ${cleanExpandedContent}
           content={processedContent}
           fontSize={fontSize} // Use dynamic font size from props
           textAlign={textAlign}
-          className={`w-full ${localHideColoring ? 'hide-coloring' : ''}`}
+          className={`w-full ${hideColoring ? 'hide-coloring' : ''}`}
         />
       </div>
 
@@ -270,8 +269,7 @@ ${cleanExpandedContent}
           contentType
         } : null}
         isRegenerating={isRegenerating}
-        hideColoring={localHideColoring}
-        onColoringToggle={setLocalHideColoring}
+        hideColoring={hideColoring}
         onConfirm={confirmExpansion}
         onRegenerate={regenerateExpansion}
         onCancel={cancelExpansion}
