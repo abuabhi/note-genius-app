@@ -68,19 +68,39 @@ export const cleanYouTubeContent = (content: string): string => {
  * Database migration utility for cleaning YouTube note content
  */
 export const migrateYouTubeNoteContent = async (noteId: string, currentContent: string) => {
+  // Try to extract a YouTube ID from the content BEFORE cleaning
+  const extractYouTubeId = (text: string): string | null => {
+    if (!text) return null;
+    const urlMatch = text.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/);
+    if (urlMatch?.[1]) return urlMatch[1];
+    const idMatch = text.match(/(?:\*\*\s*)?(?:Video ID|YouTube ID)(?:\s*\*\*)?\s*:\s*([\w-]{11})/i);
+    if (idMatch?.[1]) return idMatch[1];
+    return null;
+  };
+
+  const youtubeId = extractYouTubeId(currentContent);
+  const canonicalUrl = youtubeId ? `https://www.youtube.com/watch?v=${youtubeId}` : null;
+
   const cleanedContent = cleanYouTubeContent(currentContent);
   
-  // Only update if content actually changed
-  if (cleanedContent !== currentContent) {
+  // Only update if content actually changed OR we found a canonical URL to persist
+  if (cleanedContent !== currentContent || canonicalUrl) {
     const { supabase } = await import('@/integrations/supabase/client');
+    
+    const updatePayload: Record<string, any> = { content: cleanedContent };
+    if (canonicalUrl) {
+      updatePayload.video_url = canonicalUrl;
+      // Also ensure the source_type is set to 'youtube' if not already
+      updatePayload.source_type = 'youtube';
+    }
     
     const { error } = await supabase
       .from('notes')
-      .update({ content: cleanedContent })
+      .update(updatePayload)
       .eq('id', noteId);
     
     if (error) {
-      console.error('Error updating note content:', error);
+      console.error('Error updating note content/YouTube URL:', error);
       throw error;
     }
     

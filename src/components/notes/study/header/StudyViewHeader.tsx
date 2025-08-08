@@ -65,11 +65,12 @@ export const StudyViewHeader = ({
   // Derive a usable YouTube URL if the stored one is missing
   const extractYouTubeUrl = (text?: string | null): string | null => {
     if (!text) return null;
-    const regex = /(?:https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/))([\w-]{11})/;
-    const match = text.match(regex);
-    if (match?.[1]) {
-      return `https://www.youtube.com/watch?v=${match[1]}`;
-    }
+    // Match common YouTube URL formats
+    const urlMatch = text.match(/(?:https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/))([\w-]{11})/);
+    if (urlMatch?.[1]) return `https://www.youtube.com/watch?v=${urlMatch[1]}`;
+    // Match "Video ID:" style lines
+    const idMatch = text.match(/(?:\*\*\s*)?(?:Video ID|YouTube ID)(?:\s*\*\*)?\s*:\s*([\w-]{11})/i);
+    if (idMatch?.[1]) return `https://www.youtube.com/watch?v=${idMatch[1]}`;
     return null;
   };
 
@@ -102,7 +103,7 @@ export const StudyViewHeader = ({
               <StudyViewConversionDropdown note={note} />
               <StudyViewExportDropdown note={note} />
               
-{note.sourceType === 'youtube' && youtubeUrl && (
+              {youtubeUrl && (
                 <StudyViewYouTubeButton videoUrl={youtubeUrl} />
               )}
             </>

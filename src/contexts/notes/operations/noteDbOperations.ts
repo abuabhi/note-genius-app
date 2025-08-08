@@ -31,7 +31,10 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
         enriched_content: noteData.enriched_content,
         enriched_content_generated_at: noteData.enriched_content_generated_at,
         enriched_status: noteData.enriched_status, // Only set if explicitly provided
-        subject_id: noteData.subject_id
+        subject_id: noteData.subject_id,
+        // YouTube-specific fields (persist if provided)
+        video_url: noteData.video_url,
+        video_metadata: noteData.video_metadata as any
       })
       .select()
       .single();
@@ -48,7 +51,7 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
       date: new Date(noteInsertData.date).toISOString().split('T')[0],
       subject: noteInsertData.subject, // Map subject column back to subject in our app model
       content: noteInsertData.content,
-      sourceType: noteInsertData.source_type as 'manual' | 'scan' | 'import',
+      sourceType: noteInsertData.source_type as 'manual' | 'scan' | 'import' | 'youtube',
       archived: noteInsertData.archived || false,
       pinned: noteInsertData.pinned || false,
       tags: noteData.tags || [],
@@ -68,6 +71,9 @@ export const addNoteToDatabase = async (noteData: Omit<Note, 'id'>): Promise<Not
       enriched_content_generated_at: noteInsertData.enriched_content_generated_at,
       enriched_status: noteInsertData.enriched_status as 'pending' | 'generating' | 'completed' | 'failed',
       subject_id: noteInsertData.subject_id,
+      // YouTube-specific returned fields
+      video_url: noteInsertData.video_url,
+      video_metadata: noteInsertData.video_metadata as Note['video_metadata'],
       scanData: noteData.sourceType === 'scan' && noteData.scanData ? {
         originalImageUrl: noteData.scanData.originalImageUrl,
         recognizedText: noteData.scanData.recognizedText,
@@ -160,6 +166,10 @@ export const updateNoteInDatabase = async (id: string, updatedNote: Partial<Note
   if (updatedNote.enriched_content !== undefined) noteUpdateData.enriched_content = updatedNote.enriched_content;
   if (updatedNote.enriched_content_generated_at !== undefined) noteUpdateData.enriched_content_generated_at = updatedNote.enriched_content_generated_at;
   if (updatedNote.enriched_status !== undefined) noteUpdateData.enriched_status = updatedNote.enriched_status;
+
+  // YouTube-specific fields
+  if (updatedNote.video_url !== undefined) noteUpdateData.video_url = updatedNote.video_url;
+  if (updatedNote.video_metadata !== undefined) noteUpdateData.video_metadata = updatedNote.video_metadata;
 
   console.log('📝 Database update payload:', {
     id,
