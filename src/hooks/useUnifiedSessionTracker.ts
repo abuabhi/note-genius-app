@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { useSessionPersistence } from './useSessionPersistence';
+import { useTabVisibility } from '@/hooks/performance/useTabVisibility';
 
 export interface SessionData {
   title: string;
@@ -54,6 +55,24 @@ export const useUnifiedSessionTracker = () => {
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<Date>(new Date());
   const recoveryAttempted = useRef(false);
+
+  // Track tab visibility to implement away behavior
+  const isTabVisible = useTabVisibility();
+
+  // Away handling
+  const tabHiddenAtRef = useRef<number | null>(null);
+  const awayIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const autoPausedRef = useRef<boolean>(false);
+
+  // Configurable thresholds via settings (localStorage)
+  const getAwayThresholds = () => {
+    const pause = Number(localStorage.getItem('settings.awayPauseMinutes')) || 30;
+    const end = Number(localStorage.getItem('settings.awayEndMinutes')) || 60;
+    return {
+      pauseMinutes: Math.max(1, pause),
+      endMinutes: Math.max(1, end),
+    };
+  };
 
   // Session recovery on app load
   useEffect(() => {
@@ -150,8 +169,9 @@ export const useUnifiedSessionTracker = () => {
     };
   }, [sessionState.isActive, sessionState.isPaused, sessionState.isRecovering]);
 
-  // Inactivity detection
+  // Inactivity detection (visible tab only)
   useEffect(() => {
+    if (!isTabVisible) return;
     if (sessionState.isActive && !sessionState.isPaused && !sessionState.isRecovering) {
       const checkInactivity = () => {
         const timeSinceLastActivity = Date.now() - lastActivityRef.current.getTime();
@@ -176,7 +196,53 @@ export const useUnifiedSessionTracker = () => {
         clearInterval(inactivityTimerRef.current);
       }
     };
-  }, [sessionState.isActive, sessionState.isPaused, sessionState.isRecovering]);
+  }, [sessionState.isActive, sessionState.isPaused, sessionState.isRecovering, isTabVisible]);
+
+  // Away handling: pause after pauseMinutes and end after endMinutes when tab is hidden
+  useEffect(() => {
+    if (!sessionState.isActive || sessionState.isRecovering) return;
+
+    if (isTabVisible) {
+      // Reset away tracking when user returns
+      tabHiddenAtRef.current = null;
+      autoPausedRef.current = false;
+      if (awayIntervalRef.current) {
+        clearInterval(awayIntervalRef.current);
+        awayIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // Start tracking when tab becomes hidden
+    tabHiddenAtRef.current = Date.now();
+    autoPausedRef.current = false;
+
+    awayIntervalRef.current = setInterval(() => {
+      const { pauseMinutes, endMinutes } = getAwayThresholds();
+      const hiddenAt = tabHiddenAtRef.current || Date.now();
+      const awayMs = Date.now() - hiddenAt;
+
+      if (awayMs >= endMinutes * 60 * 1000) {
+        // End session once and cleanup
+        if (awayIntervalRef.current) {
+          clearInterval(awayIntervalRef.current);
+          awayIntervalRef.current = null;
+        }
+        endSession(`Auto-ended after being away for ${endMinutes} minutes`);
+      } else if (!autoPausedRef.current && awayMs >= pauseMinutes * 60 * 1000) {
+        autoPausedRef.current = true;
+        setSessionState(prev => prev.isPaused ? prev : ({ ...prev, isPaused: true }));
+        toast.info('Session paused due to being away');
+      }
+    }, 30000);
+
+    return () => {
+      if (awayIntervalRef.current) {
+        clearInterval(awayIntervalRef.current);
+        awayIntervalRef.current = null;
+      }
+    };
+  }, [isTabVisible, sessionState.isActive, sessionState.isRecovering]);
 
   // Activity tracking
   const trackActivity = useCallback(() => {
