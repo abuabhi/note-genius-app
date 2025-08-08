@@ -303,72 +303,118 @@ class ExportService {
   }
 
   private preserveFormattingForDOCX(content: string): { paragraphs: any[] } {
+    // Build properly formatted DOCX paragraphs from mixed HTML/Markdown content
     const paragraphs: any[] = [];
-    
-    // Remove AI enhancement tags FIRST - critical for DOCX
-    let cleanContent = content
+
+    // 1) Clean content: strip AI/QUESTION tags, convert HTML blocks to newlines, remove leftover tags, decode entities
+    let txt = content
+      // AI/Enhanced wrappers
       .replace(/\[(?:AI_)?(?:ENHANCED|ENRICHED)\]([\s\S]*?)\[\/(?:AI_)?(?:ENHANCED|ENRICHED)\]/gi, '$1')
       .replace(/<div[^>]*class[^>]*ai[^>]*enhanced[^>]*>[\s\S]*?<\/div>/gi, '')
       .replace(/<div[^>]*class[^>]*enhanced[^>]*>[\s\S]*?<\/div>/gi, '')
       .replace(/\[(?:ENHANCED|ENRICHED|AI_ENHANCED)\]/gi, '')
       .replace(/\[\/(?:ENHANCED|ENRICHED|AI_ENHANCED)\]/gi, '')
-      // REMOVE QUESTION FORMATTING TAGS - critical fix for DOCX
+      // QUESTION tags
       .replace(/\*\*QUESTION\*\*/g, '')
-      .replace(/\*\*ENDQUESTION\*\*/g, '');
-    
-    // Split content by major elements (headers, paragraphs, lists)
-    const htmlContent = cleanContent
-      .replace(/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/g, '||HEADER$1||$2||ENDHEADER||')
-      .replace(/<p[^>]*>(.*?)<\/p>/g, '||PARAGRAPH||$1||ENDPARAGRAPH||')
-      .replace(/<ul[^>]*>(.*?)<\/ul>/g, '||LIST||$1||ENDLIST||')
-      .replace(/<li[^>]*>(.*?)<\/li>/g, '||LISTITEM||$1||ENDLISTITEM||');
+      .replace(/\*\*ENDQUESTION\*\*/g, '')
+      // Convert some HTML structure to text
+      .replace(/<br\s*\/?>(?=\n)?/gi, '\n')
+      .replace(/<\/(p|div|section)>/gi, '\n\n')
+      .replace(/<(p|div|section)[^>]*>/gi, '')
+      .replace(/<\/(h[1-6])>/gi, '\n\n')
+      .replace(/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/gi, (m, lvl, t) => `\n\n#${'#'.repeat(Math.max(0, (+lvl - 1)))} ${t}\n\n`)
+      .replace(/<ul[^>]*>/gi, '\n')
+      .replace(/<\/ul>/gi, '\n')
+      .replace(/<ol[^>]*>/gi, '\n')
+      .replace(/<\/ol>/gi, '\n')
+      .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, (m, t) => `• ${t}\n`)
+      // Remove any other tags
+      .replace(/<[^>]+>/g, '')
+      // Decode common entities
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      // Normalize excess blank lines
+      .replace(/\r\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
 
-    const parts = htmlContent.split(/\|\|[A-Z]+\|\|/);
-    
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i].trim();
-      if (!part) continue;
+    // 2) Helpers
+    const makeRuns = (raw: string): TextRun[] => {
+      // Protect bold first
+      let marked = raw.replace(/\*\*([^*]+)\*\*/g, 'B_OPEN$1B_CLOSE');
+      // Safe italics (avoid bullet-leading asterisks)
+      marked = marked.replace(/(^|[^*])\*([^*\n]+?)\*/g, (m, pre, inner) => `${pre}I_OPEN${inner}I_CLOSE`);
 
-      if (part.match(/^HEADER([1-6])/)) {
-        const level = parseInt(part.match(/^HEADER([1-6])/)?.[1] || '1');
-        const text = parts[i + 1]?.replace(/\|\|ENDHEADER\|\|/, '') || '';
-        paragraphs.push(new Paragraph({
-          children: [new TextRun({ text: text.trim(), bold: true, size: 28 - (level * 2) })],
-          spacing: { before: 240, after: 120 }
-        }));
-        i++; // Skip the text part
-      } else if (part === 'PARAGRAPH') {
-        const text = parts[i + 1]?.replace(/\|\|ENDPARAGRAPH\|\|/, '') || '';
-        const cleanText = text.replace(/<[^>]+>/g, '').trim();
-        if (cleanText) {
-          paragraphs.push(new Paragraph({
-            children: [new TextRun({ text: cleanText, size: 22 })],
-            spacing: { after: 120 }
-          }));
-        }
-        i++; // Skip the text part
-      } else if (part === 'LISTITEM') {
-        const text = parts[i + 1]?.replace(/\|\|ENDLISTITEM\|\|/, '') || '';
-        const cleanText = text.replace(/<[^>]+>/g, '').trim();
-        if (cleanText) {
-          paragraphs.push(new Paragraph({
-            children: [new TextRun({ text: `• ${cleanText}`, size: 22 })],
-            indent: { left: 720 },
-            spacing: { after: 60 }
-          }));
-        }
-        i++; // Skip the text part
+      const parts = marked.split(/(B_OPEN|B_CLOSE|I_OPEN|I_CLOSE)/);
+      const runs: TextRun[] = [] as any;
+      let bold = false, ital = false;
+      for (let i = 0; i < parts.length; i++) {
+        const token = parts[i];
+        if (token === 'B_OPEN') { bold = true; continue; }
+        if (token === 'B_CLOSE') { bold = false; continue; }
+        if (token === 'I_OPEN') { ital = true; continue; }
+        if (token === 'I_CLOSE') { ital = false; continue; }
+        if (!token) continue;
+        runs.push(new TextRun({ text: token, bold, italics: ital, size: 22 }));
       }
+      return runs;
+    };
+
+    const pushParagraph = (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      paragraphs.push(new Paragraph({ children: makeRuns(trimmed), spacing: { after: 120 } }));
+    };
+
+    const pushBullet = (text: string) => {
+      const t = text.replace(/^([•*+\-]\s+)/, '').trim();
+      paragraphs.push(new Paragraph({
+        children: [new TextRun({ text: '• ', bold: true, size: 22 }), ...makeRuns(t)],
+        indent: { left: 720 },
+        spacing: { after: 60 },
+      }));
+    };
+
+    const pushNumbered = (n: string, text: string) => {
+      const prefix = `${n}. `;
+      paragraphs.push(new Paragraph({
+        children: [new TextRun({ text: prefix, bold: true, size: 22 }), ...makeRuns(text.trim())],
+        indent: { left: 720 },
+        spacing: { after: 60 },
+      }));
+    };
+
+    // 3) Line-based parsing
+    const lines = txt.split('\n');
+    for (let raw of lines) {
+      const line = raw.trimRight();
+      if (!line.trim()) { paragraphs.push(new Paragraph({ children: [new TextRun({ text: ' ', size: 2 })] })); continue; }
+
+      // Headings in markdown style: remove ### but keep emphasis
+      const h = line.match(/^\s*#{1,6}\s+(.*)$/);
+      if (h) {
+        const text = h[1].trim();
+        paragraphs.push(new Paragraph({ children: makeRuns(text), spacing: { before: 240, after: 120 } }));
+        continue;
+      }
+
+      // Bullets: -, *, +, •
+      if (/^\s*[•*+\-]\s+/.test(line)) { pushBullet(line); continue; }
+
+      // Numbered: 1. 2) etc
+      const num = line.match(/^\s*(\d+)[\.)]\s+(.*)$/);
+      if (num) { pushNumbered(num[1], num[2]); continue; }
+
+      // Plain paragraph
+      pushParagraph(line);
     }
 
-    // If no structured content found, create a simple paragraph
     if (paragraphs.length === 0) {
-      const cleanText = content.replace(/<[^>]+>/g, '').trim();
-      if (cleanText) {
-        paragraphs.push(new Paragraph({
-          children: [new TextRun({ text: cleanText, size: 22 })],
-        }));
-      }
+      pushParagraph(txt);
     }
 
     return { paragraphs };
@@ -451,8 +497,7 @@ class ExportService {
       }],
     });
 
-    const buffer = await Packer.toBuffer(doc);
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const blob = await Packer.toBlob(doc);
     
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
