@@ -6,7 +6,7 @@ import { TextAlignType } from '../hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { SimpleContentRenderer } from '../SimpleContentRenderer';
-import { markdownToHtml } from '@/utils/markdownConverter';
+import { processContentForDisplay } from '@/utils/markdownConverter';
 
 interface ExpandableContentRendererProps {
   content: string;
@@ -48,7 +48,7 @@ export const ExpandableContentRenderer = ({
   const processedContent = useMemo(() => {
     // Pre-process the original content to convert AI-enhanced tags to HTML
     // This ensures consistent formatting before combining with expansions
-    const baseProcessedContent = markdownToHtml(content);
+    const baseProcessedContent = processContentForDisplay(content);
     
     if (expansions.length === 0) return baseProcessedContent;
 
