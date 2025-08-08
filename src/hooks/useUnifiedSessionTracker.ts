@@ -60,7 +60,9 @@ export const useUnifiedSessionTracker = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<Date>(new Date());
-  const recoveryAttempted = useRef(false);
+  const recoveryAttempts = useRef(0);
+  const maxRecoveryAttempts = 3;
+  const recoveryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Track tab visibility to implement away behavior
   const isTabVisible = useTabVisibility();
@@ -92,16 +94,23 @@ export const useUnifiedSessionTracker = () => {
     };
   };
 
-  // Session recovery on app load
+  // Session recovery with retry logic
   useEffect(() => {
-    const attemptRecovery = async () => {
-      if (!user || recoveryAttempted.current) {
-        console.log('🔄 [SESSION RECOVERY] Skipping recovery - user:', !!user, 'already attempted:', recoveryAttempted.current);
+    const attemptRecoveryWithRetry = async (attemptNumber = 1) => {
+      if (!user) {
+        console.log('🔄 [SESSION RECOVERY] No user available, resetting recovery state');
+        recoveryAttempts.current = 0;
+        setSessionState(prev => ({ ...prev, isRecovering: false }));
+        return;
+      }
+
+      if (attemptNumber > maxRecoveryAttempts) {
+        console.log('🔄 [SESSION RECOVERY] Max recovery attempts reached, giving up');
+        setSessionState(prev => ({ ...prev, isRecovering: false }));
         return;
       }
       
-      recoveryAttempted.current = true;
-      console.log('🔄 [SESSION RECOVERY] Attempting to recover active session for user:', user.id);
+      console.log(`🔄 [SESSION RECOVERY] Attempt ${attemptNumber}/${maxRecoveryAttempts} for user:`, user.id);
       
       try {
         const recoveredSession = await recoverActiveSession();
@@ -128,23 +137,45 @@ export const useUnifiedSessionTracker = () => {
             isRecovering: false
           };
           
-          console.log('🔄 [SESSION RECOVERY] Setting session state:', recoveredState);
           setSessionState(recoveredState);
           broadcastState(recoveredState);
+          recoveryAttempts.current = 0;
           toast.success('Study session resumed');
         } else {
           console.log('ℹ️ [SESSION RECOVERY] No active session found');
           setSessionState(prev => ({ ...prev, isRecovering: false }));
+          recoveryAttempts.current = 0;
         }
       } catch (error) {
-        console.error('❌ [SESSION RECOVERY] Error during recovery:', error);
-        setSessionState(prev => ({ ...prev, isRecovering: false }));
+        console.error(`❌ [SESSION RECOVERY] Error during recovery attempt ${attemptNumber}:`, error);
+        
+        if (attemptNumber < maxRecoveryAttempts) {
+          const retryDelay = Math.min(1000 * Math.pow(2, attemptNumber - 1), 5000); // Exponential backoff, max 5s
+          console.log(`🔄 [SESSION RECOVERY] Retrying in ${retryDelay}ms...`);
+          
+          recoveryTimeoutRef.current = setTimeout(() => {
+            attemptRecoveryWithRetry(attemptNumber + 1);
+          }, retryDelay);
+        } else {
+          setSessionState(prev => ({ ...prev, isRecovering: false }));
+          recoveryAttempts.current = 0;
+        }
       }
     };
 
-    // Add a small delay to ensure auth is fully loaded
-    const timeout = setTimeout(attemptRecovery, 100);
-    return () => clearTimeout(timeout);
+    // Reset recovery attempts when user changes
+    if (user) {
+      recoveryAttempts.current = 0;
+      // Increase initial delay to 500ms to ensure auth is fully loaded
+      const timeout = setTimeout(() => attemptRecoveryWithRetry(), 500);
+      return () => {
+        clearTimeout(timeout);
+        if (recoveryTimeoutRef.current) {
+          clearTimeout(recoveryTimeoutRef.current);
+          recoveryTimeoutRef.current = null;
+        }
+      };
+    }
   }, [user, recoverActiveSession]);
 
   // Persist session state changes

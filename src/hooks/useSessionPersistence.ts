@@ -15,7 +15,6 @@ interface PersistedSessionState {
 
 export const useSessionPersistence = () => {
   const { user } = useAuth();
-  const recoveryAttempted = useRef(false);
 
   const saveSessionState = (sessionState: PersistedSessionState) => {
     if (typeof window !== 'undefined') {
@@ -41,22 +40,25 @@ export const useSessionPersistence = () => {
   };
 
   const recoverActiveSession = async () => {
-    if (!user || recoveryAttempted.current) {
-      console.log('🔄 [SESSION PERSISTENCE] Skipping recovery - user:', !!user, 'already attempted:', recoveryAttempted.current);
+    if (!user) {
+      console.log('🔄 [SESSION PERSISTENCE] No user available for recovery');
       return null;
     }
     
-    recoveryAttempted.current = true;
-    console.log('🔄 [SESSION PERSISTENCE] Starting session recovery for user:', user.id);
+    console.log('🔄 [SESSION PERSISTENCE] Starting session recovery for user:', user.id, 'at', new Date().toISOString());
     
     try {
-      // First check localStorage
+      // Clear any stale localStorage data first
       const persistedSession = getPersistedSession();
-      console.log('🔄 [SESSION PERSISTENCE] LocalStorage session:', persistedSession);
+      if (persistedSession) {
+        console.log('🔄 [SESSION PERSISTENCE] Clearing stale localStorage session:', persistedSession.sessionId);
+        clearPersistedSession();
+      }
       
-      // Then check database for active sessions
+      // Query database for active sessions with timeout handling
       console.log('🔄 [SESSION PERSISTENCE] Querying database for active sessions...');
-      const { data: activeSessions, error } = await supabase
+      
+      const queryPromise = supabase
         .from('study_sessions')
         .select('*')
         .eq('user_id', user.id)
@@ -64,30 +66,62 @@ export const useSessionPersistence = () => {
         .order('start_time', { ascending: false })
         .limit(1);
 
+      // Add timeout to database query
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database query timeout')), 10000)
+      );
+
+      const { data: activeSessions, error } = await Promise.race([
+        queryPromise,
+        timeoutPromise
+      ]) as any;
+
       if (error) {
-        console.error('❌ [SESSION PERSISTENCE] Error checking for active sessions:', error);
-        return null;
+        console.error('❌ [SESSION PERSISTENCE] Database query error:', error);
+        throw error;
       }
 
-      console.log('🔄 [SESSION PERSISTENCE] Database query result:', activeSessions);
+      console.log('🔄 [SESSION PERSISTENCE] Database query completed:', {
+        sessionsFound: activeSessions?.length || 0,
+        sessions: activeSessions
+      });
 
       // If we have an active session in DB, return it
       if (activeSessions && activeSessions.length > 0) {
         const dbSession = activeSessions[0];
-        console.log('✅ [SESSION PERSISTENCE] Found active session in DB:', dbSession.id);
+        console.log('✅ [SESSION PERSISTENCE] Found active session:', {
+          id: dbSession.id,
+          title: dbSession.title,
+          startTime: dbSession.start_time,
+          activityType: dbSession.activity_type
+        });
         
-        // Calculate elapsed time since start
+        // Calculate elapsed time since start with validation
         const startTime = new Date(dbSession.start_time);
-        const elapsedSeconds = Math.floor((Date.now() - startTime.getTime()) / 1000);
+        const now = Date.now();
+        const elapsedMs = now - startTime.getTime();
+        
+        // Validate elapsed time (max 24 hours to prevent invalid sessions)
+        if (elapsedMs > 24 * 60 * 60 * 1000) {
+          console.warn('⚠️ [SESSION PERSISTENCE] Session too old, marking as inactive');
+          // Mark session as inactive in database
+          await supabase
+            .from('study_sessions')
+            .update({ is_active: false, end_time: new Date().toISOString() })
+            .eq('id', dbSession.id);
+          return null;
+        }
+        
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
         
         const recoveredSession = {
           sessionId: dbSession.id,
           startTime: dbSession.start_time,
-          title: dbSession.title,
+          title: dbSession.title || 'Study Session',
           subject: dbSession.subject,
           activityType: dbSession.activity_type || 'general',
           studyPlanId: dbSession.study_plan_id,
-          elapsedSeconds
+          elapsedSeconds: Math.max(0, elapsedSeconds)
         };
 
         console.log('🔄 [SESSION PERSISTENCE] Recovered session data:', recoveredSession);
@@ -98,16 +132,17 @@ export const useSessionPersistence = () => {
         return recoveredSession;
       }
 
-      // If no DB session but we have persisted data, clean it up
-      if (persistedSession) {
-        console.log('🔄 [SESSION PERSISTENCE] Cleaning up stale localStorage data');
-        clearPersistedSession();
-      }
-
-      console.log('ℹ️ [SESSION PERSISTENCE] No active session found');
+      console.log('ℹ️ [SESSION PERSISTENCE] No active session found in database');
       return null;
     } catch (error) {
-      console.error('❌ [SESSION PERSISTENCE] Error recovering session:', error);
+      console.error('❌ [SESSION PERSISTENCE] Recovery error:', {
+        error: error instanceof Error ? error.message : error,
+        userId: user?.id,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Clear potentially corrupted localStorage
+      clearPersistedSession();
       return null;
     }
   };
