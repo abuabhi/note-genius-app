@@ -282,31 +282,30 @@ serve(async (req) => {
       
       // Track AI enrichment usage
       try {
-        const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        });
-        
-        const currentDate = new Date();
-        const monthYear = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-        
-        const { error: usageError } = await supabase
-          .from('note_enrichment_usage')
-          .insert({
-            user_id: user!.id,
-            note_id: noteId,
-            enhancement_type: enhancementType,
-            tokens_used: tokenUsage?.totalTokens || 0,
-            month_year: monthYear,
-            llm_provider: 'openai'
-          });
-          
-        if (usageError) {
-          console.error(`❌ [${requestId}] Failed to record usage:`, usageError);
+        const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+        if (!serviceRoleKey) {
+          console.error(`❌ [${requestId}] SERVICE ROLE key missing - cannot record usage`);
         } else {
-          console.log(`✅ [${requestId}] Usage tracked successfully`);
+          const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
+            auth: { autoRefreshToken: false, persistSession: false }
+          });
+          const currentDate = new Date();
+          const monthYear = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+          const { error: usageError } = await serviceClient
+            .from('note_enrichment_usage')
+            .insert({
+              user_id: user!.id,
+              note_id: noteId,
+              enhancement_type: enhancementType,
+              tokens_used: tokenUsage?.totalTokens || 0,
+              month_year: monthYear,
+              llm_provider: 'openai'
+            });
+          if (usageError) {
+            console.error(`❌ [${requestId}] Failed to record usage:`, usageError);
+          } else {
+            console.log(`✅ [${requestId}] Usage tracked successfully`);
+          }
         }
       } catch (trackingError) {
         console.error(`❌ [${requestId}] Error tracking usage:`, trackingError);

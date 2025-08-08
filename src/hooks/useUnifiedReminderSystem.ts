@@ -58,7 +58,7 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
     queryFn: async () => {
       if (!user?.id) return [];
 
-      console.log('🔄 Fetching ACTIVE reminders only via UNIFIED SYSTEM...');
+      console.log('🔄 Fetching PENDING reminders only via UNIFIED SYSTEM...');
       
       const { data, error } = await supabase
         .from('reminders')
@@ -80,7 +80,7 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
           goals:goal_id(id, title)
         `)
         .eq('user_id', user.id)
-        .eq('status', 'active')
+        .eq('status', 'pending')
         .order('reminder_time', { ascending: true, nullsFirst: false })
         .limit(limit);
 
@@ -89,7 +89,7 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
         throw error;
       }
 
-      console.log(`✅ UNIFIED SYSTEM fetched ${data?.length || 0} active reminders`);
+      console.log(`✅ UNIFIED SYSTEM fetched ${data?.length || 0} pending reminders`);
       return data as SimpleReminder[] || [];
     },
     enabled: !!user?.id,
@@ -235,7 +235,7 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id)
-        .eq('status', 'active');
+        .eq('status', 'pending');
 
       if (error) throw error;
       
