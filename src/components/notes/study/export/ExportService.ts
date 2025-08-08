@@ -200,95 +200,101 @@ class ExportService {
     pdf.setFontSize(fontSize);
     pdf.setFont(undefined, 'normal');
     const formattedContent = this.preserveFormattingForPDF(content, contentType);
-    const lines = pdf.splitTextToSize(formattedContent, maxLineWidth);
-    
-    let yPosition = 65;
-    lines.forEach((line: string) => {
+
+    const ensureRoom = () => {
       if (yPosition > contentAreaHeight) {
-        // Add footer to current page
         this.addFooterToPDF(pdf, pageWidth, pageHeight, margin);
         pdf.addPage();
-        // COMPLETE font state reset for new page
         pdf.setFontSize(fontSize);
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(0, 0, 0);
         yPosition = margin;
       }
-      
-      // Handle different text styles
-      if (line.includes('PDFQUESTION') && line.includes('ENDPDFQUESTION')) {
-        // Handle questions with bold and green formatting
-        const questionText = line.replace(/PDFQUESTION/, '').replace(/ENDPDFQUESTION/, '');
-        pdf.setFont(undefined, 'bold');
-        pdf.setTextColor(62, 180, 137); // dark green
-        pdf.text(questionText, margin, yPosition);
-        // CRITICAL: Reset font state immediately after special formatting
-        pdf.setFont(undefined, 'normal');
-        pdf.setTextColor(0, 0, 0);
-        pdf.setFontSize(fontSize);
-      } else if (line.includes('PDFITALIC') && line.includes('ENDPDFITALIC')) {
-        // Handle italic text
-        const beforeItalic = line.substring(0, line.indexOf('PDFITALIC'));
-        const italicText = line.substring(line.indexOf('PDFITALIC') + 9, line.indexOf('ENDPDFITALIC'));
-        const afterItalic = line.substring(line.indexOf('ENDPDFITALIC') + 12);
-        
-        // Render before italic (if any)
-        if (beforeItalic.trim()) {
+    };
+
+    const lineHeight = fontSize * 0.7;
+
+    const drawInlineText = (text: string, x: number, y: number, maxWidth: number) => {
+      // Simple inline italic handler (single pair per line support)
+      if (text.includes('PDFITALIC') && text.includes('ENDPDFITALIC')) {
+        const before = text.substring(0, text.indexOf('PDFITALIC'));
+        const italic = text.substring(text.indexOf('PDFITALIC') + 9, text.indexOf('ENDPDFITALIC'));
+        const after = text.substring(text.indexOf('ENDPDFITALIC') + 12);
+
+        let cursorX = x;
+        if (before) {
           pdf.setFont(undefined, 'normal');
-          pdf.text(beforeItalic, margin, yPosition);
+          pdf.text(before, cursorX, y);
+          cursorX += pdf.getTextWidth(before);
         }
-        
-        // Render italic text
-        pdf.setFont(undefined, 'italic');
-        const beforeWidth = beforeItalic ? pdf.getTextWidth(beforeItalic) : 0;
-        pdf.text(italicText, margin + beforeWidth, yPosition);
-        
-        // Render after italic (if any)
-        if (afterItalic.trim()) {
+        if (italic) {
+          pdf.setFont(undefined, 'italic');
+          pdf.text(italic, cursorX, y);
+          cursorX += pdf.getTextWidth(italic);
+        }
+        if (after) {
           pdf.setFont(undefined, 'normal');
-          const italicWidth = pdf.getTextWidth(italicText);
-          pdf.text(afterItalic, margin + beforeWidth + italicWidth, yPosition);
+          pdf.text(after, cursorX, y);
         }
-        
-        // CRITICAL: Reset font state
         pdf.setFont(undefined, 'normal');
-        pdf.setFontSize(fontSize);
-        pdf.setTextColor(0, 0, 0);
-      } else if (line.startsWith('**') && line.endsWith('**')) {
+      } else if (text.startsWith('**') && text.endsWith('**')) {
         pdf.setFont(undefined, 'bold');
-        pdf.text(line.slice(2, -2), margin, yPosition);
-        // CRITICAL: Reset font state immediately
-        pdf.setFont(undefined, 'normal');
-        pdf.setFontSize(fontSize);
-      } else if (line.startsWith('  • ')) {
-        // Handle bullet points with proper indentation
-        const bulletText = line.substring(4); // Remove "  • "
-        pdf.setFont(undefined, 'normal');
-        pdf.text('•', margin, yPosition);
-        pdf.text(bulletText, margin + 10, yPosition);
-      } else if (line.startsWith('    ') && !line.startsWith('  • ')) {
-        // Handle indented continuation lines
-        const indentedText = line.substring(4); // Remove indentation
-        pdf.setFont(undefined, 'normal');
-        pdf.text(indentedText, margin + 10, yPosition);
-      } else if (line.match(/^[A-Za-z ]+$/)) {
-        // Headers are now plain text (no ### prefix) - make them bold and larger
-        pdf.setFontSize(fontSize + 4);
-        pdf.setFont(undefined, 'bold');
-        pdf.text(line, margin, yPosition);
-        // CRITICAL: Reset font state immediately
-        pdf.setFontSize(fontSize);
+        pdf.text(text.slice(2, -2), x, y);
         pdf.setFont(undefined, 'normal');
       } else {
-        // Ensure normal formatting for regular text
         pdf.setFont(undefined, 'normal');
-        pdf.setFontSize(fontSize);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(line, margin, yPosition);
+        pdf.text(text, x, y);
       }
-      
-      yPosition += fontSize * 0.7;
-    });
+    };
+
+    const lines = formattedContent.split('\n');
+    let yPosition = 65;
+
+    for (const rawLine of lines) {
+      const line = rawLine.trimEnd();
+      if (!line) {
+        yPosition += lineHeight; // preserve blank line spacing
+        continue;
+      }
+
+      if (line.startsWith('PDFQUESTION') && line.includes('ENDPDFQUESTION')) {
+        const questionText = line.replace(/PDFQUESTION/, '').replace(/ENDPDFQUESTION/, '');
+        ensureRoom();
+        pdf.setFont(undefined, 'bold');
+        pdf.setTextColor(62, 180, 137);
+        const chunks = pdf.splitTextToSize(questionText, maxLineWidth);
+        chunks.forEach((chunk) => {
+          ensureRoom();
+          pdf.text(chunk, margin, yPosition);
+          yPosition += lineHeight;
+        });
+        pdf.setFont(undefined, 'normal');
+        pdf.setTextColor(0, 0, 0);
+        continue;
+      }
+
+      if (line.startsWith('PDFBULLET ')) {
+        const text = line.replace(/^PDFBULLET\s+/, '');
+        const wrapped = pdf.splitTextToSize(text, maxLineWidth - 10);
+        wrapped.forEach((chunk, idx) => {
+          ensureRoom();
+          if (idx === 0) {
+            pdf.text('•', margin, yPosition);
+          }
+          drawInlineText(chunk, margin + 10, yPosition, maxLineWidth - 10);
+          yPosition += lineHeight;
+        });
+        continue;
+      }
+
+      // Regular paragraph line
+      const wrapped = pdf.splitTextToSize(line, maxLineWidth);
+      wrapped.forEach((chunk) => {
+        ensureRoom();
+        drawInlineText(chunk, margin, yPosition, maxLineWidth);
+        yPosition += lineHeight;
+      });
+    }
     
     // Add footer to the last page
     this.addFooterToPDF(pdf, pageWidth, pageHeight, margin);
