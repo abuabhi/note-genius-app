@@ -69,6 +69,9 @@ class ExportService {
       .replace(/<div[^>]*class[^>]*enhanced[^>]*>[\s\S]*?<\/div>/gi, '')
       .replace(/\[(?:ENHANCED|ENRICHED|AI_ENHANCED)\]/gi, '')
       .replace(/\[\/(?:ENHANCED|ENRICHED|AI_ENHANCED)\]/gi, '')
+      // REMOVE QUESTION FORMATTING TAGS - critical fix
+      .replace(/\*\*QUESTION\*\*/g, '')
+      .replace(/\*\*ENDQUESTION\*\*/g, '')
       // Preserve headers with proper spacing
       .replace(/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/g, (match, level, text) => {
         const headerPrefix = '#'.repeat(parseInt(level)) + ' ';
@@ -118,15 +121,15 @@ class ExportService {
       .replace(/^\s+|\s+$/g, '')
       .trim();
 
-    // Enhanced question detection for Top 10 Questions
+    // Enhanced question detection for Top 10 Questions - format for PDF display
     if (contentType === 'questions') {
       formattedContent = formattedContent
-        // Mark questions for special formatting (Q1., Q2., etc.)
-        .replace(/^(Q\d+[\.\:]?\s*)(.*$)/gm, '**QUESTION**$1$2**ENDQUESTION**')
+        // Mark questions for special formatting (Q1., Q2., etc.) - for PDF processing only
+        .replace(/^(Q\d+[\.\:]?\s*)(.*$)/gm, 'PDFQUESTION$1$2ENDPDFQUESTION')
         // Mark numbered questions without Q prefix
         .replace(/^(\d+[\.\:]?\s*)(.*?)(?=\n|$)/gm, (match, number, text) => {
           if (text.trim().endsWith('?') || text.trim().length > 10) {
-            return `**QUESTION**${number}${text}**ENDQUESTION**`;
+            return `PDFQUESTION${number}${text}ENDPDFQUESTION`;
           }
           return match;
         });
@@ -204,9 +207,9 @@ class ExportService {
       }
       
       // Handle different text styles
-      if (line.includes('**QUESTION**') && line.includes('**ENDQUESTION**')) {
+      if (line.includes('PDFQUESTION') && line.includes('ENDPDFQUESTION')) {
         // Handle questions with bold and green formatting
-        const questionText = line.replace(/\*\*QUESTION\*\*/, '').replace(/\*\*ENDQUESTION\*\*/, '');
+        const questionText = line.replace(/PDFQUESTION/, '').replace(/ENDPDFQUESTION/, '');
         pdf.setFont(undefined, 'bold');
         pdf.setTextColor(62, 180, 137); // dark green
         pdf.text(questionText, margin, yPosition);
@@ -260,7 +263,10 @@ class ExportService {
       .replace(/<div[^>]*class[^>]*ai[^>]*enhanced[^>]*>[\s\S]*?<\/div>/gi, '')
       .replace(/<div[^>]*class[^>]*enhanced[^>]*>[\s\S]*?<\/div>/gi, '')
       .replace(/\[(?:ENHANCED|ENRICHED|AI_ENHANCED)\]/gi, '')
-      .replace(/\[\/(?:ENHANCED|ENRICHED|AI_ENHANCED)\]/gi, '');
+      .replace(/\[\/(?:ENHANCED|ENRICHED|AI_ENHANCED)\]/gi, '')
+      // REMOVE QUESTION FORMATTING TAGS - critical fix for DOCX
+      .replace(/\*\*QUESTION\*\*/g, '')
+      .replace(/\*\*ENDQUESTION\*\*/g, '');
     
     // Split content by major elements (headers, paragraphs, lists)
     const htmlContent = cleanContent
@@ -417,6 +423,9 @@ class ExportService {
       .replace(/<div[^>]*class[^>]*enhanced[^>]*>[\s\S]*?<\/div>/gi, '')
       .replace(/\[(?:ENHANCED|ENRICHED|AI_ENHANCED)\]/gi, '')
       .replace(/\[\/(?:ENHANCED|ENRICHED|AI_ENHANCED)\]/gi, '')
+      // REMOVE QUESTION FORMATTING TAGS - critical fix for TXT
+      .replace(/\*\*QUESTION\*\*/g, '')
+      .replace(/\*\*ENDQUESTION\*\*/g, '')
       // Headers with visual emphasis
       .replace(/<h1[^>]*>(.*?)<\/h1>/g, '\n\n═══ $1 ═══\n\n')
       .replace(/<h2[^>]*>(.*?)<\/h2>/g, '\n\n▓▓▓ $1 ▓▓▓\n\n')
