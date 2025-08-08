@@ -61,10 +61,11 @@
 .simple-content ul li,
 .simple-content ol li,
 .simple-li {
-  margin-bottom: 0 !important;
+  margin-bottom: 0.4rem !important;
   margin-top: 0 !important;
-  line-height: 1.2 !important;
-  padding-left: 0 !important;
+  line-height: 1.4 !important;
+  padding-left: 1rem !important;
+  text-indent: -1rem !important;
   display: list-item !important;
 }
 

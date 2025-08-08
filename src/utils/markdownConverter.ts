@@ -93,7 +93,7 @@ export const markdownToHtml = (markdown: string): string => {
         processedLines.push(`<${listType}>`);
       }
       
-      processedLines.push(`<li>${content}</li>`);
+      processedLines.push(`<li>${content.replace(/\n/g, ' ')}</li>`);
     } else {
       // Not a list item
       if (inList) {
@@ -131,11 +131,12 @@ export const markdownToHtml = (markdown: string): string => {
     
     // Don't wrap blocks that are already HTML elements
     if (block.match(/^<(h[1-6]|div|blockquote|ul|ol|pre|hr|li)/)) {
-      // Special handling for lists - don't add br tags between list items
-      if (block.match(/^<(ul|ol)/)) {
-        return block; // Return list blocks as-is without adding br tags
-      }
-      return block.replace(/\n/g, '<br>');
+    // Special handling for lists - don't add br tags between list items
+    if (block.match(/^<(ul|ol)/)) {
+      return block; // Return list blocks as-is without adding br tags
+    }
+    // For other HTML elements, don't add line breaks that could affect spacing
+    return block;
     }
     
     // Don't wrap single list items in paragraphs if they're already processed
