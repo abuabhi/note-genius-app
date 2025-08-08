@@ -136,7 +136,7 @@ export const SessionTimer = ({
         <span className="h-4 w-px bg-border" />
 
         {/* Timer */}
-        <div className="text-lg md:text-xl font-mono font-extrabold tracking-tight text-success drop-shadow-sm">
+        <div className="text-lg md:text-xl font-mono font-extrabold tracking-tight text-white drop-shadow-sm bg-success/90 px-2 py-0.5 rounded-md">
           {formatTime(elapsedSeconds)}
         </div>
 
