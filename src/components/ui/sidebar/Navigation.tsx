@@ -9,6 +9,7 @@ import { useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { LogoutSection } from "./LogoutSection";
+import { SessionTimer } from "./SessionTimer";
 import { 
   LayoutDashboard, 
   FileText, 
@@ -40,6 +41,11 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
       <div className="flex grow flex-col">
         <ScrollArea className="flex-1 px-3 py-4">
           <div className={cn("flex w-full flex-col gap-1")}>
+            
+            {/* Session Timer */}
+            <div className="mb-4">
+              <SessionTimer isCollapsed={isCollapsed} />
+            </div>
             
             {/* Core Section */}
             <div className="mb-3">
