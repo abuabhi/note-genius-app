@@ -1,247 +1,303 @@
 import { EnhancementFunction } from './types.ts';
 
 /**
- * Simple markdown formatting rules
+ * STANDARDIZED PROMPTS FOR CONTENT ENHANCEMENT
+ * 
+ * These prompts are designed to:
+ * 1. Produce consistent, export-safe formatting
+ * 2. Handle large content with appropriate token limits
+ * 3. Generate tab-specific output formats
+ * 4. Ensure PDF/DOCX compatibility
  */
-const MARKDOWN_FORMATTING_RULES = `
-Use proper Markdown formatting:
-- Use # for headings, ## for subheadings
-- Use **bold** for important terms
-- Use - for bullet lists
-- Add blank lines between sections
-- Keep content readable and well-structured
+
+/**
+ * Export-safe formatting rules for all enhancement types
+ */
+const EXPORT_SAFE_FORMATTING = `
+FORMATTING REQUIREMENTS (Export-Safe for PDF/DOCX):
+- Use clean markdown syntax only
+- Use # for main headings, ## for subheadings, ### for minor headings
+- Use **bold** for key terms (not colors or complex styling)
+- Use - for bullet lists with proper spacing
+- Add single blank line between sections
+- NO HTML tags, NO complex styling, NO emojis
+- Keep content readable and professionally formatted
 `;
 
 /**
- * Create a prompt for the OpenAI API based on the enhancement type
+ * Token limits by enhancement type for optimal processing
+ */
+const TOKEN_LIMITS = {
+  'summarize': 1500,
+  'extract-key-points': 1200,
+  'generate-questions': 2500,
+  'convert-to-markdown': 2000,
+  'improve-clarity': 6000,
+  'enrich-note': 8000
+};
+
+/**
+ * Model selection based on enhancement complexity
+ */
+const getOptimalModel = (enhancementType: EnhancementFunction): string => {
+  const complexEnhancements = ['enrich-note', 'improve-clarity'];
+  return complexEnhancements.includes(enhancementType) ? 'gpt-4.1-2025-04-14' : 'gpt-4.1-mini-2025-04-14';
+};
+
+/**
+ * Get token limit for enhancement type
+ */
+export const getTokenLimit = (enhancementType: EnhancementFunction): number => {
+  return TOKEN_LIMITS[enhancementType] || 2000;
+};
+
+/**
+ * Get optimal model for enhancement type
+ */
+export const getModel = (enhancementType: EnhancementFunction): string => {
+  return getOptimalModel(enhancementType);
+};
+
+/**
+ * Create a standardized prompt for the OpenAI API based on the enhancement type
  */
 export const createPrompt = (enhancementType: EnhancementFunction, noteTitle: string, noteContent: string): string => {
   // Base context to include in all prompts
   const baseContext = `
-${MARKDOWN_FORMATTING_RULES}
+${EXPORT_SAFE_FORMATTING}
 
-The following is a note titled "${noteTitle}":
+Content Title: "${noteTitle}"
+Content Length: ${noteContent.length} characters
 
+Content:
 ${noteContent}
 
 `;
 
-  // Select prompt based on enhancement type
+  // Select standardized prompt based on enhancement type
   switch (enhancementType) {
     case 'summarize':
       return `${baseContext}
-Do not include the note title again in the content.
+**TASK**: Create a concise, well-structured summary of this content.
 
-Please create a concise summary of this note in **Markdown format**.
-
-Requirements:
+**OUTPUT FORMAT** (Export-Safe Summary Tab):
 - Start with: \`# Summary\`
 - Use flowing paragraphs with complete sentences
-- Separate each paragraph with a blank line
-- Use **bold** for key terms where appropriate
-- Keep the summary to around **20% of the original length**
-- If the content has multiple topics, group them using \`##\` subheadings
-- Use proper spacing between all elements
-- Output only the formatted summary content (no explanations or notes)
+- Separate each paragraph with a single blank line
+- Use **bold** for key terms only (no colors or styling)
+- Target length: 20-25% of original content
+- Group multiple topics using \`##\` subheadings if needed
+- Use clean markdown formatting compatible with PDF/DOCX export
 
-Example format (follow structure only, do not reuse text):
+**CONTENT PROCESSING**:
+- Extract main ideas and key concepts
+- Preserve important details and context
+- Maintain logical flow and structure
+- Remove redundancy while keeping essential information
 
-\`\`\`markdown
-# Summary
+**EXPORT COMPATIBILITY**:
+- Use only standard markdown syntax
+- No HTML tags, colors, or complex formatting
+- Simple, clean structure that renders well in all formats
 
-This note explains the fundamentals of [topic].
-
-## Key Concepts
-
-The main ideas include...
-
-## Important Details
-
-Additional details on related topics...
-\`\`\`
-`;
+Return only the formatted summary content with no additional explanations.`;
 
     case 'extract-key-points':
       return `${baseContext}
-Do not repeat the note title in the output.
+**TASK**: Extract the most important facts, concepts, and insights from this content.
 
-Extract and return only the most important facts, concepts, and insights from this note using clean **Markdown formatting**.
+**OUTPUT FORMAT** (Export-Safe Key Points Tab):
+- Start with: \`# Key Points\`
+- Provide 7-10 bullet points total
+- Use \`- \` for each bullet point
+- Add single blank line between each point
+- Use **bold** for key terms within points
+- Group related points under \`##\` subheadings if helpful
+- NO nested lists or complex indentation
+- NO emojis, colors, or special formatting
 
-Requirements:
-- Begin with: \`# Key Points\`
-- Provide a minimum of **7–10 bullet points**
-- Use \`- \` for each bullet point, separated by blank lines
-- Use **bold** for key terms within each point
-- Group related points under \`##\` subheadings if appropriate
-- Keep each point clear, informative, and to the point
-- Do NOT include explanations or commentary—only the formatted key points
+**CONTENT STRATEGY**:
+- Focus on actionable insights and core concepts
+- Extract facts that can stand alone
+- Maintain 1-2 line length per point
+- Ensure each point is clear and informative
+- Prioritize most important information first
 
-Example structure (for format guidance only):
+**EXPORT COMPATIBILITY**:
+- Simple bullet structure that renders in PDF/DOCX
+- Clean markdown formatting only
+- Professional appearance for printed documents
 
-\`\`\`markdown
-# Key Points
-
-## Core Concepts
-
-- **First key idea**: Brief but meaningful explanation
-
-- **Second concept**: Summary of importance
-
-## Supporting Facts
-
-- **Term**: Explanation here
-- **Another fact**: More context
-\`\`\`
-`;
+Return only the formatted key points with no additional text.`;
 
     case 'improve-clarity':
       return `${baseContext}
-Do not repeat or include the note title in the output.
+**TASK**: Enhance this content by inserting learning aids inline without changing the original text.
 
-You are an AI assistant helping students understand complex topics better. Your task is to enhance this educational content by inserting **new learning aids inline** — without changing the original text.
+**EXPANSION TARGET**: Add 30-50% more content overall
 
------------------------
-✅ FORMAT & STRUCTURE RULES
------------------------
-- DO NOT reword or delete the original content
-- Insert new content directly **after** the relevant sentence or paragraph
-- Wrap all enhancements in \`**[ENRICHED]**\` and \`**[/ENRICHED]**\` markers
-- Add **30–50% more content** overall
-- Format enhancements using proper Markdown:
-  - \`##\`, \`###\` for headings
-  - \`- \` for bullet lists (with blank lines before/after)
-  - \`**bold**\` for key terms
-  - Break large additions into smaller, readable chunks
+**CRITICAL RULES**:
+- NEVER reword, delete, or modify original content
+- Insert new content directly after relevant sentences/paragraphs
+- Wrap all enhancements in [AI_ENHANCED]...[/AI_ENHANCED] tags
+- Maintain original structure and formatting
+- Use export-safe markdown formatting
 
------------------------
-🧠 CONTENT STRATEGY
------------------------
-Enhancements should:
-- Explain difficult concepts
-- Define key terms
-- Provide analogies or real-world examples
-- Offer memory tips or study methods
+**ENHANCEMENT STRATEGY**:
+- Explain difficult concepts and terminology
+- Define key terms and technical language
+- Provide analogies and real-world examples
+- Offer memory tips and study methods
 - Make connections to related topics
+- Add practical context and applications
 
------------------------
-🧪 EXAMPLE FORMAT
------------------------
+**FORMATTING FOR ENHANCEMENTS**:
+- Use standard markdown: ##, ###, **bold**, - bullets
+- Break large additions into readable chunks
+- Add single blank lines for proper spacing
+- Ensure PDF/DOCX export compatibility
 
-Original paragraph.
+**VISUAL TREATMENT**:
+- Enhanced content gets left border + light background styling
+- Keep enhancements focused and educational
+- Make them substantial enough to add real value
 
-**[ENRICHED]**
+**EXAMPLE FORMAT**:
 
-### Explanation
+Original paragraph about a concept.
 
-- **Why it matters**: Brief contextual note
-- **Example**: Real-world scenario
-- **Study Tip**: Mnemonic, shortcut, or association
+[AI_ENHANCED]
+### Understanding This Concept
 
-**[/ENRICHED]**
+- **Key Point**: Explanation of why this matters
+- **Real-World Example**: Practical application or scenario
+- **Study Tip**: Memory aid or learning technique
+- **Connection**: How this relates to other topics
+[/AI_ENHANCED]
 
------------------------
-⚠️ DO NOT:
------------------------
-- Alter or summarize original content
-- Insert new headings outside of enhancement blocks
-- Include explanations of what you're doing
-- Repeat or paraphrase the note title
+**EXPORT COMPATIBILITY**:
+- Standard markdown syntax only
+- Clean structure for PDF/DOCX rendering
+- Professional appearance when printed
 
-Return only the original content with **[ENRICHED]** blocks inserted inline.`;
+Return only the original content with [AI_ENHANCED] blocks inserted inline.`;
 
     case 'convert-to-markdown':
       return `${baseContext}
-Do not include or repeat the note title in the output.
+**TASK**: Convert the provided content into clean, structured markdown format without altering the original content.
 
-Your task is to convert the provided content into clear, structured **Markdown format** to improve readability and presentation. Do **not** alter or summarise the original content — just format it.
-
-Requirements:
-- Keep all original sentences and wording exactly as-is
-- Start with a top-level heading (\`#\`) based on the topic (not the note title)
+**OUTPUT FORMAT** (Export-Safe Original++ Tab):
+- Keep ALL original sentences and wording exactly as-is
+- Start with appropriate heading (\`#\`) based on topic content
 - Use \`##\` for major sections, \`###\` for subsections
-- Use bullet lists (\`- \`) with proper indentation and spacing
-- Use numbered lists (\`1., 2.\`) only where logical steps are involved
-- Use **bold** for key terms and \`code\` for technical terms where needed
-- Add a blank line **before and after** all headings, lists, and sections
-- Ensure proper paragraph spacing and Markdown hierarchy
-- Do not add, delete, or reword any content
+- Use bullet lists (\`- \`) with proper spacing
+- Use numbered lists (\`1., 2.\`) only for logical steps
+- Use **bold** for key terms where appropriate
+- Add single blank line before and after headings, lists, sections
+- Maintain original paragraph structure
 
-Output only the fully formatted Markdown version of the original note.`;
+**FORMATTING RULES**:
+- NO content alteration, summarization, or rewording
+- NO addition or deletion of information
+- Focus purely on structural markdown formatting
+- Preserve original tone and style
+- Improve readability through formatting only
+
+**EXPORT COMPATIBILITY**:
+- Standard markdown syntax for PDF/DOCX export
+- Clean hierarchy and spacing
+- Professional appearance when printed
+- No complex formatting that breaks in exports
+
+Return only the fully formatted markdown version with no explanations.`;
 
     case 'generate-questions':
       return `${baseContext}
-Do not include or repeat the note title in the output.
+**TASK**: Generate exactly 10 comprehensive study questions with detailed answers.
 
-**YOUR MISSION**: Generate exactly **10 comprehensive study questions with detailed answers** based on this note content.
-
-**📋 FORMATTING REQUIREMENTS:**
+**OUTPUT FORMAT** (Export-Safe Questions Tab):
 - Start with: \`# Top 10 Study Questions\`
 - Format each Q&A pair as: \`## Q1: [Question]\` followed by \`**A1:** [Answer]\`
 - Continue with Q2/A2, Q3/A3, etc. through Q10/A10
-- Use proper Markdown formatting throughout
-- Add blank lines between each Q&A pair for readability
-
-**🎯 QUESTION STRATEGY:**
-Create questions that cover:
-- **Core concepts** and main ideas (Questions 1-3)
-- **Important details** and specifics (Questions 4-6) 
-- **Application** and real-world connections (Questions 7-8)
-- **Analysis** and critical thinking (Questions 9-10)
-
-**✅ QUESTION QUALITY STANDARDS:**
-- Questions should be **clear, specific, and answerable** from the note content
-- Answers should be **comprehensive but concise** (2-4 sentences each)
-- Mix different question types: definition, explanation, comparison, application
-- Ensure questions test **deep understanding**, not just memorization
+- Add single blank line between each Q&A pair
 - Use **bold** for key terms in answers
+- NO colors, emojis, or special formatting
 
-**📐 EXACT FORMAT EXAMPLE:**
+**QUESTION STRATEGY**:
+- Questions 1-3: Core concepts and main ideas
+- Questions 4-6: Important details and specifics  
+- Questions 7-8: Application and real-world connections
+- Questions 9-10: Analysis and critical thinking
 
-\`\`\`markdown
+**QUALITY STANDARDS**:
+- Questions must be clear, specific, and answerable from content
+- Answers should be comprehensive but concise (2-4 sentences each)
+- Mix question types: definition, explanation, comparison, application
+- Test deep understanding, not just memorization
+- Ensure 100% accuracy based on provided content
+
+**EXPORT COMPATIBILITY**:
+- Standard markdown formatting for PDF/DOCX compatibility
+- Clean, professional appearance when printed
+- Consistent heading structure and formatting
+
+**EXACT FORMAT**:
 # Top 10 Study Questions
 
-## Q1: What is the primary function of photosynthesis in plants?
+## Q1: [Your question here?]
 
-**A1:** Photosynthesis is the process by which plants convert **light energy** into **chemical energy** (glucose) using carbon dioxide and water. This process is essential for plant survival and produces oxygen as a byproduct, supporting most life on Earth.
+**A1:** [Your detailed answer with **bold** key terms where appropriate.]
 
-## Q2: What are the two main stages of photosynthesis?
+## Q2: [Next question?]
 
-**A2:** The two main stages are the **light-dependent reactions** (occurring in thylakoids) and the **light-independent reactions** or **Calvin cycle** (occurring in the stroma). The first stage captures light energy, while the second stage uses that energy to produce glucose.
+**A2:** [Next answer...]
 
-[Continue through Q10...]
-\`\`\`
+[Continue through Q10/A10]
 
-**⚠️ CRITICAL REQUIREMENTS:**
-- Generate exactly 10 questions (Q1-Q10)
-- Each question must have a detailed answer
-- Use the exact numbering format shown (Q1, A1, Q2, A2, etc.)
-- Cover the full range of content complexity
-- Ensure answers are accurate and based only on the note content
-
-Return only the formatted Q&A content - no explanations or additional notes.`;
+Return only the formatted Q&A content with no additional explanations.`;
 
     case 'enrich-note':
       return `${baseContext}
-You are a helpful writing assistant. Your task is to expand this content by adding helpful context and explanations while preserving the original text.
+**TASK**: Significantly expand this content by adding educational enhancements while preserving ALL original text exactly as written.
 
-**Task**: Add 50-70% more content to make this text more informative and detailed.
+**EXPANSION TARGET**: Add 60-70% more content (if original is 1000 words, result should be 1600-1700 words)
 
-**Rules**:
-- Keep all original content unchanged
-- Add new information inline where it provides value
-- Use [AI_ENHANCED]...[/AI_ENHANCED] tags around all additions
-- Focus on explanations, context, examples, and clarifications
-- Maintain the original structure and formatting
-- Use proper Markdown formatting
+**CRITICAL REQUIREMENTS**:
+- PRESERVE ALL original content exactly as written - NO modifications
+- Insert comprehensive enhancements after relevant paragraphs/concepts
+- Wrap ALL new content with: [AI_ENHANCED] your enhancement here [/AI_ENHANCED]
+- Ensure natural flow between original and enhanced content
 
-**What to add**:
-- Explanations of concepts or terms
-- Additional context and background
-- Examples or analogies
-- Clarifying details
-- Related information
+**ENHANCEMENT STRATEGY**:
+- Detailed explanations and context for complex concepts
+- Real-world examples and practical applications
+- Background information and historical context  
+- Step-by-step breakdowns of complex ideas
+- Memory aids and study techniques
+- Connections to related topics and fields
+- Practical implications and use cases
 
-Simply expand the content to make it more comprehensive and informative.`;
+**FORMATTING FOR ENRICHED CONTENT**:
+- Use standard markdown: ##, ###, **bold**, - bullets
+- Keep enhancements focused and well-structured
+- Add single blank lines between sections
+- Ensure export-safe formatting (PDF/DOCX compatible)
+
+**VISUAL TREATMENT**:
+- All AI-enhanced content will be visually distinguished with left border + light background
+- Enhanced sections should be substantial (minimum 2-3 sentences)
+- Focus on educational value and depth
+
+**EXAMPLE**:
+Original: "Photosynthesis is the process plants use to make food."
+
+Enhanced: "Photosynthesis is the process plants use to make food.
+
+[AI_ENHANCED]
+This remarkable biological process occurs in the chloroplasts of plant cells, where chlorophyll captures light energy from the sun. Photosynthesis can be broken down into two main stages: the light-dependent reactions and the Calvin cycle. During this process, plants convert carbon dioxide from the air and water from the soil into glucose and oxygen. This process is fundamental to life on Earth, forming the base of most food chains and producing the oxygen we breathe.
+[/AI_ENHANCED]"
+
+Return the original content with substantial inline enhancements wrapped in [AI_ENHANCED] tags.`;
 
     default:
       return `${baseContext}

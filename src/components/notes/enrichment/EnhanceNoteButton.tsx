@@ -25,14 +25,19 @@ export const EnhanceNoteButton: React.FC<EnhanceNoteButtonProps> = ({
     
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('test-enhance', {
-        body: { text: noteContent, enhancementType: 'generate-questions' }
+      const { data, error } = await supabase.functions.invoke('enrich-note', {
+        body: { 
+          noteId, 
+          noteContent, 
+          enhancementType: 'generate-questions',
+          noteTitle: noteTitle || 'Study Questions'
+        }
       });
 
       if (error) throw error;
       
-      if (data.success) {
-        onEnhance(JSON.stringify(data.result, null, 2));
+      if (data.enhancedContent) {
+        onEnhance(data.enhancedContent);
         toast.success('Questions generated successfully!');
       }
     } catch (error) {

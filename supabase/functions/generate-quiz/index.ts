@@ -70,18 +70,19 @@ Make sure each question is clear, the correct answer index is accurate (0-3), an
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-mini-2025-04-14', // Standardized model
         messages: [
           {
             role: 'system',
-            content: 'You are an expert educational content creator. Generate high-quality quiz questions that test understanding and application of concepts. Always respond with valid JSON only.'
+            content: 'You are an expert educational content creator. Generate high-quality quiz questions that test understanding and application of concepts. Always respond with valid JSON only. Ensure export-safe formatting.'
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.7,
+        temperature: 0.3, // Standardized temperature for consistency
+        top_p: 0.9,       // Standardized top_p
         max_tokens: 3000,
       }),
     });

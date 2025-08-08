@@ -21,19 +21,20 @@ export const callOpenAI = async (prompt: string, apiKey: string, signal?: AbortS
       },
       signal,
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4.1-2025-04-14', // Standardized model for complex tasks
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that expands and enriches content to make it more detailed and informative. Always fulfill requests to expand content.'
+            content: 'You are an expert educational content enhancer. You create high-quality, export-safe content that renders perfectly in PDF, DOCX, and web formats. Always follow the formatting requirements exactly and provide substantial, educational enhancements.'
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.3,
-        max_tokens: 8000,
+        temperature: 0.3, // Standardized temperature for consistency
+        top_p: 0.9,      // Standardized top_p for all enhancements
+        max_tokens: 8000, // Will be dynamically adjusted based on enhancement type
         stream: false
       }),
     });

@@ -5,8 +5,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 import { corsHeaders, createCorsResponse } from './cors.ts';
 import { authenticateUser } from './auth.ts';
 import { callOpenAI, detectProblematicContent } from './openai.ts';
-import { createPrompt } from './prompts.ts';
+import { createPrompt, getTokenLimit, getModel } from './prompts.ts';
 import { processLargeContent } from './chunking.ts';
+import { processLargeContentStandardized } from './content-processor.ts';
 import { checkRateLimit, cleanupRateLimitStore, getRateLimitStatus } from './rate-limiter.ts';
 import type { EnrichmentRequestBody, ErrorResponse, EnhancementFunction, TokenUsage } from './types.ts';
 
@@ -193,48 +194,81 @@ serve(async (req) => {
     let processingStats = {};
     
     try {
-      if (enhancementType === 'enrich-note') {
-        if (noteContent.length > 15000) {
-          console.log(`📚 [${requestId}] Large content for enrich-note detected (${noteContent.length} chars), using optimized chunking`);
-          const result = await processLargeContent(noteContent, enhancementType, noteTitle, openaiApiKey, controller.signal);
-          enhancedContent = result.enhancedContent;
-          tokenUsage = result.tokenUsage;
-          processingStats = { method: 'optimized_chunking', reason: 'content_too_large_for_enrichment' };
-        } else {
-          console.log(`🚀 [${requestId}] Using Two-Pass Enhancement System`);
-          const { performTwoPassEnhancement } = await import('./two-pass-enhancement.ts');
-          
-          const result = await performTwoPassEnhancement(noteContent, noteTitle, openaiApiKey, controller.signal);
-          enhancedContent = result.enhancedContent;
-          
-          // Estimate token usage for two-pass system
-          const estimatedTokens = Math.ceil((noteContent.length + enhancedContent.length) / 3);
-          tokenUsage = {
-            promptTokens: Math.ceil(noteContent.length / 3),
-            completionTokens: Math.ceil((enhancedContent.length - noteContent.length) / 3),
-            totalTokens: estimatedTokens
-          };
-          
-          processingStats = {
-            conceptsExtracted: result.conceptsExtracted,
-            enhancementsAdded: result.enhancementsAdded,
-            method: 'two-pass-enhancement'
-          };
-        }
-      } else if (noteContent.length > 30000) {
-        console.log(`📚 [${requestId}] Large content detected, using chunking approach`);
-        const result = await processLargeContent(noteContent, enhancementType, noteTitle, openaiApiKey, controller.signal);
+      // **STANDARDIZED CONTENT PROCESSING LOGIC**
+      
+      // Determine processing method based on content size and enhancement type
+      const contentLength = noteContent.length;
+      const estimatedTokens = Math.ceil(contentLength / 4);
+      const tokenLimit = getTokenLimit(enhancementType);
+      const model = getModel(enhancementType);
+      
+      console.log(`📊 [${requestId}] Content analysis: ${contentLength} chars, ~${estimatedTokens} tokens, limit: ${tokenLimit}, model: ${model}`);
+      
+      // Use standardized large content processing for appropriate cases
+      if (estimatedTokens > 3000 || contentLength > 12000) {
+        console.log(`📚 [${requestId}] Large content detected, using standardized chunking approach`);
+        const result = await processLargeContentStandardized(noteContent, enhancementType, noteTitle, openaiApiKey, controller.signal);
         enhancedContent = result.enhancedContent;
         tokenUsage = result.tokenUsage;
-        processingStats = { method: 'chunking', reason: 'content_exceeds_standard_limit' };
+        processingStats = { 
+          method: 'standardized_chunking', 
+          reason: 'content_exceeds_optimal_size',
+          model,
+          tokenLimit
+        };
       } else {
-        console.log(`📝 [${requestId}] Standard content processing (${noteContent.length} chars)`);
+        console.log(`📝 [${requestId}] Standard content processing with optimized settings`);
+        
+        // Use standardized prompt and model selection
         const prompt = createPrompt(enhancementType, noteTitle, noteContent);
-        console.log(`🤖 [${requestId}] Calling OpenAI API with prompt length: ${prompt.length}`);
-        const openAIResult = await callOpenAI(prompt, openaiApiKey, controller.signal);
-        enhancedContent = openAIResult.enhancedContent;
-        tokenUsage = openAIResult.tokenUsage;
-        processingStats = { method: 'standard' };
+        console.log(`🤖 [${requestId}] Using ${model} with token limit ${tokenLimit}`);
+        
+        // Call OpenAI with standardized settings
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openaiApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            model,
+            messages: [
+              {
+                role: 'system',
+                content: `You are an expert educational content enhancer specializing in ${enhancementType}. Create high-quality, export-safe content that renders perfectly in PDF, DOCX, and web formats. Follow the formatting requirements exactly.`
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            temperature: 0.3,
+            top_p: 0.9,
+            max_tokens: tokenLimit,
+            stream: false
+          }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`❌ [${requestId}] OpenAI API error:`, response.status, errorText);
+          throw new Error(`AI service error: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        enhancedContent = data.choices[0].message.content;
+        tokenUsage = data.usage ? {
+          promptTokens: data.usage.prompt_tokens || 0,
+          completionTokens: data.usage.completion_tokens || 0,
+          totalTokens: data.usage.total_tokens || 0
+        } : undefined;
+        
+        processingStats = { 
+          method: 'standardized_single_call', 
+          model,
+          tokenLimit
+        };
       }
       
       clearTimeout(timeoutId);

@@ -29,14 +29,19 @@ export const EnhanceDropdown = ({
     
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('test-enhance', {
-        body: { text: noteContent, enhancementType }
+      const { data, error } = await supabase.functions.invoke('enrich-note', {
+        body: { 
+          noteId, 
+          noteContent, 
+          enhancementType, 
+          noteTitle: 'Enhanced Content' 
+        }
       });
 
       if (error) throw error;
       
-      if (data.success && onEnhancement) {
-        onEnhancement(JSON.stringify(data.result, null, 2));
+      if (data.enhancedContent && onEnhancement) {
+        onEnhancement(data.enhancedContent);
         toast.success('Enhancement completed successfully!');
       }
     } catch (error) {

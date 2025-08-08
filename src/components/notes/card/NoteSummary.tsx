@@ -54,24 +54,20 @@ export const NoteSummary = ({
       setError(null);
 
       setIsEnhancing(true);
-      const { data, error } = await supabase.functions.invoke('test-enhance', {
-        body: { text: note.content || '', enhancementType: 'summary' }
+      const { data, error } = await supabase.functions.invoke('enrich-note', {
+        body: { 
+          noteId: note.id,
+          noteContent: note.content || '', 
+          enhancementType: 'summarize',
+          noteTitle: note.title
+        }
       });
       
       if (error) throw error;
-      if (!data.success) throw new Error(data.error);
       
-      const result = { success: true, content: JSON.stringify(data.result, null, 2) };
+      const summaryContent = data.enhancedContent;
       
-      // result is always successful at this point
-
-      const summaryContent = result.content;
-      
-      // Update in database
-      await updateNoteInDatabase(note.id, {
-        summary: summaryContent,
-        summary_generated_at: new Date().toISOString()
-      });
+      // Database update is handled automatically by enrich-note function
       
       // Update local state
       setSummaryText(summaryContent);

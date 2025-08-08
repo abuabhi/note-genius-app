@@ -43,14 +43,19 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
     
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('test-enhance', {
-        body: { text: noteContent, enhancementType: selectedEnhancement }
+      const { data, error } = await supabase.functions.invoke('enrich-note', {
+        body: { 
+          noteId,
+          noteContent, 
+          enhancementType: selectedEnhancement,
+          noteTitle: noteTitle || 'Enhanced Content'
+        }
       });
 
       if (error) throw error;
       
-      if (data.success) {
-        setEnhancedContent(JSON.stringify(data.result, null, 2));
+      if (data.enhancedContent) {
+        setEnhancedContent(data.enhancedContent);
         toast.success('Enhancement completed successfully!');
       }
     } catch (error) {
