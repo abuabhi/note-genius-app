@@ -2,6 +2,7 @@
 import React from 'react';
 import NavBar from './NavBar';
 import Footer from './Footer';
+import { FloatingSessionTimer } from '@/components/ui/floating/FloatingSessionTimer';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ const Layout = ({ children }: LayoutProps) => {
         {children}
       </main>
       <Footer />
+      <FloatingSessionTimer />
     </div>
   );
 };

@@ -42,10 +42,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
         <ScrollArea className="flex-1 px-3 py-4">
           <div className={cn("flex w-full flex-col gap-1")}>
             
-            {/* Session Timer */}
-            <div className="mb-4">
-              <SessionTimer isCollapsed={isCollapsed} />
-            </div>
             
             {/* Core Section */}
             <div className="mb-3">
