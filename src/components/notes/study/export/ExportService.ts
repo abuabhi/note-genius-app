@@ -60,92 +60,70 @@ class ExportService {
   }
 
   private preserveFormattingForPDF(content: string, contentType?: ContentType): string {
-    // Enhanced formatting preservation for PDF
-    let formattedContent = content
-      // Remove AI enhancement tags FIRST - most critical fix
+    // Normalize into plain text with simple tokens for headings/questions; no markdown markers
+    let txt = content
+      // Strip AI/enrichment wrappers
       .replace(/\[(?:AI_)?(?:ENHANCED|ENRICHED)\]([\s\S]*?)\[\/(?:AI_)?(?:ENHANCED|ENRICHED)\]/gi, '$1')
-      // Remove any remaining AI enhancement divs and tags
       .replace(/<div[^>]*class[^>]*ai[^>]*enhanced[^>]*>[\s\S]*?<\/div>/gi, '')
       .replace(/<div[^>]*class[^>]*enhanced[^>]*>[\s\S]*?<\/div>/gi, '')
       .replace(/\[(?:ENHANCED|ENRICHED|AI_ENHANCED)\]/gi, '')
       .replace(/\[\/(?:ENHANCED|ENRICHED|AI_ENHANCED)\]/gi, '')
-      // REMOVE QUESTION FORMATTING TAGS - critical fix
+      // Strip question markers (will add PDFQUESTION later)
       .replace(/\*\*QUESTION\*\*/g, '')
       .replace(/\*\*ENDQUESTION\*\*/g, '')
-      // Convert headers to plain text (remove ### markdown syntax)
-      .replace(/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/g, (match, level, text) => {
-        return '\n\n' + text.trim() + '\n\n';
-      })
-      // Preserve bold formatting
-      .replace(/<strong[^>]*>(.*?)<\/strong>/g, '**$1**')
-      .replace(/<b[^>]*>(.*?)<\/b>/g, '**$1**')
-      // Mark italic formatting for PDF processing (not markdown)
-      .replace(/<em[^>]*>(.*?)<\/em>/g, 'PDFITALIC$1ENDPDFITALIC')
-      .replace(/<i[^>]*>(.*?)<\/i>/g, 'PDFITALIC$1ENDPDFITALIC')
-      // Handle existing markdown italic and convert to PDF markers
-      .replace(/\*([^*]+)\*/g, 'PDFITALIC$1ENDPDFITALIC')
-      // Preserve bullet lists with proper indentation for multi-line content
-      .replace(/<ul[^>]*>/g, '')
-      .replace(/<\/ul>/g, '\n')
-      .replace(/<li[^>]*>(.*?)<\/li>/g, (match, content) => {
-        // Process multi-line bullet content with proper indentation
-        const lines = content.split('\n');
-        const firstLine = '  • ' + lines[0].trim() + '\n';
-        const additionalLines = lines.slice(1).map(line => 
-          line.trim() ? '    ' + line.trim() + '\n' : '\n'
-        ).join('');
-        return firstLine + additionalLines;
-      })
-      // Preserve numbered lists
-      .replace(/<ol[^>]*>/g, '')
-      .replace(/<\/ol>/g, '\n')
-      .replace(/<li[^>]*>(.*?)<\/li>/g, (match, content, index) => `  ${index + 1}. ${content}\n`)
-      // Preserve paragraphs with proper spacing
-      .replace(/<p[^>]*>/g, '')
-      .replace(/<\/p>/g, '\n\n')
-      // Preserve line breaks
-      .replace(/<br\s*\/?>/g, '\n')
-      // Handle tables (convert to text representation)
-      .replace(/<table[^>]*>/g, '\n--- TABLE ---\n')
-      .replace(/<\/table>/g, '\n--- END TABLE ---\n')
-      .replace(/<tr[^>]*>/g, '| ')
-      .replace(/<\/tr>/g, ' |\n')
-      .replace(/<t[hd][^>]*>(.*?)<\/t[hd]>/g, '$1 | ')
-      // Handle divs and spans while preserving structure
-      .replace(/<div[^>]*>/g, '\n')
-      .replace(/<\/div>/g, '\n')
-      .replace(/<span[^>]*>/g, '')
-      .replace(/<\/span>/g, '')
-      // Remove remaining HTML tags
+      // Headings (HTML and Markdown) -> tokens
+      .replace(/<h([1-6])[^>]*>([\s\S]*?)<\/h[1-6]>/gi, (m, lvl, t) => `\n\nPDF_HDR_${lvl}: ${t.trim()}\n\n`)
+      .replace(/^\s*######\s+(.+)$/gm, 'PDF_HDR_6: $1')
+      .replace(/^\s*#####\s+(.+)$/gm, 'PDF_HDR_5: $1')
+      .replace(/^\s*####\s+(.+)$/gm, 'PDF_HDR_4: $1')
+      .replace(/^\s*###\s+(.+)$/gm, 'PDF_HDR_3: $1')
+      .replace(/^\s*##\s+(.+)$/gm, 'PDF_HDR_2: $1')
+      .replace(/^\s*#\s+(.+)$/gm, 'PDF_HDR_1: $1')
+      // Lists
+      .replace(/<ul[^>]*>/gi, '\n')
+      .replace(/<\/ul>/gi, '\n')
+      .replace(/<ol[^>]*>/gi, '\n')
+      .replace(/<\/ol>/gi, '\n')
+      .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, (m, t) => `• ${t.replace(/\n+/g, ' ').trim()}\n`)
+      // Paragraphs and breaks
+      .replace(/<br\s*\/?>(?=\n)?/gi, '\n')
+      .replace(/<\/(p|div|section)>/gi, '\n\n')
+      .replace(/<(p|div|section)[^>]*>/gi, '')
+      // Remove the rest of HTML
       .replace(/<[^>]+>/g, '')
-      // Decode HTML entities
+      // Decode entities
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'")
-      // Clean up excessive whitespace while preserving intentional spacing
+      // Remove all markdown emphasis markers so nothing leaks to PDF
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/__([^_]+)__/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/_([^_]+)_/g, '$1')
+      // Normalize whitespace
+      .replace(/\r\n/g, '\n')
       .replace(/\n\s*\n\s*\n/g, '\n\n')
       .replace(/^\s+|\s+$/g, '')
       .trim();
 
-    // Enhanced question detection for Top 10 Questions - format for PDF display
+    // Special styling for questions
     if (contentType === 'questions') {
-      formattedContent = formattedContent
-        // Mark questions for special formatting (Q1., Q2., etc.) - for PDF processing only
-        .replace(/^(Q\d+[\.\:]?\s*)(.*$)/gm, 'PDFQUESTION$1$2ENDPDFQUESTION')
-        // Mark numbered questions without Q prefix
-        .replace(/^(\d+[\.\:]?\s*)(.*?)(?=\n|$)/gm, (match, number, text) => {
+      txt = txt
+        .replace(/^(Q\d+[\.:]?\s*)(.*$)/gm, 'PDFQUESTION$1$2ENDPDFQUESTION')
+        .replace(/^(\d+[\.:]?\s*)(.*?)(?=\n|$)/gm, (match, num, text) => {
           if (text.trim().endsWith('?') || text.trim().length > 10) {
-            return `PDFQUESTION${number}${text}ENDPDFQUESTION`;
+            return `PDFQUESTION${num}${text}ENDPDFQUESTION`;
           }
           return match;
         });
     }
 
-    return formattedContent;
+    return txt;
   }
+
 
   private addFooterToPDF(pdf: jsPDF, pageWidth: number, pageHeight: number, margin: number): void {
     // Save current font state
@@ -214,39 +192,6 @@ class ExportService {
 
     const lineHeight = fontSize * 0.7;
 
-    const drawInlineText = (text: string, x: number, y: number, maxWidth: number) => {
-      // Simple inline italic handler (single pair per line support)
-      if (text.includes('PDFITALIC') && text.includes('ENDPDFITALIC')) {
-        const before = text.substring(0, text.indexOf('PDFITALIC'));
-        const italic = text.substring(text.indexOf('PDFITALIC') + 9, text.indexOf('ENDPDFITALIC'));
-        const after = text.substring(text.indexOf('ENDPDFITALIC') + 12);
-
-        let cursorX = x;
-        if (before) {
-          pdf.setFont(undefined, 'normal');
-          pdf.text(before, cursorX, y);
-          cursorX += pdf.getTextWidth(before);
-        }
-        if (italic) {
-          pdf.setFont(undefined, 'italic');
-          pdf.text(italic, cursorX, y);
-          cursorX += pdf.getTextWidth(italic);
-        }
-        if (after) {
-          pdf.setFont(undefined, 'normal');
-          pdf.text(after, cursorX, y);
-        }
-        pdf.setFont(undefined, 'normal');
-      } else if (text.startsWith('**') && text.endsWith('**')) {
-        pdf.setFont(undefined, 'bold');
-        pdf.text(text.slice(2, -2), x, y);
-        pdf.setFont(undefined, 'normal');
-      } else {
-        pdf.setFont(undefined, 'normal');
-        pdf.text(text, x, y);
-      }
-    };
-
     const lines = formattedContent.split('\n');
     let yPosition = 65;
 
@@ -257,6 +202,7 @@ class ExportService {
         continue;
       }
 
+      // Questions (special styling)
       if (line.startsWith('PDFQUESTION') && line.includes('ENDPDFQUESTION')) {
         const questionText = line.replace(/PDFQUESTION/, '').replace(/ENDPDFQUESTION/, '');
         ensureRoom();
@@ -273,28 +219,68 @@ class ExportService {
         continue;
       }
 
-      if (line.startsWith('PDFBULLET ')) {
-        const text = line.replace(/^PDFBULLET\s+/, '');
+      // Headings
+      const hdr = line.match(/^PDF_HDR_(\d):\s*(.*)$/);
+      if (hdr) {
+        const level = parseInt(hdr[1], 10);
+        const text = hdr[2].trim();
+        const sizes = [0, 18, 16, 14, 13, 12, 12];
+        const oldSize = pdf.getFontSize();
+        pdf.setFontSize(sizes[Math.min(level, 6)]);
+        pdf.setFont(undefined, 'bold');
+        const wrapped = pdf.splitTextToSize(text, maxLineWidth);
+        wrapped.forEach((chunk) => {
+          ensureRoom();
+          pdf.text(chunk, margin, yPosition);
+          yPosition += lineHeight;
+        });
+        pdf.setFont(undefined, 'normal');
+        pdf.setFontSize(oldSize);
+        continue;
+      }
+
+      // Bulleted list items
+      const bullet = line.match(/^\s*(?:[•*+\-])\s+(.*)$/);
+      if (bullet) {
+        const text = bullet[1].trim();
         const wrapped = pdf.splitTextToSize(text, maxLineWidth - 10);
         wrapped.forEach((chunk, idx) => {
           ensureRoom();
           if (idx === 0) {
             pdf.text('•', margin, yPosition);
           }
-          drawInlineText(chunk, margin + 10, yPosition, maxLineWidth - 10);
+          pdf.text(chunk, margin + 10, yPosition);
           yPosition += lineHeight;
         });
         continue;
       }
 
-      // Regular paragraph line
+      // Numbered list items
+      const num = line.match(/^\s*(\d+)[\.)]\s+(.*)$/);
+      if (num) {
+        const prefix = `${num[1]}.`;
+        const text = num[2].trim();
+        const wrapped = pdf.splitTextToSize(text, maxLineWidth - 14);
+        wrapped.forEach((chunk, idx) => {
+          ensureRoom();
+          if (idx === 0) {
+            pdf.text(prefix, margin, yPosition);
+          }
+          pdf.text(chunk, margin + 14, yPosition);
+          yPosition += lineHeight;
+        });
+        continue;
+      }
+
+      // Regular paragraph
       const wrapped = pdf.splitTextToSize(line, maxLineWidth);
       wrapped.forEach((chunk) => {
         ensureRoom();
-        drawInlineText(chunk, margin, yPosition, maxLineWidth);
+        pdf.text(chunk, margin, yPosition);
         yPosition += lineHeight;
       });
     }
+
     
     // Add footer to the last page
     this.addFooterToPDF(pdf, pageWidth, pageHeight, margin);
@@ -327,6 +313,11 @@ class ExportService {
       .replace(/<ol[^>]*>/gi, '\n')
       .replace(/<\/ol>/gi, '\n')
       .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, (m, t) => `• ${t}\n`)
+      // Convert inline HTML emphasis to markdown markers so we can style in DOCX runs
+      .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, '**$1**')
+      .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, '**$1**')
+      .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, '*$1*')
+      .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, '*$1*')
       // Remove any other tags
       .replace(/<[^>]+>/g, '')
       // Decode common entities
