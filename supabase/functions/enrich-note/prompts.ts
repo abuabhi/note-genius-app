@@ -108,10 +108,9 @@ Return only the formatted summary content with no additional explanations.`;
 
 **OUTPUT FORMAT** (Export-Safe Key Points Tab):
 - Start with: \`# Key Points\`
-- Provide 7-10 bullet points total
-- Use \`- \` for each bullet point
-- Add single blank line between each point
-- Use **bold** for key terms within points
+        - Provide 7-10 bullet points total
+        - Use \`- \` for each bullet point
+        - Use **bold** for key terms within points
 - Group related points under \`##\` subheadings if helpful
 - NO nested lists or complex indentation
 - NO emojis, colors, or special formatting
@@ -190,10 +189,10 @@ Return only the original content with [AI_ENHANCED] blocks inserted inline.`;
 - Keep ALL original sentences and wording exactly as-is
 - Start with appropriate heading (\`#\`) based on topic content
 - Use \`##\` for major sections, \`###\` for subsections
-- Use bullet lists (\`- \`) with proper spacing
-- Use numbered lists (\`1., 2.\`) only for logical steps
-- Use **bold** for key terms where appropriate
-- Add single blank line before and after headings, lists, sections
+        - Use bullet lists (\`- \`) with proper spacing
+        - Use numbered lists (\`1., 2.\`) only for logical steps
+        - Use **bold** for key terms where appropriate
+        - Add single blank line before and after headings, sections
 - Maintain original paragraph structure
 
 **FORMATTING RULES**:
@@ -217,10 +216,9 @@ Return only the fully formatted markdown version with no explanations.`;
 
 **OUTPUT FORMAT** (Export-Safe Questions Tab):
 - Start with: \`# Top 10 Study Questions\`
-- Format each Q&A pair as: \`## Q1: [Question]\` followed by \`**A1:** [Answer]\`
-- Continue with Q2/A2, Q3/A3, etc. through Q10/A10
-- Add single blank line between each Q&A pair
-- Use **bold** for key terms in answers
+        - Format each Q&A pair as: \`## Q1: [Question]\` followed by \`**A1:** [Answer]\`
+        - Continue with Q2/A2, Q3/A3, etc. through Q10/A10
+        - Use **bold** for key terms in answers
 - NO colors, emojis, or special formatting
 
 **QUESTION STRATEGY**:

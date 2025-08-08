@@ -125,7 +125,7 @@
   color: #236248 !important;
   font-weight: bold !important;
   margin-bottom: 0.8rem;
-  margin-top: 1.8rem;
+  margin-top: 1.2rem;
   font-size: 1.05em;
   line-height: 1.4;
 }
@@ -133,7 +133,7 @@
 .simple-content .answer-text {
   margin-bottom: 1.5rem;
   color: hsl(var(--foreground));
-  margin-top: 0.8rem;
+  margin-top: 0.4rem;
   line-height: 1.6;
 }
 
