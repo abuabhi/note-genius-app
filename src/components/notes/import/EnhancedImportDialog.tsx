@@ -151,7 +151,7 @@ export const EnhancedImportDialog = ({
                       <span>{tab.label}</span>
                       {tab.badge && (
                         <Badge
-                          variant="secondary"
+                          variant="contrast"
                           aria-label={tab.badgeAriaLabel || 'Beta badge'}
                           className="text-[10px]"
                         >

@@ -35,10 +35,8 @@ export const CommunicationNavigationSection = ({
           isCollapsed={isCollapsed}
           badge={
             <Badge
-              className={cn(
-                "flex h-fit w-fit items-center gap-1.5 rounded border-none bg-mint-50 px-1.5 text-mint-600 dark:bg-mint-700 dark:text-mint-300",
-              )}
-              variant="outline"
+              variant="contrast"
+              className={cn("px-1.5 py-0.5 text-[10px]")}
             >
               BETA
             </Badge>

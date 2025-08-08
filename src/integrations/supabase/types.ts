@@ -3499,6 +3499,30 @@ export type Database = {
         }
         Relationships: []
       }
+      transcription_settings: {
+        Row: {
+          alert_email: string
+          base_offset: number
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          alert_email?: string
+          base_offset?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          alert_email?: string
+          base_offset?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_academic_preferences: {
         Row: {
           academic_year: string | null
