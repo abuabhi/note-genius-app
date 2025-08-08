@@ -7,9 +7,13 @@ import { cn } from '@/lib/utils';
 
 interface SessionTimerProps {
   isCollapsed: boolean;
+  hideIcon?: boolean;
+  hideSubject?: boolean;
+  stripStudyPlanPrefix?: boolean;
+  emphasizeTime?: boolean;
 }
 
-export const SessionTimer = ({ isCollapsed }: SessionTimerProps) => {
+export const SessionTimer = ({ isCollapsed, hideIcon = false, hideSubject = false, stripStudyPlanPrefix = false, emphasizeTime = false }: SessionTimerProps) => {
   const {
     isActive,
     elapsedSeconds,
@@ -113,7 +117,8 @@ export const SessionTimer = ({ isCollapsed }: SessionTimerProps) => {
     };
   };
 
-  const theme = getSessionTheme();
+const theme = getSessionTheme();
+  const titleToShow = currentTitle ? (stripStudyPlanPrefix ? currentTitle.replace(/^Study Plan:\s*/i, '') : currentTitle) : 'Study Session';
 
   const handleEndSession = () => {
     const confirmEnd = window.confirm('Are you sure you want to end this study session?');
@@ -130,18 +135,23 @@ export const SessionTimer = ({ isCollapsed }: SessionTimerProps) => {
         theme.background
       )}>
         <div className="flex flex-col items-center gap-2">
-          <div className="relative">
-            <div className={cn("h-5 w-5", theme.iconColor)}>
-              {getActivityIcon()}
+          {!hideIcon && (
+            <div className="relative">
+              <div className={cn("h-5 w-5", theme.iconColor)}>
+                {getActivityIcon()}
+              </div>
+              {!isPaused && (
+                <div className={cn(
+                  "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse",
+                  theme.indicator
+                )} />
+              )}
             </div>
-            {!isPaused && (
-              <div className={cn(
-                "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse",
-                theme.indicator
-              )} />
-            )}
-          </div>
-          <span className={cn("text-sm font-mono font-bold", theme.timeText)}>
+          )}
+          <span className={cn(
+            emphasizeTime ? "text-base sm:text-lg font-mono font-bold" : "text-sm font-mono font-bold",
+            theme.timeText
+          )}>
             {formatTime(elapsedSeconds)}
           </span>
         </div>
@@ -174,19 +184,21 @@ export const SessionTimer = ({ isCollapsed }: SessionTimerProps) => {
 
       {/* Main Timer Display */}
       <div className="flex items-center gap-3 mb-4">
-        <div className="relative">
-          <div className={cn("h-6 w-6", theme.iconColor)}>
-            {getActivityIcon()}
+        {!hideIcon && (
+          <div className="relative">
+            <div className={cn("h-6 w-6", theme.iconColor)}>
+              {getActivityIcon()}
+            </div>
+            {!isPaused && !showInactivityWarning && (
+              <div className={cn(
+                "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse",
+                theme.indicator
+              )} />
+            )}
           </div>
-          {!isPaused && !showInactivityWarning && (
-            <div className={cn(
-              "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full animate-pulse",
-              theme.indicator
-            )} />
-          )}
-        </div>
+        )}
         <div className="flex-1 min-w-0">
-          <div className={cn("text-xl font-mono font-bold", theme.timeText)}>
+          <div className={cn(emphasizeTime ? "text-2xl sm:text-3xl font-mono font-bold" : "text-xl font-mono font-bold", theme.timeText)}>
             {formatTime(elapsedSeconds)}
           </div>
           <div className={cn("text-sm font-medium", theme.text)}>
@@ -198,9 +210,9 @@ export const SessionTimer = ({ isCollapsed }: SessionTimerProps) => {
       {/* Session Info */}
       <div className="mb-4">
         <div className={cn("text-sm font-semibold truncate", theme.text)}>
-          {currentTitle || 'Study Session'}
+          {titleToShow}
         </div>
-        {currentSubject && (
+        {currentSubject && !hideSubject && (
           <div className={cn("text-xs opacity-75 truncate mt-1", theme.text)}>
             {currentSubject}
           </div>

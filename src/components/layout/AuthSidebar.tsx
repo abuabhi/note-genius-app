@@ -16,10 +16,8 @@ const AuthSidebar = () => {
         </SidebarContent>
       </Sidebar>
       
-      {/* Fixed Timer at Bottom-Left - Enhanced Integration */}
-      <div className="fixed bottom-4 left-4 z-50">
-        <FloatingSessionTimer isCollapsed={isCollapsed} />
-      </div>
+      {/* Floating Session Timer */}
+      <FloatingSessionTimer isCollapsed={isCollapsed} />
     </div>
   );
 };
