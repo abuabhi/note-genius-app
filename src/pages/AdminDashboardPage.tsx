@@ -63,39 +63,11 @@ const AdminDashboardPage = () => {
       color: 'bg-orange-500'
     },
     {
-      title: 'Flashcard Management',
-      description: 'Manage flashcard sets and content',
-      icon: Layers,
-      href: '/admin/flashcards',
-      color: 'bg-pink-500'
-    },
-    {
-      title: 'Sections Management',
-      description: 'Organize content into sections',
-      icon: BookOpen,
-      href: '/admin/sections',
-      color: 'bg-teal-500'
-    },
-    {
-      title: 'Grades Management',
-      description: 'Manage grade levels and classifications',
-      icon: GraduationCap,
-      href: '/admin/grades',
-      color: 'bg-red-500'
-    },
-    {
-      title: 'Subjects Management',
-      description: 'Manage subject categories and topics',
-      icon: BookOpen,
-      href: '/admin/subjects',
-      color: 'bg-yellow-500'
-    },
-    {
-      title: 'CSV Import Tools',
-      description: 'Import data from CSV files',
-      icon: Upload,
-      href: '/admin/csv-import',
-      color: 'bg-cyan-500'
+      title: 'YouTube Transcriptions (Apify)',
+      description: 'Monitor Apify YouTube transcript extraction usage and counts',
+      icon: BarChart3,
+      href: '/admin/transcriptions',
+      color: 'bg-rose-500'
     },
     {
       title: 'Tier Limits',
@@ -110,6 +82,47 @@ const AdminDashboardPage = () => {
       icon: HelpCircle,
       href: '/admin/help',
       color: 'bg-indigo-500'
+    },
+    // Moved to end and tagged as Coming Soon
+    {
+      title: 'Flashcard Management',
+      description: 'Manage flashcard sets and content',
+      icon: Layers,
+      href: '/admin/flashcards',
+      color: 'bg-pink-500',
+      comingSoon: true
+    },
+    {
+      title: 'Sections Management',
+      description: 'Organize content into sections',
+      icon: BookOpen,
+      href: '/admin/sections',
+      color: 'bg-teal-500',
+      comingSoon: true
+    },
+    {
+      title: 'Grades Management',
+      description: 'Manage grade levels and classifications',
+      icon: GraduationCap,
+      href: '/admin/grades',
+      color: 'bg-red-500',
+      comingSoon: true
+    },
+    {
+      title: 'Subjects Management',
+      description: 'Manage subject categories and topics',
+      icon: BookOpen,
+      href: '/admin/subjects',
+      color: 'bg-yellow-500',
+      comingSoon: true
+    },
+    {
+      title: 'CSV Import Tools',
+      description: 'Import data from CSV files',
+      icon: Upload,
+      href: '/admin/csv-import',
+      color: 'bg-cyan-500',
+      comingSoon: true
     }
   ];
 
@@ -129,11 +142,16 @@ const AdminDashboardPage = () => {
             return (
               <Card key={section.href} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className="flex items-center space-x-2">
-                    <div className={`p-2 rounded-lg ${section.color} text-white`}>
-                      <IconComponent className="h-5 w-5" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className={`p-2 rounded-lg ${section.color} text-white`}>
+                        <IconComponent className="h-5 w-5" />
+                      </div>
+                      <CardTitle className="text-lg">{section.title}</CardTitle>
                     </div>
-                    <CardTitle className="text-lg">{section.title}</CardTitle>
+                    {section.comingSoon && (
+                      <span className="text-xs font-medium px-2 py-1 rounded bg-gray-100 text-gray-700">Coming Soon</span>
+                    )}
                   </div>
                   <CardDescription>{section.description}</CardDescription>
                 </CardHeader>
