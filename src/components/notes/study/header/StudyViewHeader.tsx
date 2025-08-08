@@ -62,6 +62,27 @@ export const StudyViewHeader = ({
   isEnhancing = false,
 }: StudyViewHeaderProps) => {
 
+  // Derive a usable YouTube URL if the stored one is missing
+  const extractYouTubeUrl = (text?: string | null): string | null => {
+    if (!text) return null;
+    const regex = /(?:https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/))([\w-]{11})/;
+    const match = text.match(regex);
+    if (match?.[1]) {
+      return `https://www.youtube.com/watch?v=${match[1]}`;
+    }
+    return null;
+  };
+
+  const getYouTubeUrl = (): string | null => {
+    if (note.video_url) return note.video_url;
+    return (
+      extractYouTubeUrl(note.content) ||
+      extractYouTubeUrl(note.markdown_content) ||
+      null
+    );
+  };
+
+  const youtubeUrl = getYouTubeUrl();
 
   return (
     <CardHeader className="border-b p-4 bg-card">
@@ -81,8 +102,8 @@ export const StudyViewHeader = ({
               <StudyViewConversionDropdown note={note} />
               <StudyViewExportDropdown note={note} />
               
-              {note.sourceType === 'youtube' && note.video_url && (
-                <StudyViewYouTubeButton videoUrl={note.video_url} />
+{note.sourceType === 'youtube' && youtubeUrl && (
+                <StudyViewYouTubeButton videoUrl={youtubeUrl} />
               )}
             </>
           )}
