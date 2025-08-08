@@ -8,6 +8,7 @@ import { ScanImportTab } from './tabs/ScanImportTab';
 import { YouTubeImportTab } from './tabs/YouTubeImportTab';
 import { BulkPdfImportTab } from './tabs/BulkPdfImportTab';
 import { Upload } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface EnhancedImportDialogProps {
   isVisible: boolean;
@@ -99,9 +100,9 @@ export const EnhancedImportDialog = ({
     }
   };
 
-  const tabs = [
+  const tabs: Array<{ value: string; label: string; badge?: string; badgeAriaLabel?: string }> = [
     { value: 'file', label: 'Files' },
-    { value: 'youtube', label: 'YouTube' },
+    { value: 'youtube', label: 'YouTube', badge: 'Beta', badgeAriaLabel: 'Feature in beta' },
     { value: 'api', label: 'Online' },
     { value: 'scan', label: 'Scan' },
     { value: 'bulk', label: 'Bulk PDF' }
@@ -146,7 +147,18 @@ export const EnhancedImportDialog = ({
                     value={tab.value}
                     className="text-sm font-medium text-gray-700 data-[state=active]:bg-white data-[state=active]:text-mint-600 data-[state=active]:shadow-sm rounded-md py-2"
                   >
-                    {tab.label}
+                    <span className="inline-flex items-center gap-2">
+                      <span>{tab.label}</span>
+                      {tab.badge && (
+                        <Badge
+                          variant="secondary"
+                          aria-label={tab.badgeAriaLabel || 'Beta badge'}
+                          className="text-[10px]"
+                        >
+                          {tab.badge}
+                        </Badge>
+                      )}
+                    </span>
                   </TabsTrigger>
                 ))}
               </TabsList>
