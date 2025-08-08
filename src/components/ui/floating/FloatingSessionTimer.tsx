@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useUnifiedSessionTracker } from '@/hooks/useUnifiedSessionTracker';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, Play, Pause, Square, GripVertical, AlertTriangle } from 'lucide-react';
+import { Clock, Play, Pause, Square, GripVertical, AlertTriangle, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Position {
@@ -24,9 +24,18 @@ export const FloatingSessionTimer = () => {
     isRecovering
   } = useUnifiedSessionTracker();
 
+  // Get default bottom-left position
+  const getDefaultPosition = useCallback((): Position => {
+    const timerHeight = 180; // Approximate timer height
+    return {
+      x: 20,
+      y: window.innerHeight - timerHeight - 20
+    };
+  }, []);
+
   const [position, setPosition] = useState<Position>(() => {
     const saved = localStorage.getItem('floating-timer-position');
-    return saved ? JSON.parse(saved) : { x: 20, y: 100 };
+    return saved ? JSON.parse(saved) : getDefaultPosition();
   });
   
   const [isDragging, setIsDragging] = useState(false);
@@ -110,6 +119,11 @@ export const FloatingSessionTimer = () => {
     }
   };
 
+  const resetPosition = () => {
+    const defaultPos = getDefaultPosition();
+    setPosition(defaultPos);
+  };
+
   // Don't render if no active session or still recovering
   if (!isActive || isRecovering) {
     return null;
@@ -185,6 +199,15 @@ export const FloatingSessionTimer = () => {
             className="bg-white/20 hover:bg-white/30 text-white border-white/30 h-8 px-3"
           >
             {isPaused ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={resetPosition}
+            className="bg-white/20 hover:bg-white/30 text-white border-white/30 h-8 px-3"
+            title="Reset to default position"
+          >
+            <Home className="h-3 w-3" />
           </Button>
           <Button
             size="sm"
