@@ -42,7 +42,7 @@ export const SessionTimer = ({
 
   // Show loading state during recovery
   if (isRecovering) {
-    return <div className="relative overflow-hidden bg-gradient-to-r from-success to-primary border border-white/10 rounded-xl shadow-lg p-3 backdrop-blur-sm ring-1 ring-white/10">
+    return <div className="relative overflow-hidden bg-gradient-to-r from-emerald-400 via-teal-500 to-blue-600 border border-white/10 rounded-xl shadow-lg p-3 backdrop-blur-sm ring-1 ring-white/10">
         <div className="flex items-center gap-2">
           <Loader className="h-4 w-4 text-white animate-spin" />
           {!isCollapsed && <span className="text-base text-white font-medium">Loading session...</span>}
@@ -96,7 +96,7 @@ export const SessionTimer = ({
   };
   if (isCollapsed) {
     // Collapsed state - enhanced minimal indicator
-    return <div className={cn("relative overflow-hidden bg-gradient-to-r from-success to-primary border border-white/10 rounded-xl shadow-lg p-3 backdrop-blur-sm ring-1 ring-white/10 transition-all duration-300", theme.background)}>
+    return <div className={cn("relative overflow-hidden bg-gradient-to-r from-emerald-400 via-teal-500 to-blue-600 border border-white/10 rounded-xl shadow-lg p-3 backdrop-blur-sm ring-1 ring-white/10 transition-all duration-300", theme.background)}>
         <div className="flex flex-col items-center gap-2">
           {!hideIcon && <div className="relative">
               <div className={cn("h-8 w-8 rounded-full bg-white/10 ring-1 ring-white/30 flex items-center justify-center", theme.iconColor)}>
@@ -112,7 +112,7 @@ export const SessionTimer = ({
   }
 
   // Expanded state - enhanced full timer
-  return <div className={cn("relative overflow-hidden bg-gradient-to-r from-success to-primary border border-white/10 rounded-xl shadow-lg ring-1 ring-white/10 px-4 py-3 backdrop-blur-sm transition-all duration-300 min-w-72 min-h-14 before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-white/40", theme.background)}>
+  return <div className={cn("relative overflow-hidden bg-gradient-to-r from-emerald-400 via-teal-500 to-blue-600 border border-white/10 rounded-xl shadow-lg ring-1 ring-white/10 px-4 py-3 backdrop-blur-sm transition-all duration-300 min-w-72 min-h-14 before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-white/40", theme.background)}>
       {/* Inactivity Warning - compact */}
       {showInactivityWarning && <div className="mb-2 px-2 py-1 rounded-sm border border-white/20 bg-white/10 text-xs md:text-sm text-white">
           Auto pause protection: you're inactive — session will auto-pause soon.
