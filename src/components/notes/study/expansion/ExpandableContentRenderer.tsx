@@ -16,6 +16,7 @@ interface ExpandableContentRendererProps {
   noteTitle: string;
   noteId: string;
   className?: string;
+  hideColoring?: boolean;
 }
 
 export const ExpandableContentRenderer = ({
@@ -25,11 +26,13 @@ export const ExpandableContentRenderer = ({
   contentType,
   noteTitle,
   noteId,
-  className = ""
+  className = "",
+  hideColoring = false
 }: ExpandableContentRendererProps) => {
   const [selectedText, setSelectedText] = useState('');
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [localHideColoring, setLocalHideColoring] = useState(hideColoring);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -91,9 +94,10 @@ export const ExpandableContentRenderer = ({
           .filter(line => line.length > 0)
           .join('\n\n');
 
+        const expansionClass = localHideColoring ? 'ai-expansion-content-neutral' : 'ai-expansion-content';
         const expansionBlock = `
 
-<div class="ai-expansion-content">
+<div class="${expansionClass}">
 ${cleanExpandedContent}
 </div>
 
@@ -108,7 +112,7 @@ ${cleanExpandedContent}
     }
 
     return processedText;
-  }, [content, expansions, contentType]);
+  }, [content, expansions, contentType, localHideColoring]);
 
   // DEBOUNCED selection handler to prevent multiple rapid calls
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -246,7 +250,7 @@ ${cleanExpandedContent}
           content={processedContent}
           fontSize={fontSize} // Use dynamic font size from props
           textAlign={textAlign}
-          className="w-full"
+          className={`w-full ${localHideColoring ? 'hide-coloring' : ''}`}
         />
       </div>
 
@@ -266,6 +270,8 @@ ${cleanExpandedContent}
           contentType
         } : null}
         isRegenerating={isRegenerating}
+        hideColoring={localHideColoring}
+        onColoringToggle={setLocalHideColoring}
         onConfirm={confirmExpansion}
         onRegenerate={regenerateExpansion}
         onCancel={cancelExpansion}
@@ -284,6 +290,23 @@ ${cleanExpandedContent}
           position: relative;
           font-size: 16px !important;
           font-family: inherit !important;
+        }
+        
+        .ai-expansion-content-neutral {
+          border-left: 3px solid hsl(var(--border));
+          padding: 12px 16px;
+          margin: 12px 0;
+          font-style: italic !important;
+          font-weight: normal !important;
+          line-height: 1.6;
+          position: relative;
+          font-size: 16px !important;
+          font-family: inherit !important;
+        }
+        
+        .hide-coloring .ai-enhanced-simple {
+          background: none !important;
+          border-left: 3px solid hsl(var(--border)) !important;
         }
         
         .expansion-remove-wrapper {

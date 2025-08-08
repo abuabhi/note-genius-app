@@ -166,6 +166,11 @@ export const processContentForDisplay = (content: string): string => {
     return content;
   }
   
+  // Check if content already has ai-enhanced-simple divs - preserve them
+  if (content.includes('ai-enhanced-simple')) {
+    // Content already has AI enhancement styling applied, preserve it
+    return content;
+  }
   
   // If content has HTML tags, convert to clean markdown first, then back to HTML
   if (content.includes('<') && content.includes('>')) {

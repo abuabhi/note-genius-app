@@ -1,7 +1,8 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Check, X, Type } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { RefreshCw, Check, X, Type, Palette } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 interface ExpansionPreviewDialogProps {
@@ -12,6 +13,8 @@ interface ExpansionPreviewDialogProps {
     contentType: string;
   } | null;
   isRegenerating?: boolean;
+  hideColoring?: boolean;
+  onColoringToggle?: (hide: boolean) => void;
   onConfirm: () => void;
   onRegenerate: () => void;
   onCancel: () => void;
@@ -21,6 +24,8 @@ export const ExpansionPreviewDialog = ({
   isOpen,
   expansion,
   isRegenerating = false,
+  hideColoring = false,
+  onColoringToggle,
   onConfirm,
   onRegenerate,
   onCancel
@@ -75,38 +80,54 @@ export const ExpansionPreviewDialog = ({
           </div>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <div className="flex gap-2 w-full sm:w-auto">
+        <DialogFooter className="flex-col gap-3">
+          {/* Color Toggle */}
+          {onColoringToggle && (
+            <div className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Palette className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Show colored formatting</span>
+              </div>
+              <Switch
+                checked={!hideColoring}
+                onCheckedChange={(checked) => onColoringToggle(!checked)}
+              />
+            </div>
+          )}
+          
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={onCancel}
+                className="flex-1 sm:flex-initial"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+              <Button
+                variant="outline"
+                onClick={onRegenerate}
+                disabled={isRegenerating}
+                className="flex-1 sm:flex-initial"
+              >
+                {isRegenerating ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                {isRegenerating ? 'Regenerating...' : 'Regenerate'}
+              </Button>
+            </div>
             <Button
-              variant="outline"
-              onClick={onCancel}
-              className="flex-1 sm:flex-initial"
-            >
-              <X className="h-4 w-4 mr-2" />
-              Cancel
-            </Button>
-            <Button
-              variant="outline"
-              onClick={onRegenerate}
+              onClick={onConfirm}
               disabled={isRegenerating}
-              className="flex-1 sm:flex-initial"
+              className="w-full sm:w-auto"
             >
-              {isRegenerating ? (
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              {isRegenerating ? 'Regenerating...' : 'Regenerate'}
+              <Check className="h-4 w-4 mr-2" />
+              Confirm & Add to Note
             </Button>
           </div>
-          <Button
-            onClick={onConfirm}
-            disabled={isRegenerating}
-            className="w-full sm:w-auto"
-          >
-            <Check className="h-4 w-4 mr-2" />
-            Confirm & Add to Note
-          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
