@@ -321,8 +321,7 @@ class ExportService {
       .replace(/<br\s*\/?>(?=\n)?/gi, '\n')
       .replace(/<\/(p|div|section)>/gi, '\n\n')
       .replace(/<(p|div|section)[^>]*>/gi, '')
-      .replace(/<\/(h[1-6])>/gi, '\n\n')
-      .replace(/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/gi, (m, lvl, t) => `\n\n#${'#'.repeat(Math.max(0, (+lvl - 1)))} ${t}\n\n`)
+      .replace(/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/gi, (m, lvl, t) => `\n\nDOCX_HDR_${lvl} ${t}\n\n`)
       .replace(/<ul[^>]*>/gi, '\n')
       .replace(/<\/ul>/gi, '\n')
       .replace(/<ol[^>]*>/gi, '\n')
@@ -374,7 +373,7 @@ class ExportService {
       const t = text.replace(/^([•*+\-]\s+)/, '').trim();
       paragraphs.push(new Paragraph({
         children: [new TextRun({ text: '• ', bold: true, size: 22 }), ...makeRuns(t)],
-        indent: { left: 720 },
+        indent: { left: 720, hanging: 360 },
         spacing: { after: 60 },
       }));
     };
@@ -383,7 +382,7 @@ class ExportService {
       const prefix = `${n}. `;
       paragraphs.push(new Paragraph({
         children: [new TextRun({ text: prefix, bold: true, size: 22 }), ...makeRuns(text.trim())],
-        indent: { left: 720 },
+        indent: { left: 720, hanging: 360 },
         spacing: { after: 60 },
       }));
     };
@@ -394,11 +393,21 @@ class ExportService {
       const line = raw.trimRight();
       if (!line.trim()) { paragraphs.push(new Paragraph({ children: [new TextRun({ text: ' ', size: 2 })] })); continue; }
 
-      // Headings in markdown style: remove ### but keep emphasis
-      const h = line.match(/^\s*#{1,6}\s+(.*)$/);
-      if (h) {
-        const text = h[1].trim();
-        paragraphs.push(new Paragraph({ children: makeRuns(text), spacing: { before: 240, after: 120 } }));
+      // Headings: from HTML markers or markdown ## syntax
+      const hdr = line.match(/^\s*DOCX_HDR_(\d)\s+(.*)$/);
+      if (hdr) {
+        const level = parseInt(hdr[1], 10);
+        const text = hdr[2].trim();
+        const size = Math.max(20, 32 - (level - 1) * 2);
+        paragraphs.push(new Paragraph({ children: [new TextRun({ text, bold: true, size })], spacing: { before: 240, after: 120 } }));
+        continue;
+      }
+      const mh = line.match(/^\s*(#{1,6})\s+(.*)$/);
+      if (mh) {
+        const level = mh[1].length;
+        const text = mh[2].trim();
+        const size = Math.max(20, 32 - (level - 1) * 2);
+        paragraphs.push(new Paragraph({ children: [new TextRun({ text, bold: true, size })], spacing: { before: 240, after: 120 } }));
         continue;
       }
 
