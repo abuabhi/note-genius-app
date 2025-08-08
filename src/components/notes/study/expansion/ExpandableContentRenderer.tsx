@@ -96,10 +96,6 @@ export const ExpandableContentRenderer = ({
 
         const expansionBlock = `
 
----
-
-<div class="ai-expansion-header">🧠 AI Expanded Content</div>
-
 <div class="ai-expansion-content">
 ${cleanExpandedContent}
 </div>
@@ -280,45 +276,17 @@ ${cleanExpandedContent}
 
       <style dangerouslySetInnerHTML={{
         __html: `
-        .ai-expansion-header {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.875rem;
-          font-weight: 600;
-          color: #059669;
-          background: linear-gradient(to right, #ecfdf5, #d1fae5);
-          border: 1px solid #a7f3d0;
-          border-radius: 0.5rem;
-          padding: 0.5rem 0.75rem;
-          margin: 1.5rem 0 0.75rem 0;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
-        
         .ai-expansion-content {
-          background: linear-gradient(to right, #f0fdf4, #ecfdf5);
-          border-left: 3px solid #22c55e;
-          padding: 1rem 1.25rem;
-          margin: 0.5rem 0 1.5rem 0;
-          border-radius: 0 0.5rem 0.5rem 0;
+          background: hsl(48, 100%, 96%);
+          border-left: 3px solid #d97706;
+          padding: 12px 16px;
+          margin: 12px 0;
           font-style: italic !important;
           font-weight: normal !important;
-          color: #166534;
           line-height: 1.6;
           position: relative;
           font-size: 16px !important;
           font-family: inherit !important;
-        }
-        
-        .ai-expansion-content::before {
-          content: '';
-          position: absolute;
-          left: -3px;
-          top: 0;
-          bottom: 0;
-          width: 3px;
-          background: linear-gradient(to bottom, #22c55e, #16a34a);
-          border-radius: 0 0 0 0.125rem;
         }
         
         .expansion-remove-wrapper {
