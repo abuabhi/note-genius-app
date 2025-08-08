@@ -28,8 +28,9 @@ export const EmailDialog = ({ isOpen, onClose, note, contentType }: EmailDialogP
       case 'original': return 'Original Content';
       case 'summary': return 'Summary';
       case 'keyPoints': return 'Key Points';
-      case 'improved': return 'Improved Content';
-      case 'markdown': return 'Markdown Content';
+      case 'enriched': return 'Enriched Note';
+      case 'markdown': return 'Original++';
+      case 'questions': return 'Top 10 Questions';
       default: return 'Content';
     }
   };

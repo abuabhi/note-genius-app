@@ -42,6 +42,12 @@ export const StudyViewExportDropdown = ({ note }: StudyViewExportDropdownProps) 
       available: Boolean(note.content || note.description)
     },
     {
+      type: 'markdown',
+      label: 'Original++',
+      icon: Code,
+      available: Boolean(note.markdown_content)
+    },
+    {
       type: 'summary',
       label: 'Summary',
       icon: Target,
@@ -54,16 +60,16 @@ export const StudyViewExportDropdown = ({ note }: StudyViewExportDropdownProps) 
       available: Boolean(note.key_points)
     },
     {
-      type: 'improved',
-      label: 'Improved Content',
+      type: 'enriched',
+      label: 'Enriched Note',
       icon: Sparkles,
-      available: Boolean(note.questions_content)
+      available: Boolean(note.enriched_content)
     },
     {
-      type: 'markdown',
-      label: 'Original++',
-      icon: Code,
-      available: Boolean(note.markdown_content)
+      type: 'questions',
+      label: 'Top 10 Questions',
+      icon: Target,
+      available: Boolean(note.questions_content)
     }
   ];
 
