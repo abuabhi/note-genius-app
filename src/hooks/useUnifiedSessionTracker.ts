@@ -190,19 +190,16 @@ export const useUnifiedSessionTracker = () => {
   // Inactivity detection (visible tab only)
   useEffect(() => {
     if (!isTabVisible) return;
-    if (sessionState.isActive && !sessionState.isPaused && !sessionState.isRecovering) {
+    if (sessionState.isActive && !sessionState.isRecovering) {
       const checkInactivity = () => {
-        const timeSinceLastActivity = Date.now() - lastActivityRef.current.getTime();
-        const fiveMinutes = 5 * 60 * 1000;
-        
-        if (timeSinceLastActivity > fiveMinutes) {
-          setSessionState(prev => ({ ...prev, showInactivityWarning: true }));
-          
-          setTimeout(() => {
-            if (sessionState.showInactivityWarning) {
-              endSession('Auto-ended due to inactivity');
-            }
-          }, 2 * 60 * 1000);
+        const { pauseMinutes, endMinutes } = getAwayThresholds();
+        const inactivityMs = Date.now() - lastActivityRef.current.getTime();
+
+        if (inactivityMs >= endMinutes * 60 * 1000) {
+          endSession('Auto-ended due to inactivity');
+        } else if (!sessionState.isPaused && inactivityMs >= pauseMinutes * 60 * 1000) {
+          setSessionState(prev => prev.isPaused ? prev : ({ ...prev, isPaused: true, showInactivityWarning: true }));
+          toast.info('Session paused due to inactivity');
         }
       };
 
@@ -214,7 +211,7 @@ export const useUnifiedSessionTracker = () => {
         clearInterval(inactivityTimerRef.current);
       }
     };
-  }, [sessionState.isActive, sessionState.isPaused, sessionState.isRecovering, isTabVisible]);
+  }, [sessionState.isActive, sessionState.isRecovering, isTabVisible, sessionState.isPaused]);
 
   // Away handling: pause after pauseMinutes and end after endMinutes when tab is hidden
   useEffect(() => {

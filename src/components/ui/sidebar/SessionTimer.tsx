@@ -41,14 +41,14 @@ export const SessionTimer = ({ isCollapsed, hideIcon = false, hideSubject = fals
   // Show loading state during recovery
   if (isRecovering) {
     return (
-      <div className="bg-white border border-blue-200 rounded-xl shadow-lg p-3 backdrop-blur-sm">
+      <div className="bg-background border border-success rounded-xl shadow-lg p-3 backdrop-blur-sm">
         <div className="flex items-center gap-2">
           {isCollapsed ? (
-            <Loader className="h-4 w-4 text-blue-600 animate-spin" />
+            <Loader className="h-4 w-4 text-success animate-spin" />
           ) : (
             <>
-              <Loader className="h-4 w-4 text-blue-600 animate-spin" />
-              <span className="text-sm text-blue-800 font-medium">Loading session...</span>
+              <Loader className="h-4 w-4 text-success animate-spin" />
+              <span className="text-base text-success font-medium">Loading session...</span>
             </>
           )}
         </div>
@@ -88,32 +88,12 @@ export const SessionTimer = ({ isCollapsed, hideIcon = false, hideSubject = fals
   };
 
   const getSessionTheme = () => {
-    if (showInactivityWarning) {
-      return {
-        background: 'bg-destructive/10 border-destructive/30',
-        text: 'text-destructive',
-        timeText: 'text-destructive',
-        iconColor: 'text-destructive',
-        indicator: 'bg-destructive'
-      };
-    }
-
-    if (isPaused) {
-      return {
-        background: 'bg-muted/50 border-border',
-        text: 'text-muted-foreground',
-        timeText: 'text-foreground',
-        iconColor: 'text-muted-foreground',
-        indicator: 'bg-muted-foreground'
-      };
-    }
-
     return {
-      background: 'bg-primary/5 border-primary/20',
-      text: 'text-foreground',
-      timeText: 'text-primary',
-      iconColor: 'text-primary',
-      indicator: 'bg-primary'
+      background: 'border-success',
+      text: 'text-success',
+      timeText: 'text-success',
+      iconColor: 'text-success',
+      indicator: 'bg-success'
     };
   };
 
@@ -131,7 +111,7 @@ const theme = getSessionTheme();
     // Collapsed state - enhanced minimal indicator
     return (
       <div className={cn(
-        "bg-background border border-border rounded-md shadow-md p-2 backdrop-blur-sm ring-1 ring-primary/10 transition-all duration-300",
+        "bg-background border border-success rounded-md shadow-md p-3 backdrop-blur-sm ring-1 ring-success/20 transition-all duration-300",
         theme.background
       )}>
         <div className="flex flex-col items-center gap-2">
@@ -149,8 +129,7 @@ const theme = getSessionTheme();
             </div>
           )}
           <span className={cn(
-            emphasizeTime ? "text-base sm:text-lg font-mono font-bold" : "text-sm font-mono font-bold",
-            theme.timeText
+            "text-base font-mono font-bold text-success"
           )}>
             {formatTime(elapsedSeconds)}
           </span>
@@ -162,18 +141,18 @@ const theme = getSessionTheme();
   // Expanded state - enhanced full timer
   return (
     <div className={cn(
-      "bg-background border border-border rounded-md shadow-md ring-1 ring-primary/10 px-3 py-2 backdrop-blur-sm transition-all duration-300 min-w-64",
+      "bg-background border border-success rounded-md shadow-md ring-1 ring-success/20 px-4 py-3 backdrop-blur-sm transition-all duration-300 min-w-72 min-h-14",
       theme.background
     )}>
       {/* Inactivity Warning - compact */}
       {showInactivityWarning && (
-        <div className="mb-2 px-2 py-1 rounded-sm border border-destructive/30 bg-destructive/10 text-[11px] text-destructive flex items-center justify-between">
+        <div className="mb-2 px-2 py-1 rounded-sm border border-success bg-success/10 text-base text-success flex items-center justify-between">
           <span className="leading-snug">Session inactive — auto-stop soon.</span>
           <Button
             variant="ghost"
             size="icon"
             onClick={dismissInactivityWarning}
-            className="h-6 w-6 text-destructive hover:text-destructive"
+            className="h-6 w-6 text-success hover:text-success"
             aria-label="Dismiss inactivity warning"
           >
             <X className="h-3.5 w-3.5" />
@@ -187,13 +166,13 @@ const theme = getSessionTheme();
         <div className="flex items-center gap-2">
           {!isPaused && !showInactivityWarning && <span className={cn("inline-block h-2 w-2 rounded-full animate-pulse", theme.indicator)} />}
           {(isPaused || showInactivityWarning) && <span className={cn("inline-block h-2 w-2 rounded-full", theme.indicator)} />}
-          <span className={cn("text-xs", theme.text)}>{isPaused ? 'Paused' : showInactivityWarning ? 'Inactive' : 'Active Session'}</span>
+          <span className="text-base text-success">{isPaused ? 'Paused' : showInactivityWarning ? 'Inactive' : 'Active Session'}</span>
         </div>
 
         <span className="h-4 w-px bg-border" />
 
         {/* Timer */}
-        <div className={cn(emphasizeTime ? "text-base sm:text-lg md:text-xl font-mono font-bold" : "text-sm font-mono font-semibold", theme.timeText)}>
+        <div className="text-base font-mono font-bold text-success">
           {formatTime(elapsedSeconds)}
         </div>
 
@@ -201,7 +180,7 @@ const theme = getSessionTheme();
 
         {/* Title */}
         <div className="flex-1 min-w-0">
-          <div className={cn("truncate text-sm", theme.text)} title={titleToShow}>
+          <div className="truncate text-base text-success" title={titleToShow}>
             {titleToShow}
           </div>
         </div>

@@ -46,7 +46,7 @@ export const FloatingSessionTimer: React.FC<FloatingSessionTimerProps> = ({ isCo
     try { return localStorage.getItem(AWAY_TIP_KEY) === '1'; } catch { return false; }
   });
 
-  const { isActive } = useUnifiedSessionTracker();
+  const { isActive, isRecovering } = useUnifiedSessionTracker();
 
   const clampToViewport = useCallback((next: Position): Position => {
     const margin = 8;
@@ -109,6 +109,10 @@ export const FloatingSessionTimer: React.FC<FloatingSessionTimerProps> = ({ isCo
   };
 
   const resetPosition = () => setPos(getDefaultPosition());
+
+  if (!isActive && !isRecovering) {
+    return null;
+  }
 
   return (
     <>
