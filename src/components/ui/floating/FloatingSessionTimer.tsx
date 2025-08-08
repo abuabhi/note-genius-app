@@ -18,9 +18,14 @@ export const FloatingSessionTimer: React.FC<FloatingSessionTimerProps> = ({ isCo
   const dragOffsetRef = useRef<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
 
   const getDefaultPosition = (): Position => {
-    const margin = 16;
-    const y = typeof window !== 'undefined' ? Math.max(0, (window.innerHeight - 140)) - margin : 0;
-    return { x: margin, y };
+    const marginLeft = 16;
+    const bottomSafe = 120; // keep controls clear of bottom edge
+    const approxHeight = isCollapsed ? 80 : 176; // estimated component height
+    if (typeof window === 'undefined') {
+      return { x: marginLeft, y: 16 };
+    }
+    const y = Math.max(16, window.innerHeight - approxHeight - bottomSafe);
+    return { x: marginLeft, y };
   };
 
   const [pos, setPos] = useState<Position>(() => {
@@ -55,6 +60,11 @@ export const FloatingSessionTimer: React.FC<FloatingSessionTimerProps> = ({ isCo
     return () => window.removeEventListener('resize', onResize);
   }, [clampToViewport]);
 
+  // Clamp on mount and when layout changes (e.g., sidebar collapse)
+  useEffect(() => {
+    setPos(p => clampToViewport(p));
+  }, [clampToViewport, isCollapsed]);
+
   const onPointerDown = (e: React.PointerEvent) => {
     draggingRef.current = true;
     const rect = containerRef.current?.getBoundingClientRect();
@@ -82,12 +92,12 @@ export const FloatingSessionTimer: React.FC<FloatingSessionTimerProps> = ({ isCo
   return (
     <div
       ref={containerRef}
-      className="fixed z-50 select-none"
+      className="fixed z-50 select-none drop-shadow-2xl"
       style={{ left: pos.x, top: pos.y }}
     >
       {/* Drag handle and reset button */}
       <div
-        className="flex items-center justify-between px-2 py-1 rounded-t-md bg-background/70 border border-b-0 border-border cursor-move backdrop-blur"
+        className="flex items-center justify-between px-2 py-1 rounded-t-md bg-background border border-b-0 border-border cursor-move backdrop-blur shadow-md ring-1 ring-primary/20"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -105,7 +115,7 @@ export const FloatingSessionTimer: React.FC<FloatingSessionTimerProps> = ({ isCo
       </div>
 
       {/* Timer body */}
-      <div className="rounded-b-md border border-t-0 border-border bg-background/90 shadow-lg backdrop-blur">
+      <div className="rounded-b-md border border-t-0 border-border bg-background shadow-xl ring-1 ring-primary/20 backdrop-blur">
         <SessionTimer isCollapsed={isCollapsed} />
       </div>
     </div>

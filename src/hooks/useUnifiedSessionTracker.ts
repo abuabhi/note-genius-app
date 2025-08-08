@@ -37,6 +37,12 @@ export const useUnifiedSessionTracker = () => {
     recoverActiveSession 
   } = useSessionPersistence();
   
+  // Cross-component sync via window event
+  const EVENT_NAME = 'unified-session:state';
+  const broadcastState = (state: UnifiedSessionState) => {
+    window.dispatchEvent(new CustomEvent<UnifiedSessionState>(EVENT_NAME, { detail: state }));
+  };
+  
   const [sessionState, setSessionState] = useState<UnifiedSessionState>({
     isActive: false,
     currentSessionId: null,
@@ -63,6 +69,18 @@ export const useUnifiedSessionTracker = () => {
   const tabHiddenAtRef = useRef<number | null>(null);
   const awayIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const autoPausedRef = useRef<boolean>(false);
+
+  // Listen for external session state updates (from other hook instances)
+  useEffect(() => {
+    const onExternalUpdate = (e: Event) => {
+      const ce = e as CustomEvent<UnifiedSessionState>;
+      if (ce.detail) {
+        setSessionState(ce.detail);
+      }
+    };
+    window.addEventListener(EVENT_NAME as any, onExternalUpdate as EventListener);
+    return () => window.removeEventListener(EVENT_NAME as any, onExternalUpdate as EventListener);
+  }, []);
 
   // Configurable thresholds via settings (localStorage)
   const getAwayThresholds = () => {
@@ -112,7 +130,7 @@ export const useUnifiedSessionTracker = () => {
           
           console.log('🔄 [SESSION RECOVERY] Setting session state:', recoveredState);
           setSessionState(recoveredState);
-          
+          broadcastState(recoveredState);
           toast.success('Study session resumed');
         } else {
           console.log('ℹ️ [SESSION RECOVERY] No active session found');
@@ -306,7 +324,7 @@ export const useUnifiedSessionTracker = () => {
 
       console.log('✅ [UNIFIED SESSION] Session created successfully:', data.id);
 
-      setSessionState({
+      const newState: UnifiedSessionState = {
         isActive: true,
         currentSessionId: data.id,
         startTime: now,
@@ -318,7 +336,10 @@ export const useUnifiedSessionTracker = () => {
         studyPlanId: sessionData.studyPlanId || null,
         showInactivityWarning: false,
         isRecovering: false
-      });
+      };
+
+      setSessionState(newState);
+      broadcastState(newState);
 
       toast.success(`Session started: ${sessionData.title}`);
       return data.id;
@@ -366,7 +387,7 @@ export const useUnifiedSessionTracker = () => {
         inactivityTimerRef.current = null;
       }
 
-      setSessionState({
+      const endedState: UnifiedSessionState = {
         isActive: false,
         currentSessionId: null,
         startTime: null,
@@ -378,7 +399,10 @@ export const useUnifiedSessionTracker = () => {
         studyPlanId: null,
         showInactivityWarning: false,
         isRecovering: false
-      });
+      };
+
+      setSessionState(endedState);
+      broadcastState(endedState);
 
       clearPersistedSession();
       toast.success(`Session ended (${Math.round(duration / 60)} minutes)`);
@@ -390,10 +414,11 @@ export const useUnifiedSessionTracker = () => {
   };
 
   const togglePause = () => {
-    setSessionState(prev => ({
-      ...prev,
-      isPaused: !prev.isPaused
-    }));
+    setSessionState(prev => {
+      const next = { ...prev, isPaused: !prev.isPaused };
+      broadcastState(next);
+      return next;
+    });
     
     if (!sessionState.isPaused) {
       toast.info('Session paused');
@@ -404,7 +429,11 @@ export const useUnifiedSessionTracker = () => {
   };
 
   const dismissInactivityWarning = () => {
-    setSessionState(prev => ({ ...prev, showInactivityWarning: false }));
+    setSessionState(prev => {
+      const next = { ...prev, showInactivityWarning: false };
+      broadcastState(next);
+      return next;
+    });
     trackActivity();
   };
 
