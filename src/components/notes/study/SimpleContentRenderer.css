@@ -49,7 +49,7 @@
 .simple-ol,
 .simple-content ul,
 .simple-content ol {
-  margin-bottom: 1.2rem;
+  margin-bottom: 0.8rem;
   margin-top: 0;
   padding-left: 1.5rem;
   list-style-type: disc;
@@ -58,7 +58,7 @@
 .simple-content ul li,
 .simple-content ol li,
 .simple-li {
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.1rem;
   margin-top: 0;
   line-height: 1.4;
   padding-left: 0.2rem;
@@ -124,16 +124,16 @@
 .simple-content .question-text {
   color: #236248 !important;
   font-weight: bold !important;
-  margin-bottom: 0.8rem;
-  margin-top: 1.2rem;
+  margin-bottom: 0.4rem;
+  margin-top: 0.8rem;
   font-size: 1.05em;
   line-height: 1.4;
 }
 
 .simple-content .answer-text {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.8rem;
   color: hsl(var(--foreground));
-  margin-top: 0.4rem;
+  margin-top: 0.2rem;
   line-height: 1.6;
 }
 

@@ -121,13 +121,31 @@ export const markdownToHtml = (markdown: string): string => {
   // Handle line breaks and paragraphs
   html = html.replace(/\r\n/g, '\n').trim();
   
-  // Split by double newlines for paragraphs
+  // Clean up extra blank lines that cause spacing issues
+  html = html.replace(/\n\s*\n\s*\n/g, '\n\n');
+  
+  // Split by double newlines for paragraphs, but be smarter about lists and Q&A
   const blocks = html.split(/\n\s*\n/);
   const processedBlocks = blocks.map(block => {
     if (!block.trim()) return '';
     
     // Don't wrap blocks that are already HTML elements
     if (block.match(/^<(h[1-6]|div|blockquote|ul|ol|pre|hr|li)/)) {
+      return block.replace(/\n/g, '<br>');
+    }
+    
+    // Don't wrap single list items in paragraphs if they're already processed
+    if (block.match(/^<li>.*<\/li>$/)) {
+      return block;
+    }
+    
+    // Don't wrap question/answer blocks in extra paragraphs
+    if (block.match(/^<div class="(question-text|answer-text)">/)) {
+      return block.replace(/\n/g, '<br>');
+    }
+    
+    // For plain text blocks, only wrap in paragraphs if they don't contain list items
+    if (block.includes('<li>') || block.includes('<ul>') || block.includes('<ol>')) {
       return block.replace(/\n/g, '<br>');
     }
     
