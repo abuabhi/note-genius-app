@@ -6,6 +6,7 @@ import Footer from './Footer';
 import { ReminderNavPopover } from '@/components/reminders/ReminderNavPopover';
 import { UserSection } from '@/components/ui/sidebar/UserSection';
 import { Menu } from 'lucide-react';
+import { FloatingSessionTimer } from '@/components/ui/floating/FloatingSessionTimer';
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -65,6 +66,7 @@ const SidebarLayout = ({ children }: SidebarLayoutProps) => {
           </div>
         </SidebarInset>
       </div>
+      <FloatingSessionTimer />
     </div>
   );
 };
