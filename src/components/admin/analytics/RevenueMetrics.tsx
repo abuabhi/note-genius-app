@@ -1,10 +1,10 @@
 
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DollarSign, TrendingUp, Users, Target, AlertTriangle } from "lucide-react";
+import { DollarSign, TrendingUp, Users, Target } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 interface DateRange {
@@ -17,28 +17,26 @@ interface RevenueMetricsProps {
 }
 
 export const RevenueMetrics = ({ dateRange }: RevenueMetricsProps) => {
-  const { data: revenueData, isLoading } = useQuery({
+  const { data: revenueData, isLoading, error } = useQuery({
     queryKey: ['revenue-metrics', dateRange],
     queryFn: async () => {
-      const { data: mrr, error: mrrError } = await supabase.rpc('calculate_mrr');
-      const { data: arr, error: arrError } = await supabase.rpc('calculate_arr');
-      const { data: churnRate, error: churnError } = await supabase.rpc('calculate_churn_rate');
-      
-      if (mrrError || arrError || churnError) {
-        console.error('Revenue metrics error:', { mrrError, arrError, churnError });
+      const { data, error } = await supabase.functions.invoke('admin-stripe-metrics', {
+        body: {
+          start: dateRange.start.toISOString(),
+          end: dateRange.end.toISOString(),
+        },
+      });
+      if (error) {
+        console.error('Revenue metrics error:', error);
         throw new Error('Failed to fetch revenue metrics');
       }
-
-      return {
-        mrr: mrr || 0,
-        arr: arr || 0,
-        churnRate: churnRate || 0,
-        // Remove mock data - implement real Stripe integration
-        mrrHistory: [],
-        planDistribution: [],
-        cac: 0,
-        ltv: 0,
-        ltvCacRatio: 0
+      return data as {
+        mrr: number;
+        arr: number;
+        churnRate: number;
+        mrrHistory: Array<{ month: string; mrr: number }>;
+        planDistribution: Array<{ plan: string; customers: number; revenue: number }>;
+        ltvCacRatio: number;
       };
     }
   });
@@ -47,22 +45,14 @@ export const RevenueMetrics = ({ dateRange }: RevenueMetricsProps) => {
     return <div>Loading revenue metrics...</div>;
   }
 
+  if (error) {
+    return <div>Failed to load revenue metrics.</div>;
+  }
+
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
 
   return (
     <div className="space-y-6">
-      {/* Stripe Integration Required Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-blue-600" />
-          <div>
-            <h3 className="font-semibold text-blue-800">🔌 Stripe Integration Required</h3>
-            <p className="text-sm text-blue-700">
-              Connect your Stripe account to view real subscription revenue, MRR, ARR, and churn rates. Mock data has been removed for production.
-            </p>
-          </div>
-        </div>
-      </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -72,9 +62,6 @@ export const RevenueMetrics = ({ dateRange }: RevenueMetricsProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(revenueData?.mrr || 0)}</div>
-            <p className="text-xs text-muted-foreground">
-              <Badge variant="secondary">Stripe Integration Needed</Badge>
-            </p>
           </CardContent>
         </Card>
 
@@ -85,9 +72,6 @@ export const RevenueMetrics = ({ dateRange }: RevenueMetricsProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(revenueData?.arr || 0)}</div>
-            <p className="text-xs text-muted-foreground">
-              <Badge variant="secondary">Stripe Integration Needed</Badge>
-            </p>
           </CardContent>
         </Card>
 
@@ -98,9 +82,6 @@ export const RevenueMetrics = ({ dateRange }: RevenueMetricsProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{(revenueData?.churnRate || 0).toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground">
-              <Badge variant="secondary">Stripe Integration Needed</Badge>
-            </p>
           </CardContent>
         </Card>
 
@@ -111,9 +92,6 @@ export const RevenueMetrics = ({ dateRange }: RevenueMetricsProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{revenueData?.ltvCacRatio.toFixed(1)}:1</div>
-            <p className="text-xs text-muted-foreground">
-              <Badge variant="secondary">Stripe Integration Needed</Badge>
-            </p>
           </CardContent>
         </Card>
       </div>
@@ -124,12 +102,11 @@ export const RevenueMetrics = ({ dateRange }: RevenueMetricsProps) => {
             <CardTitle>MRR Trend</CardTitle>
             <CardDescription>
               Monthly recurring revenue over time
-              <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Mock Stripe Data</span>
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={revenueData?.mrrHistory}>
+              <LineChart data={revenueData?.mrrHistory || []}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
@@ -145,12 +122,11 @@ export const RevenueMetrics = ({ dateRange }: RevenueMetricsProps) => {
             <CardTitle>Revenue by Plan</CardTitle>
             <CardDescription>
               Distribution of customers and revenue by plan
-              <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Mock Stripe Data</span>
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={revenueData?.planDistribution}>
+              <BarChart data={revenueData?.planDistribution || []}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="plan" />
                 <YAxis />

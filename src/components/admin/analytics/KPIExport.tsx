@@ -21,10 +21,13 @@ export const KPIExport = ({ dateRange }: KPIExportProps) => {
   const { data: exportData } = useQuery({
     queryKey: ['kpi-export-data', dateRange],
     queryFn: async () => {
-      // Gather all KPI data
-      const { data: mrr } = await supabase.rpc('calculate_mrr');
-      const { data: arr } = await supabase.rpc('calculate_arr');
-      const { data: churnRate } = await supabase.rpc('calculate_churn_rate');
+      // Revenue via Stripe (Edge Function)
+      const { data: stripeMetrics } = await supabase.functions.invoke('admin-stripe-metrics', {
+        body: {
+          start: dateRange.start.toISOString(),
+          end: dateRange.end.toISOString(),
+        },
+      });
       const { data: dau } = await supabase.rpc('calculate_dau');
       const { data: mau } = await supabase.rpc('calculate_mau');
       const { data: avgSessionLength } = await supabase.rpc('calculate_avg_session_length');
@@ -45,9 +48,9 @@ export const KPIExport = ({ dateRange }: KPIExportProps) => {
           end: dateRange.end.toISOString().split('T')[0]
         },
         revenue: {
-          mrr: mrr || 0,
-          arr: arr || 0,
-          churnRate: churnRate || 0
+          mrr: stripeMetrics?.mrr || 0,
+          arr: stripeMetrics?.arr || 0,
+          churnRate: stripeMetrics?.churnRate || 0
         },
         users: {
           totalUsers: totalUsers?.length || 0,
