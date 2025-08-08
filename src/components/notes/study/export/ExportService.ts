@@ -72,21 +72,30 @@ class ExportService {
       // REMOVE QUESTION FORMATTING TAGS - critical fix
       .replace(/\*\*QUESTION\*\*/g, '')
       .replace(/\*\*ENDQUESTION\*\*/g, '')
-      // Preserve headers with proper spacing
+      // Convert headers to plain text (remove ### markdown syntax)
       .replace(/<h([1-6])[^>]*>(.*?)<\/h[1-6]>/g, (match, level, text) => {
-        const headerPrefix = '#'.repeat(parseInt(level)) + ' ';
-        return '\n\n' + headerPrefix + text.trim() + '\n\n';
+        return '\n\n' + text.trim() + '\n\n';
       })
       // Preserve bold formatting
       .replace(/<strong[^>]*>(.*?)<\/strong>/g, '**$1**')
       .replace(/<b[^>]*>(.*?)<\/b>/g, '**$1**')
-      // Preserve italic formatting
-      .replace(/<em[^>]*>(.*?)<\/em>/g, '*$1*')
-      .replace(/<i[^>]*>(.*?)<\/i>/g, '*$1*')
-      // Preserve bullet lists with proper indentation
+      // Mark italic formatting for PDF processing (not markdown)
+      .replace(/<em[^>]*>(.*?)<\/em>/g, 'PDFITALIC$1ENDPDFITALIC')
+      .replace(/<i[^>]*>(.*?)<\/i>/g, 'PDFITALIC$1ENDPDFITALIC')
+      // Handle existing markdown italic and convert to PDF markers
+      .replace(/\*([^*]+)\*/g, 'PDFITALIC$1ENDPDFITALIC')
+      // Preserve bullet lists with proper indentation for multi-line content
       .replace(/<ul[^>]*>/g, '')
       .replace(/<\/ul>/g, '\n')
-      .replace(/<li[^>]*>(.*?)<\/li>/g, '  • $1\n')
+      .replace(/<li[^>]*>(.*?)<\/li>/g, (match, content) => {
+        // Process multi-line bullet content with proper indentation
+        const lines = content.split('\n');
+        const firstLine = '  • ' + lines[0].trim() + '\n';
+        const additionalLines = lines.slice(1).map(line => 
+          line.trim() ? '    ' + line.trim() + '\n' : '\n'
+        ).join('');
+        return firstLine + additionalLines;
+      })
       // Preserve numbered lists
       .replace(/<ol[^>]*>/g, '')
       .replace(/<\/ol>/g, '\n')
@@ -217,23 +226,56 @@ class ExportService {
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(0, 0, 0);
         pdf.setFontSize(fontSize);
+      } else if (line.includes('PDFITALIC') && line.includes('ENDPDFITALIC')) {
+        // Handle italic text
+        const beforeItalic = line.substring(0, line.indexOf('PDFITALIC'));
+        const italicText = line.substring(line.indexOf('PDFITALIC') + 9, line.indexOf('ENDPDFITALIC'));
+        const afterItalic = line.substring(line.indexOf('ENDPDFITALIC') + 12);
+        
+        // Render before italic (if any)
+        if (beforeItalic.trim()) {
+          pdf.setFont(undefined, 'normal');
+          pdf.text(beforeItalic, margin, yPosition);
+        }
+        
+        // Render italic text
+        pdf.setFont(undefined, 'italic');
+        const beforeWidth = beforeItalic ? pdf.getTextWidth(beforeItalic) : 0;
+        pdf.text(italicText, margin + beforeWidth, yPosition);
+        
+        // Render after italic (if any)
+        if (afterItalic.trim()) {
+          pdf.setFont(undefined, 'normal');
+          const italicWidth = pdf.getTextWidth(italicText);
+          pdf.text(afterItalic, margin + beforeWidth + italicWidth, yPosition);
+        }
+        
+        // CRITICAL: Reset font state
+        pdf.setFont(undefined, 'normal');
+        pdf.setFontSize(fontSize);
+        pdf.setTextColor(0, 0, 0);
       } else if (line.startsWith('**') && line.endsWith('**')) {
         pdf.setFont(undefined, 'bold');
         pdf.text(line.slice(2, -2), margin, yPosition);
         // CRITICAL: Reset font state immediately
         pdf.setFont(undefined, 'normal');
         pdf.setFontSize(fontSize);
-      } else if (line.startsWith('# ')) {
+      } else if (line.startsWith('  • ')) {
+        // Handle bullet points with proper indentation
+        const bulletText = line.substring(4); // Remove "  • "
+        pdf.setFont(undefined, 'normal');
+        pdf.text('•', margin, yPosition);
+        pdf.text(bulletText, margin + 10, yPosition);
+      } else if (line.startsWith('    ') && !line.startsWith('  • ')) {
+        // Handle indented continuation lines
+        const indentedText = line.substring(4); // Remove indentation
+        pdf.setFont(undefined, 'normal');
+        pdf.text(indentedText, margin + 10, yPosition);
+      } else if (line.match(/^[A-Za-z ]+$/)) {
+        // Headers are now plain text (no ### prefix) - make them bold and larger
         pdf.setFontSize(fontSize + 4);
         pdf.setFont(undefined, 'bold');
-        pdf.text(line.slice(2), margin, yPosition);
-        // CRITICAL: Reset font state immediately
-        pdf.setFontSize(fontSize);
-        pdf.setFont(undefined, 'normal');
-      } else if (line.startsWith('## ')) {
-        pdf.setFontSize(fontSize + 2);
-        pdf.setFont(undefined, 'bold');
-        pdf.text(line.slice(3), margin, yPosition);
+        pdf.text(line, margin, yPosition);
         // CRITICAL: Reset font state immediately
         pdf.setFontSize(fontSize);
         pdf.setFont(undefined, 'normal');
