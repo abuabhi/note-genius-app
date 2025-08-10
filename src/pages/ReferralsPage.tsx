@@ -1,32 +1,28 @@
 
-import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useAuth } from "@/contexts/auth";
 import { Loader2, Gift } from "lucide-react";
 import { SimplifiedReferralForm } from "@/components/referrals/SimplifiedReferralForm";
 import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
-import { Suspense, memo, useMemo } from "react";
+import { memo, useMemo } from "react";
+import { Helmet } from "react-helmet";
 
 const ReferralsPageContent = memo(() => {
   console.log('🎯 ReferralsPage component rendering');
   
-  const { user, loading } = useRequireAuth();
+  const { user } = useAuth();
   
-  if (loading) {
-    console.log('⏳ Referrals page is loading...');
+  
+  if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-        <div className="max-w-7xl mx-auto p-6 flex items-center justify-center h-[50vh]">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-mint-500" />
-            <p className="mt-2 text-gray-600">Loading referrals...</p>
+        <div className="max-w-4xl mx-auto p-6 h-[50vh] flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <p className="text-gray-700">Please sign in to access referrals.</p>
+            <a href="/auth" className="inline-flex items-center px-4 py-2 rounded-md bg-mint-600 text-white hover:bg-mint-700 transition">Sign in</a>
           </div>
         </div>
       </div>
     );
-  }
-  
-  if (!user) {
-    console.log("❌ Not authorized, redirecting via useRequireAuth");
-    return null;
   }
 
   console.log('✅ Referrals page rendering main content');
@@ -38,37 +34,25 @@ const ReferralsPageContent = memo(() => {
   }), []);
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-      <div className="max-w-4xl mx-auto p-6 space-y-8">
-        <PageBreadcrumb {...breadcrumbProps} />
-        
-        <Suspense fallback={
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-mint-500" />
-            <span className="ml-2 text-gray-600">Loading referral data...</span>
-          </div>
-        }>
+    <>
+      <Helmet>
+        <title>Invite Friends & Earn Rewards | PrepGenie</title>
+        <meta name="description" content="Invite friends to PrepGenie with your referral link and earn rewards together." />
+        <link rel="canonical" href={`${window.location.origin}/referrals`} />
+      </Helmet>
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <div className="max-w-4xl mx-auto p-6 space-y-8">
+          <PageBreadcrumb {...breadcrumbProps} />
           <SimplifiedReferralForm />
-        </Suspense>
+        </div>
       </div>
-    </div>
+    </>
   );
 });
 
 const ReferralsPage = memo(() => {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-        <div className="max-w-7xl mx-auto p-6 flex items-center justify-center h-[50vh]">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-mint-500" />
-            <p className="mt-2 text-gray-600">Loading referrals...</p>
-          </div>
-        </div>
-      </div>
-    }>
-      <ReferralsPageContent />
-    </Suspense>
+    <ReferralsPageContent />
   );
 });
 

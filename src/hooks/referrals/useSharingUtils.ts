@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 
 export const useSharingUtils = () => {
   const generateReferralLink = (referralCode: string) => {
-    return `${window.location.origin}?ref=${referralCode}`;
+    return `${window.location.origin}/signup?ref=${encodeURIComponent(referralCode)}`;
   };
 
   const copyReferralLink = async (referralCode: string) => {

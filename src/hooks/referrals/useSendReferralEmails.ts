@@ -2,11 +2,11 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useAuth } from '@/contexts/auth';
 
 export const useSendReferralEmails = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { userProfile } = useRequireAuth();
+  const { user } = useAuth();
 
   const sendReferralEmails = async (emails: string[], message: string, referralCode: string) => {
     setIsLoading(true);
@@ -15,7 +15,7 @@ export const useSendReferralEmails = () => {
       console.log('🚀 Sending individual referral emails:', { emails, referralCode });
       
       // Get referrer name from user profile
-      const referrerName = userProfile?.username || 'A friend';
+      const referrerName = ((user as any)?.user_metadata?.username as string) || (user?.email ? user.email.split("@")[0] : undefined) || 'A friend';
       
       let successCount = 0;
       let errorCount = 0;

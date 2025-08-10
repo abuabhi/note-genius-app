@@ -13,8 +13,7 @@ import { useSendReferralEmails } from '@/hooks/referrals/useSendReferralEmails';
 
 export const SimplifiedReferralForm = () => {
   const { toast } = useToast();
-  const { referralStats, isLoading } = useReferralData();
-  const { generateReferralLink, copyReferralLink } = useReferralData();
+  const { referralStats, isLoading, generateReferralLink, copyReferralLink } = useReferralData();
   const { sendReferralEmails, isLoading: isSendingEmails } = useSendReferralEmails();
   
   const [emails, setEmails] = useState('');
@@ -141,7 +140,7 @@ export const SimplifiedReferralForm = () => {
               readOnly
               className="font-mono text-sm"
             />
-            <Button onClick={handleCopyLink} variant="outline" size="sm">
+            <Button onClick={handleCopyLink} variant="outline" size="sm" disabled={!referralStats?.referralCode}>
               <Copy className="h-4 w-4" />
             </Button>
           </div>
