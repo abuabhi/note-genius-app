@@ -18,9 +18,16 @@ export const useAuthRedirects = ({
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Define which routes are public
-  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup', '/tier-selection', '/payment', '/oauth2callback', '/auth/google-docs/callback', '/auth/evernote/callback', '/auth/notion/callback', '/auth/microsoft/callback'];
-  const isPublicRoute = publicRoutes.includes(location.pathname);
+  // Define which routes are public (case-insensitive) and prefixes for dynamic public paths
+  const normalizedPath = location.pathname.toLowerCase();
+  const exactPublicPaths = new Set([
+    '/', '/about', '/pricing', '/faq', '/help', '/help-center', '/help-centre',
+    '/contact', '/blog', '/features', '/login', '/signup', '/tier-selection', '/payment',
+    '/oauth2callback', '/auth/google-docs/callback', '/auth/evernote/callback', '/auth/notion/callback', '/auth/microsoft/callback',
+    '/privacy', '/terms'
+  ]);
+  const publicPrefixes = ['/coupon/', '/auth/'];
+  const isPublicRoute = exactPublicPaths.has(normalizedPath) || publicPrefixes.some(prefix => normalizedPath.startsWith(prefix));
   
   useEffect(() => {
     console.log('🚦 [AUTH REDIRECTS] State:', { 

@@ -24,8 +24,6 @@ const RemindersPage = lazy(() => import('@/pages/RemindersPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
 const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
-const HelpPage = lazy(() => import('@/pages/HelpPage'));
-const FAQPage = lazy(() => import('@/pages/FAQPage'));
 const StudyPlannerPage = lazy(() => import('@/pages/StudyPlannerPage'));
 const QuizDetailsPage = lazy(() => import('@/pages/QuizDetailsPage'));
 const InfluencerDashboardPage = lazy(() => import('@/pages/InfluencerDashboardPage'));
@@ -144,14 +142,6 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/referrals',
     element: <ReferralsPage />
-  },
-  {
-    path: '/help',
-    element: <HelpPage />
-  },
-  {
-    path: '/faq',
-    element: <FAQPage />
   },
   {
     path: '/influencer',

@@ -14,6 +14,8 @@ import PublicCouponPage from "@/pages/PublicCouponPage";
 import TierSelectionPage from "@/pages/TierSelectionPage";
 import PaymentPage from "@/pages/PaymentPage";
 import SignupPage from "@/pages/SignupPage";
+import HelpPage from "@/pages/HelpPage";
+import FAQPage from "@/pages/FAQPage";
 
 export interface RouteConfig {
   path: string;
@@ -33,5 +35,9 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/terms", element: <TermsPage /> }, // TermsPage already has Layout internally
   { path: "/privacy", element: <PrivacyPage /> }, // PrivacyPage already has Layout internally
   { path: "/features", element: <FeaturesPage /> }, // FeaturesPage already has Layout internally
+  { path: "/help", element: <HelpPage /> },
+  { path: "/help-center", element: <HelpPage /> },
+  { path: "/help-centre", element: <HelpPage /> },
+  { path: "/faq", element: <FAQPage /> },
   { path: "/coupon/:code", element: <PublicCouponPage /> } // Public coupon redemption page
 ];
