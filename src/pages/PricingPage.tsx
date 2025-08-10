@@ -1,6 +1,8 @@
 
 import Layout from "@/components/layout/Layout";
 import { Pricing } from "@/components/ui/pricing";
+import { PricingFAQ } from "@/components/ui/pricing/PricingFAQ";
+import { Helmet } from "react-helmet";
 
 const PricingPage = () => {
   // Updated pricing data to match Stripe configuration exactly
@@ -94,12 +96,18 @@ const PricingPage = () => {
 
   return (
     <Layout>
+      <Helmet>
+        <title>Pricing & Subscription FAQ | PrepGenie</title>
+        <meta name="description" content="Pricing plans, limits, billing, and subscription FAQ. Compare SCHOLAR, GRADUATE, and MASTER tiers." />
+        <link rel="canonical" href={typeof window !== 'undefined' ? `${window.location.origin}/pricing` : '/pricing'} />
+      </Helmet>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <Pricing 
           plans={demoPlans}
           title="Choose Your Plan"
           description="Select the perfect plan for your learning journey. All plans include access to our comprehensive study tools and features."
         />
+        <PricingFAQ />
       </div>
     </Layout>
   );
