@@ -79,11 +79,22 @@ export const useEnhancementManager = (note: Note, onNoteUpdate?: () => void) => 
     setLoadingStates(prev => ({ ...prev, [enhancementType]: true }));
     
     try {
-      const { data, error } = await supabase.functions.invoke('test-enhance', {
-        body: {
-          text: note.content || note.description || '',
-          enhancementType
-        }
+      const isEnrichFunction = enhancementType === 'enrich-note' || enhancementType === 'generate-questions';
+      const functionName = isEnrichFunction ? 'enrich-note' : 'test-enhance';
+      const requestBody = isEnrichFunction
+        ? {
+            noteId: note.id,
+            noteContent: note.content || note.description || '',
+            enhancementType,
+            noteTitle: (note as any).title || undefined,
+          }
+        : {
+            text: note.content || note.description || '',
+            enhancementType,
+          };
+
+      const { data, error } = await supabase.functions.invoke(functionName, {
+        body: requestBody,
       });
 
       const totalTime = performance.now() - start;
@@ -93,12 +104,16 @@ export const useEnhancementManager = (note: Note, onNoteUpdate?: () => void) => 
         return { content: '', success: false };
       }
 
-      if (!data.success) {
+      if (!isEnrichFunction && !data.success) {
         toast.error('Enhancement failed: ' + data.error);
         return { content: '', success: false };
       }
 
-      const processedContent = processEnhancementContent(enhancementType, data.result);
+      const processedContent = isEnrichFunction
+        ? (typeof data?.enhancedContent === 'string' 
+            ? data.enhancedContent 
+            : processEnhancementContent(enhancementType, data?.enhancedContent))
+        : processEnhancementContent(enhancementType, data?.result);
       
       // Immediate display
       setGeneratedContent(prev => ({ ...prev, [column]: processedContent }));
@@ -111,8 +126,8 @@ export const useEnhancementManager = (note: Note, onNoteUpdate?: () => void) => 
       return {
         content: processedContent,
         success: true,
-        processingTime: data.processing_time,
-        tokensUsed: data.tokens_used
+        processingTime: (data as any)?.processing_time,
+        tokensUsed: (data as any)?.tokens_used,
       };
     } catch (error) {
       const totalTime = performance.now() - start;

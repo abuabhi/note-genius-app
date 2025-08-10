@@ -8,6 +8,8 @@ import { Loader2, Sparkles, FileText, List, HelpCircle, Code, RefreshCw, Clock, 
 import { EnhancementType } from '@/types/enhancement';
 import { ExpandableContentRenderer } from './expansion/ExpandableContentRenderer';
 import { useEnhancementManager } from '@/hooks/useEnhancementManager';
+import { UsageIndicator } from '@/components/notes/enrichment/UsageIndicator';
+import { useAiEnrichmentUsage } from '@/hooks/usage/useAiEnrichmentUsage';
 
 // Utility function for content statistics
 const getContentStats = (content: string) => {
@@ -33,6 +35,7 @@ export const SimpleEnhancementTabs = React.memo(({
   const [activeTab, setActiveTab] = useState<EnhancementType>('original');
   const [hideColoring, setHideColoring] = useState(false);
   const { generatedContent, generateEnhancement, regenerateAll, isLoading, isAnyLoading } = useEnhancementManager(note, onNoteUpdate);
+  const { usageCount, monthlyLimit, isLoading: statsLoading, refetch: refetchUsage } = useAiEnrichmentUsage();
 
   const hasContent = useCallback((content: string) => content && content.trim().length > 0, []);
 
@@ -107,8 +110,6 @@ export const SimpleEnhancementTabs = React.memo(({
       hasContent: hasContent(generatedContent['questions_content'] || note.questions_content || '')
     }
   ], [note, generatedContent]);
-
-
   return (
     <div className="h-full flex flex-col">
       
@@ -238,6 +239,12 @@ export const SimpleEnhancementTabs = React.memo(({
                       </div>
                     </div>
 
+                    {/* Usage indicator for Enriched tab */}
+                    {tab.value === 'enriched' && (
+                      <div className="px-6 pt-4">
+                        <UsageIndicator currentUsage={usageCount} monthlyLimit={monthlyLimit} isLoading={statsLoading} />
+                      </div>
+                    )}
                     {/* Content area */}
                     <div className="flex-1 overflow-auto p-6">
                       {(() => {
