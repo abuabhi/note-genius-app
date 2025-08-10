@@ -3873,6 +3873,10 @@ export type Database = {
         Args: { influencer_username: string }
         Returns: string
       }
+      generate_unique_referral_code: {
+        Args: { base_code?: string }
+        Returns: string
+      }
       get_active_announcements: {
         Args: { user_tier_param?: string; current_page?: string }
         Returns: {
@@ -3907,6 +3911,14 @@ export type Database = {
           timezone: string
           last_digest_sent_at: string
         }[]
+      }
+      get_my_referral_code: {
+        Args: { preferred_base?: string }
+        Returns: string
+      }
+      get_or_create_referral_code: {
+        Args: { p_user_id: string; preferred_base?: string }
+        Returns: string
       }
       get_overdue_goals: {
         Args: { p_user_id: string }
