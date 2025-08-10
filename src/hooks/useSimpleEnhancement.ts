@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Note } from '@/types/note';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,7 +21,6 @@ export const useSimpleEnhancement = (note: Note, onNoteUpdate?: () => void) => {
         functionChoice: enhancementType === 'enrich-note' ? 'enrich-note' : 'test-enhance'
       });
       
-      // Use enrich-note function for enrichment requests to handle large content with chunking
       if (enhancementType === 'enrich-note') {
         const { data, error } = await supabase.functions.invoke('enrich-note', {
           body: {
@@ -31,8 +31,22 @@ export const useSimpleEnhancement = (note: Note, onNoteUpdate?: () => void) => {
           }
         });
 
-        if (error) throw error;
-        if (!data.enhancedContent) throw new Error('Enhancement failed - no content returned');
+        if (error) {
+          console.error('❌ enrich-note error:', error);
+          // Try to parse limit error details
+          let parsed: any = null;
+          try { parsed = JSON.parse(error.message); } catch (_) {}
+          if (parsed?.error === 'usage_limit_reached') {
+            toast.error(parsed.message || "You've reached your monthly AI enrichment limit.");
+          } else {
+            toast.error('Failed to enrich note');
+          }
+          throw error;
+        }
+
+        if (!data?.enhancedContent) {
+          throw new Error('Enhancement failed - no content returned');
+        }
 
         const enhancedWordCount = data.enhancedContent.split(/\s+/).length;
         const hasEnrichedTags = /\[(?:AI_)?ENRICHED\]/i.test(data.enhancedContent);
@@ -42,10 +56,17 @@ export const useSimpleEnhancement = (note: Note, onNoteUpdate?: () => void) => {
           enhancedWordCount,
           wordCountIncrease: enhancedWordCount - originalWordCount,
           percentageIncrease: ((enhancedWordCount - originalWordCount) / originalWordCount * 100).toFixed(1) + '%',
-          hasEnrichedTags
+          hasEnrichedTags,
+          usage: data.usage
         });
 
         toast.success('Note enrichment completed successfully!');
+        // Surface usage progress if available
+        if (data?.usage?.used != null && data?.usage?.limit != null) {
+          toast.message(`AI Enrichment usage: ${data.usage.used} / ${data.usage.limit}`, {
+            description: `Remaining this month: ${Math.max(0, (data.usage.limit - data.usage.used))}`,
+          });
+        }
         
         if (onNoteUpdate) {
           onNoteUpdate();

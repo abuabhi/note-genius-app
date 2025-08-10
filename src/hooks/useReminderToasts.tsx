@@ -61,11 +61,18 @@ export const useReminderToasts = () => {
     
     // Show toasts for new active reminders that need attention
     const newReminders = reminders.filter(reminder => {
-      // Check if this reminder should show a toast
-      const reminderTime = new Date(reminder.reminder_time);
       const now = new Date();
-      const shouldShow = reminderTime <= now && !shownReminders.current.has(reminder.id);
-      
+      const reminderTime = new Date(reminder.reminder_time);
+      const todayStr = now.toISOString().split('T')[0];
+
+      // Include todos due today/overdue even if reminder_time is later
+      const isDueDate = reminder.type === 'todo' && reminder.due_date && reminder.due_date <= todayStr;
+
+      const shouldShow =
+        (reminderTime <= now || isDueDate) &&
+        reminder.status === 'pending' &&
+        !shownReminders.current.has(reminder.id);
+
       return shouldShow;
     });
 
