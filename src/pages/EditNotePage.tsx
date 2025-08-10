@@ -6,6 +6,9 @@ import { useOptimizedNoteStudy } from "@/hooks/notes/useOptimizedNoteStudy";
 import { LoadingState } from "@/components/notes/page/LoadingState";
 import { ErrorState } from "@/components/notes/page/ErrorState";
 import EditNoteContent from "@/components/notes/page/EditNoteContent";
+import { UsageLimitBanner } from "@/components/ui/UsageLimitBanner";
+import { useAiEnrichmentUsage } from "@/hooks/usage/useAiEnrichmentUsage";
+import { useUserTier } from "@/hooks/useUserTier";
 
 const EditNotePage = () => {
   const { noteId } = useParams();
@@ -15,6 +18,8 @@ const EditNotePage = () => {
 
   // Use optimized data fetching
   const { note, isLoading, error } = useOptimizedNoteStudy(noteId || '');
+  const { userTier } = useUserTier();
+  const { usageCount, monthlyLimit } = useAiEnrichmentUsage();
 
   if (isLoading) {
     return (
@@ -34,6 +39,15 @@ const EditNotePage = () => {
 
   return (
     <Layout>
+      {monthlyLimit !== null && userTier && (
+        <UsageLimitBanner
+          currentTier={userTier}
+          feature="AI Enhancements"
+          usedCount={usageCount}
+          limit={monthlyLimit}
+          className="mb-4"
+        />
+      )}
       <EditNoteContent note={note} />
     </Layout>
   );

@@ -1,9 +1,12 @@
 
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import React from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAiEnrichmentUsage } from "@/hooks/usage/useAiEnrichmentUsage";
+
 
 interface EnhanceNoteButtonProps {
   noteId: string;
@@ -19,6 +22,8 @@ export const EnhanceNoteButton: React.FC<EnhanceNoteButtonProps> = ({
   onEnhance
 }) => {
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const { hasReachedLimit, isNearLimit, usageCount, monthlyLimit } = useAiEnrichmentUsage();
+
   
   const handleEnhance = async () => {
     if (!noteContent) return;
@@ -49,23 +54,39 @@ export const EnhanceNoteButton: React.FC<EnhanceNoteButtonProps> = ({
   };
 
   return (
-    <Button 
-      onClick={handleEnhance}
-      disabled={isProcessing}
-      className="flex items-center gap-2"
-    >
-      {isProcessing ? (
-        <>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Processing...
-        </>
-      ) : (
-        <>
-          <Sparkles className="h-4 w-4" />
-          Enhance Note
-        </>
-      )}
-    </Button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button 
+            onClick={handleEnhance}
+            disabled={isProcessing || hasReachedLimit}
+            aria-disabled={isProcessing || hasReachedLimit}
+            className="flex items-center gap-2"
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                {hasReachedLimit ? 'Limit reached' : 'Enhance Note'}
+              </>
+            )}
+          </Button>
+        </TooltipTrigger>
+        {(hasReachedLimit || isNearLimit) && (
+          <TooltipContent side="top" align="center">
+            <p className="max-w-xs text-sm">
+              {hasReachedLimit
+                ? `You've reached your monthly enhancement limit${typeof monthlyLimit === 'number' ? ` (${usageCount}/${monthlyLimit}).` : '.'} Upgrade to continue.`
+                : `You're approaching your monthly enhancement limit${typeof monthlyLimit === 'number' ? ` (${usageCount}/${monthlyLimit}).` : '.'}`}
+            </p>
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
