@@ -13,6 +13,7 @@ import { UpgradeDialog } from "@/components/ui/UpgradeDialog";
 import { Loader, Crown, Zap, Shield, Check, X, CreditCard, RefreshCw, Settings, Calendar, Sparkles } from "lucide-react";
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { useAiEnrichmentUsage } from "@/hooks/usage/useAiEnrichmentUsage";
 
 const tierBadgeVariants = {
   [UserTier.SCHOLAR]: "outline",
@@ -82,6 +83,8 @@ export const MergedSubscriptionCard = () => {
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
+
+  const { usageCount: aiUsageCount, monthlyLimit: aiMonthlyLimit, percentage: aiUsagePercentage, isNearLimit: aiNearLimit, hasReachedLimit: aiReachedLimit, isLoading: aiUsageLoading } = useAiEnrichmentUsage();
 
   const getUsagePercentage = (used: number, limit: number) => {
     if (limit === -1 || limit === 0) return 0;
@@ -202,6 +205,15 @@ export const MergedSubscriptionCard = () => {
                     <Settings className="h-3 w-3 mr-1" />
                     Billing History
                   </Button>
+                  {userTier === UserTier.GRADUATE && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleUpgrade(UserTier.MASTER)}
+                      className="h-8 px-3 text-xs bg-mint-600 hover:bg-mint-700"
+                    >
+                      Upgrade to Master
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -324,22 +336,23 @@ export const MergedSubscriptionCard = () => {
 
                 <div className="space-y-1">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="font-medium text-gray-700">Storage</span>
+                    <span className="font-medium text-gray-700">AI Enrichment</span>
                     <span className="text-gray-500 text-xs">
-                      {usageStats?.storageUsed || 0} MB / {formatLimitDisplay(tierLimits.max_storage_mb)} MB
+                      {aiMonthlyLimit === null ? `${aiUsageCount} / Unlimited` : `${aiUsageCount} / ${aiMonthlyLimit}`}
                     </span>
                   </div>
-                  <Progress 
-                    value={getUsagePercentage(usageStats?.storageUsed || 0, tierLimits.max_storage_mb)}
-                    className="h-1.5"
-                  />
-                  {/* Show upgrade prompt when approaching limit */}
-                  {tierLimits.max_storage_mb !== -1 && getUsagePercentage(usageStats?.storageUsed || 0, tierLimits.max_storage_mb) >= 80 && userTier !== UserTier.DEAN && (
+                  {aiMonthlyLimit === null ? (
+                    <Progress value={0} className="h-1.5" />
+                  ) : (
+                    <Progress value={aiUsagePercentage} className="h-1.5" />
+                  )}
+                  <div className="text-[10px] text-gray-500">Resets monthly</div>
+                  {aiMonthlyLimit !== null && (aiNearLimit || aiReachedLimit) && userTier !== UserTier.DEAN && (
                     <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
                       <span>
-                        You're using {getUsagePercentage(usageStats?.storageUsed || 0, tierLimits.max_storage_mb)}% of your storage limit.
-                        {userTier === UserTier.SCHOLAR && " Upgrade to Graduate for 500MB."}
-                        {userTier === UserTier.GRADUATE && " Upgrade to Master for 2GB."}
+                        {aiReachedLimit ? "You've reached your monthly AI enrichment limit." : `You're using ${aiUsagePercentage}% of your monthly AI enrichment limit.`}
+                        {userTier === UserTier.SCHOLAR && " Upgrade to Graduate for higher monthly AI limits."}
+                        {userTier === UserTier.GRADUATE && " Upgrade to Master for higher monthly AI limits."}
                       </span>
                     </div>
                   )}
@@ -399,6 +412,24 @@ export const MergedSubscriptionCard = () => {
                     <X className="h-3 w-3 text-gray-400" />
                   )}
                   <span className="text-gray-700 text-xs">Priority Support</span>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  {(userTier === UserTier.MASTER || userTier === UserTier.DEAN) ? (
+                    <Check className="h-3 w-3 text-emerald-500" />
+                  ) : (
+                    <X className="h-3 w-3 text-gray-400" />
+                  )}
+                  <span className="text-gray-700 text-xs">Advanced Analytics</span>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  {(userTier === UserTier.MASTER || userTier === UserTier.DEAN) ? (
+                    <Check className="h-3 w-3 text-emerald-500" />
+                  ) : (
+                    <X className="h-3 w-3 text-gray-400" />
+                  )}
+                  <span className="text-gray-700 text-xs">Advanced Templates</span>
                 </div>
               </div>
             </div>
