@@ -68,6 +68,15 @@ export const useSettingsFormData = (
             form.setValue("enableRealTimeAdaptations", adaptivePrefs.real_time_adaptations ?? true);
             form.setValue("enableLearningPaths", adaptivePrefs.learning_paths ?? true);
           }
+
+          // Load engagement/fun preferences from auth metadata (no DB changes required)
+          const meta = user.user_metadata || {};
+          const engage = (meta.engagement_preferences as any) || meta;
+          form.setValue("enableConfettiCelebrations", engage.enableConfettiCelebrations ?? engage.confettiCelebrations ?? true);
+          form.setValue("enableAvatarFrames", engage.enableAvatarFrames ?? engage.avatarFrames ?? true);
+          form.setValue("enableDailyQuoteCard", engage.enableDailyQuoteCard ?? engage.dailyQuoteCard ?? true);
+          form.setValue("enableSoundEffects", engage.enableSoundEffects ?? engage.soundEffects ?? true);
+          form.setValue("enableEmojiBurst", engage.enableEmojiBurst ?? engage.emojiBurst ?? true);
         }
       } catch (error) {
         console.error("Error fetching user preferences:", error);

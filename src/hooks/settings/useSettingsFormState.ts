@@ -42,6 +42,12 @@ export const useSettingsFormState = () => {
       quietHoursEnabled: false,
       quietHoursStart: "22:00",
       quietHoursEnd: "08:00",
+      // Fun & Feedback defaults
+      enableConfettiCelebrations: true,
+      enableAvatarFrames: true,
+      enableDailyQuoteCard: true,
+      enableSoundEffects: true,
+      enableEmojiBurst: true,
     },
     mode: "onBlur",
   });

@@ -45,6 +45,13 @@ export const settingsFormSchema = z.object({
   quietHoursEnabled: z.boolean().default(false),
   quietHoursStart: z.string().default('22:00'),
   quietHoursEnd: z.string().default('08:00'),
+  
+  // Fun & Feedback Preferences
+  enableConfettiCelebrations: z.boolean().default(true),
+  enableAvatarFrames: z.boolean().default(true),
+  enableDailyQuoteCard: z.boolean().default(true),
+  enableSoundEffects: z.boolean().default(true),
+  enableEmojiBurst: z.boolean().default(true),
 });
 
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;

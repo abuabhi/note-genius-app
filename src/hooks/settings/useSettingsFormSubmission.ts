@@ -69,9 +69,20 @@ export const useSettingsFormSubmission = (
         return false;
       }
       
-      // Also update auth user metadata so header avatar updates immediately
+      // Also update auth user metadata so header avatar updates immediately and persist engagement prefs
+      const engagementPreferences = {
+        enableConfettiCelebrations: data.enableConfettiCelebrations,
+        enableAvatarFrames: data.enableAvatarFrames,
+        enableDailyQuoteCard: data.enableDailyQuoteCard,
+        enableSoundEffects: data.enableSoundEffects,
+        enableEmojiBurst: data.enableEmojiBurst,
+      };
+
       await supabase.auth.updateUser({
-        data: { avatar_url: data.avatar_url || '' }
+        data: { 
+          avatar_url: data.avatar_url || '',
+          engagement_preferences: engagementPreferences,
+        }
       });
       
       toast.success("Settings saved successfully");
