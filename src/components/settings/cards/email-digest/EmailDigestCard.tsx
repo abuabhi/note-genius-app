@@ -13,6 +13,7 @@ export const EmailDigestCard = () => {
   const { preferences, loading, updatePreferences } = useEmailDigestPreferences();
   const [activating, setActivating] = useState(false);
   const [sending, setSending] = useState(false);
+  const [checkingHealth, setCheckingHealth] = useState(false);
 
   const handleActivateCron = async () => {
     try {
@@ -37,6 +38,25 @@ export const EmailDigestCard = () => {
       toast.error(`Failed to send test email: ${e.message || e}`);
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleHealthCheck = async () => {
+    try {
+      setCheckingHealth(true);
+      const { data, error } = await supabase.functions.invoke('health-check');
+      if (error) throw error;
+      const status = (data as any)?.status || (data as any)?.system_status || 'ok';
+      const usersReady = (data as any)?.users_ready_for_digest ?? (data as any)?.metrics?.users_ready_for_digest;
+      const pending = (data as any)?.pending_reminders ?? (data as any)?.metrics?.pending_reminders ?? (data as any)?.pending_notifications;
+      let msg = `Health: ${status}`;
+      if (typeof usersReady === 'number') msg += ` • users ready: ${usersReady}`;
+      if (typeof pending === 'number') msg += ` • pending: ${pending}`;
+      toast.success(msg);
+    } catch (e: any) {
+      toast.error(`Health check failed: ${e.message || e}`);
+    } finally {
+      setCheckingHealth(false);
     }
   };
   if (loading) {
@@ -79,6 +99,9 @@ export const EmailDigestCard = () => {
           </Button>
           <Button size="sm" onClick={handleSendTest} disabled={sending}>
             {sending ? 'Sending…' : 'Send Test Digest Email'}
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleHealthCheck} disabled={checkingHealth}>
+            {checkingHealth ? 'Checking…' : 'Run Health Check'}
           </Button>
         </div>
 

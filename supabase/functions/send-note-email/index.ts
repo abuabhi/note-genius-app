@@ -83,7 +83,7 @@ serve(async (req) => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "PrepGenie <noreply@prepgenie.app>",
+      from: "PrepGenie <noreply@prepgenie.io>",
       to: [to],
       subject: emailSubject,
       html: emailBody,

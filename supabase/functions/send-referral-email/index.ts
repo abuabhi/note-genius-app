@@ -50,7 +50,7 @@ const handler = async (req: Request): Promise<Response> => {
                   <p style="margin: 0 0 5px 0; color: #92400e; font-size: 14px; font-weight: bold;">Your Referral Code:</p>
                   <p style="margin: 0; color: #92400e; font-size: 24px; font-weight: bold; letter-spacing: 2px;">${referralCode}</p>
                 </div>
-                <a href="https://prepgenie.com/signup?ref=${referralCode}" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Join PrepGenie Now</a>
+                <a href="https://prepgenie.io/signup?ref=${referralCode}" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Join PrepGenie Now</a>
               </div>
               
               <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
@@ -77,7 +77,7 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               
               <div style="text-align: center; margin: 30px 0;">
-                <a href="https://prepgenie.com/dashboard" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Start Learning Now</a>
+                <a href="https://prepgenie.io/dashboard" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Start Learning Now</a>
               </div>
               
               <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
@@ -104,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               
               <div style="text-align: center; margin: 30px 0;">
-                <a href="https://prepgenie.com/referrals" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">View Your Referrals</a>
+                <a href="https://prepgenie.io/referrals" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">View Your Referrals</a>
               </div>
               
               <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
