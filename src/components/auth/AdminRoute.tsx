@@ -1,10 +1,10 @@
 
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth';
+import { useRequireAuth, UserTier } from '@/hooks/useRequireAuth';
 import { Loader2 } from 'lucide-react';
 
 export const AdminRoute = () => {
-  const { user, loading } = useAuth();
+  const { userProfile, loading } = useRequireAuth();
 
   if (loading) {
     return (
@@ -14,7 +14,8 @@ export const AdminRoute = () => {
     );
   }
 
-  // For now, allow any authenticated user to access admin routes
-  // In a real app, you'd check for admin role here
-  return user ? <Outlet /> : <Navigate to="/login" replace />;
+  if (!userProfile) return <Navigate to="/login" replace />;
+  if (userProfile.user_tier !== UserTier.DEAN) return <Navigate to="/dashboard" replace />;
+
+  return <Outlet />;
 };

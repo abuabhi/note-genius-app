@@ -11,6 +11,7 @@ import { Suspense } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import SidebarLayout from '@/components/layout/SidebarLayout';
+import { useRequireAuth, UserTier } from '@/hooks/useRequireAuth';
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
@@ -39,6 +40,13 @@ const AppRoutes = () => {
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint-600"></div>
     </div>
   );
+
+  const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    const { userProfile, loading } = useRequireAuth();
+    if (loading) return <LoadingSkeleton />;
+    return userProfile?.user_tier === UserTier.DEAN ? <>{children}</> : <Navigate to="/dashboard" />;
+  };
+
 
   if (loading) {
     return <LoadingSkeleton />;
@@ -97,21 +105,23 @@ const AppRoutes = () => {
       
       {/* Protected admin routes */}
       {adminRoutes.map((route) => (
-        <Route
-          key={route.path}
-          path={route.path}
-          element={
-            <ProtectedRoute>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <LazyLoadWrapper>
-                  {route.element}
-                </LazyLoadWrapper>
-              </Suspense>
-            </ProtectedRoute>
-          }
-        />
-      ))}
-      
+          <Route
+            key={route.path}
+            path={route.path}
+            element={
+              <ProtectedRoute>
+                <AdminProtectedRoute>
+                  <Suspense fallback={<LoadingSkeleton />}>
+                    <LazyLoadWrapper>
+                      {route.element}
+                    </LazyLoadWrapper>
+                  </Suspense>
+                </AdminProtectedRoute>
+              </ProtectedRoute>
+            }
+          />
+        ))}
+
       {/* Misc routes */}
       {miscRoutes.map((route) => (
         <Route

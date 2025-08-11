@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,17 +10,21 @@ import {
   FileText, 
   ChevronDown, 
   ChevronRight,
-  Play,
-  Clock,
   Lightbulb,
   Search,
   Edit,
-  Settings
+  Settings,
+  Trash2,
+  Plus
 } from 'lucide-react';
-import { useHelpTopics, HelpTopic } from '@/hooks/help/useHelpTopics';
+import { useHelpTopics, HelpTopic, useDeleteHelpTopic } from '@/hooks/help/useHelpTopics';
 import { useRequireAuth, UserTier } from '@/hooks/useRequireAuth';
 import { YouTubeComingSoonPlaceholder } from '@/components/help/YouTubeComingSoonPlaceholder';
 import { HelpTopicEditDialog } from '@/components/help/HelpTopicEditDialog';
+import { HelpTopicCreateDialog } from '@/components/help/HelpTopicCreateDialog';
+import { YouTubePlayer } from '@/components/help/video/YouTubePlayer';
+import { processContentForDisplay } from '@/utils/markdownConverter';
+import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
 const HelpPage = () => {
@@ -30,8 +32,10 @@ const HelpPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingTopic, setEditingTopic] = useState<HelpTopic | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const { data: helpContent = [], isLoading } = useHelpTopics();
+  const deleteTopic = useDeleteHelpTopic();
   const { userProfile } = useRequireAuth();
   const isAdmin = userProfile?.user_tier === UserTier.DEAN;
 
@@ -43,6 +47,22 @@ const HelpPage = () => {
     );
   };
 
+  const getYouTubeIdFromUrl = (url: string): string | null => {
+    try {
+      const urlObj = new URL(url);
+      if (urlObj.hostname.includes('youtu.be')) {
+        return urlObj.pathname.slice(1);
+      }
+      if (urlObj.searchParams.get('v')) {
+        return urlObj.searchParams.get('v');
+      }
+      const match = url.match(/(?:embed\/|v\/)([\w-]{11})/);
+      return match ? match[1] : null;
+    } catch {
+      return null;
+    }
+  };
+
   const categories = [
     { id: 'all', label: 'All Topics', icon: BookOpen },
     { id: 'getting-started', label: 'Getting Started', icon: BookOpen },
@@ -51,15 +71,21 @@ const HelpPage = () => {
     { id: 'ai-features', label: 'AI Features', icon: MessageCircle },
     { id: 'reminders', label: 'Reminders', icon: MessageCircle },
     { id: 'import-export', label: 'Import & Export', icon: FileText },
-    { id: 'analytics', label: 'Analytics', icon: MessageCircle }
+    { id: 'analytics', label: 'Analytics', icon: MessageCircle },
+    { id: 'study-sessions', label: 'Study Sessions', icon: BookOpen },
+    { id: 'progress', label: 'Progress', icon: BookOpen },
+    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'advanced', label: 'Advanced', icon: Settings }
   ];
 
   const filteredContent = helpContent.filter(item => {
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+    const lower = searchTerm.toLowerCase();
     const matchesSearch = searchTerm === '' || 
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.content.toLowerCase().includes(searchTerm.toLowerCase());
+      item.title.toLowerCase().includes(lower) ||
+      item.description.toLowerCase().includes(lower) ||
+      item.content.toLowerCase().includes(lower) ||
+      (Array.isArray(item.tags) && item.tags.some(tag => tag.toLowerCase().includes(lower)));
     return matchesCategory && matchesSearch;
   });
 
@@ -179,35 +205,29 @@ const HelpPage = () => {
               
               <CollapsibleContent>
                 <CardContent className="pt-0">
-                  {/* Text Content */}
-                  <div className="prose max-w-none mb-6 text-gray-700 leading-relaxed">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                        em: ({ children }) => <em className="italic text-gray-800">{children}</em>,
-                        ul: ({ children }) => <ul className="list-disc ml-6 space-y-1">{children}</ul>,
-                        ol: ({ children }) => <ol className="list-decimal ml-6 space-y-1">{children}</ol>,
-                        li: ({ children }) => <li className="text-gray-700">{children}</li>,
-                        h1: ({ children }) => <h1 className="text-2xl font-bold text-gray-900 mt-6 mb-4">{children}</h1>,
-                        h2: ({ children }) => <h2 className="text-xl font-bold text-gray-900 mt-6 mb-3">{children}</h2>,
-                        h3: ({ children }) => <h3 className="text-lg font-semibold text-gray-900 mt-5 mb-2">{children}</h3>,
-                        p: ({ children }) => <p className="mb-3 text-gray-700">{children}</p>
-                      }}
-                    >
-                      {item.content}
-                    </ReactMarkdown>
-                  </div>
+                  <div className="prose max-w-none mb-6 text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: processContentForDisplay(item.content) }} />
 
                   {/* Video Content */}
-                  {(item.video_title || item.video_url) && (
+                  {(item.video_url || item.video_title) && (
                     <div className="mb-6">
-                      <YouTubeComingSoonPlaceholder
-                        title={item.video_title || 'Video Tutorial'}
-                        duration={item.video_duration || '0:00'}
-                        className="w-full"
-                      />
-                      
+                      {item.video_url && getYouTubeIdFromUrl(item.video_url) ? (
+                        <YouTubePlayer
+                          video={{
+                            youtubeId: getYouTubeIdFromUrl(item.video_url) || '',
+                            title: item.video_title || item.title,
+                            duration: item.video_duration || '0:00'
+                          }}
+                          contentId={item.id}
+                          className="w-full"
+                        />
+                      ) : (
+                        <YouTubeComingSoonPlaceholder
+                          title={item.video_title || 'Video Tutorial'}
+                          duration={item.video_duration || '0:00'}
+                          className="w-full"
+                        />
+                      )}
+
                       {/* Video Chapters */}
                       {item.video_chapters && item.video_chapters.length > 0 && (
                         <div className="mt-4 p-4 bg-gray-50 rounded-lg">
