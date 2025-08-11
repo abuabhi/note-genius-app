@@ -16,6 +16,7 @@ import PaymentPage from "@/pages/PaymentPage";
 import SignupPage from "@/pages/SignupPage";
 import HelpPage from "@/pages/HelpPage";
 import FAQPage from "@/pages/FAQPage";
+import SiteMapPage from "@/pages/SiteMapPage";
 
 export interface RouteConfig {
   path: string;
@@ -39,5 +40,6 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/help-center", element: <HelpPage /> },
   { path: "/help-centre", element: <HelpPage /> },
   { path: "/faq", element: <FAQPage /> },
+  { path: "/sitemap", element: <SiteMapPage /> },
   { path: "/coupon/:code", element: <PublicCouponPage /> } // Public coupon redemption page
 ];
