@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
+import { useUserTier, UserTier } from "@/hooks/useUserTier";
 export const EmailDigestCard = () => {
   const { preferences, loading, updatePreferences } = useEmailDigestPreferences();
   const [activating, setActivating] = useState(false);
   const [sending, setSending] = useState(false);
   const [checkingHealth, setCheckingHealth] = useState(false);
+  const { userTier } = useUserTier();
 
   const handleActivateCron = async () => {
     try {
@@ -93,17 +95,19 @@ export const EmailDigestCard = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" onClick={handleActivateCron} disabled={activating}>
-            {activating ? 'Activating…' : 'Activate Daily Digest Cron'}
-          </Button>
-          <Button size="sm" onClick={handleSendTest} disabled={sending}>
-            {sending ? 'Sending…' : 'Send Test Digest Email'}
-          </Button>
-          <Button size="sm" variant="outline" onClick={handleHealthCheck} disabled={checkingHealth}>
-            {checkingHealth ? 'Checking…' : 'Run Health Check'}
-          </Button>
-        </div>
+        {userTier === UserTier.DEAN && (
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="secondary" onClick={handleActivateCron} disabled={activating}>
+              {activating ? 'Activating…' : 'Activate Daily Digest Cron'}
+            </Button>
+            <Button size="sm" onClick={handleSendTest} disabled={sending}>
+              {sending ? 'Sending…' : 'Send Test Digest Email'}
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleHealthCheck} disabled={checkingHealth}>
+              {checkingHealth ? 'Checking…' : 'Run Health Check'}
+            </Button>
+          </div>
+        )}
 
         <DeliverySettingsSection 
           preferences={preferences} 

@@ -66,68 +66,151 @@ serve(async (req) => {
           continue;
         }
         
-        // Get user's active reminders and goals
-        const { data: reminders } = await supabase
-          .from('reminders')
+        // Fetch user preferences and enforce frequency/content toggles
+        const { data: prefs } = await supabase
+          .from('email_digest_preferences')
           .select('*')
           .eq('user_id', user.user_id)
-          .in('status', ['pending', 'sent'])
-          .order('reminder_time', { ascending: true })
-          .limit(10);
+          .maybeSingle();
+
+        const digestEnabled = prefs?.digest_enabled ?? true;
+        const frequency: 'daily' | 'weekly' | 'never' = (prefs?.frequency as any) || 'daily';
+
+        if (!digestEnabled || frequency === 'never') {
+          console.log(`⛔ Skipping ${user.email}: digest disabled or frequency=never`);
+          continue;
+        }
+
+        // Weekly gating: only send if 7+ days since last sent
+        if (frequency === 'weekly') {
+          const lastSent = user.last_digest_sent_at || prefs?.last_digest_sent_at;
+          if (lastSent) {
+            const last = new Date(lastSent);
+            const diffDays = (now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24);
+            if (diffDays < 6.5) {
+              console.log(`📆 Skipping ${user.email}: weekly frequency window not reached (${diffDays.toFixed(1)}d)`);
+              continue;
+            }
+          }
+        }
+
+        // Conditionally load content based on prefs
+        let reminders: any[] = [];
+        let goals: any[] = [];
+        let sessions: any[] = [];
+        let todos: any[] = [];
+        let flashcardProgress: any[] = [];
+        let quizzes: any[] = [];
+        let notes: any[] = [];
+
+        // General reminders (independent toggle)
+        {
+          const { data } = await supabase
+            .from('reminders')
+            .select('*')
+            .eq('user_id', user.user_id)
+            .in('status', ['pending', 'sent'])
+            .order('reminder_time', { ascending: true })
+            .limit(10);
+          reminders = data || [];
+        }
         
-        const { data: goals } = await supabase
-          .from('study_goals')
-          .select('*')
-          .eq('user_id', user.user_id)
-          .eq('status', 'active')
-          .order('end_date', { ascending: true })
-          .limit(5);
+        if (prefs?.include_goals) {
+          const { data } = await supabase
+            .from('study_goals')
+            .select('*')
+            .eq('user_id', user.user_id)
+            .eq('status', 'active')
+            .order('end_date', { ascending: true })
+            .limit(5);
+          goals = data || [];
+        }
         
-        const { data: sessions } = await supabase
-          .from('study_sessions')
-          .select('*')
-          .eq('user_id', user.user_id)
-          .gte('start_time', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
-          .order('start_time', { ascending: false })
-          .limit(5);
+        if (prefs?.include_study_sessions) {
+          const { data } = await supabase
+            .from('study_sessions')
+            .select('*')
+            .eq('user_id', user.user_id)
+            .gte('start_time', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+            .order('start_time', { ascending: false })
+            .limit(prefs?.study_sessions_limit ?? 5);
+          sessions = data || [];
+        }
 
-        // Get user's todos
-        const { data: todos } = await supabase
-          .from('reminders')
-          .select('*')
-          .eq('user_id', user.user_id)
-          .eq('type', 'todo')
-          .eq('status', 'pending')
-          .order('due_date', { ascending: true })
-          .limit(5);
+        if (prefs?.include_todos) {
+          // Base pending todos
+          let base = supabase
+            .from('reminders')
+            .select('*')
+            .eq('user_id', user.user_id)
+            .eq('type', 'todo')
+            .order('due_date', { ascending: true })
+            .limit(10);
 
-        // Get pending flashcards for review
-        const { data: flashcardProgress } = await supabase
-          .from('user_flashcard_progress')
-          .select(`
-            *,
-            flashcards!inner(
-              front,
-              flashcard_sets!inner(title)
-            )
-          `)
-          .eq('user_id', user.user_id)
-          .lte('next_review_at', new Date().toISOString())
-          .order('next_review_at', { ascending: true })
-          .limit(10);
+          if (prefs?.only_urgent) {
+            // Filter urgent/critical after fetch due to limited query operators
+            const { data } = await base;
+            todos = (data || []).filter((t: any) => ['urgent', 'critical'].includes(t.escalation_level));
+          } else {
+            // Include completed if requested; otherwise pending only
+            if (prefs?.include_completed) {
+              const { data } = await supabase
+                .from('reminders')
+                .select('*')
+                .eq('user_id', user.user_id)
+                .eq('type', 'todo')
+                .in('status', ['pending', 'completed'])
+                .order('due_date', { ascending: true })
+                .limit(10);
+              todos = data || [];
+            } else {
+              const { data } = await base.eq('status', 'pending');
+              todos = data || [];
+            }
+          }
+        }
 
-        // Get pending quizzes (quizzes created by user that haven't been taken recently)
-        const { data: quizzes } = await supabase
-          .from('quizzes')
-          .select(`
-            id,
-            title,
-            description,
-            created_at
-          `)
-          .eq('user_id', user.user_id)
-          .order('created_at', { ascending: false })
-          .limit(5);
+        if (prefs?.include_flashcards) {
+          const { data } = await supabase
+            .from('user_flashcard_progress')
+            .select(`
+              *,
+              flashcards!inner(
+                front,
+                flashcard_sets!inner(title)
+              )
+            `)
+            .eq('user_id', user.user_id)
+            .lte('next_review_at', new Date().toISOString())
+            .order('next_review_at', { ascending: true })
+            .limit(prefs?.flashcards_limit ?? 10);
+          flashcardProgress = data || [];
+        }
+
+        if (prefs?.include_quizzes) {
+          const { data } = await supabase
+            .from('quizzes')
+            .select(`
+              id,
+              title,
+              description,
+              created_at
+            `)
+            .eq('user_id', user.user_id)
+            .order('created_at', { ascending: false })
+            .limit(prefs?.quizzes_limit ?? 3);
+          quizzes = data || [];
+        }
+
+        if (prefs?.include_notes) {
+          const { data } = await supabase
+            .from('notes')
+            .select('id, title, description, updated_at')
+            .eq('user_id', user.user_id)
+            .order('updated_at', { ascending: false })
+            .limit(prefs?.notes_limit ?? 5);
+          notes = data || [];
+        }
         
         // Enhanced content logging
         const reminderCount = reminders?.length || 0;

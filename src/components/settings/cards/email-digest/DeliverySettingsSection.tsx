@@ -10,6 +10,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { COMPREHENSIVE_TIMEZONES, getTimezonesByRegion, getCurrentTimeInTimezone } from "@/utils/timezoneData";
+import { useUserTier, UserTier } from "@/hooks/useUserTier";
 
 interface DeliverySettingsSectionProps {
   preferences: EmailDigestPreferences;
@@ -19,6 +20,7 @@ interface DeliverySettingsSectionProps {
 export const DeliverySettingsSection = ({ preferences, updatePreferences }: DeliverySettingsSectionProps) => {
   const [sendingTest, setSendingTest] = useState(false);
   const timezonesByRegion = getTimezonesByRegion();
+  const { userTier } = useUserTier();
 
   const handleSendTestEmail = async () => {
     setSendingTest(true);
@@ -157,30 +159,32 @@ export const DeliverySettingsSection = ({ preferences, updatePreferences }: Deli
               </p>
             </div>
 
-            {/* Test Email Button */}
-            <div className="pt-4 border-t">
-              <Button
-                onClick={handleSendTestEmail}
-                disabled={sendingTest}
-                variant="outline"
-                className="w-full h-10"
-              >
-                {sendingTest ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Sending Test Email...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Send Test Email Now
-                  </>
-                )}
-              </Button>
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                Send a test email to verify your settings are working
-              </p>
-            </div>
+            {/* Test Email Button - DEAN only */}
+            {userTier === UserTier.DEAN && (
+              <div className="pt-4 border-t">
+                <Button
+                  onClick={handleSendTestEmail}
+                  disabled={sendingTest}
+                  variant="outline"
+                  className="w-full h-10"
+                >
+                  {sendingTest ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Sending Test Email...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Send Test Email Now
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  Send a test email to verify your settings are working
+                </p>
+              </div>
+            )}
           </>
         )}
       </CardContent>
