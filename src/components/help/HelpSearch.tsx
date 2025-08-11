@@ -20,7 +20,9 @@ const categoryLabels: Record<HelpCategory, string> = {
   'ai-features': 'AI Features',
   'reminders': 'Reminders',
   'import-export': 'Import & Export',
-  'analytics': 'Analytics'
+  'analytics': 'Analytics',
+  'goals-todos': 'Goals & To-Dos',
+  'upgrade': 'Upgrade'
 };
 
 export const HelpSearch: React.FC = () => {

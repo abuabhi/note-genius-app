@@ -39,7 +39,9 @@ export type HelpCategory =
   | 'ai-features'
   | 'reminders'
   | 'import-export'
-  | 'analytics';
+  | 'analytics'
+  | 'goals-todos'
+  | 'upgrade';
 
 export type HelpContext = 
   | 'dashboard'

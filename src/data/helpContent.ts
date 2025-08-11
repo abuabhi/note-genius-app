@@ -703,6 +703,385 @@ export const helpContent: HelpContent[] = [
     ],
     tags: ['troubleshooting', 'issues', 'support', 'problems', 'solutions'],
     lastUpdated: '2024-12-30'
+  },
+  {
+    id: 'import-flashcards-notes',
+    title: 'Import Notes and Flashcards',
+    description: 'Bring your existing notes and flashcards into the app quickly and safely',
+    category: 'import-export',
+    context: ['import'],
+    priority: 1,
+    textContent: `Notes: PDF, DOCX, TXT, PPTX; OCR for images.
+
+• Flashcards: CSV with columns Front, Back, Tags, Notes.
+
+Steps:
+1) Open Import.
+2) Choose file(s).
+3) Pick processing: OCR, subject, tags.
+4) Review and save.
+
+Best Practices:
+- Use good lighting for OCR images.
+- Keep consistent file names.
+- Confirm subjects/tags after import.`,
+    quickTips: [
+      'Use batch import for multiple files',
+      'Review OCR text before saving',
+      'Tag immediately for easier search'
+    ],
+    tags: ['import', 'ocr', 'csv', 'notes', 'flashcards'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'export-data-guide',
+    title: 'Export Your Data',
+    description: 'Export notes, flashcards, and analytics for backup or sharing',
+    category: 'import-export',
+    context: ['export'],
+    priority: 2,
+    textContent: `Export options:
+- Notes → PDF/DOCX
+- Flashcards → CSV
+- Analytics → PDF summary
+
+Steps:
+1) Open Export.
+2) Select items or filters.
+3) Choose format.
+4) Download or share.
+
+Best Practices:
+- Keep periodic backups.
+- Export sets by subject.
+- Use analytics reports for check-ins.`,
+    quickTips: [
+      'Export before major edits',
+      'Use subject filters',
+      'Keep weekly analytics PDFs'
+    ],
+    tags: ['export', 'backup', 'pdf', 'csv'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'import-troubleshooting',
+    title: 'Troubleshooting Imports',
+    description: 'Fix common import issues (format, encoding, large files)',
+    category: 'import-export',
+    context: ['import'],
+    priority: 3,
+    textContent: `CSV: Ensure header order and UTF-8 encoding.
+DOCX/PDF: Remove password protection.
+Images: Use clear scans.
+Large batches: Split into smaller sets.
+
+Tip: Try one file first to isolate issues.`,
+    quickTips: [
+      'Validate CSV before upload',
+      'Avoid scanned PDFs when possible',
+      'Import in smaller batches'
+    ],
+    tags: ['troubleshooting', 'import', 'csv', 'ocr'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'analytics-overview',
+    title: 'Analytics Overview',
+    description: 'Understand key metrics and trends',
+    category: 'analytics',
+    context: ['dashboard', 'progress-overview'],
+    priority: 1,
+    textContent: `Metrics: total sessions, total time, average time, streak days, accuracy, quiz scores, learning velocity.
+
+Tips:
+- Review weekly to adjust your plan.
+- Focus on underperforming subjects.
+- Track your peak study times.`,
+    quickTips: [
+      'Use weekly view for trends',
+      'Compare subjects',
+      'Act on low-accuracy topics'
+    ],
+    tags: ['analytics', 'overview', 'performance'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'analytics-improve-habits',
+    title: 'Use Analytics to Improve Habits',
+    description: 'Turn data into better results',
+    category: 'analytics',
+    context: ['progress-overview', 'study-session'],
+    priority: 2,
+    textContent: `1) Identify low-accuracy cards and schedule extra reviews.
+2) Shift difficult topics to your peak time window.
+3) Shorten long sessions if efficiency drops.
+4) Create goals tied to measurable metrics.`,
+    quickTips: [
+      'Start with one metric',
+      'Revisit after a week',
+      'Celebrate milestones'
+    ],
+    tags: ['analytics', 'improvement', 'habits'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'study-start-manage',
+    title: 'Starting and Managing Sessions',
+    description: 'Start focused sessions with goals and timers',
+    category: 'study-sessions',
+    context: ['study-session', 'dashboard'],
+    priority: 1,
+    textContent: `Steps:
+1) Start Session.
+2) Pick subject/materials.
+3) Set duration/goal.
+4) Use focus timer; add notes.
+5) End and review summary.
+
+Best Practices:
+- Keep sessions 25–50 minutes.
+- Insert short breaks.
+- Log quick reflections.`,
+    quickTips: [
+      'Start with a clear goal',
+      'Small notes during session',
+      'End with reflection'
+    ],
+    tags: ['sessions', 'timers', 'goals'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'study-focus-pomodoro',
+    title: 'Focus Mode and Pomodoro',
+    description: 'Stay on task with structured focus and breaks',
+    category: 'study-sessions',
+    context: ['study-session'],
+    priority: 2,
+    textContent: `Use Pomodoro: 25 min focus + 5 min break.
+Turn on distraction-minimizing mode and break reminders.
+Increase focus blocks gradually if comfortable.`,
+    quickTips: [
+      'Keep breaks truly off-task',
+      'Stop at the bell',
+      'Batch similar topics'
+    ],
+    tags: ['focus', 'pomodoro', 'productivity'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'study-link-goals',
+    title: 'Link Sessions to Goals and Materials',
+    description: 'Track effort where it matters',
+    category: 'study-sessions',
+    context: ['study-session'],
+    priority: 3,
+    textContent: `Choose a goal or set when starting sessions.
+Benefits: progress attribution, accurate analytics, easier weekly reviews.`,
+    quickTips: [
+      'Always link to a goal',
+      'Use consistent subjects',
+      'Review linked progress weekly'
+    ],
+    tags: ['sessions', 'goals', 'attribution'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'progress-dashboard',
+    title: 'Progress Dashboard',
+    description: 'Read and act on progress charts',
+    category: 'progress',
+    context: ['progress-overview', 'dashboard'],
+    priority: 1,
+    textContent: `See sessions, study time, streaks, subject split, accuracy, and quizzes.
+Goal: rising accuracy and steady time. Use exports for check-ins.`,
+    quickTips: [
+      'Watch streaks',
+      'Balance subjects',
+      'Combine with goals'
+    ],
+    tags: ['progress', 'dashboard', 'trends'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'progress-streaks',
+    title: 'Streaks and Consistency',
+    description: 'Build reliable habits with streaks',
+    category: 'progress',
+    context: ['progress-overview'],
+    priority: 2,
+    textContent: `Aim for short daily sessions to keep streaks.
+If you miss a day, resume next day and adjust targets—consistency beats intensity.`,
+    quickTips: [
+      'Minimum viable session',
+      "Don't chase perfection",
+      'Review weekly'
+    ],
+    tags: ['streaks', 'habits', 'consistency'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'settings-profile-preferences',
+    title: 'Profile and Preferences',
+    description: 'Update your profile, subjects, and UI preferences',
+    category: 'settings',
+    context: ['settings'],
+    priority: 1,
+    textContent: `Edit name, time zone, subjects, grade, and theme.
+Calibrate time zone for analytics accuracy.
+Keep subjects/grades current for better recommendations.`,
+    quickTips: [
+      'Set correct time zone',
+      'Keep subjects clean',
+      'Pick a readable theme'
+    ],
+    tags: ['settings', 'profile', 'subjects'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'settings-notifications-digest',
+    title: 'Notifications and Email Digest',
+    description: 'Control notification channels and the daily/weekly digest',
+    category: 'settings',
+    context: ['settings', 'reminders'],
+    priority: 2,
+    textContent: `Toggle digest (daily/weekly), set time, choose content (notes, flashcards, quizzes, sessions), urgent-only if needed.
+Adjust in-app and browser notifications to your preference.`,
+    quickTips: [
+      'Digest in morning',
+      'Urgent only during exams',
+      'Review weekly'
+    ],
+    tags: ['settings', 'notifications', 'digest'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'advanced-shortcuts-tips',
+    title: 'Keyboard Shortcuts and Power Tips',
+    description: 'Navigate and act faster',
+    category: 'advanced',
+    context: ['settings'],
+    priority: 3,
+    textContent: `Common shortcuts: search, add note, start session, save.
+Power tips: batch actions, templates, quick tagging.`,
+    quickTips: [
+      'Learn 3 shortcuts first',
+      'Batch related tasks',
+      'Create templates'
+    ],
+    tags: ['advanced', 'shortcuts', 'productivity'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'goals-creating-tracking',
+    title: 'Creating and Tracking Study Goals',
+    description: 'Set measurable goals and see progress clearly',
+    category: 'goals-todos',
+    context: ['dashboard', 'progress-overview'],
+    priority: 1,
+    textContent: `Steps:
+1) Create goal with title, timeframe, target hours.
+2) Link sessions.
+3) Track percent complete and adjust weekly.
+
+Best Practices: realistic targets, align to subjects, reflect after each session.`,
+    quickTips: [
+      'Start small',
+      'Link every session',
+      'Adjust weekly'
+    ],
+    tags: ['goals', 'planning', 'targets'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'todos-and-reminders',
+    title: 'To-Dos and Reminders for Study',
+    description: 'Manage tasks with due dates and recurring schedules',
+    category: 'goals-todos',
+    context: ['reminders', 'dashboard'],
+    priority: 2,
+    textContent: `Create to-dos with priority and due date.
+Use recurring items for weekly reviews.
+Mark done or reschedule—avoid overdue pileups.`,
+    quickTips: [
+      'Keep tasks small',
+      'Review daily',
+      'Use recurring for routines'
+    ],
+    tags: ['todos', 'reminders', 'tasks'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'templates-recurring-tasks',
+    title: 'Templates for Recurring Study Tasks',
+    description: 'Build once, reuse often',
+    category: 'goals-todos',
+    context: ['reminders'],
+    priority: 3,
+    textContent: `Create templates for: Weekly recap, Flashcard review, Practice quiz.
+Apply templates to save time and maintain consistency.`,
+    quickTips: [
+      'Start with two templates',
+      'Iterate monthly',
+      'Track completion rate'
+    ],
+    tags: ['templates', 'routines', 'productivity'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'upgrade-plans-benefits',
+    title: 'Upgrade Plans and Benefits',
+    description: 'Choose the plan that fits your study style',
+    category: 'upgrade',
+    context: ['settings', 'dashboard'],
+    priority: 1,
+    textContent: `Benefits by tier: increased AI limits, advanced analytics, priority reminders, collaboration options.
+Start with monthly; switch to annual for savings.`,
+    quickTips: [
+      'Trial first',
+      'Annual for savings',
+      'Match plan to workload'
+    ],
+    tags: ['upgrade', 'pricing', 'plans'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'upgrade-change-plan',
+    title: 'How to Upgrade or Downgrade',
+    description: 'Change your plan anytime from Settings',
+    category: 'upgrade',
+    context: ['settings'],
+    priority: 2,
+    textContent: `Steps:
+1) Open Settings → Billing.
+2) Choose new tier.
+3) Confirm. Proration applies mid-cycle.
+Downgrades usually take effect next cycle.`,
+    quickTips: [
+      'Review usage before change',
+      'Check proration',
+      'Download recent receipts'
+    ],
+    tags: ['billing', 'downgrade', 'change-plan'],
+    lastUpdated: '2025-08-11'
+  },
+  {
+    id: 'billing-receipts-refunds',
+    title: 'Billing, Receipts, and Refunds',
+    description: 'Manage invoices, payment methods, and refunds',
+    category: 'upgrade',
+    context: ['settings'],
+    priority: 3,
+    textContent: `Update payment method.
+View/download invoices.
+Refunds follow policy—contact support with order ID.
+Keep your email up to date.`,
+    quickTips: [
+      'Save invoices',
+      'Keep card valid',
+      'Contact support early'
+    ],
+    tags: ['billing', 'receipts', 'refunds'],
+    lastUpdated: '2025-08-11'
   }
 ];
 
