@@ -10,7 +10,8 @@ import { Gift, Users, Trophy, Share2, Copy, Loader2, Linkedin, Twitter, Mail, Me
 import { useToast } from '@/hooks/use-toast';
 import { useReferralData } from '@/hooks/referrals/useReferralData';
 import { useSendReferralEmails } from '@/hooks/referrals/useSendReferralEmails';
-
+import { useAuth } from '@/contexts/auth';
+import { supabase } from '@/integrations/supabase/client';
 export const SimplifiedReferralForm = () => {
   const { toast } = useToast();
   const { referralStats, isLoading, generateReferralLink, copyReferralLink, shareViaLinkedIn, shareViaTwitter, generateRecommendedMessage, shareViaWhatsApp, shareViaEmail, refetchReferralStats } = useReferralData();
@@ -20,13 +21,44 @@ export const SimplifiedReferralForm = () => {
   const [message, setMessage] = useState('');
   const [hasPrefilled, setHasPrefilled] = useState(false);
   const [hasEditedMessage, setHasEditedMessage] = useState(false);
+  const { user } = useAuth();
+  const [referralCode, setReferralCode] = useState<string>('');
+  const [isCodeLoading, setIsCodeLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!hasPrefilled && referralStats?.referralCode) {
-      setMessage(generateRecommendedMessage(referralStats.referralCode));
-      setHasPrefilled(true);
-    }
-  }, [referralStats?.referralCode, hasPrefilled]);
+    const loadCode = async () => {
+      if (!user) return;
+      const cacheKey = `referralCode:${user.id}`;
+      try {
+        const cached = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null;
+        if (cached) {
+          setReferralCode(cached);
+          if (!hasPrefilled) {
+            setMessage(generateRecommendedMessage(cached));
+            setHasPrefilled(true);
+          }
+          return;
+        }
+      } catch {}
+      setIsCodeLoading(true);
+      const { data, error } = await supabase.rpc('get_my_referral_code');
+      setIsCodeLoading(false);
+      if (error || !data) {
+        toast({ title: "Couldn't fetch your link", description: 'Please try again later.', variant: 'destructive' });
+        return;
+      }
+      const code = String(data).trim();
+      setReferralCode(code);
+      try {
+        if (typeof window !== 'undefined') localStorage.setItem(cacheKey, code);
+      } catch {}
+      if (!hasPrefilled) {
+        setMessage(generateRecommendedMessage(code));
+        setHasPrefilled(true);
+      }
+    };
+    loadCode();
+  }, [user, hasPrefilled, generateRecommendedMessage, toast]);
 
   const handleSendInvitations = async () => {
     if (!emails.trim()) {
@@ -38,7 +70,8 @@ export const SimplifiedReferralForm = () => {
       return;
     }
 
-    if (!referralStats?.referralCode) {
+    const codeToUse = referralCode || referralStats?.referralCode;
+    if (!codeToUse) {
       toast({
         title: "Error",
         description: "Could not get your referral code. Please try again.",
@@ -59,7 +92,7 @@ export const SimplifiedReferralForm = () => {
       return;
     }
 
-    const success = await sendReferralEmails(emailList, message, referralStats.referralCode);
+    const success = await sendReferralEmails(emailList, message, codeToUse);
     
     if (success) {
       setEmails('');
@@ -68,22 +101,14 @@ export const SimplifiedReferralForm = () => {
   };
 
   const handleCopyLink = async () => {
-    if (referralStats?.referralCode) {
-      await copyReferralLink(referralStats.referralCode);
-    }
+  const codeToUse = referralCode || referralStats?.referralCode;
+  if (codeToUse) {
+    await copyReferralLink(codeToUse);
+  }
   };
 
-  const handleRetry = async () => {
-    const result = await refetchReferralStats();
-    const code = (result as any)?.data?.referralCode || referralStats?.referralCode;
-    if (!code) {
-      toast({ title: "Couldn't fetch your link", description: 'Please try again in a moment.', variant: 'destructive' });
-    } else {
-      toast({ title: 'Referral link ready', description: 'Your referral link is available now.' });
-    }
-  };
 
-  if (isLoading) {
+  if (isLoading && isCodeLoading) {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="h-6 w-6 animate-spin text-mint-500" />
@@ -92,7 +117,8 @@ export const SimplifiedReferralForm = () => {
     );
   }
 
-  const referralLink = referralStats?.referralCode ? generateReferralLink(referralStats.referralCode) : '';
+  const codeToUse = referralCode || referralStats?.referralCode;
+  const referralLink = codeToUse ? generateReferralLink(codeToUse) : '';
 
   return (
     <div className="space-y-8">
@@ -158,29 +184,24 @@ export const SimplifiedReferralForm = () => {
             <Input 
               value={referralLink}
               readOnly
-              placeholder={referralStats?.referralCode ? undefined : 'Fetching your link...'}
+              placeholder={codeToUse ? undefined : 'Fetching your link...'}
               className="font-mono text-sm"
             />
-            <Button onClick={handleCopyLink} variant="outline" size="sm" disabled={!referralStats?.referralCode}>
+            <Button onClick={handleCopyLink} variant="outline" size="sm" type="button" disabled={!codeToUse}>
               <Copy className="h-4 w-4" />
             </Button>
-            {!referralStats?.referralCode && (
-              <Button onClick={handleRetry} variant="outline" size="sm" type="button">
-                Retry
-              </Button>
-            )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" disabled={!referralStats?.referralCode} onClick={() => referralStats?.referralCode && shareViaLinkedIn(referralStats.referralCode)}>
+            <Button variant="outline" size="sm" type="button" disabled={!codeToUse} onClick={() => codeToUse && shareViaLinkedIn(codeToUse)}>
               <Linkedin className="h-4 w-4 mr-1" /> LinkedIn
             </Button>
-            <Button variant="outline" size="sm" disabled={!referralStats?.referralCode} onClick={() => referralStats?.referralCode && shareViaTwitter(referralStats.referralCode)}>
+            <Button variant="outline" size="sm" type="button" disabled={!codeToUse} onClick={() => codeToUse && shareViaTwitter(codeToUse)}>
               <Twitter className="h-4 w-4 mr-1" /> Twitter
             </Button>
-            <Button variant="outline" size="sm" disabled={!referralStats?.referralCode} onClick={() => referralStats?.referralCode && shareViaWhatsApp(referralStats.referralCode)}>
+            <Button variant="outline" size="sm" type="button" disabled={!codeToUse} onClick={() => codeToUse && shareViaWhatsApp(codeToUse)}>
               <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
             </Button>
-            <Button variant="outline" size="sm" disabled={!referralStats?.referralCode} onClick={() => referralStats?.referralCode && shareViaEmail(referralStats.referralCode)}>
+            <Button variant="outline" size="sm" type="button" disabled={!codeToUse} onClick={() => codeToUse && shareViaEmail(codeToUse)}>
               <Mail className="h-4 w-4 mr-1" /> Email
             </Button>
           </div>
@@ -222,10 +243,10 @@ export const SimplifiedReferralForm = () => {
               rows={6}
             />
             <div className="flex gap-2 mt-2">
-              <Button variant="outline" size="sm" onClick={() => { if (referralStats?.referralCode) { setMessage(generateRecommendedMessage(referralStats.referralCode)); setHasEditedMessage(false); } }} disabled={!referralStats?.referralCode}>
+              <Button variant="outline" size="sm" type="button" onClick={() => { if (codeToUse) { setMessage(generateRecommendedMessage(codeToUse)); setHasEditedMessage(false); } }} disabled={!codeToUse}>
                 Use recommended message
               </Button>
-              <Button variant="outline" size="sm" onClick={() => { if (message) { navigator.clipboard.writeText(message); toast({ title: 'Copied!', description: 'Message copied to clipboard' }); } }} disabled={!message}>
+              <Button variant="outline" size="sm" type="button" onClick={() => { if (message) { navigator.clipboard.writeText(message); toast({ title: 'Copied!', description: 'Message copied to clipboard' }); } }} disabled={!message}>
                 <Copy className="h-4 w-4 mr-1" /> Copy message
               </Button>
             </div>
