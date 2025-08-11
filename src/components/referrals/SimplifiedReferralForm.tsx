@@ -68,6 +68,16 @@ export const SimplifiedReferralForm = () => {
     if (success) {
       setEmails('');
       setMessage('');
+      toast({
+        title: 'Invitations sent',
+        description: `Sent to ${emailList.length} recipient${emailList.length > 1 ? 's' : ''}.`
+      });
+    } else {
+      toast({
+        title: 'Failed to send invitations',
+        description: 'Please try again.',
+        variant: 'destructive'
+      });
     }
   };
 
