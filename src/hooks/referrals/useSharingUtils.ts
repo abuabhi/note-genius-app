@@ -60,10 +60,40 @@ Try it: ${link}
     toast.success('Twitter opened! Your tweet is ready to share 🐦');
   };
 
+  const generateRecommendedMessage = (referralCode: string) => {
+    const link = generateReferralLink(referralCode);
+    return `Hey! I've been using PrepGenie and it's seriously improved how I study.
+
+Here’s why I love it:
+• AI-powered flashcards tailored to you
+• Smart note organization and insights
+• Progress tracking that actually motivates
+
+Join with my link and check it out: ${link}`;
+  };
+
+  const shareViaWhatsApp = (referralCode: string) => {
+    const text = generateRecommendedMessage(referralCode);
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+    toast.success('WhatsApp opened! Message ready to send 💬');
+  };
+
+  const shareViaEmail = (referralCode: string) => {
+    const subject = 'Join me on PrepGenie!';
+    const body = generateRecommendedMessage(referralCode);
+    const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailto, '_self');
+    toast.success('Email composer opened ✉️');
+  };
+
   return {
     generateReferralLink,
     copyReferralLink,
     shareViaLinkedIn,
-    shareViaTwitter
+    shareViaTwitter,
+    generateRecommendedMessage,
+    shareViaWhatsApp,
+    shareViaEmail
   };
 };

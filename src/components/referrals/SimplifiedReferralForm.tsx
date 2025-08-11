@@ -1,23 +1,29 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Gift, Users, Trophy, Share2, Copy, Loader2 } from 'lucide-react';
+import { Gift, Users, Trophy, Share2, Copy, Loader2, Linkedin, Twitter, Mail, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useReferralData } from '@/hooks/referrals/useReferralData';
 import { useSendReferralEmails } from '@/hooks/referrals/useSendReferralEmails';
 
 export const SimplifiedReferralForm = () => {
   const { toast } = useToast();
-  const { referralStats, isLoading, generateReferralLink, copyReferralLink } = useReferralData();
+  const { referralStats, isLoading, generateReferralLink, copyReferralLink, shareViaLinkedIn, shareViaTwitter, generateRecommendedMessage, shareViaWhatsApp, shareViaEmail } = useReferralData();
   const { sendReferralEmails, isLoading: isSendingEmails } = useSendReferralEmails();
   
   const [emails, setEmails] = useState('');
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (!message && referralStats?.referralCode) {
+      setMessage(generateRecommendedMessage(referralStats.referralCode));
+    }
+  }, [referralStats?.referralCode]);
 
   const handleSendInvitations = async () => {
     if (!emails.trim()) {
@@ -67,7 +73,7 @@ export const SimplifiedReferralForm = () => {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="h-6 w-6 animate-spin text-mint-500" />
-        <span className="ml-2 text-gray-600">Loading referral data...</span>
+        <span className="ml-2 text-muted-foreground">Loading referral data...</span>
       </div>
     );
   }
@@ -144,6 +150,20 @@ export const SimplifiedReferralForm = () => {
               <Copy className="h-4 w-4" />
             </Button>
           </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" disabled={!referralStats?.referralCode} onClick={() => referralStats?.referralCode && shareViaLinkedIn(referralStats.referralCode)}>
+              <Linkedin className="h-4 w-4 mr-1" /> LinkedIn
+            </Button>
+            <Button variant="outline" size="sm" disabled={!referralStats?.referralCode} onClick={() => referralStats?.referralCode && shareViaTwitter(referralStats.referralCode)}>
+              <Twitter className="h-4 w-4 mr-1" /> Twitter
+            </Button>
+            <Button variant="outline" size="sm" disabled={!referralStats?.referralCode} onClick={() => referralStats?.referralCode && shareViaWhatsApp(referralStats.referralCode)}>
+              <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
+            </Button>
+            <Button variant="outline" size="sm" disabled={!referralStats?.referralCode} onClick={() => referralStats?.referralCode && shareViaEmail(referralStats.referralCode)}>
+              <Mail className="h-4 w-4 mr-1" /> Email
+            </Button>
+          </div>
           <p className="text-sm text-gray-600">
             Share this link with your friends. When they sign up using your link, you'll both get rewards!
           </p>
@@ -184,6 +204,14 @@ export const SimplifiedReferralForm = () => {
               className="mt-1"
               rows={3}
             />
+            <div className="flex gap-2 mt-2">
+              <Button variant="outline" size="sm" onClick={() => referralStats?.referralCode && setMessage(generateRecommendedMessage(referralStats.referralCode))} disabled={!referralStats?.referralCode}>
+                Use recommended message
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => { if (message) { navigator.clipboard.writeText(message); toast({ title: 'Copied!', description: 'Message copied to clipboard' }); } }} disabled={!message}>
+                <Copy className="h-4 w-4 mr-1" /> Copy message
+              </Button>
+            </div>
           </div>
           
           <Button 

@@ -9,7 +9,7 @@ export const useReferralData = () => {
   const { data: contests = [], isLoading: contestsLoading } = useContests();
   const { data: contestEntries = [], isLoading: entriesLoading } = useContestEntries();
   const { joinContest, isJoiningContest } = useContestActions();
-  const { generateReferralLink, copyReferralLink, shareViaLinkedIn, shareViaTwitter } = useSharingUtils();
+  const { generateReferralLink, copyReferralLink, shareViaLinkedIn, shareViaTwitter, generateRecommendedMessage, shareViaWhatsApp, shareViaEmail } = useSharingUtils();
 
   // Handle error states gracefully
   const isLoading = statsLoading || contestsLoading || entriesLoading;
@@ -38,6 +38,9 @@ export const useReferralData = () => {
     generateReferralLink,
     copyReferralLink,
     shareViaLinkedIn,
-    shareViaTwitter
+    shareViaTwitter,
+    generateRecommendedMessage,
+    shareViaWhatsApp,
+    shareViaEmail
   };
 };

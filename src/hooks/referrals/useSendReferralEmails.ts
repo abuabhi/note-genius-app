@@ -31,7 +31,8 @@ export const useSendReferralEmails = () => {
               to: email,
               referrerName: referrerName,
               referralCode: referralCode,
-              type: 'invitation'
+              type: 'invitation',
+              message: message || undefined
             }
           });
 

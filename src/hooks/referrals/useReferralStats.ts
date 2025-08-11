@@ -22,7 +22,38 @@ export const useReferralStats = () => {
         throw rpcError;
       }
 
-      const referralCode = (rpcReferralCode ?? '').toString();
+      // Determine user's referral code with robust fallbacks
+      let resolvedCode = (rpcReferralCode ?? '').toString().trim();
+
+      if (!resolvedCode) {
+        // Fallback 1: read from profiles table
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('referral_code')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Error fetching profile referral_code:', profileError);
+        } else if (profile?.referral_code) {
+          resolvedCode = String(profile.referral_code).trim();
+        }
+      }
+
+      if (!resolvedCode) {
+        // Fallback 2: server-side create if missing
+        const { data: createdCode, error: createErr } = await supabase.rpc(
+          'get_or_create_referral_code',
+          { p_user_id: user.id }
+        );
+        if (createErr) {
+          console.error('Error creating referral code via RPC:', createErr);
+        } else if (createdCode) {
+          resolvedCode = String(createdCode).trim();
+        }
+      }
+
+      const referralCode = resolvedCode;
 
       // 2) Aggregate referral stats for this user
       const { data: referrals, error: referralsError } = await supabase
