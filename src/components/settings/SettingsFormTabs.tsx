@@ -44,9 +44,9 @@ export const SettingsFormTabs = ({
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
-        {tabs.slice(0, 4).map(tab => (
-          <TabsTrigger key={tab.id} value={tab.id}>
+      <TabsList className="flex w-full overflow-x-auto gap-2 md:grid md:grid-cols-7">
+        {tabs.map(tab => (
+          <TabsTrigger key={tab.id} value={tab.id} className="whitespace-nowrap">
             {tab.label}
           </TabsTrigger>
         ))}

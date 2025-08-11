@@ -31,7 +31,7 @@ export const useSettingsForm = () => {
   // Handle tab parameter from URL
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['account', 'subjects', 'adaptive', 'notifications', 'subscription'].includes(tabParam)) {
+    if (tabParam && ['account', 'subjects', 'adaptive', 'notifications', 'subscription', 'study', 'password'].includes(tabParam)) {
       startTransition(() => {
         setActiveTab(tabParam);
       });
