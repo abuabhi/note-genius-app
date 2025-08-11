@@ -1,52 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>/</loc>
+    <loc>https://www.prepgenie.io/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>/features</loc>
+    <loc>https://www.prepgenie.io/features</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>/pricing</loc>
+    <loc>https://www.prepgenie.io/pricing</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>/about</loc>
+    <loc>https://www.prepgenie.io/about</loc>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>/contact</loc>
+    <loc>https://www.prepgenie.io/contact</loc>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>/help</loc>
+    <loc>https://www.prepgenie.io/help</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>/faq</loc>
+    <loc>https://www.prepgenie.io/faq</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>/terms</loc>
+    <loc>https://www.prepgenie.io/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>/privacy</loc>
+    <loc>https://www.prepgenie.io/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>/sitemap</loc>
+    <loc>https://www.prepgenie.io/sitemap</loc>
     <changefreq>monthly</changefreq>
     <priority>0.2</priority>
   </url>

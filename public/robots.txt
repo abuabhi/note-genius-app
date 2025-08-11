@@ -17,4 +17,4 @@ Disallow: /reminders
 Disallow: /notifications
 Disallow: /settings
 
-Sitemap: /sitemap.xml
+Sitemap: https://www.prepgenie.io/sitemap.xml
