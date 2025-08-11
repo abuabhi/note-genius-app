@@ -1,4 +1,6 @@
 
+import { Helmet } from 'react-helmet';
+
 const FAQPage = () => {
   const faqs = [
     {

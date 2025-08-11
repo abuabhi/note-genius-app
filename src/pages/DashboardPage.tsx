@@ -3,6 +3,7 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Loader2 } from "lucide-react";
 import { RestoreDashboard } from "@/components/dashboard/RestoreDashboard";
 import { DashboardErrorBoundary } from "@/components/error/DashboardErrorBoundary";
+import { Helmet } from "react-helmet";
 
 const DashboardPage = () => {
   const {
