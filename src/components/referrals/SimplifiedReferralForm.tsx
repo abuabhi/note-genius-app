@@ -13,7 +13,7 @@ import { useSendReferralEmails } from '@/hooks/referrals/useSendReferralEmails';
 
 export const SimplifiedReferralForm = () => {
   const { toast } = useToast();
-  const { referralStats, isLoading, generateReferralLink, copyReferralLink, shareViaLinkedIn, shareViaTwitter, generateRecommendedMessage, shareViaWhatsApp, shareViaEmail } = useReferralData();
+  const { referralStats, isLoading, generateReferralLink, copyReferralLink, shareViaLinkedIn, shareViaTwitter, generateRecommendedMessage, shareViaWhatsApp, shareViaEmail, refetchReferralStats } = useReferralData();
   const { sendReferralEmails, isLoading: isSendingEmails } = useSendReferralEmails();
   
   const [emails, setEmails] = useState('');
@@ -44,12 +44,13 @@ export const SimplifiedReferralForm = () => {
       return;
     }
 
-    const emailList = emails.split(',').map(email => email.trim()).filter(Boolean);
+    const email = emails.trim();
+    const emailList = email ? [email] : [];
     
     if (emailList.length === 0) {
       toast({
-        title: "Invalid emails",
-        description: "Please enter valid email addresses separated by commas",
+        title: "Invalid email",
+        description: "Please enter a valid email address",
         variant: "destructive"
       });
       return;
@@ -149,6 +150,11 @@ export const SimplifiedReferralForm = () => {
             <Button onClick={handleCopyLink} variant="outline" size="sm" disabled={!referralStats?.referralCode}>
               <Copy className="h-4 w-4" />
             </Button>
+            {!referralStats?.referralCode && (
+              <Button onClick={() => refetchReferralStats()} variant="outline" size="sm">
+                Generate Link
+              </Button>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" disabled={!referralStats?.referralCode} onClick={() => referralStats?.referralCode && shareViaLinkedIn(referralStats.referralCode)}>
@@ -180,18 +186,15 @@ export const SimplifiedReferralForm = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="emails">Friend's Email Addresses</Label>
-            <Textarea
+            <Label htmlFor="emails">Friend's Email Address</Label>
+            <Input
               id="emails"
-              placeholder="Enter email addresses separated by commas (e.g., friend1@email.com, friend2@email.com)"
+              type="email"
+              placeholder="friend@example.com"
               value={emails}
               onChange={(e) => setEmails(e.target.value)}
               className="mt-1"
-              rows={3}
             />
-            <p className="text-sm text-gray-500 mt-1">
-              Separate multiple email addresses with commas
-            </p>
           </div>
           
           <div>
@@ -201,8 +204,8 @@ export const SimplifiedReferralForm = () => {
               placeholder="Add a personal message to your invitation..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="mt-1"
-              rows={3}
+              className="mt-1 min-h-[160px]"
+              rows={6}
             />
             <div className="flex gap-2 mt-2">
               <Button variant="outline" size="sm" onClick={() => referralStats?.referralCode && setMessage(generateRecommendedMessage(referralStats.referralCode))} disabled={!referralStats?.referralCode}>

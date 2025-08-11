@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
 import { SessionTimer } from "./SessionTimer";
+import { TierDropdown } from "./TierDropdown";
 import { 
   LayoutDashboard, 
   FileText, 
@@ -208,6 +209,11 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
             </div>
           </div>
         </ScrollArea>
+      </div>
+      
+      {/* Tier info at the bottom */}
+      <div className="border-t border-border/50 bg-white/50 py-2">
+        <TierDropdown isCollapsed={isCollapsed} />
       </div>
       
     </motion.div>

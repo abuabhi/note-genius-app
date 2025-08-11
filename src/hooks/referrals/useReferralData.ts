@@ -5,7 +5,7 @@ import { useContestActions } from './useContestActions';
 import { useSharingUtils } from './useSharingUtils';
 
 export const useReferralData = () => {
-  const { data: referralStats, isLoading: statsLoading, error: statsError } = useReferralStats();
+  const { data: referralStats, isLoading: statsLoading, error: statsError, refetch: refetchReferralStats } = useReferralStats();
   const { data: contests = [], isLoading: contestsLoading } = useContests();
   const { data: contestEntries = [], isLoading: entriesLoading } = useContestEntries();
   const { joinContest, isJoiningContest } = useContestActions();
@@ -16,13 +16,21 @@ export const useReferralData = () => {
   const hasError = !!statsError;
 
   // Always return consistent data structure, never return null/undefined for arrays
-  const safeReferralStats = isLoading ? {
+  const safeReferralStats = isLoading
+  ? {
     totalReferrals: 0,
     completedReferrals: 0,
     pendingReferrals: 0,
     totalPointsEarned: 0,
     referralCode: 'LOADING'
-  } : referralStats;
+  }
+  : {
+    totalReferrals: referralStats?.totalReferrals ?? 0,
+    completedReferrals: referralStats?.completedReferrals ?? 0,
+    pendingReferrals: referralStats?.pendingReferrals ?? 0,
+    totalPointsEarned: referralStats?.totalPointsEarned ?? 0,
+    referralCode: referralStats?.referralCode ?? ''
+  };
   
   const safeContests = contests || [];
   const safeContestEntries = contestEntries || [];
@@ -41,6 +49,7 @@ export const useReferralData = () => {
     shareViaTwitter,
     generateRecommendedMessage,
     shareViaWhatsApp,
-    shareViaEmail
+    shareViaEmail,
+    refetchReferralStats
   };
 };
