@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 // Define string literal types for the schema
@@ -13,6 +12,8 @@ export const settingsFormSchema = z.object({
   email: z.string().email().optional(),
   school: z.string().optional(),
   whatsapp_phone: z.string().optional(),
+  // Avatar selection (empty means use initials)
+  avatar_url: z.string().optional(),
   
   // Location and timezone
   country_id: z.string().optional(),

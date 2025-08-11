@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/auth';
 import { User, Settings, LogOut } from 'lucide-react';
 
@@ -23,17 +23,18 @@ export const UserMenu = () => {
     navigate('/');
   };
 
-  const userInitials = user?.email?.substring(0, 2).toUpperCase() || 'U';
+  const userInitials = (user?.email?.substring(0, 2) || 'U').toUpperCase();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-mint-100 text-mint-700">
-              {userInitials}
-            </AvatarFallback>
-          </Avatar>
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={user?.user_metadata?.avatar_url || ''} alt="User avatar" />
+              <AvatarFallback className="bg-mint-100 text-mint-700">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>

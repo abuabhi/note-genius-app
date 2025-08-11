@@ -49,6 +49,7 @@ export const useSettingsFormSubmission = (
         username: data.username || null,
         school: data.school || null,
         whatsapp_phone: data.whatsapp_phone || null,
+        avatar_url: data.avatar_url || null,
         country_id: data.country_id || null,
         timezone: data.timezone || 'UTC',
         weekly_study_goal_hours: data.weeklyStudyGoalHours,
@@ -67,6 +68,11 @@ export const useSettingsFormSubmission = (
         toast.error("Failed to save preferences");
         return false;
       }
+      
+      // Also update auth user metadata so header avatar updates immediately
+      await supabase.auth.updateUser({
+        data: { avatar_url: data.avatar_url || '' }
+      });
       
       toast.success("Settings saved successfully");
       return true;

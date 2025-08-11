@@ -1,5 +1,5 @@
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ChevronsUpDown, Settings, Shield, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
@@ -48,6 +48,7 @@ export const UserSection = ({ isCollapsed }: UserSectionProps) => {
             className="flex items-center gap-3 px-3 py-2 h-auto hover:bg-mint-50 rounded-lg transition-all duration-200" 
           >
             <Avatar className='rounded-full size-8 ring-2 ring-mint-100'>
+              <AvatarImage src={user?.user_metadata?.avatar_url || ''} alt="User avatar" />
               <AvatarFallback className="bg-gradient-to-br from-mint-500 to-mint-600 text-white font-medium">
                 P{userProfile?.user_tier?.charAt(0) || "S"}
               </AvatarFallback>

@@ -29,6 +29,7 @@ export const useSettingsFormData = (
           form.setValue("email", user.email || "");
           form.setValue("school", data.school || "");
           form.setValue("whatsapp_phone", data.whatsapp_phone || "");
+          form.setValue("avatar_url", data.avatar_url || user.user_metadata?.avatar_url || "");
           form.setValue("country_id", data.country_id || "");
           form.setValue("timezone", data.timezone || "UTC");
           

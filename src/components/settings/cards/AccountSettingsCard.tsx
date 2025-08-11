@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { User, FileText, MapPin, Clock, Smartphone } from 'lucide-react';
 import { getTimezonesByRegion, getCurrentTimeInTimezone } from '@/utils/timezoneData';
+import { AvatarPicker } from '@/components/settings/avatar/AvatarPicker';
 
 interface AccountSettingsCardProps {
   form: any;
@@ -67,6 +68,17 @@ export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
             )}
           />
         </div>
+
+        {/* Avatar Selection */}
+        <FormField
+          control={form.control}
+          name="avatar_url"
+          render={({ field }) => (
+            <FormItem>
+              <AvatarPicker value={field.value || ''} onChange={field.onChange} />
+            </FormItem>
+          )}
+        />
 
         {/* School Information */}
         <FormField

@@ -18,6 +18,7 @@ export const useSettingsFormState = () => {
       email: user?.email || "",
       school: "",
       whatsapp_phone: "",
+      avatar_url: user?.user_metadata?.avatar_url || "",
       country_id: "",
       timezone: "UTC",
       language: "en",
