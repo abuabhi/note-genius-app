@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { User, FileText, MapPin, Clock, Smartphone } from 'lucide-react';
 import { getTimezonesByRegion, getCurrentTimeInTimezone } from '@/utils/timezoneData';
 import { AvatarPicker } from '@/components/settings/avatar/AvatarPicker';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 interface AccountSettingsCardProps {
   form: any;
@@ -203,6 +205,14 @@ export const AccountSettingsCard: React.FC<AccountSettingsCardProps> = ({
             </FormItem>
           )}
         />
+
+        <div className="pt-2">
+          <Button variant="link" asChild>
+            <Link to="?tab=password" aria-label="Change your password in the Password tab">
+              Change password
+            </Link>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

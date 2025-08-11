@@ -59,7 +59,6 @@ export const SettingsFormTabs = ({
           countries={countries}
           onCountryChange={onCountryChange}
         />
-        <PasswordChangeCard />
       </TabsContent>
       
       <TabsContent value="subjects" className="space-y-6">
