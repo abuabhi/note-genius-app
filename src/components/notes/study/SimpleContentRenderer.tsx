@@ -2,6 +2,7 @@ import React from 'react';
 import { TextAlignType } from './hooks/useStudyViewState';
 import { processContentForDisplay } from '@/utils/markdownConverter';
 import './SimpleContentRenderer.css';
+import { sanitizeHTML } from '@/utils/sanitize';
 
 interface SimpleContentRendererProps {
   content: string;
@@ -35,7 +36,7 @@ export const SimpleContentRenderer: React.FC<SimpleContentRendererProps> = ({
     <div 
       className={containerClass}
       style={containerStyle}
-      dangerouslySetInnerHTML={{ __html: processedContent }}
+      dangerouslySetInnerHTML={{ __html: sanitizeHTML(processedContent) }}
     />
   );
 };

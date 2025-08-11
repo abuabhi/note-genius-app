@@ -24,6 +24,7 @@ import { HelpTopicEditDialog } from '@/components/help/HelpTopicEditDialog';
 import { HelpTopicCreateDialog } from '@/components/help/HelpTopicCreateDialog';
 import { YouTubePlayer } from '@/components/help/video/YouTubePlayer';
 import { processContentForDisplay } from '@/utils/markdownConverter';
+import { sanitizeHTML } from '@/utils/sanitize';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
@@ -211,7 +212,7 @@ const HelpPage = () => {
               
               <CollapsibleContent>
                 <CardContent className="pt-0">
-                  <div className="prose max-w-none mb-6 text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: processContentForDisplay(item.content) }} />
+                  <div className="prose max-w-none mb-6 text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeHTML(processContentForDisplay(item.content)) }} />
 
                   {/* Video Content */}
                   {(item.video_url || item.video_title) && (

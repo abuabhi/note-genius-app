@@ -5,6 +5,7 @@ import { Sparkles, Copy, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { sanitizeHTML } from "@/utils/sanitize";
 
 interface TextOutputProps {
   recognizedText: string;
@@ -92,7 +93,7 @@ export const TextOutput = ({
             <div 
               className="p-3 prose prose-sm max-w-none"
               dangerouslySetInnerHTML={{ 
-                __html: renderMarkdownPreview(recognizedText) 
+                __html: sanitizeHTML(renderMarkdownPreview(recognizedText)) 
               }}
             />
           </ScrollArea>

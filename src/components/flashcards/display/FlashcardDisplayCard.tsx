@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { sanitizeHTML } from '@/utils/sanitize';
 
 interface FlashcardDisplayCardProps {
   flashcard: {
@@ -34,6 +35,8 @@ export const FlashcardDisplayCard: React.FC<FlashcardDisplayCardProps> = ({
 
   const frontContent = flashcard.front_content || flashcard.front || '';
   const backContent = flashcard.back_content || flashcard.back || '';
+  const safeFront = sanitizeHTML(frontContent);
+  const safeBack = sanitizeHTML(backContent);
 
   return (
     <Card className={cn("p-8 min-h-[300px] cursor-pointer relative", className)} onClick={onFlip}>
@@ -41,11 +44,11 @@ export const FlashcardDisplayCard: React.FC<FlashcardDisplayCardProps> = ({
         <div className="text-center mb-4">
           {isFlipped ? (
             <div className="prose prose-sm max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: backContent }} />
+              <div dangerouslySetInnerHTML={{ __html: safeBack }} />
             </div>
           ) : (
             <div className="prose prose-sm max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: frontContent }} />
+              <div dangerouslySetInnerHTML={{ __html: safeFront }} />
             </div>
           )}
         </div>
