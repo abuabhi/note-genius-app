@@ -143,7 +143,23 @@ const FAQPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+    <>
+      <Helmet>
+        <title>FAQ | PrepGenie</title>
+        <meta name="description" content="Frequently asked questions about PrepGenie features, AI tools, pricing, and more." />
+        <link rel="canonical" href={typeof window !== 'undefined' ? `${window.location.origin}/faq` : '/faq'} />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": faqs.map(f => ({
+              "@type": "Question",
+              "name": f.question,
+              "acceptedAnswer": { "@type": "Answer", "text": f.answer }
+            }))
+          })}
+        </script>
+      </Helmet>
       <div className="container mx-auto px-6 py-12">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
@@ -198,7 +214,7 @@ const FAQPage = () => {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

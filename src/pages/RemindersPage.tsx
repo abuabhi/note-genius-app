@@ -5,6 +5,7 @@ import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
 import { ReminderDebugPanel } from "@/components/debug/ReminderDebugPanel";
 import { Bell } from "lucide-react";
 import { useUnifiedReminderSystem } from "@/hooks/useUnifiedReminderSystem";
+import { Helmet } from 'react-helmet';
 
 const RemindersPage = () => {
   const { user, loading } = useRequireAuth();
@@ -43,6 +44,9 @@ const RemindersPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <StandardPageHeader
         title="🎯 UNIFIED Reminder System"
         description={`Single source of truth for reminders (${totalCount} total) - All other systems DELETED`}

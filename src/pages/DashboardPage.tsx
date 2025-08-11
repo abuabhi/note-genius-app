@@ -28,6 +28,9 @@ const DashboardPage = () => {
   
   return (
     <DashboardErrorBoundary>
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <RestoreDashboard />
     </DashboardErrorBoundary>
   );

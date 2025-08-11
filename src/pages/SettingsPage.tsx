@@ -3,6 +3,7 @@ import { SettingsFormProvider } from '@/components/settings/SettingsFormProvider
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
 import { Settings } from 'lucide-react';
+import { Helmet } from 'react-helmet';
 
 const SettingsPage = () => {
   const { loading } = useRequireAuth();
@@ -25,6 +26,9 @@ const SettingsPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <StandardPageHeader
         title="Settings"
         description="Manage your account preferences and application settings"

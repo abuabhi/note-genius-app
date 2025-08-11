@@ -9,6 +9,7 @@ import { StudySuggestions } from "@/components/analytics/StudySuggestions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, History, Archive, BarChart3, Brain } from "lucide-react";
 import { useSessionAnalytics } from "@/hooks/useSessionAnalytics";
+import { Helmet } from 'react-helmet';
 
 const StudySessionsPage = () => {
   const { user, loading } = useRequireAuth();
@@ -55,6 +56,9 @@ const StudySessionsPage = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-mint-50 via-white to-mint-100/30">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="container mx-auto p-4 md:p-6 space-y-8">
           {/* Header Section */}
           <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">

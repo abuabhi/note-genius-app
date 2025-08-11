@@ -10,6 +10,7 @@ import { Mail, Phone, MapPin, Send } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Helmet } from "react-helmet";
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -73,6 +74,11 @@ const ContactPage = () => {
 
   return (
     <Layout>
+      <Helmet>
+        <title>Contact PrepGenie Support</title>
+        <meta name="description" content="Contact PrepGenie for support, feedback, or questions. We're here to help you study smarter." />
+        <link rel="canonical" href={typeof window !== 'undefined' ? `${window.location.origin}/contact` : '/contact'} />
+      </Helmet>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <StandardPageHeader
           title="Contact Us"

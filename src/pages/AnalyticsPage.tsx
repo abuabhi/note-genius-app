@@ -11,6 +11,7 @@ import { QuizAnalytics } from "@/components/analytics/redesigned/QuizAnalytics";
 import { EnhancedSessionHistory } from "@/components/analytics/redesigned/EnhancedSessionHistory";
 import { OptimizedStudyAchievements } from "@/components/analytics/redesigned/OptimizedStudyAchievements";
 import { FlashcardProvider } from "@/contexts/FlashcardContext";
+import { Helmet } from 'react-helmet';
 
 const AnalyticsPage = () => {
   const { user, loading } = useRequireAuth();
@@ -41,6 +42,9 @@ const AnalyticsPage = () => {
 
   return (
     <FlashcardProvider>
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <StandardPageHeader
           title="Learning Analytics"

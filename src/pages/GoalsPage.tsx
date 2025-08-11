@@ -12,6 +12,7 @@ import { useGoalTracking } from '@/hooks/useGoalTracking';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Helmet } from 'react-helmet';
 
 const GoalsPage = () => {
   const { loading: authLoading } = useRequireAuth();
@@ -138,6 +139,9 @@ const GoalsPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       {/* Simple page header without StandardPageHeader */}
       <div className="bg-white/60 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
         <div className="container mx-auto px-6 py-6">

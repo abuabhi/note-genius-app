@@ -2,10 +2,16 @@
 import React from 'react';
 import Layout from '@/components/layout/Layout';
 import { Separator } from '@/components/ui/separator';
+import { Helmet } from 'react-helmet';
 
 const TermsPage = () => {
   return (
     <Layout>
+      <Helmet>
+        <title>Terms of Service | PrepGenie</title>
+        <meta name="description" content="Read the PrepGenie Terms of Service governing use of our AI-powered study platform." />
+        <link rel="canonical" href={typeof window !== 'undefined' ? `${window.location.origin}/terms` : '/terms'} />
+      </Helmet>
       <div className="min-h-screen bg-gradient-to-br from-mint-50 via-white to-blue-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="bg-white rounded-xl shadow-sm border border-mint-100 p-8 md:p-12">

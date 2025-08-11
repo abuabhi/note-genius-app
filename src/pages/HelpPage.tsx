@@ -26,6 +26,7 @@ import { YouTubePlayer } from '@/components/help/video/YouTubePlayer';
 import { processContentForDisplay } from '@/utils/markdownConverter';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 
 const HelpPage = () => {
   const [openSections, setOpenSections] = useState<string[]>([]);
@@ -106,7 +107,12 @@ const HelpPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <>
+      <Helmet>
+        <title>Help Center | PrepGenie</title>
+        <meta name="description" content="Guides, tutorials, and FAQs to help you get the most out of PrepGenie." />
+        <link rel="canonical" href={typeof window !== 'undefined' ? `${window.location.origin}/help` : '/help'} />
+      </Helmet>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Help Center</h1>
         <div className="flex items-center justify-between">
@@ -323,7 +329,7 @@ const HelpPage = () => {
           onOpenChange={(open) => !open && setEditingTopic(null)}
         />
       )}
-    </div>
+    </>
   );
 };
 

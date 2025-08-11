@@ -13,6 +13,7 @@ const NotificationsPage = () => {
       <Helmet>
         <title>Notifications - PrepGenie</title>
         <meta name="description" content="Manage your notifications and preferences" />
+        <meta name="robots" content="noindex,nofollow" />
       </Helmet>
       
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">

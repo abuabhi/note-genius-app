@@ -3,10 +3,16 @@ import React from 'react';
 import Layout from '@/components/layout/Layout';
 import { Separator } from '@/components/ui/separator';
 import { Shield, Lock, Eye, Database, UserCheck, Mail } from 'lucide-react';
+import { Helmet } from 'react-helmet';
 
 const PrivacyPage = () => {
   return (
     <Layout>
+      <Helmet>
+        <title>Privacy Policy | PrepGenie</title>
+        <meta name="description" content="Learn how PrepGenie collects, uses, and protects your data. Read our privacy policy." />
+        <link rel="canonical" href={typeof window !== 'undefined' ? `${window.location.origin}/privacy` : '/privacy'} />
+      </Helmet>
       <div className="min-h-screen bg-gradient-to-br from-mint-50 via-white to-blue-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="bg-white rounded-xl shadow-sm border border-mint-100 p-8 md:p-12">

@@ -1,14 +1,20 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+
+# Disallow private app routes
+Disallow: /dashboard
+Disallow: /notes
+Disallow: /flashcards
+Disallow: /quizzes
+Disallow: /study-sessions
+Disallow: /progress
+Disallow: /analytics
+Disallow: /goals
+Disallow: /todos
+Disallow: /schedule
+Disallow: /study-planner
+Disallow: /reminders
+Disallow: /notifications
+Disallow: /settings
+
+Sitemap: /sitemap.xml

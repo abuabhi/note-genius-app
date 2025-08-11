@@ -13,6 +13,7 @@ import { NotesFilters } from '@/components/notes/NotesFilters';
 import { NotesGrid } from '@/components/notes/NotesGrid';
 import { useNotes } from '@/hooks/useNotes';
 import { toast } from 'sonner';
+import { Helmet } from 'react-helmet';
 
 
 // Enhanced error fallback component with better debugging
@@ -136,6 +137,9 @@ const NotesPageContent = () => {
 
   return (
     <div className="h-full">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       
       <NotesPageHeader
         loading={false}

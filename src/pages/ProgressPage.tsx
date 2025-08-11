@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Achievements } from "@/components/progress/Achievements";
 import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
 import { BarChart3 } from "lucide-react";
+import { Helmet } from 'react-helmet';
 
 const ProgressPage = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -19,6 +20,9 @@ const ProgressPage = () => {
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <StandardPageHeader
           title="Progress Tracking"
           description="Track your learning progress and achievements"

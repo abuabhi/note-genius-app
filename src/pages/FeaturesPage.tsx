@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
+import { Helmet } from 'react-helmet';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -466,6 +467,11 @@ const FeaturesPage = () => {
 
   return (
     <Layout>
+      <Helmet>
+        <title>Features | PrepGenie AI Study Tools</title>
+        <meta name="description" content="Explore PrepGenie's AI features: flashcards, quizzes, study plans, analytics, OCR, and more to study smarter." />
+        <link rel="canonical" href={typeof window !== 'undefined' ? `${window.location.origin}/features` : '/features'} />
+      </Helmet>
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         {/* Hero Section */}
         <div className="relative overflow-hidden">

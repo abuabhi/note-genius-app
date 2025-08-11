@@ -8,6 +8,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QuizPageHeader } from '@/components/quiz/QuizPageHeader';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 
 const QuizPage = () => {
   const { loading: authLoading } = useRequireAuth();
@@ -39,6 +40,9 @@ const QuizPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <QuizPageHeader
         loading={false}
         viewMode={viewMode}

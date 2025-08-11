@@ -2,10 +2,16 @@
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet";
 
 const AboutPage = () => {
   return (
     <Layout>
+      <Helmet>
+        <title>About PrepGenie | Our Story & Mission</title>
+        <meta name="description" content="Learn about PrepGenie's mission to personalize learning with AI and help students study smarter." />
+        <link rel="canonical" href={typeof window !== 'undefined' ? `${window.location.origin}/about` : '/about'} />
+      </Helmet>
       <div className="bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
         {/* Hero Section */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">

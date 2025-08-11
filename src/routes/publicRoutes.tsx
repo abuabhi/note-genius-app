@@ -37,8 +37,8 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/privacy", element: <PrivacyPage /> }, // PrivacyPage already has Layout internally
   { path: "/features", element: <FeaturesPage /> }, // FeaturesPage already has Layout internally
   { path: "/help", element: <HelpPage /> },
-  { path: "/help-center", element: <HelpPage /> },
-  { path: "/help-centre", element: <HelpPage /> },
+  { path: "/help-center", element: <Navigate to="/help" replace /> },
+  { path: "/help-centre", element: <Navigate to="/help" replace /> },
   { path: "/faq", element: <FAQPage /> },
   { path: "/sitemap", element: <SiteMapPage /> },
   { path: "/coupon/:code", element: <PublicCouponPage /> } // Public coupon redemption page
