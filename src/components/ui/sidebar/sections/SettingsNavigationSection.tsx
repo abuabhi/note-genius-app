@@ -1,7 +1,7 @@
 
 import { useLocation } from "react-router-dom";
 import { NavLink } from "../NavLink";
-import { Bell, Settings } from "lucide-react";
+import { Bell } from "lucide-react";
 
 interface SettingsNavigationSectionProps {
   isCollapsed: boolean;
@@ -17,13 +17,6 @@ export const SettingsNavigationSection = ({ isCollapsed }: SettingsNavigationSec
         icon={Bell}
         label="Notifications"
         isActive={pathname.includes("/notifications")}
-        isCollapsed={isCollapsed}
-      />
-      <NavLink
-        to="/settings"
-        icon={Settings}
-        label="Settings"
-        isActive={pathname.includes("/settings")}
         isCollapsed={isCollapsed}
       />
     </>

@@ -8,7 +8,7 @@ import { NavLink } from "./NavLink";
 import { useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { LogoutSection } from "./LogoutSection";
+
 import { SessionTimer } from "./SessionTimer";
 import { 
   LayoutDashboard, 
@@ -22,7 +22,7 @@ import {
   Heart,
   Calendar,
   HelpCircle,
-  Settings
+  
 } from "lucide-react";
 
 interface NavigationProps {
@@ -204,23 +204,12 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   isCollapsed={isCollapsed}
                 />
                 
-                <NavLink
-                  to="/settings"
-                  icon={Settings}
-                  label="Settings"
-                  isActive={pathname.startsWith("/settings")}
-                  isCollapsed={isCollapsed}
-                />
               </div>
             </div>
           </div>
         </ScrollArea>
       </div>
       
-      {/* User section with logout and upgrade */}
-      <div className="border-t border-border/50 bg-white/50">
-        <LogoutSection isCollapsed={isCollapsed} />
-      </div>
     </motion.div>
   );
 };
