@@ -18,12 +18,15 @@ export const SimplifiedReferralForm = () => {
   
   const [emails, setEmails] = useState('');
   const [message, setMessage] = useState('');
+  const [hasPrefilled, setHasPrefilled] = useState(false);
+  const [hasEditedMessage, setHasEditedMessage] = useState(false);
 
   useEffect(() => {
-    if (!message && referralStats?.referralCode) {
+    if (!hasPrefilled && referralStats?.referralCode) {
       setMessage(generateRecommendedMessage(referralStats.referralCode));
+      setHasPrefilled(true);
     }
-  }, [referralStats?.referralCode]);
+  }, [referralStats?.referralCode, hasPrefilled]);
 
   const handleSendInvitations = async () => {
     if (!emails.trim()) {
@@ -67,6 +70,16 @@ export const SimplifiedReferralForm = () => {
   const handleCopyLink = async () => {
     if (referralStats?.referralCode) {
       await copyReferralLink(referralStats.referralCode);
+    }
+  };
+
+  const handleRetry = async () => {
+    const result = await refetchReferralStats();
+    const code = (result as any)?.data?.referralCode || referralStats?.referralCode;
+    if (!code) {
+      toast({ title: "Couldn't fetch your link", description: 'Please try again in a moment.', variant: 'destructive' });
+    } else {
+      toast({ title: 'Referral link ready', description: 'Your referral link is available now.' });
     }
   };
 
@@ -145,14 +158,15 @@ export const SimplifiedReferralForm = () => {
             <Input 
               value={referralLink}
               readOnly
+              placeholder={referralStats?.referralCode ? undefined : 'Fetching your link...'}
               className="font-mono text-sm"
             />
             <Button onClick={handleCopyLink} variant="outline" size="sm" disabled={!referralStats?.referralCode}>
               <Copy className="h-4 w-4" />
             </Button>
             {!referralStats?.referralCode && (
-              <Button onClick={() => refetchReferralStats()} variant="outline" size="sm">
-                Generate Link
+              <Button onClick={handleRetry} variant="outline" size="sm" type="button">
+                Retry
               </Button>
             )}
           </div>
@@ -203,12 +217,12 @@ export const SimplifiedReferralForm = () => {
               id="message"
               placeholder="Add a personal message to your invitation..."
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) => { setMessage(e.target.value); if (!hasEditedMessage) setHasEditedMessage(true); }}
               className="mt-1 min-h-[160px]"
               rows={6}
             />
             <div className="flex gap-2 mt-2">
-              <Button variant="outline" size="sm" onClick={() => referralStats?.referralCode && setMessage(generateRecommendedMessage(referralStats.referralCode))} disabled={!referralStats?.referralCode}>
+              <Button variant="outline" size="sm" onClick={() => { if (referralStats?.referralCode) { setMessage(generateRecommendedMessage(referralStats.referralCode)); setHasEditedMessage(false); } }} disabled={!referralStats?.referralCode}>
                 Use recommended message
               </Button>
               <Button variant="outline" size="sm" onClick={() => { if (message) { navigator.clipboard.writeText(message); toast({ title: 'Copied!', description: 'Message copied to clipboard' }); } }} disabled={!message}>

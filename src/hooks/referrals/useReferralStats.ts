@@ -12,21 +12,47 @@ export const useReferralStats = () => {
     queryFn: async (): Promise<ReferralStats> => {
       if (!user) throw new Error('No user');
 
-      // 1) Get or create the user's referral code via secure RPC
-      console.log('🔗 Fetching referral code via RPC for user:', user.id);
-      const { data: rpcReferralCode, error: rpcError } = await supabase.rpc('get_my_referral_code');
+      const cacheKey = `referralCode:${user.id}`;
+      let resolvedCode = '';
 
-      if (rpcError) {
-        console.error('Error fetching referral code via RPC:', rpcError);
-        // Let React Query handle the error state
-        throw rpcError;
+      // Try local cache first
+      try {
+        const cached = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null;
+        if (cached) {
+          resolvedCode = cached.trim();
+          console.log('🔗 Using cached referral code:', resolvedCode);
+        }
+      } catch (e) {
+        console.warn('LocalStorage unavailable for referral code cache:', e);
       }
 
-      // Determine user's referral code with robust fallbacks
-      let resolvedCode = (rpcReferralCode ?? '').toString().trim();
-
+      // Try to get or create securely (primary path)
       if (!resolvedCode) {
-        // Fallback 1: read from profiles table
+        console.log('🔗 Attempting get_or_create_referral_code for user:', user.id);
+        const { data: createdCode, error: createErr } = await supabase.rpc(
+          'get_or_create_referral_code',
+          { p_user_id: user.id }
+        );
+        if (createErr) {
+          console.warn('get_or_create_referral_code failed:', createErr);
+        } else if (createdCode) {
+          resolvedCode = String(createdCode).trim();
+        }
+      }
+
+      // Fallback: get_my_referral_code
+      if (!resolvedCode) {
+        console.log('🔗 Attempting get_my_referral_code for user:', user.id);
+        const { data: rpcReferralCode, error: rpcError } = await supabase.rpc('get_my_referral_code');
+        if (rpcError) {
+          console.warn('get_my_referral_code failed:', rpcError);
+        } else if (rpcReferralCode) {
+          resolvedCode = String(rpcReferralCode).trim();
+        }
+      }
+
+      // Fallback: read from profiles table
+      if (!resolvedCode) {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('referral_code')
@@ -34,26 +60,18 @@ export const useReferralStats = () => {
           .maybeSingle();
 
         if (profileError) {
-          console.error('Error fetching profile referral_code:', profileError);
+          console.warn('Profile referral_code fetch failed:', profileError);
         } else if (profile?.referral_code) {
           resolvedCode = String(profile.referral_code).trim();
         }
       }
 
-      if (!resolvedCode) {
-        // Fallback 2: server-side create if missing
-        const { data: createdCode, error: createErr } = await supabase.rpc(
-          'get_or_create_referral_code',
-          { p_user_id: user.id }
-        );
-        if (createErr) {
-          console.error('Error creating referral code via RPC:', createErr);
-        } else if (createdCode) {
-          resolvedCode = String(createdCode).trim();
-        }
+      // Cache for future use
+      if (resolvedCode) {
+        try {
+          if (typeof window !== 'undefined') localStorage.setItem(cacheKey, resolvedCode);
+        } catch {}
       }
-
-      const referralCode = resolvedCode;
 
       // 2) Aggregate referral stats for this user
       const { data: referrals, error: referralsError } = await supabase
@@ -76,11 +94,12 @@ export const useReferralStats = () => {
         completedReferrals,
         pendingReferrals,
         totalPointsEarned,
-        referralCode,
+        referralCode: resolvedCode,
       };
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 };
