@@ -16,49 +16,22 @@ serve(async (req) => {
     
     console.log('🔧 Setting up notification cron jobs...');
     
-    // Set up notification processing every 5 minutes
-    const notificationCron = `
-      SELECT cron.schedule(
-        'process-notifications-every-5min',
-        '*/5 * * * *',
-        $$
-        SELECT net.http_post(
-          url := '${supabaseUrl}/functions/v1/process-notifications',
-          headers := '{"Content-Type": "application/json", "Authorization": "Bearer ${supabaseAnonKey}"}'::jsonb,
-          body := '{"source": "cron"}'::jsonb
-        );
-        $$
-      );
-    `;
-    
-    // Set up daily digest processing every hour
-    const digestCron = `
-      SELECT cron.schedule(
-        'send-daily-digest-hourly',
-        '0 * * * *',
-        $$
-        SELECT net.http_post(
-          url := '${supabaseUrl}/functions/v1/send-daily-digest',
-          headers := '{"Content-Type": "application/json", "Authorization": "Bearer ${supabaseAnonKey}"}'::jsonb,
-          body := '{"source": "cron"}'::jsonb
-        );
-        $$
-      );
-    `;
-    
-    // Execute cron setup
-    await supabase.rpc('exec', { sql: notificationCron });
-    await supabase.rpc('exec', { sql: digestCron });
-    
-    console.log('✅ Cron jobs configured successfully');
-    
+    // Prefer safe, parameterized RPCs/edge functions over raw SQL
+    const [digestSetup, reminderSetup] = await Promise.allSettled([
+      supabase.functions.invoke('setup-digest-cron'),
+      supabase.functions.invoke('setup-reminder-cron')
+    ]);
+
+    const jobs: string[] = [];
+    if (digestSetup.status === 'fulfilled') jobs.push('daily-digest-hourly: 0 * * * * (every hour)');
+    if (reminderSetup.status === 'fulfilled') jobs.push('process-reminders-job: */15 * * * * (every 15 minutes)');
+
+    console.log('✅ Cron jobs configured via setup functions', { digest: digestSetup.status, reminder: reminderSetup.status });
+
     return new Response(JSON.stringify({ 
       success: true,
       message: 'Notification cron jobs configured',
-      jobs: [
-        'process-notifications-every-5min: */5 * * * * (every 5 minutes)',
-        'send-daily-digest-hourly: 0 * * * * (every hour)'
-      ]
+      jobs
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
