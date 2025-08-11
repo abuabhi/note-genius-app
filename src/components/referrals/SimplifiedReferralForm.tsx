@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useReferralData } from '@/hooks/referrals/useReferralData';
 import { useSendReferralEmails } from '@/hooks/referrals/useSendReferralEmails';
 import { useAuth } from '@/contexts/auth';
-import { supabase } from '@/integrations/supabase/client';
+import { useReferralCode } from '@/hooks/referrals/useReferralCode';
 export const SimplifiedReferralForm = () => {
   const { toast } = useToast();
   const { referralStats, isLoading, generateReferralLink, copyReferralLink, shareViaLinkedIn, shareViaTwitter, generateRecommendedMessage, shareViaWhatsApp, shareViaEmail, refetchReferralStats } = useReferralData();
@@ -22,43 +22,14 @@ export const SimplifiedReferralForm = () => {
   const [hasPrefilled, setHasPrefilled] = useState(false);
   const [hasEditedMessage, setHasEditedMessage] = useState(false);
   const { user } = useAuth();
-  const [referralCode, setReferralCode] = useState<string>('');
-  const [isCodeLoading, setIsCodeLoading] = useState<boolean>(false);
+  const { code: referralCode, isLoading: isCodeLoading } = useReferralCode();
 
   useEffect(() => {
-    const loadCode = async () => {
-      if (!user) return;
-      const cacheKey = `referralCode:${user.id}`;
-      try {
-        const cached = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null;
-        if (cached) {
-          setReferralCode(cached);
-          if (!hasPrefilled) {
-            setMessage(generateRecommendedMessage(cached));
-            setHasPrefilled(true);
-          }
-          return;
-        }
-      } catch {}
-      setIsCodeLoading(true);
-      const { data, error } = await supabase.rpc('get_my_referral_code');
-      setIsCodeLoading(false);
-      if (error || !data) {
-        toast({ title: "Couldn't fetch your link", description: 'Please try again later.', variant: 'destructive' });
-        return;
-      }
-      const code = String(data).trim();
-      setReferralCode(code);
-      try {
-        if (typeof window !== 'undefined') localStorage.setItem(cacheKey, code);
-      } catch {}
-      if (!hasPrefilled) {
-        setMessage(generateRecommendedMessage(code));
-        setHasPrefilled(true);
-      }
-    };
-    loadCode();
-  }, [user, hasPrefilled, generateRecommendedMessage, toast]);
+    if (!hasPrefilled && referralCode) {
+      setMessage(generateRecommendedMessage(referralCode));
+      setHasPrefilled(true);
+    }
+  }, [hasPrefilled, referralCode, generateRecommendedMessage]);
 
   const handleSendInvitations = async () => {
     if (!emails.trim()) {
@@ -70,7 +41,7 @@ export const SimplifiedReferralForm = () => {
       return;
     }
 
-    const codeToUse = referralCode || referralStats?.referralCode;
+    const codeToUse = referralCode;
     if (!codeToUse) {
       toast({
         title: "Error",
@@ -101,12 +72,10 @@ export const SimplifiedReferralForm = () => {
   };
 
   const handleCopyLink = async () => {
-  const codeToUse = referralCode || referralStats?.referralCode;
-  if (codeToUse) {
-    await copyReferralLink(codeToUse);
-  }
+    if (referralCode) {
+      await copyReferralLink(referralCode);
+    }
   };
-
 
   if (isLoading && isCodeLoading) {
     return (
@@ -117,7 +86,7 @@ export const SimplifiedReferralForm = () => {
     );
   }
 
-  const codeToUse = referralCode || referralStats?.referralCode;
+  const codeToUse = referralCode;
   const referralLink = codeToUse ? generateReferralLink(codeToUse) : '';
 
   return (

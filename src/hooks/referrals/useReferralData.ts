@@ -22,14 +22,14 @@ export const useReferralData = () => {
     completedReferrals: 0,
     pendingReferrals: 0,
     totalPointsEarned: 0,
-    referralCode: 'LOADING'
+    referralCode: ''
   }
   : {
     totalReferrals: referralStats?.totalReferrals ?? 0,
     completedReferrals: referralStats?.completedReferrals ?? 0,
     pendingReferrals: referralStats?.pendingReferrals ?? 0,
     totalPointsEarned: referralStats?.totalPointsEarned ?? 0,
-    referralCode: referralStats?.referralCode ?? ''
+    referralCode: ''
   };
   
   const safeContests = contests || [];
