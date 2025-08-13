@@ -76,6 +76,13 @@ const getInitials = (name: string) => {
     .join('')
     .toUpperCase();
 };
+const slugify = (name: string) =>
+  name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
 
 const Testimonials = () => {
   return (
@@ -104,13 +111,18 @@ const Testimonials = () => {
                 <div className="flex items-center gap-4 mb-6">
                   <Avatar className="h-12 w-12 border-2 border-mint-200">
                     <AvatarImage
-                      src={testimonial.image}
+                      src={`/lovable-uploads/${slugify(testimonial.author)}.png`}
                       alt={`${testimonial.author} - ${testimonial.role}`}
                       loading="lazy"
                       decoding="async"
                       width={48}
                       height={48}
                       className="object-cover"
+                      onError={(e) => {
+                        if (e.currentTarget.src !== testimonial.image) {
+                          e.currentTarget.src = testimonial.image;
+                        }
+                      }}
                     />
                     <AvatarFallback>{getInitials(testimonial.author)}</AvatarFallback>
                   </Avatar>

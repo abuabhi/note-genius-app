@@ -2,7 +2,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
-import { OptimizedImage } from "@/components/performance/ImageOptimizer";
+
 
 const Hero = () => {
   return (
@@ -74,14 +74,15 @@ const Hero = () => {
         </div>
         <div className="relative">
           <div className="absolute -inset-4 bg-gradient-to-r from-mint-300 to-neutral-300 blur-3xl opacity-20" />
-          <OptimizedImage
+          <img
             src="/lovable-uploads/dfc64fc7-59ae-4272-b049-ebb22b83b527.png"
             alt="PrepGenie dashboard showing flashcards, quizzes, study plans, notes, and analytics tracking"
             width={1600}
             height={900}
             sizes="(max-width: 1024px) 100vw, 50vw"
-            priority
-            className="relative rounded-2xl shadow-xl w-full"
+            loading="eager"
+            decoding="async"
+            className="relative rounded-2xl shadow-xl w-full object-cover"
           />
           <div className="absolute -bottom-4 -right-4 bg-white rounded-lg shadow-lg p-3 border border-mint-100">
             <p className="text-xs text-gray-600 font-medium">📊 Study Analytics</p>
