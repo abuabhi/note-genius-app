@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth';
 
 export const useSendReferralEmails = () => {
@@ -51,25 +50,18 @@ export const useSendReferralEmails = () => {
         }
       }
 
-      // Show appropriate success/error messages
+      // Return success/error status for the form component to handle
       if (successCount > 0 && errorCount === 0) {
-        toast.success(`Successfully sent ${successCount} referral invitation${successCount > 1 ? 's' : ''}! 🎉`);
-        return true;
+        return { success: true, message: `Successfully sent ${successCount} referral invitation${successCount > 1 ? 's' : ''}! 🎉` };
       } else if (successCount > 0 && errorCount > 0) {
-        toast.success(`Sent ${successCount} invitations successfully`);
-        toast.error(`Failed to send ${errorCount} invitations`);
-        console.log('❌ Failed emails:', errors);
-        return true; // Partial success
+        return { success: true, message: `Sent ${successCount} invitations successfully, but ${errorCount} failed` };
       } else {
-        toast.error('Failed to send referral invitations. Please try again.');
-        console.log('❌ All emails failed:', errors);
-        return false;
+        return { success: false, message: 'Failed to send referral invitations. Please try again.' };
       }
       
     } catch (error) {
       console.error('❌ Network error sending referral emails:', error);
-      toast.error('Network error. Please check your connection and try again.');
-      return false;
+      return { success: false, message: 'Network error. Please check your connection and try again.' };
     } finally {
       setIsLoading(false);
     }

@@ -63,19 +63,19 @@ export const SimplifiedReferralForm = () => {
       return;
     }
 
-    const success = await sendReferralEmails(emailList, message, codeToUse);
+    const result = await sendReferralEmails(emailList, message, codeToUse);
     
-    if (success) {
-      setEmails('');
-      setMessage('');
+    if (result.success) {
+      setEmails(''); // Only clear the email field
+      // Keep the personal message so user can reuse it
       toast({
-        title: 'Invitations sent',
-        description: `Sent to ${emailList.length} recipient${emailList.length > 1 ? 's' : ''}.`
+        title: 'Success!',
+        description: result.message
       });
     } else {
       toast({
         title: 'Failed to send invitations',
-        description: 'Please try again.',
+        description: result.message,
         variant: 'destructive'
       });
     }
