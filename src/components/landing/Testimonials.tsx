@@ -84,6 +84,35 @@ const slugify = (name: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
 
+// Optional explicit mapping. If you upload files with different names (GUIDs), set the path here.
+// Place files in public/lovable-uploads and update only the right-hand side if needed.
+const avatarMap: Record<string, string | undefined> = {
+  'priya-sharma': '/lovable-uploads/priya-sharma.png',
+  'wei-chen': '/lovable-uploads/wei-chen.png',
+  'arjun-patel': '/lovable-uploads/arjun-patel.png',
+  'jessica-zhang': '/lovable-uploads/jessica-zhang.png',
+  'ravi-kumar': '/lovable-uploads/ravi-kumar.png',
+  'emma-liu': '/lovable-uploads/emma-liu.png',
+  'dev-singh': '/lovable-uploads/dev-singh.png',
+  'lily-wang': '/lovable-uploads/lily-wang.png',
+  'aditya-gupta': '/lovable-uploads/aditya-gupta.png',
+};
+
+const getAvatarCandidates = (author: string, fallbackUrl?: string) => {
+  const s = slugify(author);
+  const mapped = avatarMap[s];
+  const list = [
+    mapped,
+    `/lovable-uploads/${s}.png`,
+    `/lovable-uploads/${s}.jpg`,
+    `/lovable-uploads/${author}.png`,
+    `/lovable-uploads/${author}.jpg`,
+    fallbackUrl,
+    '/placeholder.svg',
+  ].filter(Boolean) as string[];
+  return list;
+};
+
 const Testimonials = () => {
   return (
     <div className="bg-gradient-to-b from-mint-50/20 via-white to-mint-50/30 py-24">
@@ -111,7 +140,7 @@ const Testimonials = () => {
                 <div className="flex items-center gap-4 mb-6">
                   <Avatar className="h-12 w-12 border-2 border-mint-200">
                     <AvatarImage
-                      src={`/lovable-uploads/${slugify(testimonial.author)}.png`}
+                      src={getAvatarCandidates(testimonial.author, testimonial.image)[0]}
                       alt={`${testimonial.author} - ${testimonial.role}`}
                       loading="lazy"
                       decoding="async"
@@ -120,17 +149,12 @@ const Testimonials = () => {
                       className="object-cover"
                       onError={(e) => {
                         const el = e.currentTarget as HTMLImageElement;
-                        const step = Number(el.dataset.step || '0');
-                        const candidates = [
-                          `/lovable-uploads/${slugify(testimonial.author)}.jpg`,
-                          `/lovable-uploads/${testimonial.author}.png`,
-                          `/lovable-uploads/${testimonial.author}.jpg`,
-                          testimonial.image,
-                          '/placeholder.svg',
-                        ];
-                        if (step < candidates.length) {
-                          el.src = candidates[step];
-                          el.dataset.step = String(step + 1);
+                        const candidates = getAvatarCandidates(testimonial.author, testimonial.image);
+                        const nextIndex = Number(el.dataset.step || '0') + 1;
+                        if (nextIndex < candidates.length) {
+                          console.info('[Testimonials] Avatar fallback', { author: testimonial.author, try: nextIndex + 1, src: candidates[nextIndex] });
+                          el.src = candidates[nextIndex];
+                          el.dataset.step = String(nextIndex);
                         }
                       }}
                     />
