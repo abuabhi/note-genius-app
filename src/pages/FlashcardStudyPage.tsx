@@ -5,7 +5,6 @@ import { SimplifiedStudyPage } from "@/pages/study/SimplifiedStudyPage";
 import { ArrowLeft } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { FlashcardProvider } from "@/contexts/FlashcardContext";
-import { StudyAudioWidget } from "@/components/study/audio/StudyAudioWidget";
 
 const FlashcardStudyPageContent = () => {
   const { id } = useParams();
@@ -41,13 +40,7 @@ const FlashcardStudyPageContent = () => {
 
   console.log("FlashcardStudyPage: Rendering SimplifiedStudyPage with setId:", currentSetId);
 
-  return (
-    <>
-      <SimplifiedStudyPage />
-      {/* Study Audio Widget */}
-      <StudyAudioWidget />
-    </>
-  );
+  return <SimplifiedStudyPage />;
 };
 
 const FlashcardStudyPage = () => {

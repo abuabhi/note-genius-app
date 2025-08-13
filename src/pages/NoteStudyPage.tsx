@@ -10,7 +10,6 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useOptimizedNoteStudy } from "@/hooks/notes/useOptimizedNoteStudy";
 import { OptimizedNotesProvider } from "@/contexts/OptimizedNotesContext";
 import { FlashcardProvider } from "@/contexts/FlashcardContext";
-import { StudyAudioWidget } from "@/components/study/audio/StudyAudioWidget";
 
 const NoteStudyPageContent = () => {
   const { noteId } = useParams();
@@ -109,9 +108,6 @@ const NoteStudyPageContent = () => {
           onClose={() => setIsChatOpen(false)}
         />
       )}
-
-      {/* Study Audio Widget */}
-      <StudyAudioWidget />
     </div>
   );
 };
