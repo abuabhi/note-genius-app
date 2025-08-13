@@ -85,17 +85,17 @@ const slugify = (name: string) =>
     .replace(/(^-|-$)/g, '');
 
 // Optional explicit mapping. If you upload files with different names (GUIDs), set the path here.
-// Place files in public/lovable-uploads and update only the right-hand side if needed.
+// Place files in public/lovable-uploads/avatars and update only the right-hand side if needed.
 const avatarMap: Record<string, string | undefined> = {
-  'priya-sharma': '/lovable-uploads/priya-sharma.png',
-  'wei-chen': '/lovable-uploads/wei-chen.png',
-  'arjun-patel': '/lovable-uploads/arjun-patel.png',
-  'jessica-zhang': '/lovable-uploads/jessica-zhang.png',
-  'ravi-kumar': '/lovable-uploads/ravi-kumar.png',
-  'emma-liu': '/lovable-uploads/emma-liu.png',
-  'dev-singh': '/lovable-uploads/dev-singh.png',
-  'lily-wang': '/lovable-uploads/lily-wang.png',
-  'aditya-gupta': '/lovable-uploads/aditya-gupta.png',
+  'priya-sharma': '/lovable-uploads/avatars/priya-sharma.png?v=2',
+  'wei-chen': '/lovable-uploads/avatars/wei-chen.png?v=2',
+  'arjun-patel': '/lovable-uploads/avatars/arjun-patel.png?v=2',
+  'jessica-zhang': '/lovable-uploads/avatars/jessica-zhang.png?v=2',
+  'ravi-kumar': '/lovable-uploads/avatars/ravi-kumar.png?v=2',
+  'emma-liu': '/lovable-uploads/avatars/emma-liu.png?v=2',
+  'dev-singh': '/lovable-uploads/avatars/dev-singh.png?v=2',
+  'lily-wang': '/lovable-uploads/avatars/lily-wang.png?v=2',
+  'aditya-gupta': '/lovable-uploads/avatars/aditya-gupta.png?v=2',
 };
 
 const getAvatarCandidates = (author: string, fallbackUrl?: string) => {
@@ -109,12 +109,12 @@ const getAvatarCandidates = (author: string, fallbackUrl?: string) => {
   // 1) Explicit mapping (if provided)
   if (mapped) list.push(mapped);
 
-  // 2) Full-name slug variants (lowercase)
-  exts.forEach(ext => list.push(`/lovable-uploads/${s}.${ext}`));
+  // 2) Full-name slug variants (lowercase) in avatars folder
+  exts.forEach(ext => list.push(`/lovable-uploads/avatars/${s}.${ext}?v=2`));
 
-  // 3) First-name variants (original case and lowercase)
-  exts.forEach(ext => list.push(`/lovable-uploads/${firstName}.${ext}`));
-  exts.forEach(ext => list.push(`/lovable-uploads/${firstLower}.${ext}`));
+  // 3) First-name variants (original case and lowercase) in avatars folder
+  exts.forEach(ext => list.push(`/lovable-uploads/avatars/${firstName}.${ext}?v=2`));
+  exts.forEach(ext => list.push(`/lovable-uploads/avatars/${firstLower}.${ext}?v=2`));
 
   // 4) External URL fallback provided in data
   if (fallbackUrl) list.push(fallbackUrl);
