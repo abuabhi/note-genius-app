@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -23,11 +24,30 @@ serve(async (req) => {
     } = await req.json();
 
     // Branding and links (configurable via env)
-    const brandName = Deno.env.get('BRAND_NAME') ?? 'Study App';
-    const siteUrl = (Deno.env.get('SITE_URL') ?? 'https://prepgenie.io').replace(/\/$/, '');
+    const brandName = Deno.env.get('BRAND_NAME') ?? 'PrepGenie';
+    const siteUrl = (Deno.env.get('SITE_URL') ?? 'https://www.prepgenie.io').replace(/\/$/, '');
     const logoUrl = Deno.env.get('BRAND_LOGO_URL'); // Full URL to a hosted logo image (PNG/SVG)
 
-    const displayName = (userEmail || '').split('@')[0] || 'there';
+    // Supabase client for fetching profile name
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const toTitleCase = (s: string) => s.split(/[\s._-]+/).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+
+    let firstName: string | null = null;
+    let username: string | null = null;
+    if (userId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, username')
+        .eq('id', userId)
+        .maybeSingle();
+      firstName = (profile as any)?.first_name ?? null;
+      username = (profile as any)?.username ?? null;
+    }
+    const emailLocal = (userEmail || '').split('@')[0] || 'there';
+    const displayName = (firstName && firstName.trim()) || (username && toTitleCase(username.trim())) || toTitleCase(emailLocal);
 
     // Preheader and date formatting
     const currentDate = new Date().toLocaleDateString('en-US', {
