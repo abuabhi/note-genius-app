@@ -1,4 +1,6 @@
 
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
 const testimonials = [
   {
     content: "The AI flashcard generation is incredible! I just upload my VCE Biology notes and get perfectly formatted study cards that helped me achieve a study score of 45.",
@@ -65,6 +67,16 @@ const testimonials = [
   }
 ];
 
+const getInitials = (name: string) => {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+};
+
 const Testimonials = () => {
   return (
     <div className="bg-gradient-to-b from-mint-50/20 via-white to-mint-50/30 py-24">
@@ -90,11 +102,18 @@ const Testimonials = () => {
               <div className="absolute -inset-1 bg-gradient-to-r from-mint-300 to-neutral-300 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-200" />
               <div className="relative h-full p-8 bg-white rounded-2xl border border-mint-100 shadow-sm group-hover:shadow-lg transition-all duration-200">
                 <div className="flex items-center gap-4 mb-6">
-                  <img
-                    className="h-12 w-12 rounded-full object-cover border-2 border-mint-200"
-                    src={testimonial.image}
-                    alt={testimonial.author}
-                  />
+                  <Avatar className="h-12 w-12 border-2 border-mint-200">
+                    <AvatarImage
+                      src={testimonial.image}
+                      alt={`${testimonial.author} - ${testimonial.role}`}
+                      loading="lazy"
+                      decoding="async"
+                      width={48}
+                      height={48}
+                      className="object-cover"
+                    />
+                    <AvatarFallback>{getInitials(testimonial.author)}</AvatarFallback>
+                  </Avatar>
                   <div>
                     <h4 className="text-lg font-medium text-gray-900">{testimonial.author}</h4>
                     <p className="text-sm text-neutral-600">{testimonial.role}</p>
