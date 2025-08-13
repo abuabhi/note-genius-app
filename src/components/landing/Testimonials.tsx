@@ -119,7 +119,10 @@ const getAvatarCandidates = (author: string, fallbackUrl?: string) => {
   // 4) External URL fallback provided in data
   if (fallbackUrl) list.push(fallbackUrl);
 
-  // 5) Final placeholder
+  // 5) Local default avatar fallback (ensures a 200 in production)
+  list.push('/lovable-uploads/default-avatar.png');
+
+  // 6) Final placeholder
   list.push('/placeholder.svg');
 
   // Remove falsy and duplicates while preserving order
