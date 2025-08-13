@@ -100,17 +100,31 @@ const avatarMap: Record<string, string | undefined> = {
 
 const getAvatarCandidates = (author: string, fallbackUrl?: string) => {
   const s = slugify(author);
+  const firstName = author.split(' ').filter(Boolean)[0] || author;
+  const firstLower = firstName.toLowerCase();
   const mapped = avatarMap[s];
-  const list = [
-    mapped,
-    `/lovable-uploads/${s}.png`,
-    `/lovable-uploads/${s}.jpg`,
-    `/lovable-uploads/${author}.png`,
-    `/lovable-uploads/${author}.jpg`,
-    fallbackUrl,
-    '/placeholder.svg',
-  ].filter(Boolean) as string[];
-  return list;
+  const exts = ['png', 'jpg', 'jpeg', 'webp'];
+  const list: string[] = [];
+
+  // 1) Explicit mapping (if provided)
+  if (mapped) list.push(mapped);
+
+  // 2) Full-name slug variants (lowercase)
+  exts.forEach(ext => list.push(`/lovable-uploads/${s}.${ext}`));
+
+  // 3) First-name variants (original case and lowercase)
+  exts.forEach(ext => list.push(`/lovable-uploads/${firstName}.${ext}`));
+  exts.forEach(ext => list.push(`/lovable-uploads/${firstLower}.${ext}`));
+
+  // 4) External URL fallback provided in data
+  if (fallbackUrl) list.push(fallbackUrl);
+
+  // 5) Final placeholder
+  list.push('/placeholder.svg');
+
+  // Remove falsy and duplicates while preserving order
+  const unique = Array.from(new Set(list.filter(Boolean)));
+  return unique;
 };
 
 const Testimonials = () => {

@@ -87,15 +87,25 @@ const Hero = () => {
               const el = e.currentTarget as HTMLImageElement;
               const step = Number(el.dataset.step || '0');
               const candidates = [
+                '/lovable-uploads/hero.png',
+                '/lovable-uploads/hero.webp',
                 '/lovable-uploads/hero.jpg',
+                '/lovable-uploads/Hero.png',
+                '/lovable-uploads/Hero.webp',
+                '/lovable-uploads/Hero.jpg',
                 '/lovable-uploads/hero-image.png',
                 '/lovable-uploads/hero-image.jpg',
+                '/lovable-uploads/hero-image.webp',
                 '/lovable-uploads/dfc64fc7-59ae-4272-b049-ebb22b83b527.png',
                 '/placeholder.svg',
               ];
               if (step < candidates.length) {
-                el.src = candidates[step];
+                const next = candidates[step];
+                console.info('[Hero] Image fallback', { try: step + 1, src: next });
+                el.src = next;
                 el.dataset.step = String(step + 1);
+              } else {
+                console.warn('[Hero] All image fallbacks exhausted');
               }
             }}
           />
