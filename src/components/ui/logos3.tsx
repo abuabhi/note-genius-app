@@ -101,7 +101,7 @@ const Logos3: React.FC<Logos3Props> = ({
                   className="flex basis-1/3 justify-center pl-0 sm:basis-1/4 md:basis-1/5 lg:basis-1/6"
                 >
                   <div className="mx-8 flex shrink-0 items-center justify-center">
-                    <div className="rounded-xl bg-muted/50 px-4 py-3 md:px-6 md:py-4">
+                    <div className="px-4 py-3 md:px-6 md:py-4">
                       <ImageWithFallback src={logo.image} alt={logo.description} className={[logo.className, "object-contain"].filter(Boolean).join(" ")} />
                     </div>
                   </div>
