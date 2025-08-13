@@ -6,6 +6,7 @@ import Hero from "@/components/landing/Hero";
 import Features from "@/components/landing/Features";
 import CTA from "@/components/landing/CTA";
 import StickyMobileCTA from "@/components/landing/StickyMobileCTA";
+import { Logos3 } from "@/components/ui/logos3";
 
 const EnhancedInteractiveDemo = React.lazy(() =>
   import("@/components/landing/EnhancedInteractiveDemo").then((m) => ({
@@ -48,6 +49,7 @@ const HomePage = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <Hero />
+        <Logos3 heading="Trusted by students at" />
         <Features />
 
         <Suspense fallback={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16"><div className="h-40 rounded-2xl bg-white/60 border border-mint-100 animate-pulse" /></div>}>
