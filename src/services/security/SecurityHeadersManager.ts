@@ -51,7 +51,7 @@ class SecurityHeadersManager {
       `default-src ${origins}`,
       scriptSrc,
       styleSrc,
-      `img-src ${origins} data: blob:`,
+      `img-src ${origins} https://images.unsplash.com https://*.unsplash.com data: blob:`,
       `font-src ${origins} data:`,
       `connect-src ${origins} https://*.supabase.co wss://*.supabase.co`,
       `frame-src 'none'`,

@@ -75,7 +75,7 @@ const Hero = () => {
         <div className="relative">
           <div className="absolute -inset-4 bg-gradient-to-r from-mint-300 to-neutral-300 blur-3xl opacity-20" />
           <OptimizedImage
-            src="/lovable-uploads/9e080446-2784-40e3-9ee8-d58f79a70960.png"
+            src="/lovable-uploads/dfc64fc7-59ae-4272-b049-ebb22b83b527.png"
             alt="PrepGenie dashboard showing flashcards, quizzes, study plans, notes, and analytics tracking"
             width={1600}
             height={900}
