@@ -49,7 +49,7 @@ const HomePage = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
         <Hero />
-        <Logos3 heading="Trusted by students at" />
+        <Logos3 heading="Trusted by students at" count={17} />
         <Features />
 
         <Suspense fallback={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16"><div className="h-40 rounded-2xl bg-white/60 border border-mint-100 animate-pulse" /></div>}>

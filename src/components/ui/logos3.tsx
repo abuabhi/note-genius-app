@@ -15,6 +15,7 @@ interface Logos3Props {
   heading?: string;
   logos?: Logo[];
   className?: string;
+  count?: number; // number of sequential logos to attempt
 }
 
 // Small helper to gracefully fall back between svg -> png -> jpg
@@ -57,10 +58,11 @@ const Logos3: React.FC<Logos3Props> = ({
   heading = "Trusted by students at",
   logos,
   className,
+  count = 12,
 }) => {
   // Default to sequential school logos placed under public/lovable-uploads/schools/
   // Example filenames: 1.svg, 2.svg, 3.svg ...
-  const defaultLogos: Logo[] = Array.from({ length: 12 }, (_, i) => {
+  const defaultLogos: Logo[] = Array.from({ length: count }, (_, i) => {
     const num = i + 1;
     return {
       id: `logo-${num}`,
