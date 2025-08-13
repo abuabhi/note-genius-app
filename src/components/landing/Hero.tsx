@@ -75,7 +75,7 @@ const Hero = () => {
         <div className="relative">
           <div className="absolute -inset-4 bg-gradient-to-r from-mint-300 to-neutral-300 blur-3xl opacity-20" />
           <img
-            src="/lovable-uploads/dfc64fc7-59ae-4272-b049-ebb22b83b527.png"
+            src="/lovable-uploads/hero.png"
             alt="PrepGenie dashboard showing flashcards, quizzes, study plans, notes, and analytics tracking"
             width={1600}
             height={900}
@@ -83,6 +83,21 @@ const Hero = () => {
             loading="eager"
             decoding="async"
             className="relative rounded-2xl shadow-xl w-full object-cover"
+            onError={(e) => {
+              const el = e.currentTarget as HTMLImageElement;
+              const step = Number(el.dataset.step || '0');
+              const candidates = [
+                '/lovable-uploads/hero.jpg',
+                '/lovable-uploads/hero-image.png',
+                '/lovable-uploads/hero-image.jpg',
+                '/lovable-uploads/dfc64fc7-59ae-4272-b049-ebb22b83b527.png',
+                '/placeholder.svg',
+              ];
+              if (step < candidates.length) {
+                el.src = candidates[step];
+                el.dataset.step = String(step + 1);
+              }
+            }}
           />
           <div className="absolute -bottom-4 -right-4 bg-white rounded-lg shadow-lg p-3 border border-mint-100">
             <p className="text-xs text-gray-600 font-medium">📊 Study Analytics</p>

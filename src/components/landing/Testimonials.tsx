@@ -119,8 +119,18 @@ const Testimonials = () => {
                       height={48}
                       className="object-cover"
                       onError={(e) => {
-                        if (e.currentTarget.src !== testimonial.image) {
-                          e.currentTarget.src = testimonial.image;
+                        const el = e.currentTarget as HTMLImageElement;
+                        const step = Number(el.dataset.step || '0');
+                        const candidates = [
+                          `/lovable-uploads/${slugify(testimonial.author)}.jpg`,
+                          `/lovable-uploads/${testimonial.author}.png`,
+                          `/lovable-uploads/${testimonial.author}.jpg`,
+                          testimonial.image,
+                          '/placeholder.svg',
+                        ];
+                        if (step < candidates.length) {
+                          el.src = candidates[step];
+                          el.dataset.step = String(step + 1);
                         }
                       }}
                     />
