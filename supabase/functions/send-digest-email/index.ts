@@ -294,7 +294,7 @@ serve(async (req) => {
     textParts.push(`Manage your preferences: ${siteUrl}/settings`);
 
     const { data, error } = await resend.emails.send({
-      from: `${brandName} <noreply@${new URL(siteUrl).hostname}>`,
+      from: `${brandName} <noreply@${new URL(siteUrl).hostname.replace(/^www\./, '')}>`,
       to: [userEmail],
       subject: `📚 Your Daily Study Digest - ${currentDate}`,
       html: content,

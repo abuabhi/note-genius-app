@@ -80,64 +80,45 @@ serve(async (req) => {
       )
     }
 
-    // Send test email using custom verified domain
-    const testTime = new Date().toLocaleString()
-    console.log('📧 Sending test email to:', user.email);
-    
-    const { error: emailError } = await resend.emails.send({
-      from: 'PrepGenie <noreply@prepgenie.io>',
-      to: [user.email || ''],
-      subject: `📧 Test Email Digest - ${testTime}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #059669; margin-bottom: 20px;">📧 Test Email Digest</h1>
-          
-          <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-            <p style="margin: 0; color: #0369a1;">
-              <strong>✅ Success!</strong> Your email digest is working properly.
-            </p>
-            <p style="margin: 8px 0 0 0; color: #0369a1; font-size: 14px;">
-              Test sent at: ${testTime}
-            </p>
-          </div>
+    // Send test email by invoking the main digest template
+    const testTime = new Date().toISOString()
+    console.log('📧 Invoking send-digest-email for test at:', testTime)
 
-          <h2 style="color: #374151; font-size: 18px; margin: 20px 0 10px 0;">Your Current Settings:</h2>
-          <ul style="color: #6b7280; line-height: 1.6;">
-            <li><strong>Frequency:</strong> ${preferences.frequency}</li>
-            <li><strong>Time:</strong> ${preferences.digest_time}</li>
-            <li><strong>Timezone:</strong> ${preferences.timezone}</li>
-            <li><strong>Include Goals:</strong> ${preferences.include_goals ? 'Yes' : 'No'}</li>
-            <li><strong>Include Todos:</strong> ${preferences.include_todos ? 'Yes' : 'No'}</li>
-            <li><strong>Include Notes:</strong> ${preferences.include_notes ? 'Yes' : 'No'}</li>
-            <li><strong>Include Flashcards:</strong> ${preferences.include_flashcards ? 'Yes' : 'No'}</li>
-          </ul>
-
-          <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #059669;">
-            <p style="margin: 0; color: #374151; font-size: 14px;">
-              This is a test email. Your actual daily digest will contain your real study data and will be sent according to your scheduled time.
-            </p>
-          </div>
-        </div>
-      `,
-    })
-
-    if (emailError) {
-      console.error('❌ Email sending error:', emailError);
-      throw emailError
+    const payload = {
+      userEmail: user.email || '',
+      userId: user.id,
+      reminders: [],
+      goals: [],
+      sessions: [],
+      todos: [],
+      flashcards: [],
+      quizzes: [],
+      timezone: preferences.timezone || 'UTC',
     }
 
-    console.log('✅ Test email sent successfully to:', user.email);
+    const { data: digestData, error: digestError } = await supabase.functions.invoke('send-digest-email', {
+      headers: { Authorization: `Bearer ${token}` },
+      body: payload,
+    })
+
+    if (digestError) {
+      console.error('❌ send-digest-email invocation failed:', digestError)
+      throw digestError
+    }
+
+    console.log('✅ Test digest sent via template:', digestData)
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
-        message: 'Test email sent successfully!',
+        message: 'Test digest sent via main template',
         sentTo: user.email,
-        sentAt: testTime
+        sentAt: testTime,
+        emailId: (digestData as any)?.emailId ?? null,
       }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     )
 
