@@ -68,7 +68,7 @@ const Logos3: React.FC<Logos3Props> = ({
       id: `logo-${num}`,
       description: `School logo ${num}`,
       image: `/lovable-uploads/schools/${num}.svg?v=1`,
-      className: "h-8 w-auto md:h-10",
+      className: "h-16 w-auto md:h-20",
     };
   });
 
@@ -77,7 +77,7 @@ const Logos3: React.FC<Logos3Props> = ({
   return (
     <section className={"py-12 " + (className ?? "")}>
       <div className="container mx-auto flex flex-col items-center text-center">
-        <h2 className="my-2 text-base font-medium text-muted-foreground">Trusted by students at</h2>
+        
         <h3 className="mb-6 text-2xl font-bold tracking-tight lg:text-3xl">{heading}</h3>
       </div>
       <div className="pt-6 md:pt-8">
