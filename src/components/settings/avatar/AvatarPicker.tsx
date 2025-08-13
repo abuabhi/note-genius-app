@@ -12,45 +12,24 @@ import girl6 from '@/assets/avatars/girl-6.png';
 import girl7 from '@/assets/avatars/girl-7.png';
 import girl8 from '@/assets/avatars/girl-8.png';
 import girl9 from '@/assets/avatars/girl-9.png';
-import girl10 from '@/assets/avatars/girl-10.png';
-import boy1 from '@/assets/avatars/boy-1.png';
-import boy2 from '@/assets/avatars/boy-2.png';
-import boy3 from '@/assets/avatars/boy-3.png';
-import boy4 from '@/assets/avatars/boy-4.png';
-import boy5 from '@/assets/avatars/boy-5.png';
-import boy6 from '@/assets/avatars/boy-6.png';
-import boy7 from '@/assets/avatars/boy-7.png';
-import boy8 from '@/assets/avatars/boy-8.png';
-import boy9 from '@/assets/avatars/boy-9.png';
-import boy10 from '@/assets/avatars/boy-10.png';
 
 interface AvatarOption {
   id: string;
   label: string;
-  src: string;
+  src: string; // public URL under /lovable-uploads
+  fallbackSrc?: string; // bundled fallback image
 }
 
 const AVATARS: AvatarOption[] = [
-  { id: 'girl1', label: 'Girl 1', src: girl1 },
-  { id: 'girl2', label: 'Girl 2', src: girl2 },
-  { id: 'girl3', label: 'Girl 3', src: girl3 },
-  { id: 'girl4', label: 'Girl 4', src: girl4 },
-  { id: 'girl5', label: 'Girl 5', src: girl5 },
-  { id: 'girl6', label: 'Girl 6', src: girl6 },
-  { id: 'girl7', label: 'Girl 7', src: girl7 },
-  { id: 'girl8', label: 'Girl 8', src: girl8 },
-  { id: 'girl9', label: 'Girl 9', src: girl9 },
-  { id: 'girl10', label: 'Girl 10', src: girl10 },
-  { id: 'boy1', label: 'Boy 1', src: boy1 },
-  { id: 'boy2', label: 'Boy 2', src: boy2 },
-  { id: 'boy3', label: 'Boy 3', src: boy3 },
-  { id: 'boy4', label: 'Boy 4', src: boy4 },
-  { id: 'boy5', label: 'Boy 5', src: boy5 },
-  { id: 'boy6', label: 'Boy 6', src: boy6 },
-  { id: 'boy7', label: 'Boy 7', src: boy7 },
-  { id: 'boy8', label: 'Boy 8', src: boy8 },
-  { id: 'boy9', label: 'Boy 9', src: boy9 },
-  { id: 'boy10', label: 'Boy 10', src: boy10 },
+  { id: 'avatar-01', label: 'Avatar 01', src: '/lovable-uploads/avatars/avatar-01.png?v=3', fallbackSrc: girl1 },
+  { id: 'avatar-02', label: 'Avatar 02', src: '/lovable-uploads/avatars/avatar-02.png?v=3', fallbackSrc: girl2 },
+  { id: 'avatar-03', label: 'Avatar 03', src: '/lovable-uploads/avatars/avatar-03.png?v=3', fallbackSrc: girl3 },
+  { id: 'avatar-04', label: 'Avatar 04', src: '/lovable-uploads/avatars/avatar-04.png?v=3', fallbackSrc: girl4 },
+  { id: 'avatar-05', label: 'Avatar 05', src: '/lovable-uploads/avatars/avatar-05.png?v=3', fallbackSrc: girl5 },
+  { id: 'avatar-06', label: 'Avatar 06', src: '/lovable-uploads/avatars/avatar-06.png?v=3', fallbackSrc: girl6 },
+  { id: 'avatar-07', label: 'Avatar 07', src: '/lovable-uploads/avatars/avatar-07.png?v=3', fallbackSrc: girl7 },
+  { id: 'avatar-08', label: 'Avatar 08', src: '/lovable-uploads/avatars/avatar-08.png?v=3', fallbackSrc: girl8 },
+  { id: 'avatar-09', label: 'Avatar 09', src: '/lovable-uploads/avatars/avatar-09.png?v=3', fallbackSrc: girl9 },
 ];
 
 interface AvatarPickerProps {
@@ -84,9 +63,14 @@ export const AvatarPicker: React.FC<AvatarPickerProps> = ({ value, onChange }) =
           >
             <img
               src={a.src}
-              alt={`${a.label} anime avatar`}
+              alt={`${a.label} avatar image`}
               loading="lazy"
               className="h-12 w-12 rounded-full object-cover"
+              onError={(e) => {
+                if (a.fallbackSrc) {
+                  (e.currentTarget as HTMLImageElement).src = a.fallbackSrc;
+                }
+              }}
             />
           </button>
         ))}

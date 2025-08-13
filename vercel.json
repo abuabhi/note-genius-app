@@ -25,6 +25,15 @@
           "value": "no-store, max-age=0"
         }
       ]
+    },
+    {
+      "source": "/lovable-uploads/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        }
+      ]
     }
   ],
   "rewrites": [
