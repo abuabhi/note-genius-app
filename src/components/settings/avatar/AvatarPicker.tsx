@@ -21,15 +21,15 @@ interface AvatarOption {
 }
 
 const AVATARS: AvatarOption[] = [
-  { id: 'aditya-gupta', label: 'Aditya Gupta', src: '/lovable-uploads/avatars/aditya-gupta.png?v=1', fallbackSrc: girl1 },
-  { id: 'arjun-patel', label: 'Arjun Patel', src: '/lovable-uploads/avatars/arjun-patel.png?v=1', fallbackSrc: girl2 },
-  { id: 'dev-singh', label: 'Dev Singh', src: '/lovable-uploads/avatars/dev-singh.png?v=1', fallbackSrc: girl3 },
-  { id: 'emma-liu', label: 'Emma Liu', src: '/lovable-uploads/avatars/emma-liu.png?v=1', fallbackSrc: girl4 },
-  { id: 'jessica-zhang', label: 'Jessica Zhang', src: '/lovable-uploads/avatars/jessica-zhang.png?v=1', fallbackSrc: girl5 },
-  { id: 'lily-wang', label: 'Lily Wang', src: '/lovable-uploads/avatars/lily-wang.png?v=1', fallbackSrc: girl6 },
-  { id: 'priya-sharma', label: 'Priya Sharma', src: '/lovable-uploads/avatars/priya-sharma.png?v=1', fallbackSrc: girl7 },
-  { id: 'ravi-kumar', label: 'Ravi Kumar', src: '/lovable-uploads/avatars/ravi-kumar.png?v=1', fallbackSrc: girl8 },
-  { id: 'wei-chen', label: 'Wei Chen', src: '/lovable-uploads/avatars/wei-chen.png?v=1', fallbackSrc: girl9 },
+  { id: 'aditya-gupta', label: 'Aditya Gupta', src: '/lovable-uploads/avatars/aditya-gupta.png?v=2', fallbackSrc: girl1 },
+  { id: 'arjun-patel', label: 'Arjun Patel', src: '/lovable-uploads/avatars/arjun-patel.png?v=2', fallbackSrc: girl2 },
+  { id: 'dev-singh', label: 'Dev Singh', src: '/lovable-uploads/avatars/dev-singh.png?v=2', fallbackSrc: girl3 },
+  { id: 'emma-liu', label: 'Emma Liu', src: '/lovable-uploads/avatars/emma-liu.png?v=2', fallbackSrc: girl4 },
+  { id: 'jessica-zhang', label: 'Jessica Zhang', src: '/lovable-uploads/avatars/jessica-zhang.png?v=2', fallbackSrc: girl5 },
+  { id: 'lily-wang', label: 'Lily Wang', src: '/lovable-uploads/avatars/lily-wang.png?v=2', fallbackSrc: girl6 },
+  { id: 'priya-sharma', label: 'Priya Sharma', src: '/lovable-uploads/avatars/priya-sharma.png?v=2', fallbackSrc: girl7 },
+  { id: 'ravi-kumar', label: 'Ravi Kumar', src: '/lovable-uploads/avatars/ravi-kumar.png?v=2', fallbackSrc: girl8 },
+  { id: 'wei-chen', label: 'Wei Chen', src: '/lovable-uploads/avatars/wei-chen.png?v=2', fallbackSrc: girl9 },
 ];
 
 interface AvatarPickerProps {
