@@ -27,6 +27,12 @@ const ImageWithFallback: React.FC<{
   const [currentSrc, setCurrentSrc] = React.useState(src);
   const tried = React.useRef<Record<string, boolean>>({});
 
+  const onLoad = () => {
+    try {
+      console.info("[Logos3] image loaded", { src: currentSrc, alt });
+    } catch {}
+  };
+
   const onError = () => {
     // Try switching extensions in order: svg -> png -> jpg
     try {
@@ -34,24 +40,29 @@ const ImageWithFallback: React.FC<{
       const ext = url.pathname.split(".").pop()?.toLowerCase();
       if (ext === "svg" && !tried.current["png"]) {
         tried.current["png"] = true;
-        setCurrentSrc(currentSrc.replace(/\.svg(\?.*)?$/, ".png$1"));
+        const next = currentSrc.replace(/\.svg(\?.*)?$/, ".png$1");
+        console.warn("[Logos3] svg failed, trying png", { from: currentSrc, to: next, alt });
+        setCurrentSrc(next);
       } else if (ext === "png" && !tried.current["jpg"]) {
         tried.current["jpg"] = true;
-        setCurrentSrc(currentSrc.replace(/\.png(\?.*)?$/, ".jpg$1"));
+        const next = currentSrc.replace(/\.png(\?.*)?$/, ".jpg$1");
+        console.warn("[Logos3] png failed, trying jpg", { from: currentSrc, to: next, alt });
+        setCurrentSrc(next);
       } else {
-        // Hide image by setting to a transparent data URI
+        console.error("[Logos3] all fallbacks failed, hiding image", { src: currentSrc, alt });
         setCurrentSrc(
           "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
         );
       }
-    } catch {
+    } catch (e) {
+      console.error("[Logos3] error parsing URL, hiding image", { src: currentSrc, alt, error: e });
       setCurrentSrc(
         "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
       );
     }
   };
 
-  return <img src={currentSrc} alt={alt} className={className} onError={onError} loading="lazy" />;
+  return <img src={currentSrc} alt={alt} className={className} onLoad={onLoad} onError={onError} loading="lazy" />;
 };
 
 const Logos3: React.FC<Logos3Props> = ({
@@ -90,8 +101,8 @@ const Logos3: React.FC<Logos3Props> = ({
                   className="flex basis-1/3 justify-center pl-0 sm:basis-1/4 md:basis-1/5 lg:basis-1/6"
                 >
                   <div className="mx-8 flex shrink-0 items-center justify-center">
-                    <div>
-                      <ImageWithFallback src={logo.image} alt={logo.description} className={logo.className} />
+                    <div className="rounded-xl bg-muted/50 ring-1 ring-border/50 px-4 py-3 md:px-6 md:py-4">
+                      <ImageWithFallback src={logo.image} alt={logo.description} className={[logo.className, "object-contain"].filter(Boolean).join(" ")} />
                     </div>
                   </div>
                 </CarouselItem>
