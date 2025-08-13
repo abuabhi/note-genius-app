@@ -16,7 +16,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!api|_next|favicon\\.ico|\\.well-known/).*)",
+      "source": "/((?!api|_next|favicon\\.ico|\\.well-known/|assets/|lovable-uploads/|.*\\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|txt|json|map|woff|woff2|ttf|otf|mp4|webm)).*)",
       "destination": "/index.html"
     }
   ]
