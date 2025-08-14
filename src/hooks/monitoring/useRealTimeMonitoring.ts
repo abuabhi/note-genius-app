@@ -128,8 +128,8 @@ export const useRealTimeMonitoring = () => {
   const trackWebVitals = useCallback(() => {
     if (typeof window === 'undefined') return;
 
-    // Core Web Vitals
-    import('web-vitals').then(({ onCLS, onFID, onFCP, onLCP, onTTFB }) => {
+    // Core Web Vitals - using correct API
+    import('web-vitals').then(({ onCLS, onINP, onFCP, onLCP, onTTFB }) => {
       onCLS(metric => collectMetric({
         name: 'cls',
         value: metric.value,
@@ -137,8 +137,8 @@ export const useRealTimeMonitoring = () => {
         tags: { type: 'web_vital' }
       }));
       
-      onFID(metric => collectMetric({
-        name: 'fid',
+      onINP(metric => collectMetric({
+        name: 'inp',
         value: metric.value,
         timestamp: Date.now(),
         tags: { type: 'web_vital' }

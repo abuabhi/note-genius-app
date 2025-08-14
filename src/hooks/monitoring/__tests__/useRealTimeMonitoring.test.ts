@@ -4,11 +4,11 @@ import { useRealTimeMonitoring } from '@/hooks/monitoring/useRealTimeMonitoring'
 
 // Mock web-vitals
 vi.mock('web-vitals', () => ({
-  getCLS: vi.fn(),
-  getFID: vi.fn(),
-  getFCP: vi.fn(),
-  getLCP: vi.fn(),
-  getTTFB: vi.fn(),
+  onCLS: vi.fn(),
+  onINP: vi.fn(),
+  onFCP: vi.fn(),
+  onLCP: vi.fn(),
+  onTTFB: vi.fn(),
 }));
 
 // Mock localStorage
