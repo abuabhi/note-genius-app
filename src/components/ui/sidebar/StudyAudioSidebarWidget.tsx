@@ -31,7 +31,7 @@ export const StudyAudioSidebarWidget = ({
         
         {/* Tooltip */}
         <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 bg-popover border rounded-md shadow-md px-2 py-1 text-sm text-popover-foreground whitespace-nowrap z-50">
-          Study Audio {enabled ? '(Playing)' : '(Paused)'}
+          Study Music {enabled ? '(Playing)' : '(Paused)'}
         </div>
       </div>;
   }
@@ -42,7 +42,7 @@ export const StudyAudioSidebarWidget = ({
         <Button variant="ghost" className={cn("w-full justify-between h-9 px-3", enabled && "bg-mint-500/10 text-mint-600")}>
           <div className="flex items-center gap-2">
             <Music className="h-4 w-4" />
-            <span className="text-sm mx-[8px]">Study Audio</span>
+            <span className="text-sm mx-[8px]">Study Music</span>
           </div>
           {enabled && <div className="w-2 h-2 bg-mint-500 rounded-full animate-pulse" />}
         </Button>

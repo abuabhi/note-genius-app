@@ -114,9 +114,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   isCollapsed={isCollapsed}
                 />
                 
-                {/* Study Audio Widget */}
-                <StudyAudioSidebarWidget isCollapsed={isCollapsed} />
-                
                 <NavLink
                   to="/todos"
                   icon={CheckSquare}
@@ -124,6 +121,9 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   isActive={pathname.startsWith("/todos")}
                   isCollapsed={isCollapsed}
                 />
+                
+                {/* Study Music Widget */}
+                <StudyAudioSidebarWidget isCollapsed={isCollapsed} />
               </div>
             </div>
 
