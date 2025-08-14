@@ -2,10 +2,11 @@ import { useStudyAudio } from '@/hooks/useStudyAudio';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Music, Pause, Play } from 'lucide-react';
+import { Music, Pause, Play, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { SOUND_CATEGORIES } from '@/utils/audio/AudioManager';
 interface StudyAudioSidebarWidgetProps {
   isCollapsed: boolean;
 }
@@ -60,19 +61,40 @@ export const StudyAudioSidebarWidget = ({
               </>}
           </Button>
 
-          {/* Preset Selection */}
-          <div className="space-y-1">
-            <div className="text-xs text-muted-foreground">Preset</div>
-            <Select value={preset} onValueChange={v => setPreset(v as any)}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Choose preset" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pink-noise">Pink Noise</SelectItem>
-                <SelectItem value="brown-noise">Brown Noise</SelectItem>
-                <SelectItem value="soft-pad">Soft Pad</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Preset Selection by Category */}
+          <div className="space-y-2">
+            <div className="text-xs text-muted-foreground">Sound Categories</div>
+            {SOUND_CATEGORIES.map((category) => {
+              const [categoryOpen, setCategoryOpen] = useState(category.presets.includes(preset));
+              
+              return (
+                <Collapsible key={category.id} open={categoryOpen} onOpenChange={setCategoryOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-between h-7 px-2 text-xs">
+                      <span>{category.name}</span>
+                      <ChevronDown className={cn("h-3 w-3 transition-transform", categoryOpen && "rotate-180")} />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-1 pt-1">
+                    {category.presets.map((presetOption) => (
+                      <Button
+                        key={presetOption}
+                        variant={preset === presetOption ? "default" : "ghost"}
+                        size="sm"
+                        className={cn(
+                          "w-full justify-start h-6 px-2 text-xs",
+                          preset === presetOption && "bg-mint-500/10 text-mint-600 hover:bg-mint-500/20"
+                        )}
+                        onClick={() => setPreset(presetOption)}
+                      >
+                        {/* Get label from AudioManager */}
+                        {presetOption.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                      </Button>
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            })}
           </div>
 
           {/* Volume Control */}
