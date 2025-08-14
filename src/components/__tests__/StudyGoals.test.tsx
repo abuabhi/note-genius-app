@@ -27,10 +27,9 @@ const MockStudyGoalsPage = () => {
           <div key={goal.id} data-testid={`goal-${goal.id}`}>
             <h3>{goal.title}</h3>
             <p>{goal.description}</p>
-            <span>Progress: {goal.current_progress}/{goal.target_value}</span>
-            <span>Type: {goal.target_type}</span>
-            <span>Status: {goal.completed ? 'Completed' : 'In Progress'}</span>
-            <button onClick={() => updateGoal(goal.id, { current_progress: goal.current_progress + 10 })}>
+            <span>Progress: {goal.progress}/{goal.target_hours}</span>
+            <span>Status: {goal.is_completed ? 'Completed' : 'In Progress'}</span>
+            <button onClick={() => updateGoal(goal.id, { progress: goal.progress + 10 })}>
               Update Progress
             </button>
             <button onClick={() => deleteGoal(goal.id)}>Delete</button>
@@ -76,8 +75,9 @@ describe('Study Goals Component', () => {
 
   it('renders study goals with progress', () => {
     const mockGoal = createTestData.studyGoal({
-      target_value: 100,
-      completed: false,
+      progress: 25,
+      target_hours: 100,
+      is_completed: false,
     });
     
     mockUseStudyGoals.mockReturnValue({
@@ -95,15 +95,14 @@ describe('Study Goals Component', () => {
     expect(screen.getByTestId(`goal-${mockGoal.id}`)).toBeInTheDocument();
     expect(screen.getByText(mockGoal.title)).toBeInTheDocument();
     expect(screen.getByText('Progress: 25/100')).toBeInTheDocument();
-    expect(screen.getByText('Type: flashcards')).toBeInTheDocument();
     expect(screen.getByText('Status: In Progress')).toBeInTheDocument();
   });
 
   it('shows completed status for finished goals', () => {
     const mockGoal = createTestData.studyGoal({
-      current_progress: 100,
-      target_value: 100,
-      completed: true,
+      progress: 100,
+      target_hours: 100,
+      is_completed: true,
     });
     
     mockUseStudyGoals.mockReturnValue({
@@ -143,7 +142,7 @@ describe('Study Goals Component', () => {
   it('handles update progress action', async () => {
     const user = userEvent.setup();
     const mockUpdateGoal = vi.fn();
-    const mockGoal = createTestData.studyGoal({ current_progress: 50 });
+    const mockGoal = createTestData.studyGoal({ progress: 50 });
     
     mockUseStudyGoals.mockReturnValue({
       goals: [mockGoal],
@@ -157,7 +156,7 @@ describe('Study Goals Component', () => {
     render(<MockStudyGoalsPage />);
     
     await user.click(screen.getByText('Update Progress'));
-    expect(mockUpdateGoal).toHaveBeenCalledWith(mockGoal.id, { current_progress: 60 });
+    expect(mockUpdateGoal).toHaveBeenCalledWith(mockGoal.id, { progress: 60 });
   });
 
   it('handles delete goal action', async () => {
