@@ -7,7 +7,7 @@
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "test:e2e": "playwright test",
-    "test:performance": "cd load-testing && npm run test:all"
+    "test:performance": "cd load-testing && npm run test:all",
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
