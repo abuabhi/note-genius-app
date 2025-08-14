@@ -1,9 +1,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useNavigate } from "react-router-dom";
 import { useEnhancedStudySuggestions, EnhancedStudySuggestion } from "@/hooks/useEnhancedStudySuggestions";
 import { useUserProgressState } from "@/hooks/useUserProgressState";
+import { useState, useEffect } from "react";
 import { 
   AlertTriangle, 
   Clock, 
@@ -18,7 +20,8 @@ import {
   GraduationCap,
   Calendar,
   PenTool,
-  Lightbulb
+  Lightbulb,
+  ChevronDown
 } from "lucide-react";
 
 interface StudySuggestionsProps {
@@ -29,6 +32,23 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
   const navigate = useNavigate();
   const progressState = useUserProgressState();
   const { suggestions, isLoading } = useEnhancedStudySuggestions(progressState);
+  
+  // Collapsible state management
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  // Load saved state from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('studySuggestionsExpanded');
+    if (saved !== null) {
+      setIsExpanded(JSON.parse(saved));
+    }
+  }, []);
+
+  const toggleExpanded = () => {
+    const newState = !isExpanded;
+    setIsExpanded(newState);
+    localStorage.setItem('studySuggestionsExpanded', JSON.stringify(newState));
+  };
 
   // Only show for users who have created library items (not brand new users)
   const hasContent = progressState.totalItems > 0;
@@ -210,109 +230,121 @@ export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) =>
   }
 
   return (
-    <div className="w-full bg-white rounded-xl border border-gray-200 shadow-sm mb-8">
-      {/* Header Section */}
-      <div className="px-8 pt-8 pb-6 border-b border-gray-100">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-mint-500 to-mint-600 rounded-xl flex items-center justify-center">
-              <Lightbulb className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-semibold text-mint-900">AI Study Suggestions</h2>
-              <p className="text-gray-600 text-sm font-medium">Smart recommendations based on your learning patterns</p>
-            </div>
-          </div>
-          <Badge variant="outline" className="bg-mint-50 text-mint-700 border-mint-200 font-semibold px-3 py-1">
-            {finalSuggestions.length} suggestion{finalSuggestions.length !== 1 ? 's' : ''}
-          </Badge>
-        </div>
-      </div>
-
-      {/* Content Section */}
-      <div className="p-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {finalSuggestions.map((suggestion, index) => (
-            <div 
-              key={suggestion.id}
-              className="relative group p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-300 min-h-[220px] flex flex-col"
-            >
-              {/* Priority indicator */}
-              <div className="absolute top-4 right-4">
-                <div className={`w-3 h-3 rounded-full ${getTypeColor(suggestion.type)}`}></div>
-              </div>
-
-              {/* Header with icon and badge */}
-              <div className="flex items-start gap-3 mb-4">
-                <div className={`p-3 rounded-lg ${getTypeColor(suggestion.type)} bg-opacity-10`}>
-                  <div className={`${getTypeColor(suggestion.type)} text-white p-1 rounded`}>
-                    {getIcon(suggestion.type, suggestion.icon)}
-                  </div>
-                </div>
-                <Badge className={`text-xs font-semibold px-2 py-1 ${getPriorityColor(suggestion.priority)}`}>
-                  {suggestion.priority === 'critical' ? '🚨 URGENT' : suggestion.priority.toUpperCase()}
-                </Badge>
-              </div>
-              
-              {/* Content */}
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 mb-3 text-lg leading-tight group-hover:text-mint-600 transition-colors">
-                  {suggestion.title}
-                </h3>
-                <p className="text-sm text-gray-600 leading-relaxed mb-4 font-medium">
-                  {suggestion.description}
-                </p>
-                
-                {/* Metadata */}
-                {suggestion.metadata && (
-                  <div className="text-xs text-gray-500 mb-4 font-medium">
-                    {suggestion.metadata.count && `${suggestion.metadata.count} items • `}
-                    {suggestion.metadata.daysOverdue && `${suggestion.metadata.daysOverdue} days overdue • `}
-                    {suggestion.metadata.percentage && `${suggestion.metadata.percentage}% score • `}
-                    {suggestion.metadata.lastActivity && `Last: ${suggestion.metadata.lastActivity}`}
-                  </div>
-                )}
-              </div>
-              
-              {/* Action button */}
-              {suggestion.actionable ? (
-                <Button 
-                  onClick={() => handleSuggestionAction(suggestion)}
-                  className="w-full bg-mint-500 hover:bg-mint-600 text-white font-semibold py-2.5 rounded-lg transition-all duration-200 group-hover:shadow-md"
-                >
-                  Take Action
-                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              ) : (
-                <div className="w-full py-2.5 text-center">
-                  <span className="text-sm text-gray-500 font-medium">No action needed</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        
-        {/* Footer */}
-        <div className="mt-8 pt-6 border-t border-gray-100">
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded} className="w-full">
+      <div className="w-full bg-white rounded-xl border border-gray-200 shadow-sm mb-8">
+        {/* Header Section - Now Collapsible Trigger */}
+        <CollapsibleTrigger
+          onClick={toggleExpanded}
+          className="w-full px-8 pt-8 pb-6 border-b border-gray-100 hover:bg-gray-50/50 transition-colors cursor-pointer"
+        >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Brain className="h-4 w-4 text-mint-600" />
-              <p className="text-sm text-gray-600 font-medium">
-                Powered by AI analysis of your study habits and performance
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-mint-500 to-mint-600 rounded-xl flex items-center justify-center">
+                <Lightbulb className="h-5 w-5 text-white" />
+              </div>
+              <div className="text-left">
+                <h2 className="text-2xl font-semibold text-mint-900">AI Study Suggestions</h2>
+                <p className="text-gray-600 text-sm font-medium">Smart recommendations based on your learning patterns</p>
+              </div>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => navigate('/analytics')}
-              className="text-mint-600 border-mint-200 hover:bg-mint-50 font-semibold"
-            >
-              View Detailed Analytics
-              <TrendingUp className="h-4 w-4 ml-2" />
-            </Button>
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="bg-mint-50 text-mint-700 border-mint-200 font-semibold px-3 py-1">
+                {finalSuggestions.length} suggestion{finalSuggestions.length !== 1 ? 's' : ''}
+              </Badge>
+              <ChevronDown 
+                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} 
+              />
+            </div>
           </div>
-        </div>
+        </CollapsibleTrigger>
+
+        {/* Content Section - Now Collapsible */}
+        <CollapsibleContent className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2">
+          <div className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {finalSuggestions.map((suggestion, index) => (
+                <div 
+                  key={suggestion.id}
+                  className="relative group p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:shadow-lg hover:border-gray-300 transition-all duration-300 min-h-[220px] flex flex-col"
+                >
+                  {/* Priority indicator */}
+                  <div className="absolute top-4 right-4">
+                    <div className={`w-3 h-3 rounded-full ${getTypeColor(suggestion.type)}`}></div>
+                  </div>
+
+                  {/* Header with icon and badge */}
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className={`p-3 rounded-lg ${getTypeColor(suggestion.type)} bg-opacity-10`}>
+                      <div className={`${getTypeColor(suggestion.type)} text-white p-1 rounded`}>
+                        {getIcon(suggestion.type, suggestion.icon)}
+                      </div>
+                    </div>
+                    <Badge className={`text-xs font-semibold px-2 py-1 ${getPriorityColor(suggestion.priority)}`}>
+                      {suggestion.priority === 'critical' ? '🚨 URGENT' : suggestion.priority.toUpperCase()}
+                    </Badge>
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-900 mb-3 text-lg leading-tight group-hover:text-mint-600 transition-colors">
+                      {suggestion.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 leading-relaxed mb-4 font-medium">
+                      {suggestion.description}
+                    </p>
+                    
+                    {/* Metadata */}
+                    {suggestion.metadata && (
+                      <div className="text-xs text-gray-500 mb-4 font-medium">
+                        {suggestion.metadata.count && `${suggestion.metadata.count} items • `}
+                        {suggestion.metadata.daysOverdue && `${suggestion.metadata.daysOverdue} days overdue • `}
+                        {suggestion.metadata.percentage && `${suggestion.metadata.percentage}% score • `}
+                        {suggestion.metadata.lastActivity && `Last: ${suggestion.metadata.lastActivity}`}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Action button */}
+                  {suggestion.actionable ? (
+                    <Button 
+                      onClick={() => handleSuggestionAction(suggestion)}
+                      className="w-full bg-mint-500 hover:bg-mint-600 text-white font-semibold py-2.5 rounded-lg transition-all duration-200 group-hover:shadow-md"
+                    >
+                      Take Action
+                      <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  ) : (
+                    <div className="w-full py-2.5 text-center">
+                      <span className="text-sm text-gray-500 font-medium">No action needed</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            {/* Footer */}
+            <div className="mt-8 pt-6 border-t border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-mint-600" />
+                  <p className="text-sm text-gray-600 font-medium">
+                    Powered by AI analysis of your study habits and performance
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate('/analytics')}
+                  className="text-mint-600 border-mint-200 hover:bg-mint-50 font-semibold"
+                >
+                  View Detailed Analytics
+                  <TrendingUp className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CollapsibleContent>
       </div>
-    </div>
+    </Collapsible>
   );
 };
