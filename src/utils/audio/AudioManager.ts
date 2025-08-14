@@ -60,6 +60,9 @@ class AudioManager {
 
   setPreset(preset: StudyPreset) {
     this.currentPreset = preset;
+    // Always cleanup existing sources when preset changes
+    this.cleanupSources();
+    
     if (this.isPlaying) {
       this.stop(0.1);
       this.play(0.2);
@@ -92,6 +95,9 @@ class AudioManager {
 
     // Guard: already playing
     if (this.isPlaying) return;
+
+    // Ensure clean state before starting
+    this.cleanupSources();
 
     // Reset master gain to 0 then fade in
     const t = this.ctx.currentTime;
