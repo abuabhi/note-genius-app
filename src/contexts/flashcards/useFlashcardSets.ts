@@ -1,292 +1,133 @@
-// @ts-nocheck
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/auth"; // Updated import path
-import { toast } from "sonner";
+import { FlashcardState } from './types';
+import { 
+  fetchFlashcardSets as fetchSets, 
+  fetchUserSubjects as fetchSubjects
+} from './operations/fetchOperations';
 import {
-  FlashcardState,
-  FlashcardSet,
-  Subject,
-  FlashcardSetWithCount,
-} from "./types";
+  createFlashcardSet as createSet,
+  updateFlashcardSet as updateSet,
+  deleteFlashcardSet as deleteSet
+} from './operations/mutationOperations';
+import { supabase } from '@/integrations/supabase/client';
+import { Flashcard } from '@/types/flashcard';
 
-export const useFlashcardSets = (state?: FlashcardState) => {
-  const { user } = useAuth();
-  const [flashcardSets, setFlashcardSets] = useState<FlashcardSetWithCount[]>([]);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      fetchFlashcardSets();
-      fetchUserSubjects();
-    }
-  }, [user]);
-
-  const fetchFlashcardSets = async () => {
+export const useFlashcardSets = (state: FlashcardState) => {
+  // Wrapper functions to pass state
+  const fetchFlashcardSets = () => fetchSets(state);
+  const createFlashcardSet = (setData) => createSet(state, setData);
+  const updateFlashcardSet = (id, setData) => updateSet(state, id, setData);
+  const deleteFlashcardSet = (id) => deleteSet(state, id);
+  const fetchUserSubjects = () => fetchSubjects(state);
+  
+  // Enhanced fetchFlashcardsInSet method that also fetches and sets the current set
+  const fetchFlashcardsInSet = async (setId: string): Promise<Flashcard[]> => {
     try {
-      setIsLoading(true);
-      if (!user) {
-        console.log("No user, returning empty array");
+      console.log("useFlashcardSets: Fetching flashcards for set:", setId);
+      
+      // First, fetch the flashcard set data and set it as current
+      const { data: setData, error: setError } = await supabase
+        .from('flashcard_sets')
+        .select('*')
+        .eq('id', setId)
+        .single();
+
+      if (setError) {
+        console.error("useFlashcardSets: Error fetching flashcard set:", setError);
+        throw setError;
+      }
+
+      if (setData) {
+        console.log("useFlashcardSets: Setting current set:", setData.name);
+        state.setCurrentSet(setData);
+      }
+      
+      // Query the flashcard_set_cards junction table to get flashcards in this set
+      // Order by position first, then by created_at as fallback
+      const { data: setCards, error: setCardsError } = await supabase
+        .from('flashcard_set_cards')
+        .select(`
+          flashcard_id,
+          position,
+          flashcards (
+            id,
+            front_content,
+            back_content,
+            difficulty,
+            created_at,
+            updated_at,
+            user_id,
+            is_built_in,
+            last_reviewed_at,
+            next_review_at
+          )
+        `)
+        .eq('set_id', setId)
+        .order('position', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (setCardsError) {
+        console.error("useFlashcardSets: Error fetching flashcards in set:", setCardsError);
+        throw setCardsError;
+      }
+
+      if (!setCards || setCards.length === 0) {
+        console.log("useFlashcardSets: No flashcards found in set:", setId);
         return [];
       }
 
-      console.log("Fetching flashcard sets for user:", user.id);
+      // Transform the data to match the Flashcard interface
+      const flashcards: Flashcard[] = setCards
+        .filter(card => card.flashcards) // Filter out any null flashcard references
+        .map(card => {
+          const flashcard = card.flashcards;
+          return {
+            id: flashcard.id,
+            front_content: flashcard.front_content,
+            back_content: flashcard.back_content,
+            // For backward compatibility
+            front: flashcard.front_content,
+            back: flashcard.back_content,
+            set_id: setId,
+            difficulty: flashcard.difficulty,
+            created_at: flashcard.created_at,
+            updated_at: flashcard.updated_at,
+            user_id: flashcard.user_id,
+            is_built_in: flashcard.is_built_in,
+            last_reviewed_at: flashcard.last_reviewed_at,
+            next_review_at: flashcard.next_review_at,
+            position: card.position
+          };
+        });
 
-      const { data, error } = await supabase
-        .from("flashcard_sets")
-        .select("*, card_count:flashcard_set_cards(count)")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching flashcard sets:", error);
-        throw error;
-      }
-
-      const setsWithCount: FlashcardSetWithCount[] = (data || []).map(set => ({
-        ...set,
-        card_count: set.card_count ? set.card_count[0]?.count : 0,
-      }));
-
-      console.log("Fetched flashcard sets:", setsWithCount);
-      setFlashcardSets(setsWithCount);
-      return setsWithCount;
+      console.log("useFlashcardSets: Fetched flashcards with positions:", flashcards.map(f => ({
+        id: f.id.slice(0, 8),
+        front: f.front_content?.slice(0, 20) + '...',
+        position: f.position
+      })));
+      
+      return flashcards;
+      
     } catch (error) {
-      console.error("Error fetching flashcard sets:", error);
-      toast.error("Failed to load flashcard sets");
-      return [];
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchUserSubjects = async () => {
-    try {
-      setIsLoading(true);
-      if (!user) {
-        console.log("No user, returning empty array");
-        return [];
-      }
-
-      console.log("Fetching subjects for user:", user.id);
-
-      const { data, error } = await supabase
-        .from("subjects")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("name", { ascending: true });
-
-      if (error) {
-        console.error("Error fetching subjects:", error);
-        throw error;
-      }
-
-      console.log("Fetched subjects:", data);
-      setSubjects(data || []);
-      return data || [];
-    } catch (error) {
-      console.error("Error fetching subjects:", error);
-      toast.error("Failed to load subjects");
-      return [];
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const createFlashcardSet = async (set: FlashcardSet) => {
-    try {
-      setIsLoading(true);
-
-      if (!user) {
-        throw new Error("User must be logged in to create flashcard set");
-      }
-
-      const { data, error } = await supabase
-        .from("flashcard_sets")
-        .insert({
-          ...set,
-          user_id: user.id,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error creating flashcard set:", error);
-        throw error;
-      }
-
-      const newSet: FlashcardSetWithCount = { ...data, card_count: 0 };
-      setFlashcardSets((prevSets) => [...prevSets, newSet]);
-      toast.success("Flashcard set created successfully!");
-      return newSet;
-    } catch (error) {
-      console.error("Error creating flashcard set:", error);
-      toast.error("Failed to create flashcard set");
+      console.error("useFlashcardSets: Error in fetchFlashcardsInSet:", error);
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
-
-  const updateFlashcardSet = async (id: string, updates: Partial<FlashcardSet>) => {
-    try {
-      setIsLoading(true);
-
-      const { data, error } = await supabase
-        .from("flashcard_sets")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error updating flashcard set:", error);
-        throw error;
-      }
-
-      setFlashcardSets((prevSets) =>
-        prevSets.map((set) => (set.id === id ? { ...set, ...data } : set))
-      );
-      toast.success("Flashcard set updated successfully!");
-      return data;
-    } catch (error) {
-      console.error("Error updating flashcard set:", error);
-      toast.error("Failed to update flashcard set");
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const deleteFlashcardSet = async (id: string) => {
-    try {
-      setIsLoading(true);
-
-      const { error } = await supabase
-        .from("flashcard_sets")
-        .delete()
-        .eq("id", id);
-
-      if (error) {
-        console.error("Error deleting flashcard set:", error);
-        throw error;
-      }
-
-      setFlashcardSets((prevSets) => prevSets.filter((set) => set.id !== id));
-      toast.success("Flashcard set deleted successfully!");
-    } catch (error) {
-      console.error("Error deleting flashcard set:", error);
-      toast.error("Failed to delete flashcard set");
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const createSubject = async (subject: Subject) => {
-    try {
-      setIsLoading(true);
-
-      if (!user) {
-        throw new Error("User must be logged in to create a subject");
-      }
-
-      const { data, error } = await supabase
-        .from("subjects")
-        .insert({
-          ...subject,
-          user_id: user.id,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error creating subject:", error);
-        throw error;
-      }
-
-      setSubjects((prevSubjects) => [...prevSubjects, data]);
-      toast.success("Subject created successfully!");
-      return data;
-    } catch (error) {
-      console.error("Error creating subject:", error);
-      toast.error("Failed to create subject");
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updateSubject = async (id: string, updates: Partial<Subject>) => {
-    try {
-      setIsLoading(true);
-
-      const { data, error } = await supabase
-        .from("subjects")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error updating subject:", error);
-        throw error;
-      }
-
-      setSubjects((prevSubjects) =>
-        prevSubjects.map((subject) => (subject.id === id ? { ...subject, ...data } : subject))
-      );
-      toast.success("Subject updated successfully!");
-      return data;
-    } catch (error) {
-      console.error("Error updating subject:", error);
-      toast.error("Failed to update subject");
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const deleteSubject = async (id: string) => {
-    try {
-      setIsLoading(true);
-
-      const { error } = await supabase
-        .from("subjects")
-        .delete()
-        .eq("id", id);
-
-      if (error) {
-        console.error("Error deleting subject:", error);
-        throw error;
-      }
-
-      setSubjects((prevSubjects) => prevSubjects.filter((subject) => subject.id !== id));
-      toast.success("Subject deleted successfully!");
-    } catch (error) {
-      console.error("Error deleting subject:", error);
-      toast.error("Failed to delete subject");
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
+  
+  // For backward compatibility, keep the function to fetch built-in sets
+  const fetchBuiltInSets = async () => {
+    // This function has been moved to useLibraryOperations
+    // but we keep it here for backward compatibility
+    return [];
   };
 
   return {
-    flashcardSets,
-    subjects,
-    isLoading,
     fetchFlashcardSets,
-    fetchUserSubjects,
     createFlashcardSet,
     updateFlashcardSet,
     deleteFlashcardSet,
-    createSubject,
-    updateSubject,
-    deleteSubject,
-    setFlashcardSets,
-    setSubjects,
+    fetchBuiltInSets,
+    fetchUserSubjects,
+    fetchFlashcardsInSet
   };
 };

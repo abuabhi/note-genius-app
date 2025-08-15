@@ -20,7 +20,6 @@ import AdminInfluencersPage from "@/pages/AdminInfluencersPage";
 import AdminCouponsPage from "@/pages/AdminCouponsPage";
 import AdminPayoutsPage from "@/pages/AdminPayoutsPage";
 import AdminTranscriptionsPage from "@/pages/AdminTranscriptionsPage";
-import AdminMusicPage from "@/pages/AdminMusicPage";
 import { RouteConfig } from './publicRoutes';
 
 // Admin routes - wrapped with SidebarLayout for sidebar/header
@@ -44,5 +43,4 @@ export const adminRoutes: RouteConfig[] = [
   { path: "/admin/help", element: <AdminHelpManagementPage /> },
   { path: "/admin/coupons", element: <AdminCouponsPage /> },
   { path: "/admin/payouts", element: <AdminPayoutsPage /> },
-  { path: "/admin/music", element: <AdminMusicPage /> },
 ];

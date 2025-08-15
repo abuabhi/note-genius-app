@@ -1,12 +1,10 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { useSessionPersistence } from './useSessionPersistence';
 import { useTabVisibility } from '@/hooks/performance/useTabVisibility';
-import { useDebounce } from './useDebounce';
-import { SessionRecoveryManager } from './utils/sessionRecoveryManager';
-import { DEBUG_CONFIG } from '@/config/debug';
 
 export interface SessionData {
   title: string;
@@ -62,6 +60,9 @@ export const useUnifiedSessionTracker = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<Date>(new Date());
+  const recoveryAttempts = useRef(0);
+  const maxRecoveryAttempts = 3;
+  const recoveryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Track tab visibility to implement away behavior
   const isTabVisible = useTabVisibility();
@@ -93,44 +94,34 @@ export const useUnifiedSessionTracker = () => {
     };
   };
 
-  // Debounce user changes to prevent excessive recovery attempts
-  const debouncedUser = useDebounce(user?.id, 1000);
-  
-  // Session recovery with singleton and debouncing
+  // Session recovery with retry logic
   useEffect(() => {
-    if (!debouncedUser) {
-      if (DEBUG_CONFIG.STATE_LOGGING) {
+    const attemptRecoveryWithRetry = async (attemptNumber = 1) => {
+      if (!user) {
         console.log('🔄 [SESSION RECOVERY] No user available, resetting recovery state');
+        recoveryAttempts.current = 0;
+        setSessionState(prev => ({ ...prev, isRecovering: false }));
+        return;
       }
-      setSessionState(prev => ({ ...prev, isRecovering: false }));
-      SessionRecoveryManager.getInstance().reset();
-      return;
-    }
 
-    const recoveryManager = SessionRecoveryManager.getInstance();
-    
-    if (recoveryManager.isInProgress) {
-      if (DEBUG_CONFIG.STATE_LOGGING) {
-        console.log('🔄 [SESSION RECOVERY] Recovery already in progress');
+      if (attemptNumber > maxRecoveryAttempts) {
+        console.log('🔄 [SESSION RECOVERY] Max recovery attempts reached, giving up');
+        setSessionState(prev => ({ ...prev, isRecovering: false }));
+        return;
       }
-      return;
-    }
-
-    const performRecovery = async () => {
+      
+      console.log(`🔄 [SESSION RECOVERY] Attempt ${attemptNumber}/${maxRecoveryAttempts} for user:`, user.id);
+      
       try {
-        if (DEBUG_CONFIG.STATE_LOGGING) {
-          console.log('🔄 [SESSION RECOVERY] Starting recovery for user:', debouncedUser);
-        }
-        
         const recoveredSession = await recoverActiveSession();
         
         if (recoveredSession) {
-          if (DEBUG_CONFIG.STATE_LOGGING) {
-            console.log('✅ [SESSION RECOVERY] Session recovered:', {
-              sessionId: recoveredSession.sessionId,
-              title: recoveredSession.title
-            });
-          }
+          console.log('✅ [SESSION RECOVERY] Session recovered:', {
+            sessionId: recoveredSession.sessionId,
+            title: recoveredSession.title,
+            elapsedSeconds: recoveredSession.elapsedSeconds,
+            activityType: recoveredSession.activityType
+          });
           
           const recoveredState = {
             isActive: true,
@@ -148,21 +139,44 @@ export const useUnifiedSessionTracker = () => {
           
           setSessionState(recoveredState);
           broadcastState(recoveredState);
+          recoveryAttempts.current = 0;
           toast.success('Study session resumed');
         } else {
-          if (DEBUG_CONFIG.STATE_LOGGING) {
-            console.log('ℹ️ [SESSION RECOVERY] No active session found');
-          }
+          console.log('ℹ️ [SESSION RECOVERY] No active session found');
           setSessionState(prev => ({ ...prev, isRecovering: false }));
+          recoveryAttempts.current = 0;
         }
       } catch (error) {
-        console.error('❌ [SESSION RECOVERY] Recovery error:', error);
-        setSessionState(prev => ({ ...prev, isRecovering: false }));
+        console.error(`❌ [SESSION RECOVERY] Error during recovery attempt ${attemptNumber}:`, error);
+        
+        if (attemptNumber < maxRecoveryAttempts) {
+          const retryDelay = Math.min(1000 * Math.pow(2, attemptNumber - 1), 5000); // Exponential backoff, max 5s
+          console.log(`🔄 [SESSION RECOVERY] Retrying in ${retryDelay}ms...`);
+          
+          recoveryTimeoutRef.current = setTimeout(() => {
+            attemptRecoveryWithRetry(attemptNumber + 1);
+          }, retryDelay);
+        } else {
+          setSessionState(prev => ({ ...prev, isRecovering: false }));
+          recoveryAttempts.current = 0;
+        }
       }
     };
 
-    recoveryManager.attemptRecovery(performRecovery);
-  }, [debouncedUser, recoverActiveSession]);
+    // Reset recovery attempts when user changes
+    if (user) {
+      recoveryAttempts.current = 0;
+      // Increase initial delay to 500ms to ensure auth is fully loaded
+      const timeout = setTimeout(() => attemptRecoveryWithRetry(), 500);
+      return () => {
+        clearTimeout(timeout);
+        if (recoveryTimeoutRef.current) {
+          clearTimeout(recoveryTimeoutRef.current);
+          recoveryTimeoutRef.current = null;
+        }
+      };
+    }
+  }, [user, recoverActiveSession]);
 
   // Persist session state changes
   useEffect(() => {
@@ -204,7 +218,7 @@ export const useUnifiedSessionTracker = () => {
     };
   }, [sessionState.isActive, sessionState.isPaused, sessionState.isRecovering]);
 
-  // Inactivity detection (visible tab only) - Production optimized intervals
+  // Inactivity detection (visible tab only)
   useEffect(() => {
     if (!isTabVisible) return;
     if (sessionState.isActive && !sessionState.isRecovering) {
@@ -220,8 +234,7 @@ export const useUnifiedSessionTracker = () => {
         }
       };
 
-      // Production optimized: check every 60 seconds instead of 30
-      inactivityTimerRef.current = setInterval(checkInactivity, 60000);
+      inactivityTimerRef.current = setInterval(checkInactivity, 30000);
     }
 
     return () => {
@@ -267,7 +280,7 @@ export const useUnifiedSessionTracker = () => {
         setSessionState(prev => prev.isPaused ? prev : ({ ...prev, isPaused: true }));
         toast.info('Session paused due to being away');
       }
-    }, 60000); // Production optimized: 60 seconds instead of 30
+    }, 30000);
 
     return () => {
       if (awayIntervalRef.current) {
@@ -306,9 +319,7 @@ export const useUnifiedSessionTracker = () => {
     if (!user) throw new Error('User not authenticated');
 
     try {
-      if (DEBUG_CONFIG.STATE_LOGGING) {
-        console.log('🚀 [UNIFIED SESSION] Starting new session:', sessionData);
-      }
+      console.log('🚀 [UNIFIED SESSION] Starting new session:', sessionData);
 
       // End any existing active session first
       if (sessionState.isActive && sessionState.currentSessionId) {
@@ -339,9 +350,7 @@ export const useUnifiedSessionTracker = () => {
 
       if (error) throw error;
 
-      if (DEBUG_CONFIG.STATE_LOGGING) {
-        console.log('✅ [UNIFIED SESSION] Session created successfully:', data.id);
-      }
+      console.log('✅ [UNIFIED SESSION] Session created successfully:', data.id);
 
       const newState: UnifiedSessionState = {
         isActive: true,
@@ -372,16 +381,12 @@ export const useUnifiedSessionTracker = () => {
 
   const endSession = async (reason = 'Manual session end'): Promise<void> => {
     if (!sessionState.isActive || !sessionState.currentSessionId) {
-      if (DEBUG_CONFIG.STATE_LOGGING) {
-        console.log('⚠️ [UNIFIED SESSION] No active session to end');
-      }
+      console.log('⚠️ [UNIFIED SESSION] No active session to end');
       return;
     }
 
     try {
-      if (DEBUG_CONFIG.STATE_LOGGING) {
-        console.log('🛑 [UNIFIED SESSION] Ending session:', sessionState.currentSessionId, 'Reason:', reason);
-      }
+      console.log('🛑 [UNIFIED SESSION] Ending session:', sessionState.currentSessionId, 'Reason:', reason);
 
       const endTime = new Date();
       const duration = Math.round((endTime.getTime() - (sessionState.startTime?.getTime() || Date.now())) / 1000);
@@ -398,9 +403,7 @@ export const useUnifiedSessionTracker = () => {
 
       if (error) throw error;
 
-      if (DEBUG_CONFIG.STATE_LOGGING) {
-        console.log('✅ [UNIFIED SESSION] Session ended successfully. Duration:', Math.round(duration / 60), 'minutes');
-      }
+      console.log('✅ [UNIFIED SESSION] Session ended successfully. Duration:', Math.round(duration / 60), 'minutes');
 
       // Clear all timers
       if (timerRef.current) {

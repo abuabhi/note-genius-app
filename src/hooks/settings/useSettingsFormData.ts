@@ -77,10 +77,6 @@ export const useSettingsFormData = (
           form.setValue("enableDailyQuoteCard", engage.enableDailyQuoteCard ?? engage.dailyQuoteCard ?? true);
           form.setValue("enableSoundEffects", engage.enableSoundEffects ?? engage.soundEffects ?? true);
           form.setValue("enableEmojiBurst", engage.enableEmojiBurst ?? engage.emojiBurst ?? true);
-          
-          // Load study music preferences
-          const musicPrefs = data.study_music_preferences as { selectedTracks?: string[] } | null;
-          form.setValue("selectedStudyTracks", musicPrefs?.selectedTracks || []);
         }
       } catch (error) {
         console.error("Error fetching user preferences:", error);

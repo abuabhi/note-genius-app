@@ -31,8 +31,6 @@ export const useUnifiedAnalytics = () => {
   const { user } = useAuth();
 
   console.log('📊 [UNIFIED ANALYTICS] Using only real sessions from unified tracker');
-  console.log('🕐 [TIMEZONE DEBUG] Current time:', new Date().toISOString());
-  console.log('🕐 [TIMEZONE DEBUG] Local timezone offset:', new Date().getTimezoneOffset());
 
   // Query for unified session data (real sessions only)
   const { data: sessions = [], isLoading } = useQuery({
@@ -118,16 +116,8 @@ export const useUnifiedAnalytics = () => {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     
-    console.log('🕐 [DATE DEBUG] Now:', now.toISOString());
-    console.log('🕐 [DATE DEBUG] Today (midnight):', today.toISOString());
-    console.log('🕐 [DATE DEBUG] Week ago:', weekAgo.toISOString());
-    
     const completedSessions = sessions.filter(s => !s.is_active && s.duration);
-    const todaySessions = sessions.filter(s => {
-      const sessionDate = new Date(s.start_time);
-      console.log('🕐 [SESSION DEBUG] Session time:', sessionDate.toISOString(), 'vs today:', today.toISOString(), 'included:', sessionDate >= today);
-      return sessionDate >= today;
-    });
+    const todaySessions = sessions.filter(s => new Date(s.start_time) >= today);
     const weeklySessions = sessions.filter(s => new Date(s.start_time) >= weekAgo);
     
     const totalMinutes = completedSessions.reduce((acc, session) => acc + (session.duration || 0), 0) / 60;

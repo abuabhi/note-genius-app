@@ -55,9 +55,6 @@ export const useSettingsFormSubmission = (
         weekly_study_goal_hours: data.weeklyStudyGoalHours,
         notification_preferences: notificationPreferences,
         adaptive_learning_preferences: adaptiveLearningPreferences,
-        study_music_preferences: {
-          selectedTracks: data.selectedStudyTracks || []
-        },
       };
 
       // Update user profile
@@ -70,25 +67,6 @@ export const useSettingsFormSubmission = (
         console.error("Error saving preferences:", error);
         toast.error("Failed to save preferences");
         return false;
-      }
-
-      // Update user's selected music track in dedicated table
-      if (data.selectedStudyTracks && data.selectedStudyTracks.length > 0) {
-        const selectedTrackId = data.selectedStudyTracks[0]; // Use first selected track
-        
-        const { error: musicError } = await supabase
-          .from('user_selected_music_track')
-          .upsert({
-            user_id: user.id,
-            track_id: selectedTrackId,
-            selected_at: new Date().toISOString()
-          });
-          
-        if (musicError) {
-          console.error("Error saving music track selection:", musicError);
-          // Don't fail the entire form submission for this
-          toast.warning("Settings saved, but music selection may not have updated");
-        }
       }
       
       // Also update auth user metadata so header avatar updates immediately and persist engagement prefs

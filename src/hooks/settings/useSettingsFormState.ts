@@ -48,8 +48,6 @@ export const useSettingsFormState = () => {
       enableDailyQuoteCard: true,
       enableSoundEffects: true,
       enableEmojiBurst: true,
-      // Study Music defaults
-      selectedStudyTracks: [],
     },
     mode: "onBlur",
   });

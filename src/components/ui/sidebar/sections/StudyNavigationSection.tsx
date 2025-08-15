@@ -1,7 +1,6 @@
 
 import { useLocation } from "react-router-dom";
 import { NavLink } from "../NavLink";
-import { StudyAudioSection } from "./StudyAudioSection";
 import { Clock, Activity } from "lucide-react";
 
 interface StudyNavigationSectionProps {
@@ -23,7 +22,6 @@ export const StudyNavigationSection = ({
 
   return (
     <>
-      <StudyAudioSection isCollapsed={isCollapsed} />
       {isStudySessionsVisible && (
         <NavLink
           to="/study-sessions"

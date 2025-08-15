@@ -1,55 +1,51 @@
-// @ts-nocheck
 
 import { useState, useEffect } from 'react';
 import { Note } from '@/types/note';
 import { fetchNotesFromSupabase, NotesQueryOptions } from './noteUtils';
 
-import { useAuth } from '@/contexts/auth';
-
-interface UseFetchNotesProps {
-  options?: NotesQueryOptions;
-}
-
-interface UseFetchNotesResult {
-  notes: Note[];
-  isLoading: boolean;
-  error: Error | null;
-  refresh: () => void;
-}
-
-export const useFetchNotes = ({ options }: UseFetchNotesProps = {}): UseFetchNotesResult => {
+export const useFetchNotes = (options: NotesQueryOptions = {}) => {
   const [notes, setNotes] = useState<Note[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<Error | null>(null);
-  const { user } = useAuth();
-
-  const fetchData = async () => {
-    if (!user) {
-      console.log("No user logged in")
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const fetchedNotes = await fetchNotesFromSupabase(user.id, options);
-      setNotes(fetchedNotes);
-    } catch (err: any) {
-      setError(err);
-      console.error("Failed to fetch notes:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchData();
-  }, [user?.id, options]);
+    const loadNotes = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await fetchNotesFromSupabase(options);
+        setNotes(result.notes);
+      } catch (err) {
+        console.error('Error fetching notes:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch notes');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const refresh = () => {
-    fetchData();
+    loadNotes();
+  }, [JSON.stringify(options)]);
+
+  const refetch = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await fetchNotesFromSupabase(options);
+      if (result.notes && result.notes.length > 0) {
+        setNotes(result.notes);
+      }
+    } catch (err) {
+      console.error('Error refetching notes:', err);
+      setError(err instanceof Error ? err.message : 'Failed to refetch notes');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return { notes, isLoading, error, refresh };
+  return {
+    notes,
+    loading,
+    error,
+    refetch
+  };
 };

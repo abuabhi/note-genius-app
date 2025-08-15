@@ -1,13 +1,13 @@
 // Debug Configuration - Single source of truth for all debugging
 export const DEBUG_CONFIG = {
-  // Set to false to completely disable all debugging features in production
-  ENHANCEMENT_FLOW: process.env.NODE_ENV === 'development',
+  // Set to false to completely disable all debugging features
+  ENHANCEMENT_FLOW: true,
   
   // Sub-features that can be individually controlled
-  NETWORK_LOGGING: process.env.NODE_ENV === 'development',
-  STATE_LOGGING: process.env.NODE_ENV === 'development',
-  UI_DEBUGGER: process.env.NODE_ENV === 'development',
-  FLOW_TRACKER: process.env.NODE_ENV === 'development',
+  NETWORK_LOGGING: true,
+  STATE_LOGGING: true,
+  UI_DEBUGGER: true,
+  FLOW_TRACKER: true,
 } as const;
 
 // Helper function to check if any debugging is enabled

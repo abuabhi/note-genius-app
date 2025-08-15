@@ -38,14 +38,14 @@ class SecurityHeadersManager {
     const origins = allowedOrigins.join(' ');
     const isDev = config.isDevelopment;
     
-    // SECURITY FIX: Allow dynamic imports for lazy-loaded components
+    // SECURITY FIX: Remove unsafe-inline and unsafe-eval in production
     const scriptSrc = isDev 
       ? `script-src ${origins} 'unsafe-inline' 'unsafe-eval'` // Development only
-      : `script-src ${origins} 'unsafe-inline' 'unsafe-eval'`; // Production - need both for Vite dynamic imports
+      : `script-src ${origins} 'strict-dynamic'`; // Production
     
     const styleSrc = isDev
       ? `style-src ${origins} 'unsafe-inline'` // Development only  
-      : `style-src ${origins} 'unsafe-inline'`; // Production - allow inline styles
+      : `style-src ${origins}`;
     
     return [
       `default-src ${origins}`,
@@ -53,7 +53,6 @@ class SecurityHeadersManager {
       styleSrc,
       `img-src ${origins} https://images.unsplash.com https://*.unsplash.com data: blob:`,
       `font-src ${origins} data:`,
-      `media-src ${origins} https://*.supabase.co data: blob:`, // AUDIO FIX: Allow Supabase media
       `connect-src ${origins} https://*.supabase.co wss://*.supabase.co`,
       `frame-src 'none'`,
       `object-src 'none'`,
@@ -65,58 +64,28 @@ class SecurityHeadersManager {
   }
 
   private applyHeaders(): void {
-    // Client-side CSP is disabled - server-side CSP is configured in vercel.json
-    // This ensures proper CSP enforcement without meta tag conflicts
+    // Only apply CSP via meta tags (X-Frame-Options must be set by server)
+    this.addMetaTag('Content-Security-Policy', this.headers['Content-Security-Policy']);
     
+    // Log security configuration
     if (config.isDevelopment) {
-      console.log('🔒 [CSP INFO] Client-side CSP disabled - using server-side configuration');
-      console.log('🔒 [CSP INFO] Expected server CSP includes media-src for Supabase audio playback');
-      console.log('🔒 [CSP INFO] Generated CSP (reference only):', this.headers['Content-Security-Policy']);
-      console.log('🔒 [CSP INFO] Server CSP should include: media-src \'self\' https://zuhcmwujzfddmafozubd.supabase.co data: blob:');
-    }
-    
-    // Log security configuration status
-    if (config.isDevelopment) {
-      console.log('🔒 Security headers status:', {
-        'Content-Security-Policy': 'Server-side configured in vercel.json',
-        'Audio Support': 'Supabase media-src enabled',
-        'Client CSP': 'Disabled (recommended)'
+      console.log('🔒 Security headers configured (client-side):', {
+        'Content-Security-Policy': this.headers['Content-Security-Policy']
       });
     }
   }
 
   private addMetaTag(name: string, content: string): void {
-    if (!content) {
-      if (config.isDevelopment) {
-        console.warn('🔒 [CSP DEBUG] Empty content for meta tag:', name);
-      }
-      return;
-    }
-    
-    if (config.isDevelopment) {
-      console.log('🔒 [CSP DEBUG] Adding meta tag:', name, content.substring(0, 100) + '...');
-    }
+    if (!content) return;
     
     const existing = document.querySelector(`meta[http-equiv="${name}"]`);
     if (existing) {
-      if (config.isDevelopment) {
-        console.log('🔒 [CSP DEBUG] Updating existing meta tag');
-      }
       existing.setAttribute('content', content);
     } else {
-      if (config.isDevelopment) {
-        console.log('🔒 [CSP DEBUG] Creating new meta tag');
-      }
       const meta = document.createElement('meta');
       meta.setAttribute('http-equiv', name);
       meta.setAttribute('content', content);
       document.head.appendChild(meta);
-    }
-    
-    // Verify it was added
-    if (config.isDevelopment) {
-      const verification = document.querySelector(`meta[http-equiv="${name}"]`);
-      console.log('🔒 [CSP DEBUG] Meta tag verification:', !!verification, verification?.getAttribute('content')?.substring(0, 50) + '...');
     }
   }
 

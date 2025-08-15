@@ -1,6 +1,4 @@
 
-// @ts-nocheck
-
 
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { StandardPageHeader } from "@/components/ui/StandardPageHeader";

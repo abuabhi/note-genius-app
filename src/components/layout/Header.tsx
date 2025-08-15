@@ -16,7 +16,7 @@ import { useAuth } from "@/contexts/auth"
 import { LogOut, User } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
-import NotificationPopover from '@/components/reminders/NotificationPopover';
+import { NotificationPopover } from '@/components/reminders/NotificationPopover';
 import { VersionDisplay } from '@/components/version/VersionDisplay';
 
 export const Header = () => {

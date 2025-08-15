@@ -8,7 +8,11 @@ import CTA from "@/components/landing/CTA";
 import StickyMobileCTA from "@/components/landing/StickyMobileCTA";
 import { Logos3 } from "@/components/ui/logos3";
 
-const EnhancedInteractiveDemo = React.lazy(() => import("@/components/landing/EnhancedInteractiveDemo"));
+const EnhancedInteractiveDemo = React.lazy(() =>
+  import("@/components/landing/EnhancedInteractiveDemo").then((m) => ({
+    default: m.EnhancedInteractiveDemo,
+  }))
+);
 const Testimonials = React.lazy(() => import("@/components/landing/Testimonials"));
 
 const HomePage = () => {

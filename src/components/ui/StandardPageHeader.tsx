@@ -40,7 +40,7 @@ export const StandardPageHeader = ({
             {defaultBreadcrumbs.map((item, index) => {
               const isLast = index === defaultBreadcrumbs.length - 1;
               return (
-                <div key={index}>
+                <React.Fragment key={index}>
                   <OptimizedBreadcrumbItem>
                     {item.href ? (
                       <OptimizedBreadcrumbLink to={item.href}>
@@ -53,7 +53,7 @@ export const StandardPageHeader = ({
                     )}
                   </OptimizedBreadcrumbItem>
                   {!isLast && <OptimizedBreadcrumbSeparator />}
-                </div>
+                </React.Fragment>
               );
             })}
           </OptimizedBreadcrumbList>

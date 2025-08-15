@@ -1,6 +1,4 @@
 
-// @ts-nocheck
-
 import { useState } from "react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import Layout from "@/components/layout/Layout";
