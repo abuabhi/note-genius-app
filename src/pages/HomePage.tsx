@@ -13,7 +13,11 @@ const EnhancedInteractiveDemo = React.lazy(() =>
     default: m.EnhancedInteractiveDemo,
   }))
 );
-const Testimonials = React.lazy(() => import("@/components/landing/Testimonials"));
+const Testimonials = React.lazy(() => 
+  import("@/components/landing/Testimonials").then((m) => ({
+    default: m.default,
+  }))
+);
 
 const HomePage = () => {
   const canonicalUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : undefined;
