@@ -83,18 +83,12 @@ export const StudyAudioSection = ({ isCollapsed }: StudyAudioSectionProps) => {
         return;
       }
 
-      // Create signed URL for the audio file
-      const { data: signedUrlData, error: urlError } = await supabase.storage
-        .from('study-music')
-        .createSignedUrl(currentTrack.audio_file_path, 3600);
-
-      if (urlError || !signedUrlData?.signedUrl) {
-        console.error('Error creating signed URL:', urlError);
-        return;
-      }
+      // Use direct public URL since the bucket is public
+      const publicUrl = `https://zuhcmwujzfddmafozubd.supabase.co/storage/v1/object/public/study-music/${currentTrack.audio_file_path}`;
+      console.log('🎵 Using public URL:', publicUrl);
 
       // Create and play audio
-      const newAudio = new Audio(signedUrlData.signedUrl);
+      const newAudio = new Audio(publicUrl);
       newAudio.loop = true;
       newAudio.volume = 0.6;
       
@@ -147,7 +141,7 @@ export const StudyAudioSection = ({ isCollapsed }: StudyAudioSectionProps) => {
         {!isCollapsed && (
           <>
             <div className="flex-1 text-left min-w-0">
-              <div className="text-sm font-medium truncate">{displayTrack.name}</div>
+              <div className="text-sm font-medium truncate">Study Music</div>
               <div className="text-xs opacity-60 truncate">
                 {isPlaying ? 'Now playing' : displayTrack.artist}
               </div>
