@@ -252,16 +252,19 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
 
     try {
       setPlayingTrack(track.id);
+      console.log('🎵 StudyMusicSettingsCard: Playing preview for track:', { 
+        id: track.id, 
+        name: track.name,
+        audioUrl: track.audioUrl,
+        youtubeUrl: track.youtubeUrl 
+      });
       
-      // Get the actual audio URL from Supabase storage
-      const audioPath = track.audioUrl || track.youtubeUrl;
-      const { data: signedUrl, error: urlError } = await supabase.storage
-        .from('study-music')
-        .createSignedUrl(audioPath, 3600);
+      // Use the already signed URL from the edge function response
+      const audioUrl = track.audioUrl || track.youtubeUrl;
       
-      if (urlError) {
-        console.error('Error creating signed URL:', urlError);
-        toast.error('Unable to load audio preview');
+      if (!audioUrl) {
+        console.error('🎵 StudyMusicSettingsCard: No audio URL available for track:', track.id);
+        toast.error('No audio URL available for this track');
         setPlayingTrack(null);
         return;
       }
@@ -275,22 +278,28 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
       // Set up event handlers
       newAudio.oncanplaythrough = async () => {
         try {
+          console.log('🎵 StudyMusicSettingsCard: Audio loaded, attempting to play');
           await newAudio.play();
           toast.success(`Playing preview: ${track.name}`);
         } catch (playError) {
-          console.error('Error playing audio:', playError);
+          console.error('🎵 StudyMusicSettingsCard: Error playing audio:', playError);
           toast.error('Unable to play audio preview');
           setPlayingTrack(null);
         }
       };
       
       newAudio.onerror = (error) => {
-        console.error('Audio loading error:', error);
+        console.error('🎵 StudyMusicSettingsCard: Audio loading error:', error);
         toast.error('Unable to load audio file');
         setPlayingTrack(null);
       };
       
+      newAudio.onloadstart = () => {
+        console.log('🎵 StudyMusicSettingsCard: Started loading audio:', audioUrl);
+      };
+      
       newAudio.onended = () => {
+        console.log('🎵 StudyMusicSettingsCard: Audio preview ended');
         setPlayingTrack(null);
         setAudio(null);
       };
@@ -298,18 +307,20 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
       // Auto-stop preview after 30 seconds
       setTimeout(() => {
         if (playingTrack === track.id && newAudio) {
+          console.log('🎵 StudyMusicSettingsCard: Auto-stopping preview after 30s');
           newAudio.pause();
           setPlayingTrack(null);
           setAudio(null);
         }
       }, 30000);
       
-      // Load the audio
-      newAudio.src = signedUrl.signedUrl;
+      // Load the audio using the signed URL from edge function
+      console.log('🎵 StudyMusicSettingsCard: Setting audio source:', audioUrl);
+      newAudio.src = audioUrl;
       setAudio(newAudio);
       
     } catch (error) {
-      console.error('Error setting up preview:', error);
+      console.error('🎵 StudyMusicSettingsCard: Error setting up preview:', error);
       toast.error('Unable to play preview');
       setPlayingTrack(null);
     }

@@ -52,18 +52,47 @@ serve(async (req) => {
     // Transform tracks to include storage URLs
     const transformedTracks = await Promise.all(
       (tracks || []).map(async (track) => {
-        // Generate signed URL for audio file
-        const { data: audioUrl } = await supabase.storage
-          .from('study-music')
-          .createSignedUrl(track.audio_file_path, 3600); // 1 hour expiry
+        console.log('🎵 get-study-music: Processing track:', { 
+          id: track.id, 
+          name: track.name, 
+          audio_file_path: track.audio_file_path 
+        });
+
+        // Generate signed URL for audio file - handle different path formats
+        let audioSignedUrl = null;
+        let audioError = null;
+        
+        if (track.audio_file_path) {
+          try {
+            const { data: audioUrl, error: urlError } = await supabase.storage
+              .from('study-music')
+              .createSignedUrl(track.audio_file_path, 3600); // 1 hour expiry
+            
+            audioSignedUrl = audioUrl?.signedUrl;
+            audioError = urlError;
+            
+            if (urlError) {
+              console.error('🎵 get-study-music: Audio URL error for track', track.id, ':', urlError);
+            } else {
+              console.log('🎵 get-study-music: Generated audio URL for track', track.id, ':', audioSignedUrl ? 'success' : 'failed');
+            }
+          } catch (err) {
+            console.error('🎵 get-study-music: Exception generating audio URL:', err);
+            audioError = err;
+          }
+        }
 
         // Generate signed URL for thumbnail if it exists
         let thumbnailUrl = null;
         if (track.thumbnail_path) {
-          const { data: thumbUrl } = await supabase.storage
-            .from('study-music')
-            .createSignedUrl(track.thumbnail_path, 3600);
-          thumbnailUrl = thumbUrl?.signedUrl || null;
+          try {
+            const { data: thumbUrl } = await supabase.storage
+              .from('study-music')
+              .createSignedUrl(track.thumbnail_path, 3600);
+            thumbnailUrl = thumbUrl?.signedUrl || null;
+          } catch (err) {
+            console.error('🎵 get-study-music: Thumbnail URL error:', err);
+          }
         }
 
         return {
@@ -71,12 +100,18 @@ serve(async (req) => {
           name: track.name,
           artist: track.artist,
           duration: track.duration_seconds || 300,
-          youtubeUrl: audioUrl?.signedUrl || '', // Use audio URL instead of YouTube
-          audioUrl: audioUrl?.signedUrl || '', // Direct audio URL for playback
+          youtubeUrl: audioSignedUrl || '', // Use audio URL for compatibility
+          audioUrl: audioSignedUrl || '', // Direct audio URL for playback
+          url: audioSignedUrl || '', // For StudyMusicManager compatibility
           thumbnailUrl: thumbnailUrl || '/placeholder-music.jpg',
           tags: track.tags || [],
           category: track.category || 'lofi',
-          sortOrder: track.sort_order || 0
+          sortOrder: track.sort_order || 0,
+          // Debug info
+          _debug: {
+            original_path: track.audio_file_path,
+            url_generation_error: audioError?.message || null
+          }
         };
       })
     );

@@ -51,65 +51,67 @@ export const StudyAudioSection = ({ isCollapsed }: StudyAudioSectionProps) => {
     if (!user) return;
     
     try {
-      // Get user's selected track from new table
+      console.log('🎵 StudyAudioSection: Loading user selected track for user:', user.id);
+      
+      // First, get tracks from edge function to ensure we have signed URLs
+      const { data: tracksData, error: tracksError } = await supabase.functions.invoke('get-study-music', {
+        body: { category: 'all', limit: 50 }
+      });
+      
+      if (tracksError) {
+        console.error('🎵 StudyAudioSection: Error fetching tracks from edge function:', tracksError);
+        setCurrentTrackName(DEFAULT_TRACK.name);
+        return;
+      }
+      
+      const availableTracks = tracksData?.tracks || [];
+      console.log('🎵 StudyAudioSection: Fetched', availableTracks.length, 'tracks from edge function');
+      
+      // Get user's selected track ID
       const { data: selectedTrackRecord } = await supabase
         .from('user_selected_music_track')
-        .select(`
-          track_id,
-          study_music_tracks (
-            id,
-            name,
-            artist,
-            audio_file_path,
-            duration_seconds
-          )
-        `)
+        .select('track_id')
         .eq('user_id', user.id)
         .single();
 
-      if (selectedTrackRecord?.study_music_tracks) {
-        const track = selectedTrackRecord.study_music_tracks as any;
-        setCurrentTrackName(`${track.name} - ${track.artist}`);
-        
-        // Generate storage URL for the audio file
-        const { data: audioUrl } = await supabase.storage
-          .from('study-music')
-          .createSignedUrl(track.audio_file_path, 3600);
-        
-        // Set up track in music manager with real audio URL
-        const musicTrack = {
-          id: track.id,
-          name: track.name,
-          artist: track.artist,
-          url: audioUrl?.signedUrl || '',
-          duration: track.duration_seconds || 1800
-        };
-        musicManager.setTracks([musicTrack]);
-        return;
+      let trackToUse = null;
+      
+      if (selectedTrackRecord?.track_id) {
+        // Find the selected track in available tracks
+        trackToUse = availableTracks.find((t: any) => t.id === selectedTrackRecord.track_id);
+        console.log('🎵 StudyAudioSection: Found user selected track:', trackToUse?.name);
       }
       
-      // Fallback: Get first available track from database
-      const { data } = await supabase.functions.invoke('get-study-music', {
-        body: { category: 'all', limit: 1 }
-      });
+      if (!trackToUse && availableTracks.length > 0) {
+        // Use first available track as fallback
+        trackToUse = availableTracks[0];
+        console.log('🎵 StudyAudioSection: Using fallback track:', trackToUse?.name);
+      }
 
-      const tracks = data?.tracks || [];
-      if (tracks.length > 0) {
-        const track = tracks[0];
-        setCurrentTrackName(`${track.name} - ${track.artist}`);
+      if (trackToUse) {
+        setCurrentTrackName(`${trackToUse.name} - ${trackToUse.artist}`);
         
+        // Use the signed URL from edge function response
         const musicTrack = {
-          id: track.id,
-          name: track.name,
-          artist: track.artist,
-          url: track.audioUrl || track.youtubeUrl,
-          duration: track.duration
+          id: trackToUse.id,
+          name: trackToUse.name,
+          artist: trackToUse.artist,
+          url: trackToUse.audioUrl || trackToUse.url || trackToUse.youtubeUrl || '',
+          duration: trackToUse.duration || 1800
         };
+        
+        console.log('🎵 StudyAudioSection: Setting track in music manager:', {
+          id: musicTrack.id,
+          name: musicTrack.name,
+          hasUrl: !!musicTrack.url
+        });
+        
         musicManager.setTracks([musicTrack]);
         return;
       }
       
-      // Final fallback to default track if database is empty
+      // Final fallback to default track if no tracks available
+      console.log('🎵 StudyAudioSection: No tracks available, using default');
       setCurrentTrackName(DEFAULT_TRACK.name);
       const defaultMusicTrack = {
         id: DEFAULT_TRACK.id,
@@ -121,7 +123,7 @@ export const StudyAudioSection = ({ isCollapsed }: StudyAudioSectionProps) => {
       musicManager.setTracks([defaultMusicTrack]);
       
     } catch (error) {
-      console.error('Error loading user track:', error);
+      console.error('🎵 StudyAudioSection: Error loading user track:', error);
       // Fallback to default
       setCurrentTrackName(DEFAULT_TRACK.name);
     }
@@ -160,7 +162,14 @@ export const StudyAudioSection = ({ isCollapsed }: StudyAudioSectionProps) => {
     }
 
     try {
+      console.log('🎵 StudyAudioSection: Handle play music - current state:', { 
+        isPlayingMusic, 
+        hasCurrentTrack: !!currentTrack,
+        currentTrackName 
+      });
+      
       if (isPlayingMusic) {
+        console.log('🎵 StudyAudioSection: Stopping music');
         musicManager.stop();
         setIsPlayingMusic(false);
         setCurrentTrack(null);
@@ -169,18 +178,30 @@ export const StudyAudioSection = ({ isCollapsed }: StudyAudioSectionProps) => {
         const availableTracks = musicManager.availableTracks;
         const trackToPlay = availableTracks[0]; // First (and only) track
         
-        if (trackToPlay) {
+        console.log('🎵 StudyAudioSection: Available tracks:', availableTracks.length);
+        console.log('🎵 StudyAudioSection: Track to play:', {
+          id: trackToPlay?.id,
+          name: trackToPlay?.name,
+          hasUrl: !!trackToPlay?.url
+        });
+        
+        if (trackToPlay && trackToPlay.url) {
+          console.log('🎵 StudyAudioSection: Playing track:', trackToPlay.name);
           await musicManager.playTrack(trackToPlay.id);
           setIsPlayingMusic(true);
           setCurrentTrack(trackToPlay);
+        } else {
+          console.error('🎵 StudyAudioSection: Cannot play - no valid track available');
+          // Try to reload tracks
+          await loadUserSelectedTrack();
         }
       }
     } catch (error) {
-      console.error('Error playing music:', error);
+      console.error('🎵 StudyAudioSection: Error playing music:', error);
       setIsPlayingMusic(false);
       setCurrentTrack(null);
     }
-  }, [isPlayingMusic, user, navigate]);
+  }, [isPlayingMusic, user, navigate, currentTrack, currentTrackName]);
 
   return (
     <div className="w-full">
