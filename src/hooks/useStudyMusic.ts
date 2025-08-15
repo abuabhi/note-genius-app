@@ -88,19 +88,7 @@ export const useStudyMusic = () => {
 
     try {
       setError(null);
-      
-      // Get signed URL for the track using the actual audio file path
-      const { data: signedUrlData, error: urlError } = await supabase.storage
-        .from('study-music')
-        .createSignedUrl(currentTrack.audio_file_path, 3600);
-
-      if (urlError || !signedUrlData?.signedUrl) {
-        throw new Error('Cannot generate audio URL');
-      }
-
-      // Update track with URL and play
-      const trackWithUrl = { ...currentTrack, url: signedUrlData.signedUrl };
-      await manager.playTrack(trackWithUrl.id);
+      await manager.playTrack(currentTrack.id);
       setIsPlaying(true);
     } catch (error) {
       console.error('Play error:', error);
