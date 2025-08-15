@@ -9,6 +9,7 @@ import AppRoutes from './components/app/AppRoutes';
 import { useNotificationToasts } from '@/hooks/useNotificationToasts';
 import { useVersionLogger } from '@/hooks/useVersionLogger';
 import { sentryService } from '@/services/sentry/sentryService';
+import { securityHeadersManager } from '@/services/security/SecurityHeadersManager';
 
 function AppContent() {
   useNotificationToasts(); // Move this inside the providers
@@ -19,6 +20,10 @@ function AppContent() {
     
     // Initialize Sentry
     sentryService.initialize().catch(console.error);
+    
+    // Force security headers initialization
+    console.log('🔒 [APP] Initializing security headers...');
+    console.log('🔒 [APP] SecurityHeadersManager instance:', securityHeadersManager);
   }, []);
 
   return <AppRoutes />;
