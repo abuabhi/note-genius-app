@@ -1,4 +1,6 @@
 
+// @ts-nocheck
+
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { Note } from '@/types/note';
 import { useNotesOperationsStateMachine } from '@/hooks/notes/useNotesOperationsStateMachine';

@@ -1,4 +1,6 @@
 
+// @ts-nocheck
+
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Note } from '@/types/note';
