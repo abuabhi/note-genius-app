@@ -1,282 +1,127 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { serve } from "http/server";
+import { createClient } from "@supabase/supabase-js";
+import { corsHeaders } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-interface StudyTrack {
-  id: string;
-  name: string;
-  artist: string;
-  duration: number;
-  youtubeUrl: string;
-  thumbnailUrl: string;
-  tags: string[];
-  category: string;
-}
-
-// Curated YouTube Study Music Library
-const CURATED_YOUTUBE_TRACKS: StudyTrack[] = [
-  {
-    id: 'lofi-1',
-    name: 'Lofi Hip Hop Study Mix',
-    artist: 'ChillHop Music',
-    duration: 3600,
-    youtubeUrl: 'https://www.youtube.com/watch?v=jfKfPfyJRdk',
-    thumbnailUrl: 'https://img.youtube.com/vi/jfKfPfyJRdk/maxresdefault.jpg',
-    tags: ['lofi', 'hip-hop', 'chill', 'focus'],
-    category: 'lofi'
-  },
-  {
-    id: 'ambient-1',
-    name: 'Deep Focus Music',
-    artist: 'Ambient Worlds',
-    duration: 7200,
-    youtubeUrl: 'https://www.youtube.com/watch?v=5qap5aO4i9A',
-    thumbnailUrl: 'https://img.youtube.com/vi/5qap5aO4i9A/maxresdefault.jpg',
-    tags: ['ambient', 'focus', 'concentration', 'deep'],
-    category: 'ambient'
-  },
-  {
-    id: 'classical-1',
-    name: 'Classical Music for Studying',
-    artist: 'Halidon Music',
-    duration: 5400,
-    youtubeUrl: 'https://www.youtube.com/watch?v=YJKjHeGaKJQ',
-    thumbnailUrl: 'https://img.youtube.com/vi/YJKjHeGaKJQ/maxresdefault.jpg',
-    tags: ['classical', 'piano', 'study', 'focus'],
-    category: 'classical'
-  },
-  {
-    id: 'nature-1',
-    name: 'Rain Sounds for Studying',
-    artist: 'Nature Sounds',
-    duration: 3600,
-    youtubeUrl: 'https://www.youtube.com/watch?v=q76bMs-NwRk',
-    thumbnailUrl: 'https://img.youtube.com/vi/q76bMs-NwRk/maxresdefault.jpg',
-    tags: ['rain', 'nature', 'white-noise', 'focus'],
-    category: 'nature'
-  },
-  {
-    id: 'jazz-1',
-    name: 'Smooth Jazz for Work',
-    artist: 'Smooth Jazz Music',
-    duration: 4800,
-    youtubeUrl: 'https://www.youtube.com/watch?v=neV3EPgvZ3g',
-    thumbnailUrl: 'https://img.youtube.com/vi/neV3EPgvZ3g/maxresdefault.jpg',
-    tags: ['jazz', 'smooth', 'work', 'concentration'],
-    category: 'jazz'
-  },
-  {
-    id: 'lofi-2',
-    name: 'Calm Lofi Study Beats',
-    artist: 'Lofi Girl',
-    duration: 3600,
-    youtubeUrl: 'https://www.youtube.com/watch?v=DWcJFNfaw9c',
-    thumbnailUrl: 'https://img.youtube.com/vi/DWcJFNfaw9c/maxresdefault.jpg',
-    tags: ['lofi', 'calm', 'study', 'beats'],
-    category: 'lofi'
-  },
-  {
-    id: 'piano-1',
-    name: 'Peaceful Piano Music',
-    artist: 'Piano Relaxing Music',
-    duration: 4800,
-    youtubeUrl: 'https://www.youtube.com/watch?v=EFkaFaYN7rM',
-    thumbnailUrl: 'https://img.youtube.com/vi/EFkaFaYN7rM/maxresdefault.jpg',
-    tags: ['piano', 'peaceful', 'relaxing', 'study'],
-    category: 'classical'
-  },
-  {
-    id: 'ambient-2',
-    name: 'Space Ambient Music',
-    artist: 'Iron Cthulhu Apocalypse',
-    duration: 7200,
-    youtubeUrl: 'https://www.youtube.com/watch?v=U_T4CCMOUg0',
-    thumbnailUrl: 'https://img.youtube.com/vi/U_T4CCMOUg0/maxresdefault.jpg',
-    tags: ['ambient', 'space', 'atmospheric', 'focus'],
-    category: 'ambient'
-  },
-  {
-    id: 'nature-2',
-    name: 'Forest Sounds',
-    artist: 'Relaxing White Noise',
-    duration: 3600,
-    youtubeUrl: 'https://www.youtube.com/watch?v=UbX-WNo0wZg',
-    thumbnailUrl: 'https://img.youtube.com/vi/UbX-WNo0wZg/maxresdefault.jpg',
-    tags: ['forest', 'nature', 'birds', 'peaceful'],
-    category: 'nature'
-  },
-  {
-    id: 'electronic-1',
-    name: 'Synthwave Study Mix',
-    artist: 'The 80s Guy',
-    duration: 4800,
-    youtubeUrl: 'https://www.youtube.com/watch?v=4bKL8ZO8w90',
-    thumbnailUrl: 'https://img.youtube.com/vi/4bKL8ZO8w90/maxresdefault.jpg',
-    tags: ['synthwave', 'electronic', 'retro', 'study'],
-    category: 'electronic'
-  },
-  {
-    id: 'lofi-3',
-    name: 'Cozy Lofi Coffee Shop',
-    artist: 'Coffee Shop Music',
-    duration: 3600,
-    youtubeUrl: 'https://www.youtube.com/watch?v=bmVKaAV_7-A',
-    thumbnailUrl: 'https://img.youtube.com/vi/bmVKaAV_7-A/maxresdefault.jpg',
-    tags: ['lofi', 'coffee', 'cozy', 'chill'],
-    category: 'lofi'
-  },
-  {
-    id: 'classical-2',
-    name: 'Baroque Music for Study',
-    artist: 'Classical Music',
-    duration: 5400,
-    youtubeUrl: 'https://www.youtube.com/watch?v=7pVAXXCiAII',
-    thumbnailUrl: 'https://img.youtube.com/vi/7pVAXXCiAII/maxresdefault.jpg',
-    tags: ['baroque', 'classical', 'study', 'concentration'],
-    category: 'classical'
-  },
-  {
-    id: 'meditation-1',
-    name: 'Tibetan Singing Bowls',
-    artist: 'Meditation Music',
-    duration: 3600,
-    youtubeUrl: 'https://www.youtube.com/watch?v=2Eos3F8B5c8',
-    thumbnailUrl: 'https://img.youtube.com/vi/2Eos3F8B5c8/maxresdefault.jpg',
-    tags: ['meditation', 'tibetan', 'healing', 'focus'],
-    category: 'meditation'
-  },
-  {
-    id: 'binaural-1',
-    name: 'Alpha Waves 8-14 Hz',
-    artist: 'Binaural Beats Base',
-    duration: 3600,
-    youtubeUrl: 'https://www.youtube.com/watch?v=WPni755-Krg',
-    thumbnailUrl: 'https://img.youtube.com/vi/WPni755-Krg/maxresdefault.jpg',
-    tags: ['binaural', 'alpha-waves', 'focus', 'concentration'],
-    category: 'binaural'
-  },
-  {
-    id: 'ambient-3',
-    name: 'Dark Ambient Study',
-    artist: 'Cryo Chamber',
-    duration: 5400,
-    youtubeUrl: 'https://www.youtube.com/watch?v=l4GY9QJ9iKI',
-    thumbnailUrl: 'https://img.youtube.com/vi/l4GY9QJ9iKI/maxresdefault.jpg',
-    tags: ['dark-ambient', 'atmospheric', 'study', 'focus'],
-    category: 'ambient'
-  }
-];
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+    
+    // Parse request body for filters
+    const { category = 'all', limit = 20 } = await req.json().catch(() => ({}));
 
-    const { category = 'all', limit = 15, userId = null, autoAssign = false, ensureDefaults = false } = await req.json().catch(() => ({}));
+    // Query study music tracks from database
+    let query = supabase
+      .from('study_music_tracks')
+      .select('*')
+      .eq('is_active', true);
 
-    // Get available tracks (filter by category if specified)
-    let availableTracks = CURATED_YOUTUBE_TRACKS;
-    if (category && category !== 'all') {
-      availableTracks = CURATED_YOUTUBE_TRACKS.filter(track => track.category === category);
+    // Apply category filter if specified
+    if (category !== 'all') {
+      query = query.eq('category', category);
     }
 
-    // Auto-assign first 3 tracks as defaults if user has no selections
-    if (ensureDefaults && userId) {
-      console.log('Checking if user needs default tracks assigned:', userId);
-      
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('study_music_preferences')
-          .eq('id', userId)
-          .single();
+    // Apply limit and ordering
+    query = query
+      .order('sort_order', { ascending: true })
+      .limit(limit);
 
-        const preferences = profile?.study_music_preferences as { selectedTracks?: string[] } | null;
-        const existingTracks = preferences?.selectedTracks || [];
-        
-        if (existingTracks.length === 0) {
-          console.log('User has no tracks, assigning default track');
-          const defaultTracks = ['lofi-1'];
-          
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({
-              study_music_preferences: { selectedTracks: defaultTracks },
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', userId);
+    const { data: tracks, error } = await query;
 
-          if (updateError) {
-            console.error('Error setting default tracks:', updateError);
-          } else {
-            console.log('Successfully set default tracks:', defaultTracks);
-          }
+    if (error) {
+      console.error('Database error:', error);
+      throw error;
+    }
+
+    // Transform tracks to include storage URLs
+    const transformedTracks = await Promise.all(
+      (tracks || []).map(async (track) => {
+        // Generate signed URL for audio file
+        const { data: audioUrl } = await supabase.storage
+          .from('study-music')
+          .createSignedUrl(track.audio_file_path, 3600); // 1 hour expiry
+
+        // Generate signed URL for thumbnail if it exists
+        let thumbnailUrl = null;
+        if (track.thumbnail_path) {
+          const { data: thumbUrl } = await supabase.storage
+            .from('study-music')
+            .createSignedUrl(track.thumbnail_path, 3600);
+          thumbnailUrl = thumbUrl?.signedUrl || null;
         }
-      } catch (err) {
-        console.error('Error in ensureDefaults:', err);
-      }
-    }
 
-    // If autoAssign is true and userId provided, auto-assign 1 random track
-    if (autoAssign && userId) {
-      console.log('Auto-assigning 1 random track for user:', userId);
-      
-      // Get 1 random track
-      const randomIndex = Math.floor(Math.random() * CURATED_YOUTUBE_TRACKS.length);
-      const selectedTracks = [CURATED_YOUTUBE_TRACKS[randomIndex].id];
+        return {
+          id: track.id,
+          name: track.name,
+          artist: track.artist,
+          duration: track.duration_seconds || 300,
+          youtubeUrl: audioUrl?.signedUrl || '', // Use audio URL instead of YouTube
+          audioUrl: audioUrl?.signedUrl || '', // Direct audio URL for playback
+          thumbnailUrl: thumbnailUrl || '/placeholder-music.jpg',
+          tags: track.tags || [],
+          category: track.category || 'lofi',
+          sortOrder: track.sort_order || 0
+        };
+      })
+    );
 
-      // Save to user preferences
-      try {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            study_music_preferences: { selectedTracks },
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', userId);
-
-        if (updateError) {
-          console.error('Error updating user preferences:', updateError);
-        } else {
-          console.log('Successfully assigned default tracks:', selectedTracks);
+    // If no tracks found, return default track for backwards compatibility
+    if (transformedTracks.length === 0) {
+      return new Response(
+        JSON.stringify({
+          tracks: [{
+            id: 'default',
+            name: 'Lofi Hip Hop Study Mix',
+            artist: 'ChillHop Music',
+            duration: 3600,
+            youtubeUrl: '',
+            audioUrl: '',
+            thumbnailUrl: '/placeholder-music.jpg',
+            tags: ['lofi', 'chill', 'focus'],
+            category: 'lofi',
+            sortOrder: 0
+          }],
+          total: 1,
+          categories: ['lofi']
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
-      } catch (err) {
-        console.error('Error in auto-assign:', err);
-      }
+      );
     }
 
-    // Return tracks in consistent order (no shuffling)
-    const orderedTracks = availableTracks;
+    // Get unique categories for response
+    const categories = [...new Set(transformedTracks.map(t => t.category))];
 
-    return new Response(JSON.stringify({ 
-      tracks: orderedTracks.slice(0, limit),
-      total: orderedTracks.length,
-      source: 'youtube-curated',
-      availableCategories: ['all', 'lofi', 'ambient', 'classical', 'nature', 'jazz', 'electronic', 'meditation', 'binaural']
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({
+        tracks: transformedTracks,
+        total: transformedTracks.length,
+        categories
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
 
   } catch (error) {
-    console.error('Error in get-study-music function:', error);
-    return new Response(JSON.stringify({ 
-      error: error.message,
-      tracks: [],
-      total: 0,
-      source: 'error'
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Function error:', error);
+    return new Response(
+      JSON.stringify({ 
+        error: 'Failed to fetch study music tracks',
+        details: error.message 
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 });

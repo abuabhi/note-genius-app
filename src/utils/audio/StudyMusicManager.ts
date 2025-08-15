@@ -44,11 +44,15 @@ class StudyMusicManager {
     }
 
     try {
-      this.audio = new Audio(track.url);
+      // Create and configure audio element
+      this.audio = new Audio();
+      this.audio.crossOrigin = "anonymous";
+      this.audio.preload = "auto";
       this.audio.volume = 0;
       this.audio.loop = true;
       this.currentTrack = track;
 
+      // Set up event handlers
       this.audio.onended = () => {
         this.isPlaying = false;
       };
@@ -58,39 +62,50 @@ class StudyMusicManager {
         this.isPlaying = false;
       };
 
-      await this.audio.play();
-      
-      // Fade in
-      const startTime = Date.now();
-      const fadeInterval = setInterval(() => {
-        const elapsed = (Date.now() - startTime) / 1000;
-        const progress = Math.min(elapsed / fadeSeconds, 1);
-        
-        if (this.audio) {
-          this.audio.volume = progress * this.volume;
-        }
-        
-        if (progress >= 1) {
-          clearInterval(fadeInterval);
-        }
-      }, 50);
+      this.audio.oncanplaythrough = async () => {
+        try {
+          await this.audio!.play();
+          
+          // Fade in
+          const startTime = Date.now();
+          const fadeInterval = setInterval(() => {
+            const elapsed = (Date.now() - startTime) / 1000;
+            const progress = Math.min(elapsed / fadeSeconds, 1);
+            
+            if (this.audio) {
+              this.audio.volume = progress * this.volume;
+            }
+            
+            if (progress >= 1) {
+              clearInterval(fadeInterval);
+            }
+          }, 50);
 
-      this.isPlaying = true;
-      
-      // Media Session metadata
-      try {
-        if ('mediaSession' in navigator) {
-          // @ts-ignore
-          navigator.mediaSession.metadata = new MediaMetadata({
-            title: track.name,
-            artist: track.artist,
-            album: 'Study Music',
-          });
+          this.isPlaying = true;
+          
+          // Media Session metadata
+          try {
+            if ('mediaSession' in navigator) {
+              // @ts-ignore
+              navigator.mediaSession.metadata = new MediaMetadata({
+                title: track.name,
+                artist: track.artist,
+                album: 'Study Music',
+              });
+            }
+          } catch {}
+        } catch (playError) {
+          console.error('Failed to play audio:', playError);
+          this.isPlaying = false;
         }
-      } catch {}
+      };
+
+      // Load the audio source
+      this.audio.src = track.url;
+      this.audio.load();
       
     } catch (error) {
-      console.error('Failed to play track:', error);
+      console.error('Failed to setup track:', error);
       this.isPlaying = false;
     }
   }

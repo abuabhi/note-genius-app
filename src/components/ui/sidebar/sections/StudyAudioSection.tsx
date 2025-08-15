@@ -74,12 +74,12 @@ export const StudyAudioSection = ({ isCollapsed }: StudyAudioSectionProps) => {
         
         if (selectedTrack) {
           setCurrentTrackName(`${selectedTrack.name} - ${selectedTrack.artist}`);
-          // Set up track in music manager
+          // Set up track in music manager with real audio URL
           const musicTrack = {
             id: selectedTrack.id,
             name: selectedTrack.name,
             artist: selectedTrack.artist,
-            url: selectedTrack.youtubeUrl,
+            url: selectedTrack.audioUrl || selectedTrack.youtubeUrl, // Prefer audioUrl from storage
             duration: selectedTrack.duration
           };
           musicManager.setTracks([musicTrack]);
