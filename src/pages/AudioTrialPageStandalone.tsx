@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 
 // Pixabay API integration (standalone)
-const PIXABAY_API_KEY = import.meta.env.VITE_PIXABAY_API_KEY || 'your-pixabay-api-key-here';
+const PIXABAY_API_KEY = '51793999-62d03dcfcc85d05a7208f73cf';
 
 type PixabayTrack = {
   id: number;
@@ -309,14 +309,9 @@ export default function AudioTrialPageStandalone() {
         <details>
           <summary className="cursor-pointer font-medium mb-2">Configuration</summary>
           <div className="space-y-2 text-sm">
-            <div>API Key configured: {PIXABAY_API_KEY !== 'your-pixabay-api-key-here' ? '✅' : '❌'}</div>
+            <div>API Key configured: ✅</div>
             <div>Total tracks: {tracks.length}</div>
             <div>Current track: {currentTrack?.id || 'none'}</div>
-            {PIXABAY_API_KEY === 'your-pixabay-api-key-here' && (
-              <div className="text-amber-600">
-                ⚠️ Set VITE_PIXABAY_API_KEY environment variable
-              </div>
-            )}
           </div>
         </details>
       </div>
