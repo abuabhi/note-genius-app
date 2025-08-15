@@ -17,7 +17,7 @@ export type PixabayResponse = {
 };
 
 // Direct Pixabay API integration
-const PIXABAY_API_KEY = import.meta.env.VITE_PIXABAY_API_KEY || 'your-pixabay-api-key-here';
+const PIXABAY_API_KEY = '51793999-62d03dcfcc85d05a7208f73cf';
 const PIXABAY_API_URL = 'https://pixabay.com/api/';
 
 export async function searchMusic(
