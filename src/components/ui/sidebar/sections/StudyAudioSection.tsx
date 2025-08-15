@@ -83,31 +83,79 @@ export const StudyAudioSection = ({ isCollapsed }: StudyAudioSectionProps) => {
         return;
       }
 
-      // Use direct public URL since the bucket is public
+      // Use fetch to get audio data and create blob URL to bypass CSP restrictions
       const publicUrl = `https://zuhcmwujzfddmafozubd.supabase.co/storage/v1/object/public/study-music/${currentTrack.audio_file_path}`;
-      console.log('🎵 Using public URL:', publicUrl);
+      console.log('🎵 Fetching audio from:', publicUrl);
 
-      // Create and play audio
-      const newAudio = new Audio(publicUrl);
-      newAudio.loop = true;
-      newAudio.volume = 0.6;
-      
-      newAudio.addEventListener('canplaythrough', () => {
-        newAudio.play().then(() => {
-          setIsPlaying(true);
-          setAudio(newAudio);
-          console.log('🎵 Playing:', currentTrack.name);
-        }).catch(error => {
-          console.error('Error playing audio:', error);
+      try {
+        const response = await fetch(publicUrl, {
+          mode: 'cors'
         });
-      });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
 
-      newAudio.addEventListener('error', (error) => {
-        console.error('Audio error:', error);
-        setIsPlaying(false);
-      });
+        const audioBlob = await response.blob();
+        const blobUrl = URL.createObjectURL(audioBlob);
+        
+        console.log('🎵 Created blob URL for audio playback');
 
-      newAudio.load();
+        // Create and play audio using blob URL
+        const newAudio = new Audio(blobUrl);
+        newAudio.loop = true;
+        newAudio.volume = 0.6;
+        
+        newAudio.addEventListener('canplaythrough', () => {
+          newAudio.play().then(() => {
+            setIsPlaying(true);
+            setAudio(newAudio);
+            console.log('🎵 Playing:', currentTrack.name);
+          }).catch(error => {
+            console.error('Error playing audio:', error);
+          });
+        });
+
+        newAudio.addEventListener('error', (error) => {
+          console.error('Audio error:', error);
+          setIsPlaying(false);
+          // Clean up blob URL on error
+          URL.revokeObjectURL(blobUrl);
+        });
+
+        newAudio.addEventListener('ended', () => {
+          // Clean up blob URL when audio ends (though it loops)
+          URL.revokeObjectURL(blobUrl);
+        });
+
+        newAudio.load();
+
+      } catch (fetchError) {
+        console.error('Error fetching audio:', fetchError);
+        
+        // Fallback: try direct audio loading (may still fail due to CSP)
+        console.log('🎵 Trying fallback direct audio loading...');
+        const fallbackAudio = new Audio(publicUrl);
+        fallbackAudio.loop = true;
+        fallbackAudio.volume = 0.6;
+        
+        fallbackAudio.addEventListener('canplaythrough', () => {
+          fallbackAudio.play().then(() => {
+            setIsPlaying(true);
+            setAudio(fallbackAudio);
+            console.log('🎵 Fallback playing:', currentTrack.name);
+          }).catch(error => {
+            console.error('Fallback audio play error:', error);
+          });
+        });
+
+        fallbackAudio.addEventListener('error', (error) => {
+          console.error('Fallback audio error:', error);
+          setIsPlaying(false);
+        });
+
+        fallbackAudio.load();
+      }
 
     } catch (error) {
       console.error('Error in handlePlayMusic:', error);

@@ -65,28 +65,21 @@ class SecurityHeadersManager {
   }
 
   private applyHeaders(): void {
-    // Clear any existing CSP meta tags first
-    const existingCSP = document.querySelectorAll('meta[http-equiv="Content-Security-Policy"]');
-    existingCSP.forEach(tag => tag.remove());
+    // TEMPORARY DISABLE: Client-side CSP meta tags are unreliable and override server CSP
+    // This is causing audio playback issues. Server-side CSP configuration needed instead.
     
-    // Only apply CSP via meta tags (X-Frame-Options must be set by server)
-    this.addMetaTag('Content-Security-Policy', this.headers['Content-Security-Policy']);
-    
-    // Debug: Log what we're setting and what's actually in the DOM
     if (config.isDevelopment) {
-      console.log('🔒 [CSP DEBUG] Generated CSP:', this.headers['Content-Security-Policy']);
-      
-      // Check what's actually in the DOM after setting
-      setTimeout(() => {
-        const appliedCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
-        console.log('🔒 [CSP DEBUG] Applied CSP meta tag:', appliedCSP?.getAttribute('content'));
-      }, 100);
+      console.log('🔒 [CSP DEBUG] Client-side CSP application DISABLED to resolve audio issues');
+      console.log('🔒 [CSP DEBUG] Generated CSP (not applied):', this.headers['Content-Security-Policy']);
     }
     
-    // Log security configuration
+    // Don't apply CSP meta tags - let server handle CSP properly
+    // this.addMetaTag('Content-Security-Policy', this.headers['Content-Security-Policy']);
+    
+    // Log security configuration  
     if (config.isDevelopment) {
-      console.log('🔒 Security headers configured (client-side):', {
-        'Content-Security-Policy': this.headers['Content-Security-Policy']
+      console.log('🔒 Security headers configured (client-side CSP disabled):', {
+        'Content-Security-Policy': '(disabled - server-side required)'
       });
     }
   }
