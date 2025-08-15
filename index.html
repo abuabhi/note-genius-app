@@ -9,7 +9,7 @@
     <meta name="author" content="Lovable" />
 
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.gpteng.co; script-src 'self' https://cdn.gpteng.co 'unsafe-inline' 'unsafe-eval'; style-src 'self' https://cdn.gpteng.co https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data: blob: https://*.ytimg.com https://*.youtube.com https://images.unsplash.com https://*.unsplash.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.youtube.com https://*.googleapis.com; frame-src https://*.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.gpteng.co; script-src 'self' https://cdn.gpteng.co https://www.googletagmanager.com 'unsafe-inline' 'unsafe-eval'; style-src 'self' https://cdn.gpteng.co https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data: blob: https://*.ytimg.com https://*.youtube.com https://images.unsplash.com https://*.unsplash.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.youtube.com https://*.googleapis.com https://www.google-analytics.com https://analytics.google.com; frame-src https://*.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
@@ -36,6 +36,15 @@
     <link rel="preconnect" href="https://cdn.gpteng.co" crossorigin>
     <link rel="dns-prefetch" href="https://www.clarity.ms">
     <link rel="preconnect" href="https://www.clarity.ms" crossorigin>
+
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QSXFSSYFWF"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-QSXFSSYFWF');
+    </script>
 
     <!-- Microsoft Clarity Analytics -->
     <script type="text/javascript">
