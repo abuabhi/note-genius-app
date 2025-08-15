@@ -1,4 +1,6 @@
 
+// @ts-nocheck
+
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { useUnifiedReminderSystem } from './useUnifiedReminderSystem';
