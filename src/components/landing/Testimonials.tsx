@@ -169,7 +169,7 @@ const Testimonials = () => {
                         const candidates = getAvatarCandidates(testimonial.author, testimonial.image);
                         const nextIndex = Number(el.dataset.step || '0') + 1;
                         if (nextIndex < candidates.length) {
-                          console.info('[Testimonials] Avatar fallback', { author: testimonial.author, try: nextIndex + 1, src: candidates[nextIndex] });
+                          console.log('[Testimonials] Avatar fallback', { author: testimonial.author, try: nextIndex + 1, src: candidates[nextIndex] });
                           el.src = candidates[nextIndex];
                           el.dataset.step = String(nextIndex);
                         }
