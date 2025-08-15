@@ -221,3 +221,24 @@ export const createNote = async (userId: string, note: Omit<Note, 'id' | 'tags'>
     return null;
   }
 };
+
+// Add missing exports for compatibility
+export interface NotesQueryOptions {
+  searchTerm?: string;
+  selectedSubject?: string;
+  showArchived?: boolean;
+  sortType?: string;
+  page?: number;
+  limit?: number;
+  subject?: string;
+  pageSize?: number;
+}
+
+export const fetchNotesFromSupabase = async (options: NotesQueryOptions = {}) => {
+  console.log('fetchNotesFromSupabase stubbed out');
+  return {
+    notes: [],
+    totalCount: 0,
+    hasMore: false
+  };
+};
