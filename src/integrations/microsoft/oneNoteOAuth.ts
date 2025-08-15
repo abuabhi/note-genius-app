@@ -4,6 +4,10 @@ export const useOneNoteAuth = () => ({
   connect: () => Promise.resolve(),
   disconnect: () => Promise.resolve(),
   isLoading: false,
+  isAuthenticated: false,
+  accessToken: null,
+  loading: false,
+  error: null,
 });
 
 export const oneNoteOAuth = {

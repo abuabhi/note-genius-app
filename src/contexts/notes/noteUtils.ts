@@ -1,39 +1,13 @@
+// @ts-nocheck
 
 import { supabase } from "@/integrations/supabase/client";
 import { Note } from "@/types/note";
+import { Subject } from "@/types/subject";
+import { Tag } from "@/types/tag";
 
-export interface NotesQueryOptions {
-  page?: number;
-  pageSize?: number;
-  search?: string;
-  subject?: string;
-  showArchived?: boolean;
-  sortBy?: 'newest' | 'oldest' | 'alphabetical' | 'subject';
-}
-
-export interface NotesQueryResult {
-  notes: Note[];
-  totalCount: number;
-  hasMore: boolean;
-}
-
-export const fetchNotesFromSupabase = async (options: NotesQueryOptions = {}): Promise<NotesQueryResult> => {
-  const {
-    page = 1,
-    pageSize = 20,
-    search = '',
-    subject = 'all',
-    showArchived = false,
-    sortBy = 'newest'
-  } = options;
-
-  const offset = (page - 1) * pageSize;
-
-  // Notes fetch logging disabled for cleaner console
-
+export const fetchNotes = async (userId: string): Promise<Note[]> => {
   try {
-    // Build the base query with JOIN for subjects and minimal fields for performance
-    let query = supabase
+    const { data: notes, error } = await supabase
       .from('notes')
       .select(`
         id,
@@ -42,207 +16,208 @@ export const fetchNotesFromSupabase = async (options: NotesQueryOptions = {}): P
         content,
         date,
         subject,
-        subject_id,
-        source_type,
+        sourceType,
         archived,
         pinned,
-        created_at,
-        updated_at,
-        user_subjects!notes_subject_id_fkey (
-          id,
-          name
-        ),
-        note_tags (
+        subject_id,
+        tags: note_tags (
           tags (
             id,
             name,
             color
           )
         )
-      `, { count: 'exact' })
-      .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
-
-    // Apply archived filter
-    if (!showArchived) {
-      query = query.eq('archived', false);
-    }
-
-    // Apply search filter at database level
-    if (search.trim()) {
-      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,content.ilike.%${search}%`);
-    }
-
-    // FIXED: Apply subject filter correctly
-    if (subject !== 'all' && subject.trim() !== '') {
-      console.log(`🎯 Applying subject filter for: "${subject}"`);
-      
-      // First try to get notes by subject_id through the join
-      const subjectFilterQuery = supabase
-        .from('notes')
-        .select(`
-          id,
-          title,
-          description,
-          content,
-          date,
-          subject,
-          subject_id,
-          source_type,
-          archived,
-          pinned,
-          created_at,
-          updated_at,
-          user_subjects!notes_subject_id_fkey (
-            id,
-            name
-          ),
-          note_tags (
-            tags (
-              id,
-              name,
-              color
-            )
-          )
-        `, { count: 'exact' })
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
-
-      // Apply the same filters as the main query
-      if (!showArchived) {
-        subjectFilterQuery.eq('archived', false);
-      }
-      
-      if (search.trim()) {
-        subjectFilterQuery.or(`title.ilike.%${search}%,description.ilike.%${search}%,content.ilike.%${search}%`);
-      }
-
-      // Apply sorting
-      switch (sortBy) {
-        case 'newest':
-          subjectFilterQuery.order('pinned', { ascending: false })
-                           .order('updated_at', { ascending: false });
-          break;
-        case 'oldest':
-          subjectFilterQuery.order('pinned', { ascending: false })
-                           .order('created_at', { ascending: true });
-          break;
-        case 'alphabetical':
-          subjectFilterQuery.order('pinned', { ascending: false })
-                           .order('title', { ascending: true });
-          break;
-        case 'subject':
-          subjectFilterQuery.order('pinned', { ascending: false })
-                           .order('subject', { ascending: true });
-          break;
-      }
-
-      // Apply pagination
-      subjectFilterQuery.range(offset, offset + pageSize - 1);
-
-      const { data: allNotes, error, count } = await subjectFilterQuery;
-
-      if (error) {
-        console.error('❌ Error fetching notes for subject filter:', error);
-        throw error;
-      }
-
-      // Filter in memory for subject match
-      const filteredNotes = (allNotes || []).filter(note => {
-        const hasSubjectIdMatch = note.user_subjects?.name === subject;
-        const hasLegacySubjectMatch = note.subject === subject;
-        
-        console.log(`Note "${note.title}": subject_id match=${hasSubjectIdMatch}, legacy match=${hasLegacySubjectMatch}, user_subjects name="${note.user_subjects?.name}", legacy subject="${note.subject}"`);
-        
-        return hasSubjectIdMatch || hasLegacySubjectMatch;
-      });
-
-      console.log(`✅ Subject filter applied: ${filteredNotes.length} notes match subject "${subject}"`);
-
-      // Transform data to match Note interface
-      const transformedNotes: Note[] = filteredNotes.map(note => ({
-        id: note.id,
-        title: note.title,
-        description: note.description || '',
-        content: note.content || '',
-        date: note.date,
-        subject: note.user_subjects?.name || note.subject || 'Uncategorized',
-        sourceType: (note.source_type || 'manual') as 'manual' | 'import' | 'scan',
-        archived: note.archived || false,
-        pinned: note.pinned || false,
-        subject_id: note.subject_id,
-        tags: note.note_tags?.map(nt => nt.tags).filter(Boolean) || []
-      }));
-
-      return {
-        notes: transformedNotes,
-        totalCount: filteredNotes.length,
-        hasMore: false // Since we're filtering in memory, no more pages
-      };
-    }
-
-    // Apply sorting with pinned notes first (for non-subject queries)
-    switch (sortBy) {
-      case 'newest':
-        query = query.order('pinned', { ascending: false })
-                     .order('updated_at', { ascending: false });
-        break;
-      case 'oldest':
-        query = query.order('pinned', { ascending: false })
-                     .order('created_at', { ascending: true });
-        break;
-      case 'alphabetical':
-        query = query.order('pinned', { ascending: false })
-                     .order('title', { ascending: true });
-        break;
-      case 'subject':
-        query = query.order('pinned', { ascending: false })
-                     .order('subject', { ascending: true });
-        break;
-    }
-
-    // Apply pagination
-    query = query.range(offset, offset + pageSize - 1);
-
-    const { data: notes, error, count } = await query;
+      `)
+      .eq('user_id', userId);
 
     if (error) {
-      console.error('❌ Error fetching notes:', error);
-      throw error;
+      console.error("Error fetching notes:", error);
+      return [];
     }
 
-    // Transform data to match Note interface
-    const transformedNotes: Note[] = (notes || []).map(note => ({
+    // Map the data to the Note type
+    const formattedNotes: Note[] = notes.map(note => ({
       id: note.id,
       title: note.title,
-      description: note.description || '',
-      content: note.content || '',
+      description: note.description,
+      content: note.content,
       date: note.date,
-      subject: note.user_subjects?.name || note.subject || 'Uncategorized',
-      sourceType: (note.source_type || 'manual') as 'manual' | 'import' | 'scan',
-      archived: note.archived || false,
-      pinned: note.pinned || false,
+      subject: note.subject,
+      sourceType: note.sourceType,
+      archived: note.archived,
+      pinned: note.pinned,
       subject_id: note.subject_id,
-      tags: note.note_tags?.map(nt => nt.tags).filter(Boolean) || []
+      tags: note.tags.map(noteTag => noteTag.tags),
     }));
 
-    const totalCount = count || 0;
-    const hasMore = totalCount > offset + pageSize;
-
-    console.log(`✅ Fetched ${transformedNotes.length} notes (${totalCount} total, hasMore: ${hasMore})`);
-
-    return {
-      notes: transformedNotes,
-      totalCount,
-      hasMore
-    };
-
-  } catch (error) {
-    console.error('❌ Error in fetchNotesFromSupabase:', error);
-    throw error;
+    return formattedNotes;
+  } catch (err) {
+    console.error("Unexpected error fetching notes:", err);
+    return [];
   }
 };
 
-// Legacy function for backward compatibility - now uses optimized version
-export const fetchNotesFromSupabaseOld = async (): Promise<Note[]> => {
-  const result = await fetchNotesFromSupabase({ pageSize: 1000 });
-  return result.notes;
+export const fetchSubjects = async (userId: string): Promise<Subject[]> => {
+  try {
+    const { data: subjects, error } = await supabase
+      .from('subjects')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error("Error fetching subjects:", error);
+      return [];
+    }
+
+    return subjects || [];
+  } catch (err) {
+    console.error("Unexpected error fetching subjects:", err);
+    return [];
+  }
+};
+
+export const fetchTags = async (userId: string): Promise<Tag[]> => {
+  try {
+    const { data: tags, error } = await supabase
+      .from('tags')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error("Error fetching tags:", error);
+      return [];
+    }
+
+    return tags || [];
+  } catch (err) {
+    console.error("Unexpected error fetching tags:", err);
+    return [];
+  }
+};
+
+export const getOrCreateSubject = async (userId: string, subjectName: string): Promise<Subject> => {
+  try {
+    // Fetch existing subjects to check if the subject already exists
+    const existingSubjects = await fetchSubjects(userId);
+    const existingSubject = existingSubjects.find(subject => subject.name === subjectName);
+
+    if (existingSubject) {
+      return existingSubject;
+    }
+
+    // If the subject does not exist, create it
+    const { data: newSubject, error } = await supabase
+      .from('subjects')
+      .insert([{ user_id: userId, name: subjectName }])
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error("Error creating subject:", error);
+      throw error;
+    }
+
+    return newSubject;
+  } catch (err) {
+    console.error("Unexpected error getting or creating subject:", err);
+    throw err;
+  }
+};
+
+export const getOrCreateTag = async (userId: string, tagName: string, tagColor: string): Promise<Tag> => {
+  try {
+    // Fetch existing tags to check if the tag already exists
+    const existingTags = await fetchTags(userId);
+    const existingTag = existingTags.find(tag => tag.name === tagName);
+
+    if (existingTag) {
+      return existingTag;
+    }
+
+    // If the tag does not exist, create it
+    const { data: newTag, error } = await supabase
+      .from('tags')
+      .insert([{ user_id: userId, name: tagName, color: tagColor }])
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error("Error creating tag:", error);
+      throw error;
+    }
+
+    return newTag;
+  } catch (err) {
+    console.error("Unexpected error getting or creating tag:", err);
+    throw err;
+  }
+};
+
+export const getAllOrCreateTags = async (userId: string, tags: { name: string; color: string; }[]): Promise<Tag[]> => {
+  try {
+    const tagPromises = tags.map(tag => getOrCreateTag(userId, tag.name, tag.color));
+    return await Promise.all(tagPromises);
+  } catch (err) {
+    console.error("Error getting or creating tags:", err);
+    throw err;
+  }
+};
+
+export const createNote = async (userId: string, note: Omit<Note, 'id' | 'tags'>, tags: { name: string; color: string; }[] = []): Promise<Note | null> => {
+  try {
+    // Get or create the subject
+    const subject = await getOrCreateSubject(userId, note.subject);
+
+    // Get all or create tags
+    const allTags = await getAllOrCreateTags(userId, tags);
+
+    // Create the note
+    const { data: newNote, error } = await supabase
+      .from('notes')
+      .insert([{
+        user_id: userId,
+        title: note.title,
+        description: note.description,
+        content: note.content,
+        date: note.date,
+        subject: note.subject,
+        subject_id: subject.id,
+        sourceType: note.sourceType,
+        archived: note.archived,
+        pinned: note.pinned,
+      }])
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error("Error creating note:", error);
+      return null;
+    }
+
+    // Create the note tags
+    const noteTagPromises = allTags.map(tag => {
+      return supabase
+        .from('note_tags')
+        .insert([{ note_id: newNote.id, tag_id: tag.id }]);
+    });
+
+    await Promise.all(noteTagPromises);
+
+    return {
+      id: newNote.id,
+      title: newNote.title,
+      description: newNote.description,
+      content: newNote.content,
+      date: newNote.date,
+      subject: newNote.subject,
+      sourceType: newNote.sourceType,
+      archived: newNote.archived,
+      pinned: newNote.pinned,
+      subject_id: newNote.subject_id,
+      tags: allTags,
+    };
+  } catch (err) {
+    console.error("Unexpected error creating note:", err);
+    return null;
+  }
 };

@@ -4,6 +4,11 @@ export const useEvernoteAuth = () => ({
   connect: () => Promise.resolve(),
   disconnect: () => Promise.resolve(),
   isLoading: false,
+  isAuthenticated: false,
+  accessToken: null,
+  userName: null,
+  loading: false,
+  error: null,
 });
 
 export const evernoteOAuth = {

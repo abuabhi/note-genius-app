@@ -4,6 +4,11 @@ export const useNotionAuth = () => ({
   connect: () => Promise.resolve(),
   disconnect: () => Promise.resolve(),
   isLoading: false,
+  isAuthenticated: false,
+  accessToken: null,
+  workspaceName: null,
+  loading: false,
+  error: null,
 });
 
 export const notionOAuth = {
