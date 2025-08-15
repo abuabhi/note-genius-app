@@ -34,8 +34,13 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
   const selectedTracks = form.watch('selectedStudyTracks') || [];
 
   useEffect(() => {
-    fetchStudyTracks();
-    ensureUserHasDefaultTracks();
+    // Add a small delay to ensure everything is loaded
+    const timer = setTimeout(() => {
+      fetchStudyTracks();
+      ensureUserHasDefaultTracks();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const ensureUserHasDefaultTracks = async () => {
@@ -95,19 +100,25 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
   const fetchStudyTracks = async () => {
     try {
       setLoading(true);
+      console.log('🎵 StudyMusicSettingsCard: Fetching study tracks...');
+      
       const { data, error } = await supabase.functions.invoke('get-study-music', {
-        body: { category: 'all', limit: 20 }
+        body: { category: 'all', limit: 50 }
       });
 
+      console.log('🎵 StudyMusicSettingsCard: Edge function response:', { data, error });
+      
       if (error) throw error;
       
-      setTracks(data?.tracks || []);
+      const tracks = data?.tracks || [];
+      console.log('🎵 StudyMusicSettingsCard: Setting', tracks.length, 'tracks');
+      setTracks(tracks);
       
       if (data?.source === 'youtube-curated') {
         toast.info("Loaded curated YouTube study music collection");
       }
     } catch (error) {
-      console.error('Error fetching study tracks:', error);
+      console.error('🎵 StudyMusicSettingsCard: Error fetching study tracks:', error);
       toast.error('Failed to load study music tracks');
       setTracks([]);
     } finally {

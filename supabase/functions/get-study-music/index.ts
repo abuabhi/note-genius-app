@@ -17,11 +17,15 @@ serve(async (req) => {
     // Parse request body for filters
     const { category = 'all', limit = 20 } = await req.json().catch(() => ({}));
 
+    console.log('🎵 get-study-music: Starting query for category:', category, 'limit:', limit);
+
     // Query study music tracks from database
     let query = supabase
       .from('study_music_tracks')
       .select('*')
       .eq('is_active', true);
+
+    console.log('🎵 get-study-music: Querying study_music_tracks with is_active = true');
 
     // Apply category filter if specified
     if (category !== 'all') {
@@ -35,8 +39,13 @@ serve(async (req) => {
 
     const { data: tracks, error } = await query;
 
+    console.log('🎵 get-study-music: Query result - tracks found:', tracks?.length || 0);
+    if (tracks?.length > 0) {
+      console.log('🎵 get-study-music: First track:', { id: tracks[0].id, name: tracks[0].name, artist: tracks[0].artist });
+    }
+
     if (error) {
-      console.error('Database error:', error);
+      console.error('🎵 get-study-music: Database error:', error);
       throw error;
     }
 
@@ -72,8 +81,11 @@ serve(async (req) => {
       })
     );
 
+    console.log('🎵 get-study-music: Transformed tracks count:', transformedTracks.length);
+
     // If no tracks found, return default track for backwards compatibility
     if (transformedTracks.length === 0) {
+      console.log('🎵 get-study-music: No tracks found, returning default fallback');
       return new Response(
         JSON.stringify({
           tracks: [{
@@ -99,6 +111,8 @@ serve(async (req) => {
 
     // Get unique categories for response
     const categories = [...new Set(transformedTracks.map(t => t.category))];
+
+    console.log('🎵 get-study-music: Returning', transformedTracks.length, 'tracks with categories:', categories);
 
     return new Response(
       JSON.stringify({
