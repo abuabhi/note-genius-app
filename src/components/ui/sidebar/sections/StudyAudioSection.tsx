@@ -63,7 +63,7 @@ export const StudyAudioSection = ({ isCollapsed }: StudyAudioSectionProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [selectedTracks, setSelectedTracks] = useState<StudyTrack[]>(DEFAULT_YOUTUBE_TRACKS);
+  const [selectedTracks, setSelectedTracks] = useState<StudyTrack[]>(DEFAULT_YOUTUBE_TRACKS.slice(0, 3));
   const [currentTrack, setCurrentTrack] = useState<StudyMusicTrack | null>(null);
   const [isPlayingMusic, setIsPlayingMusic] = useState(false);
   const [musicVolume, setMusicVolume] = useState(0.6);
@@ -237,19 +237,15 @@ export const StudyAudioSection = ({ isCollapsed }: StudyAudioSectionProps) => {
           variant="ghost"
           size="sm"
           className={cn(
-            "w-full justify-between gap-3 h-10 px-3 rounded-lg transition-all duration-200 group",
+            "w-full justify-start gap-3 h-10 px-3 rounded-lg transition-all duration-200 group",
             isPlayingMusic && "bg-primary/10 text-primary",
             open && "bg-muted"
           )}
         >
-          <div className="flex items-center gap-3">
-            <Music className="h-4 w-4" />
-            <span className="text-sm font-medium">Study Audio</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {isPlayingMusic && <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />}
-            <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
-          </div>
+          <Music className="h-4 w-4 shrink-0" />
+          <span className="text-sm font-medium flex-1">Study Audio</span>
+          {isPlayingMusic && <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse shrink-0" />}
+          <ChevronDown className={cn("h-4 w-4 transition-transform shrink-0", open && "rotate-180")} />
         </Button>
       </CollapsibleTrigger>
 
