@@ -233,95 +233,63 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
 
   const playPreview = async (track: StudyTrack) => {
     if (playingTrack === track.id) {
-      // Stop current track
       if (audio) {
         audio.pause();
-        audio.remove();
         setAudio(null);
       }
       setPlayingTrack(null);
       return;
     }
 
-    // Stop any currently playing audio
     if (audio) {
       audio.pause();
-      audio.remove();
       setAudio(null);
     }
 
     try {
       setPlayingTrack(track.id);
-      console.log('🎵 StudyMusicSettingsCard: Playing preview for track:', { 
-        id: track.id, 
-        name: track.name,
-        audioUrl: track.audioUrl,
-        youtubeUrl: track.youtubeUrl 
-      });
+      console.log('🎵 Preview track:', track.name);
       
-      // Use the already signed URL from the edge function response
-      const audioUrl = track.audioUrl || track.youtubeUrl;
+      // Generate signed URL directly for the track
+      const { data: signedUrlData } = await supabase.storage
+        .from('study-music')
+        .createSignedUrl(`tracks/focus-flow-study-sessions.mp3`, 3600);
       
-      if (!audioUrl) {
-        console.error('🎵 StudyMusicSettingsCard: No audio URL available for track:', track.id);
-        toast.error('No audio URL available for this track');
+      if (!signedUrlData?.signedUrl) {
+        toast.error('Cannot load audio file');
         setPlayingTrack(null);
         return;
       }
       
-      // Create and configure audio element
       const newAudio = new Audio();
-      newAudio.crossOrigin = "anonymous";
-      newAudio.volume = 0.4; // Lower volume for preview
-      newAudio.preload = "auto";
+      newAudio.volume = 0.4;
+      newAudio.src = signedUrlData.signedUrl;
       
-      // Set up event handlers
-      newAudio.oncanplaythrough = async () => {
+      newAudio.onloadeddata = async () => {
         try {
-          console.log('🎵 StudyMusicSettingsCard: Audio loaded, attempting to play');
           await newAudio.play();
-          toast.success(`Playing preview: ${track.name}`);
-        } catch (playError) {
-          console.error('🎵 StudyMusicSettingsCard: Error playing audio:', playError);
-          toast.error('Unable to play audio preview');
+          toast.success(`Playing: ${track.name}`);
+        } catch {
+          toast.error('Cannot play audio');
           setPlayingTrack(null);
         }
       };
       
-      newAudio.onerror = (error) => {
-        console.error('🎵 StudyMusicSettingsCard: Audio loading error:', error);
-        toast.error('Unable to load audio file');
+      newAudio.onerror = () => {
+        toast.error('Audio loading failed');
         setPlayingTrack(null);
       };
       
-      newAudio.onloadstart = () => {
-        console.log('🎵 StudyMusicSettingsCard: Started loading audio:', audioUrl);
-      };
-      
       newAudio.onended = () => {
-        console.log('🎵 StudyMusicSettingsCard: Audio preview ended');
         setPlayingTrack(null);
         setAudio(null);
       };
       
-      // Auto-stop preview after 30 seconds
-      setTimeout(() => {
-        if (playingTrack === track.id && newAudio) {
-          console.log('🎵 StudyMusicSettingsCard: Auto-stopping preview after 30s');
-          newAudio.pause();
-          setPlayingTrack(null);
-          setAudio(null);
-        }
-      }, 30000);
-      
-      // Load the audio using the signed URL from edge function
-      console.log('🎵 StudyMusicSettingsCard: Setting audio source:', audioUrl);
-      newAudio.src = audioUrl;
       setAudio(newAudio);
       
     } catch (error) {
-      console.error('🎵 StudyMusicSettingsCard: Error setting up preview:', error);
-      toast.error('Unable to play preview');
+      console.error('Preview error:', error);
+      toast.error('Preview failed');
       setPlayingTrack(null);
     }
   };
