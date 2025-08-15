@@ -1,5 +1,7 @@
 import { config } from '@/config/environment';
 import { productionErrorTracker } from '../errorTracking/ProductionErrorTracker';
+import { googleAnalyticsService } from './GoogleAnalyticsService';
+import '../../../types/gtag';
 
 interface SessionData {
   id: string;
@@ -104,6 +106,12 @@ class UserSessionTracker {
     this.session.pageViews.push(path);
     this.trackInteraction('page_view', { path });
     
+    // Enhanced GA4 page tracking
+    googleAnalyticsService.trackPageView(path, document.title, {
+      session_type: this.getSessionType(path),
+      user_tier: this.getUserTier()
+    });
+    
     if (config.isDevelopment) {
       console.log('📄 Page view tracked:', path);
     }
@@ -118,6 +126,16 @@ class UserSessionTracker {
       data,
     });
 
+    // Enhanced GA4 interaction tracking
+    if (type !== 'page_view') { // Avoid duplicate page view events
+      googleAnalyticsService.trackEvent(type as any, {
+        event_category: 'User Interaction',
+        user_tier: this.getUserTier(),
+        session_type: this.getCurrentSessionType(),
+        ...data
+      });
+    }
+
     // Keep interactions list manageable
     if (this.session.interactions.length > 100) {
       this.session.interactions = this.session.interactions.slice(-50);
@@ -130,6 +148,14 @@ class UserSessionTracker {
     this.session.performance.errorCount++;
     this.session.performance.lastError = error;
     this.trackInteraction('error', { component, error });
+    
+    // Enhanced GA4 error tracking
+    googleAnalyticsService.trackEvent('study_error_encountered', {
+      event_category: 'Error',
+      event_label: component,
+      custom_parameter_1: error,
+      user_tier: this.getUserTier()
+    });
   }
 
   trackSlowComponent(componentName: string, renderTime: number) {
@@ -141,8 +167,13 @@ class UserSessionTracker {
     }
   }
 
-  setUserId(userId: string) {
+  setUserId(userId: string, userTier?: string) {
     this.session.userId = userId;
+    
+    // Initialize GA4 user properties
+    if (userTier) {
+      googleAnalyticsService.setUserProperties(userId, userTier);
+    }
   }
 
   getSessionData(): SessionData {
@@ -189,6 +220,45 @@ class UserSessionTracker {
       clearTimeout(this.activityTimer);
     }
     this.saveSession();
+  }
+
+  // Helper methods for GA4 integration
+  private getSessionType(path: string): 'flashcard' | 'quiz' | 'notes' | 'planner' | 'goal_setting' {
+    if (path.includes('/flashcards')) return 'flashcard';
+    if (path.includes('/quiz')) return 'quiz';
+    if (path.includes('/notes')) return 'notes';
+    if (path.includes('/planner')) return 'planner';
+    if (path.includes('/goals')) return 'goal_setting';
+    return 'notes'; // Default to notes instead of 'general'
+  }
+
+  private getCurrentSessionType(): 'flashcard' | 'quiz' | 'notes' | 'planner' | 'goal_setting' {
+    return this.getSessionType(window.location.pathname);
+  }
+
+  private getUserTier(): 'SCHOLAR' | 'GRADUATE' | 'MASTER' | 'DEAN' {
+    // This would be set when user logs in - for now return a default
+    return 'SCHOLAR'; // Will be updated when user properties are set
+  }
+
+  // Enhanced tracking methods for study activities
+  trackStudySessionStart(sessionType: 'flashcard' | 'quiz' | 'notes' | 'planner' | 'goal_setting', metadata?: Record<string, any>) {
+    googleAnalyticsService.trackStudySession('start', {
+      session_type: sessionType,
+      user_tier: this.getUserTier(),
+      ...metadata
+    });
+    this.trackInteraction('study_session_start', { sessionType, ...metadata });
+  }
+
+  trackStudySessionComplete(sessionType: 'flashcard' | 'quiz' | 'notes' | 'planner' | 'goal_setting', duration: number, metadata?: Record<string, any>) {
+    googleAnalyticsService.trackStudySession('complete', {
+      session_type: sessionType,
+      session_duration: duration,
+      user_tier: this.getUserTier(),
+      ...metadata
+    });
+    this.trackInteraction('study_session_complete', { sessionType, duration, ...metadata });
   }
 }
 
