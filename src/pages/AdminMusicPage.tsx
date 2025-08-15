@@ -66,81 +66,164 @@ const AdminMusicPage = () => {
   };
 
   const uploadFile = async (file: File, bucket: string, path: string): Promise<string> => {
+    console.log(`🔄 Uploading ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) to ${bucket}/${path}`);
+    
+    // Validate file size (50MB limit)
+    if (file.size > 50 * 1024 * 1024) {
+      throw new Error(`File too large: ${(file.size / 1024 / 1024).toFixed(2)}MB (max 50MB)`);
+    }
+
+    // Generate unique path to prevent conflicts
+    const uniquePath = `${path.split('/')[0]}/${Date.now()}-${crypto.randomUUID()}-${file.name}`;
+    
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(path, file, {
+      .upload(uniquePath, file, {
         cacheControl: '3600',
-        upsert: true
+        upsert: false // Don't overwrite existing files
       });
 
-    if (error) throw error;
+    if (error) {
+      console.error(`❌ Upload failed for ${file.name}:`, error);
+      throw new Error(`Upload failed: ${error.message}`);
+    }
+    
+    console.log(`✅ Successfully uploaded ${file.name} to ${data.path}`);
     return data.path;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🚀 Starting track upload process...');
+    
+    // Validation
     if (!formData.audio_file) {
       toast.error('Please select an audio file');
       return;
     }
 
-    setUploading(true);
-    try {
-      // Upload audio file
-      const audioPath = `tracks/${Date.now()}-${formData.audio_file.name}`;
-      await uploadFile(formData.audio_file, 'study-music', audioPath);
+    if (!formData.name.trim() || !formData.artist.trim()) {
+      toast.error('Please fill in track name and artist');
+      return;
+    }
 
-      // Upload thumbnail if provided
+    // Validate audio file type
+    const validAudioTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg'];
+    if (!validAudioTypes.includes(formData.audio_file.type)) {
+      toast.error('Please select a valid audio file (.mp3, .wav, .ogg)');
+      return;
+    }
+
+    console.log('📋 Form validation passed:', {
+      name: formData.name,
+      artist: formData.artist,
+      category: formData.category,
+      audioFile: `${formData.audio_file.name} (${(formData.audio_file.size / 1024 / 1024).toFixed(2)}MB)`,
+      thumbnailFile: formData.thumbnail_file ? `${formData.thumbnail_file.name} (${(formData.thumbnail_file.size / 1024 / 1024).toFixed(2)}MB)` : 'None'
+    });
+
+    setUploading(true);
+    
+    try {
+      console.log('🎵 Step 1: Uploading audio file...');
+      const audioPath = await uploadFile(formData.audio_file, 'study-music', 'tracks/placeholder');
+
       let thumbnailPath = null;
       if (formData.thumbnail_file) {
-        thumbnailPath = `thumbnails/${Date.now()}-${formData.thumbnail_file.name}`;
-        await uploadFile(formData.thumbnail_file, 'study-music', thumbnailPath);
+        console.log('🖼️ Step 2: Uploading thumbnail...');
+        thumbnailPath = await uploadFile(formData.thumbnail_file, 'study-music', 'thumbnails/placeholder');
+      } else {
+        console.log('⏭️ Step 2: Skipping thumbnail upload (no file selected)');
       }
 
-      // Get audio duration (basic implementation)
+      console.log('⏱️ Step 3: Getting audio duration...');
       const audioDuration = await getAudioDuration(formData.audio_file);
+      console.log(`✅ Audio duration: ${audioDuration} seconds`);
 
-      // Create track record
+      console.log('💾 Step 4: Creating database record...');
+      const insertData = {
+        name: formData.name.trim(),
+        artist: formData.artist.trim(),
+        audio_file_path: audioPath,
+        thumbnail_path: thumbnailPath,
+        duration_seconds: Math.round(audioDuration),
+        category: formData.category,
+        tags: [],
+        sort_order: tracks.length,
+        created_by: user?.id
+      };
+      
+      console.log('📝 Insert data:', insertData);
+
       const { data, error } = await supabase
         .from('study_music_tracks')
-        .insert({
-          name: formData.name,
-          artist: formData.artist,
-          audio_file_path: audioPath,
-          thumbnail_path: thumbnailPath,
-          duration_seconds: Math.round(audioDuration),
-          category: formData.category,
-          tags: [],
-          sort_order: tracks.length,
-          created_by: user?.id
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Database insert failed:', error);
+        throw new Error(`Database error: ${error.message}`);
+      }
 
+      console.log('✅ Track created successfully:', data);
       setTracks([...tracks, data]);
       resetForm();
       setIsCreating(false);
-      toast.success('Track uploaded successfully');
-    } catch (error) {
-      console.error('Error uploading track:', error);
-      toast.error('Failed to upload track');
+      toast.success('Track uploaded successfully!');
+      
+    } catch (error: any) {
+      console.error('❌ Upload process failed:', error);
+      const errorMessage = error?.message || 'Unknown error occurred';
+      toast.error(`Upload failed: ${errorMessage}`);
     } finally {
       setUploading(false);
+      console.log('🏁 Upload process completed');
     }
   };
 
   const getAudioDuration = (file: File): Promise<number> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const audio = new Audio();
+      let isResolved = false;
+      
+      // Timeout after 10 seconds
+      const timeout = setTimeout(() => {
+        if (!isResolved) {
+          isResolved = true;
+          console.warn('⚠️ Audio duration detection timed out, using default');
+          URL.revokeObjectURL(audio.src);
+          resolve(300); // Default 5 minutes
+        }
+      }, 10000);
+      
       audio.addEventListener('loadedmetadata', () => {
-        resolve(audio.duration);
+        if (!isResolved) {
+          isResolved = true;
+          clearTimeout(timeout);
+          console.log(`📏 Audio duration detected: ${audio.duration} seconds`);
+          URL.revokeObjectURL(audio.src);
+          resolve(audio.duration);
+        }
       });
-      audio.addEventListener('error', () => {
-        resolve(300); // Default 5 minutes if can't determine
+      
+      audio.addEventListener('error', (e) => {
+        if (!isResolved) {
+          isResolved = true;
+          clearTimeout(timeout);
+          console.warn('⚠️ Audio duration detection failed:', e);
+          URL.revokeObjectURL(audio.src);
+          resolve(300); // Default 5 minutes
+        }
       });
-      audio.src = URL.createObjectURL(file);
+      
+      try {
+        audio.src = URL.createObjectURL(file);
+      } catch (error) {
+        console.error('❌ Failed to create audio object URL:', error);
+        clearTimeout(timeout);
+        resolve(300);
+      }
     });
   };
 
