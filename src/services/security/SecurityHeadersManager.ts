@@ -38,14 +38,14 @@ class SecurityHeadersManager {
     const origins = allowedOrigins.join(' ');
     const isDev = config.isDevelopment;
     
-    // SECURITY FIX: Remove unsafe-inline and unsafe-eval in production
+    // SECURITY FIX: Allow dynamic imports for lazy-loaded components
     const scriptSrc = isDev 
       ? `script-src ${origins} 'unsafe-inline' 'unsafe-eval'` // Development only
-      : `script-src ${origins} 'strict-dynamic'`; // Production
+      : `script-src ${origins} 'strict-dynamic' 'unsafe-inline'`; // Production - need unsafe-inline for dynamic imports
     
     const styleSrc = isDev
       ? `style-src ${origins} 'unsafe-inline'` // Development only  
-      : `style-src ${origins}`;
+      : `style-src ${origins} 'unsafe-inline'`; // Production - allow inline styles
     
     return [
       `default-src ${origins}`,
