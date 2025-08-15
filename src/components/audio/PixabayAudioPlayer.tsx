@@ -3,7 +3,7 @@ import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { PixabayTrack } from '@/utils/pixabay';
-import { config } from '@/config/environment';
+
 
 interface PixabayAudioPlayerProps {
   track: PixabayTrack;
@@ -124,16 +124,8 @@ export function PixabayAudioPlayer({
 
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  // Generate proxy URL for external audio to bypass CSP restrictions
-  const getProxyAudioUrl = (originalUrl: string) => {
-    const supabaseUrl = config.isDevelopment 
-      ? 'http://127.0.0.1:54321'
-      : 'https://zuhcmwujzfddmafozubd.supabase.co';
-    
-    return `${supabaseUrl}/functions/v1/audio-proxy?url=${encodeURIComponent(originalUrl)}`;
-  };
-
-  const audioUrl = getProxyAudioUrl(track.previewURL);
+  // Use direct Pixabay URL - no proxy needed
+  const audioUrl = track.previewURL;
 
   return (
     <div className="bg-card border rounded-lg p-6 space-y-4">
@@ -241,8 +233,7 @@ export function PixabayAudioPlayer({
       <details className="text-xs text-muted-foreground">
         <summary className="cursor-pointer">Debug Info</summary>
         <div className="mt-2 space-y-1 font-mono">
-          <div>Original URL: {track.previewURL}</div>
-          <div>Proxy URL: {audioUrl}</div>
+          <div>Audio URL: {audioUrl}</div>
           <div>ID: {track.id}</div>
           <div>Duration: {track.duration}s</div>
           <div>Playing: {isPlaying.toString()}</div>

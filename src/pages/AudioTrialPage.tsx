@@ -8,7 +8,7 @@ import { PixabayAudioPlayer } from '@/components/audio/PixabayAudioPlayer';
 import { PixabayTrackList } from '@/components/audio/PixabayTrackList';
 import { searchMusic, getMusicByCategory, PixabayTrack, PixabayResponse } from '@/utils/pixabay';
 import { toast } from 'sonner';
-import { config } from '@/config/environment';
+
 
 const MUSIC_CATEGORIES = [
   { id: 'study', label: 'Study Music', emoji: '📚' },
@@ -118,14 +118,6 @@ export default function AudioTrialPage() {
   const hasNext = tracks.length > 0 && currentIndex < tracks.length - 1;
   const hasPrevious = tracks.length > 0 && currentIndex > 0;
 
-  // Generate proxy URL for debugging
-  const getProxyUrl = (originalUrl: string) => {
-    const supabaseUrl = config.isDevelopment 
-      ? 'http://127.0.0.1:54321'
-      : 'https://zuhcmwujzfddmafozubd.supabase.co';
-    
-    return `${supabaseUrl}/functions/v1/audio-proxy?url=${encodeURIComponent(originalUrl)}`;
-  };
 
   // Monitor audio events for CSP status
   useEffect(() => {
@@ -270,8 +262,7 @@ export default function AudioTrialPage() {
             <div>Loading state: {loading.toString()}</div>
             <div>CSP status: {cspStatus}</div>
             <div>Error state: {error || 'none'}</div>
-            <div>Original URL: {currentTrack?.previewURL || 'none'}</div>
-            <div>Proxy URL: {currentTrack ? getProxyUrl(currentTrack.previewURL) : 'none'}</div>
+            <div>Audio URL: {currentTrack?.previewURL || 'none'}</div>
             <div>Browser: {navigator.userAgent.split(' ').slice(-1)[0]}</div>
           </div>
         </details>

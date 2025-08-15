@@ -16,8 +16,9 @@ export type PixabayResponse = {
   hits: PixabayTrack[];
 };
 
-// Using Supabase edge function to access API key from secrets
-import { supabase } from '@/integrations/supabase/client';
+// Direct Pixabay API integration
+const PIXABAY_API_KEY = import.meta.env.VITE_PIXABAY_API_KEY || 'your-pixabay-api-key-here';
+const PIXABAY_API_URL = 'https://pixabay.com/api/';
 
 export async function searchMusic(
   query: string,
@@ -36,22 +37,24 @@ export async function searchMusic(
   } = options;
 
   try {
-    // Use Supabase edge function to make API call with secret
-    const { data, error } = await supabase.functions.invoke('pixabay-music', {
-      body: {
-        query,
-        category,
-        audioType,
-        perPage,
-        page
-      }
+    const params = new URLSearchParams({
+      key: PIXABAY_API_KEY,
+      q: encodeURIComponent(query),
+      category,
+      audio_type: audioType,
+      per_page: perPage.toString(),
+      page: page.toString(),
+      safesearch: 'true'
     });
 
-    if (error) {
-      throw new Error(`Supabase function error: ${error.message}`);
+    const response = await fetch(`${PIXABAY_API_URL}?${params}`);
+    
+    if (!response.ok) {
+      throw new Error(`Pixabay API error: ${response.status} - ${response.statusText}`);
     }
 
-    return data as PixabayResponse;
+    const data: PixabayResponse = await response.json();
+    return data;
   } catch (error) {
     console.error('Error fetching Pixabay music:', error);
     throw error;
