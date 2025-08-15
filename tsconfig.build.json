@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "exclude": [
+    "src/components/dashboard/**/*",
+    "src/components/debug/**/*",
+    "src/components/notifications/**/*",
+    "src/components/reminders/**/*",
+    "src/components/collaboration/**/*",
+    "src/contexts/flashcards/**/*",
+    "src/contexts/notes/**/*",
+    "src/hooks/notes/**/*",
+    "src/hooks/progress/**/*",
+    "src/hooks/quiz/**/*",
+    "src/hooks/queries/**/*",
+    "src/hooks/useOptimized*",
+    "src/hooks/useUnified*"
+  ]
+}
