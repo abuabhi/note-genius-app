@@ -5,6 +5,7 @@ export interface StudyMusicTrack {
   artist: string;
   url: string;
   duration: number;
+  audio_file_path: string;
 }
 
 class StudyMusicManager {
@@ -44,11 +45,11 @@ class StudyMusicManager {
     }
 
     try {
-      // Get signed URL from Supabase
+      // Get signed URL from Supabase using the actual audio file path
       const { supabase } = await import("@/integrations/supabase/client");
       const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('study-music')
-        .createSignedUrl(`tracks/${trackId}.mp3`, 3600);
+        .createSignedUrl(track.audio_file_path, 3600);
 
       if (urlError || !signedUrlData?.signedUrl) {
         console.error('Failed to get signed URL:', urlError);

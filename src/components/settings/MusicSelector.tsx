@@ -110,7 +110,8 @@ export const MusicSelector = ({ value, onChange }: MusicSelectorProps) => {
           name: track.name,
           artist: track.artist,
           url: track.audioUrl,
-          duration: Math.min(track.duration, 30) // 30-second preview
+          duration: Math.min(track.duration, 30), // 30-second preview
+          audio_file_path: track.audioUrl // Use audioUrl as the file path for previews
         }]);
         musicManager.setVolume(previewVolume[0]);
         await musicManager.playTrack(track.id);
