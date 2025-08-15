@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
+import { DEBUG_CONFIG } from '@/config/debug';
 
 interface PersistedSessionState {
   sessionId: string;
@@ -45,18 +46,24 @@ export const useSessionPersistence = () => {
       return null;
     }
     
-    console.log('🔄 [SESSION PERSISTENCE] Starting session recovery for user:', user.id, 'at', new Date().toISOString());
+    if (DEBUG_CONFIG.STATE_LOGGING) {
+      console.log('🔄 [SESSION PERSISTENCE] Starting session recovery for user:', user.id, 'at', new Date().toISOString());
+    }
     
     try {
       // Clear any stale localStorage data first
       const persistedSession = getPersistedSession();
       if (persistedSession) {
-        console.log('🔄 [SESSION PERSISTENCE] Clearing stale localStorage session:', persistedSession.sessionId);
+        if (DEBUG_CONFIG.STATE_LOGGING) {
+          console.log('🔄 [SESSION PERSISTENCE] Clearing stale localStorage session:', persistedSession.sessionId);
+        }
         clearPersistedSession();
       }
       
       // Query database for active sessions with timeout handling
-      console.log('🔄 [SESSION PERSISTENCE] Querying database for active sessions...');
+      if (DEBUG_CONFIG.STATE_LOGGING) {
+        console.log('🔄 [SESSION PERSISTENCE] Querying database for active sessions...');
+      }
       
       const queryPromise = supabase
         .from('study_sessions')
@@ -81,10 +88,12 @@ export const useSessionPersistence = () => {
         throw error;
       }
 
-      console.log('🔄 [SESSION PERSISTENCE] Database query completed:', {
-        sessionsFound: activeSessions?.length || 0,
-        sessions: activeSessions
-      });
+      if (DEBUG_CONFIG.STATE_LOGGING) {
+        console.log('🔄 [SESSION PERSISTENCE] Database query completed:', {
+          sessionsFound: activeSessions?.length || 0,
+          sessions: activeSessions
+        });
+      }
 
       // If we have an active session in DB, return it
       if (activeSessions && activeSessions.length > 0) {
