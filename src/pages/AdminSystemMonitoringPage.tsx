@@ -11,6 +11,7 @@ import { SystemAlertsManager } from '@/components/admin/monitoring/SystemAlertsM
 import { LoadTestingDashboard } from '@/components/admin/monitoring/LoadTestingDashboard';
 import { EdgeFunctionMonitor } from '@/components/admin/monitoring/EdgeFunctionMonitor';
 import { SentryTestingDashboard } from '@/components/monitoring/SentryTestingDashboard';
+import UptimeRobotDashboard from '@/components/admin/monitoring/UptimeRobotDashboard';
 import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
 import { Monitor } from 'lucide-react';
 
@@ -50,8 +51,9 @@ const AdminSystemMonitoringPage = () => {
 
       <div className="container mx-auto px-6 py-8">
         <Tabs defaultValue="health" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="health">Health Status</TabsTrigger>
+            <TabsTrigger value="uptime">Uptime</TabsTrigger>
             <TabsTrigger value="load-testing">Load Testing</TabsTrigger>
             <TabsTrigger value="edge-functions">Edge Functions</TabsTrigger>
             <TabsTrigger value="cache">Cache Management</TabsTrigger>
@@ -61,6 +63,10 @@ const AdminSystemMonitoringPage = () => {
 
           <TabsContent value="health" className="space-y-4">
             <ProductionHealthDashboard />
+          </TabsContent>
+
+          <TabsContent value="uptime" className="space-y-4">
+            <UptimeRobotDashboard />
           </TabsContent>
 
           <TabsContent value="load-testing" className="space-y-4">
