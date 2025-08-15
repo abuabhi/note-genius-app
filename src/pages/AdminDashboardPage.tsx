@@ -15,7 +15,8 @@ import {
   Settings,
   Activity,
   HelpCircle,
-  Crown
+  Crown,
+  Music
 } from 'lucide-react';
 
 const AdminDashboardPage = () => {
@@ -82,6 +83,13 @@ const AdminDashboardPage = () => {
       icon: HelpCircle,
       href: '/admin/help',
       color: 'bg-indigo-500'
+    },
+    {
+      title: 'Study Music Management',
+      description: 'Upload and manage study music tracks and thumbnails',
+      icon: Music,
+      href: '/admin/music',
+      color: 'bg-violet-500'
     },
     // Moved to end and tagged as Coming Soon
     {
