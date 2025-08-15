@@ -25,7 +25,6 @@ import {
   HelpCircle,
   
 } from "lucide-react";
-import { StudyAudioSidebarWidget } from "./StudyAudioSidebarWidget";
 
 interface NavigationProps {
   isCollapsed: boolean;
@@ -121,9 +120,6 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   isActive={pathname.startsWith("/todos")}
                   isCollapsed={isCollapsed}
                 />
-                
-                {/* Study Music Widget */}
-                <StudyAudioSidebarWidget isCollapsed={isCollapsed} />
               </div>
             </div>
 
