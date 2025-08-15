@@ -68,9 +68,9 @@ const AdminMusicPage = () => {
   const uploadFile = async (file: File, bucket: string, path: string): Promise<string> => {
     console.log(`🔄 Uploading ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) to ${bucket}/${path}`);
     
-    // Validate file size (50MB limit)
-    if (file.size > 50 * 1024 * 1024) {
-      throw new Error(`File too large: ${(file.size / 1024 / 1024).toFixed(2)}MB (max 50MB)`);
+    // Validate file size (70MB limit)
+    if (file.size > 70 * 1024 * 1024) {
+      throw new Error(`File too large: ${(file.size / 1024 / 1024).toFixed(2)}MB (max 70MB)`);
     }
 
     // Generate unique path to prevent conflicts
