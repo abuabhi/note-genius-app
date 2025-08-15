@@ -59,3 +59,6 @@ enabled = false
 
 [functions.admin-stripe-metrics]
 verify_jwt = true
+
+[functions.get-study-music]
+verify_jwt = true

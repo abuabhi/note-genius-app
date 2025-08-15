@@ -52,6 +52,9 @@ export const settingsFormSchema = z.object({
   enableDailyQuoteCard: z.boolean().default(true),
   enableSoundEffects: z.boolean().default(true),
   enableEmojiBurst: z.boolean().default(true),
+  
+  // Study Music Preferences
+  selectedStudyTracks: z.array(z.string()).max(3).default([]),
 });
 
 export type SettingsFormValues = z.infer<typeof settingsFormSchema>;

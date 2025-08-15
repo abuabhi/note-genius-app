@@ -55,6 +55,9 @@ export const useSettingsFormSubmission = (
         weekly_study_goal_hours: data.weeklyStudyGoalHours,
         notification_preferences: notificationPreferences,
         adaptive_learning_preferences: adaptiveLearningPreferences,
+        study_music_preferences: {
+          selectedTracks: data.selectedStudyTracks || []
+        },
       };
 
       // Update user profile

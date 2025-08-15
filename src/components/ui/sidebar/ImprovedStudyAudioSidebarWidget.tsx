@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStudyAudio } from '@/hooks/useStudyAudio';
+import { StudyMusicSidebarWidget } from './StudyMusicSidebarWidget';
+import { useAuth } from "@/contexts/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
@@ -22,8 +25,54 @@ const TOP_SOUNDS: { preset: StudyPreset; name: string; description: string }[] =
 ];
 
 export const ImprovedStudyAudioSidebarWidget = ({ isCollapsed }: ImprovedStudyAudioSidebarWidgetProps) => {
+  const { user } = useAuth();
   const { enabled, toggle, preset, setPreset, volume, setVolume } = useStudyAudio();
   const [open, setOpen] = useState(false);
+  const [hasSelectedTracks, setHasSelectedTracks] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      checkUserMusicPreferences();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const checkUserMusicPreferences = async () => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('study_music_preferences')
+        .eq('id', user?.id)
+        .single();
+
+      if (error) throw error;
+
+      const preferences = profile?.study_music_preferences as { selectedTracks?: string[] } | null;
+      const selectedTracks = preferences?.selectedTracks || [];
+      setHasSelectedTracks(selectedTracks.length > 0);
+    } catch (error) {
+      console.error('Error checking music preferences:', error);
+      setHasSelectedTracks(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // If user has selected music tracks, show the music widget instead
+  if (loading) {
+    return (
+      <div className="flex items-center px-3 py-2 text-sm text-muted-foreground">
+        <Music className="h-4 w-4 mr-2" />
+        {!isCollapsed && "Loading..."}
+      </div>
+    );
+  }
+
+  if (hasSelectedTracks) {
+    return <StudyMusicSidebarWidget isCollapsed={isCollapsed} />;
+  }
 
   const handlePresetChange = async (newPreset: StudyPreset) => {
     if (enabled && preset !== newPreset) {

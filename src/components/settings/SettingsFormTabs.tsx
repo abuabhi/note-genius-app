@@ -7,11 +7,12 @@ import { AdaptiveLearningCard } from "./cards/AdaptiveLearningCard";
 import { SubjectsSettingsCard } from "./cards/SubjectsSettingsCard";
 import { PasswordChangeCard } from "./cards/PasswordChangeCard";
 import { MergedSubscriptionCard } from "./cards/MergedSubscriptionCard";
+import { StudyMusicSettingsCard } from "./cards/StudyMusicSettingsCard";
 import { UseFormReturn } from "react-hook-form";
 import { User } from "@supabase/supabase-js";
 import { UserTier } from "@/hooks/useUserTier";
 import { Country } from "@/hooks/useCountries";
-import { User as UserIcon, BookOpen, CreditCard, Bell, Brain, Zap, Lock } from "lucide-react";
+import { User as UserIcon, BookOpen, CreditCard, Bell, Brain, Zap, Lock, Music } from "lucide-react";
 
 interface SettingsFormTabsProps {
   activeTab: string;
@@ -39,12 +40,13 @@ export const SettingsFormTabs = ({
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'study', label: 'Study Preferences', icon: Brain },
     { id: 'adaptive', label: 'Adaptive Learning', icon: Zap },
+    { id: 'music', label: 'Music', icon: Music },
     { id: 'password', label: 'Password', icon: Lock },
   ];
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="flex w-full overflow-x-auto gap-2 md:grid md:grid-cols-7">
+      <TabsList className="flex w-full overflow-x-auto gap-2 md:grid md:grid-cols-8">
         {tabs.map(tab => (
           <TabsTrigger key={tab.id} value={tab.id} className="whitespace-nowrap">
             {tab.label}
@@ -79,6 +81,10 @@ export const SettingsFormTabs = ({
       
       <TabsContent value="adaptive" className="space-y-6">
         <AdaptiveLearningCard form={form} />
+      </TabsContent>
+      
+      <TabsContent value="music" className="space-y-6">
+        <StudyMusicSettingsCard form={form} />
       </TabsContent>
       
       <TabsContent value="password" className="space-y-6">

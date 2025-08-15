@@ -1,0 +1,147 @@
+// Study Music Manager for real audio tracks
+export interface StudyMusicTrack {
+  id: string;
+  name: string;
+  artist: string;
+  url: string;
+  duration: number;
+}
+
+class StudyMusicManager {
+  private static _instance: StudyMusicManager | null = null;
+  private audio: HTMLAudioElement | null = null;
+  private currentTrack: StudyMusicTrack | null = null;
+  private volume = 0.6;
+  private isPlaying = false;
+  private tracks: StudyMusicTrack[] = [];
+
+  static get instance() {
+    if (!this._instance) this._instance = new StudyMusicManager();
+    return this._instance;
+  }
+
+  setTracks(tracks: StudyMusicTrack[]) {
+    this.tracks = tracks;
+  }
+
+  setVolume(vol: number) {
+    this.volume = Math.max(0, Math.min(1, vol));
+    if (this.audio) {
+      this.audio.volume = this.volume;
+    }
+  }
+
+  async playTrack(trackId: string, fadeSeconds = 0.3) {
+    const track = this.tracks.find(t => t.id === trackId);
+    if (!track || !track.url) {
+      console.warn('Track not found or no URL available:', trackId);
+      return;
+    }
+
+    // Stop current track if playing
+    if (this.audio) {
+      this.stop(0.1);
+    }
+
+    try {
+      this.audio = new Audio(track.url);
+      this.audio.volume = 0;
+      this.audio.loop = true;
+      this.currentTrack = track;
+
+      this.audio.onended = () => {
+        this.isPlaying = false;
+      };
+
+      this.audio.onerror = (error) => {
+        console.error('Audio error:', error);
+        this.isPlaying = false;
+      };
+
+      await this.audio.play();
+      
+      // Fade in
+      const startTime = Date.now();
+      const fadeInterval = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const progress = Math.min(elapsed / fadeSeconds, 1);
+        
+        if (this.audio) {
+          this.audio.volume = progress * this.volume;
+        }
+        
+        if (progress >= 1) {
+          clearInterval(fadeInterval);
+        }
+      }, 50);
+
+      this.isPlaying = true;
+      
+      // Media Session metadata
+      try {
+        if ('mediaSession' in navigator) {
+          // @ts-ignore
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: track.name,
+            artist: track.artist,
+            album: 'Study Music',
+          });
+        }
+      } catch {}
+      
+    } catch (error) {
+      console.error('Failed to play track:', error);
+      this.isPlaying = false;
+    }
+  }
+
+  stop(fadeSeconds = 0.3) {
+    if (!this.audio) return;
+
+    const startVolume = this.audio.volume;
+    const startTime = Date.now();
+    
+    const fadeInterval = setInterval(() => {
+      const elapsed = (Date.now() - startTime) / 1000;
+      const progress = Math.min(elapsed / fadeSeconds, 1);
+      
+      if (this.audio) {
+        this.audio.volume = startVolume * (1 - progress);
+      }
+      
+      if (progress >= 1) {
+        clearInterval(fadeInterval);
+        if (this.audio) {
+          this.audio.pause();
+          this.audio.remove();
+        }
+        this.audio = null;
+        this.currentTrack = null;
+      }
+    }, 50);
+
+    this.isPlaying = false;
+  }
+
+  toggle() {
+    if (this.isPlaying) {
+      this.stop();
+    } else if (this.currentTrack) {
+      this.playTrack(this.currentTrack.id);
+    }
+  }
+
+  get playing() {
+    return this.isPlaying;
+  }
+
+  get current() {
+    return this.currentTrack;
+  }
+
+  get availableTracks() {
+    return this.tracks;
+  }
+}
+
+export default StudyMusicManager;
