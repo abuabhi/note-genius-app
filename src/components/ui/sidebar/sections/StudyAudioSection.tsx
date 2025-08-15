@@ -51,43 +51,65 @@ export const StudyAudioSection = ({ isCollapsed }: StudyAudioSectionProps) => {
     if (!user) return;
     
     try {
-      // Get user's selected track IDs from profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('study_music_preferences')
-        .eq('id', user.id)
+      // Get user's selected track from new table
+      const { data: selectedTrackRecord } = await supabase
+        .from('user_selected_music_track')
+        .select(`
+          track_id,
+          study_music_tracks (
+            id,
+            name,
+            artist,
+            audio_file_path,
+            duration_seconds
+          )
+        `)
+        .eq('user_id', user.id)
         .single();
 
-      const preferences = profile?.study_music_preferences as { selectedTracks?: string[] } | null;
-      const userSelectedTrackIds = preferences?.selectedTracks || [];
-      
-      if (userSelectedTrackIds.length > 0) {
-        // Fetch full track data from edge function to get the track name
-        const { data } = await supabase.functions.invoke('get-study-music', {
-          body: { category: 'all', limit: 20 }
-        });
-
-        const allTracks = data?.tracks || [];
-        const selectedTrack = allTracks.find((track: StudyTrack) => 
-          track.id === userSelectedTrackIds[0]
-        );
+      if (selectedTrackRecord?.study_music_tracks) {
+        const track = selectedTrackRecord.study_music_tracks as any;
+        setCurrentTrackName(`${track.name} - ${track.artist}`);
         
-        if (selectedTrack) {
-          setCurrentTrackName(`${selectedTrack.name} - ${selectedTrack.artist}`);
-          // Set up track in music manager with real audio URL
-          const musicTrack = {
-            id: selectedTrack.id,
-            name: selectedTrack.name,
-            artist: selectedTrack.artist,
-            url: selectedTrack.audioUrl || selectedTrack.youtubeUrl, // Prefer audioUrl from storage
-            duration: selectedTrack.duration
-          };
-          musicManager.setTracks([musicTrack]);
-          return;
-        }
+        // Generate storage URL for the audio file
+        const { data: audioUrl } = await supabase.storage
+          .from('study-music')
+          .createSignedUrl(track.audio_file_path, 3600);
+        
+        // Set up track in music manager with real audio URL
+        const musicTrack = {
+          id: track.id,
+          name: track.name,
+          artist: track.artist,
+          url: audioUrl?.signedUrl || '',
+          duration: track.duration_seconds || 1800
+        };
+        musicManager.setTracks([musicTrack]);
+        return;
       }
       
-      // Fallback to default track if no user selection
+      // Fallback: Get first available track from database
+      const { data } = await supabase.functions.invoke('get-study-music', {
+        body: { category: 'all', limit: 1 }
+      });
+
+      const tracks = data?.tracks || [];
+      if (tracks.length > 0) {
+        const track = tracks[0];
+        setCurrentTrackName(`${track.name} - ${track.artist}`);
+        
+        const musicTrack = {
+          id: track.id,
+          name: track.name,
+          artist: track.artist,
+          url: track.audioUrl || track.youtubeUrl,
+          duration: track.duration
+        };
+        musicManager.setTracks([musicTrack]);
+        return;
+      }
+      
+      // Final fallback to default track if database is empty
       setCurrentTrackName(DEFAULT_TRACK.name);
       const defaultMusicTrack = {
         id: DEFAULT_TRACK.id,
@@ -105,22 +127,22 @@ export const StudyAudioSection = ({ isCollapsed }: StudyAudioSectionProps) => {
     }
   };
 
-  // Listen for realtime updates to user's music preferences  
+  // Listen for realtime updates to user's music track selection
   useEffect(() => {
     if (!user) return;
 
     const channel = supabase
-      .channel('music-preferences-changes')
+      .channel('music-track-changes')
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
-          table: 'profiles',
-          filter: `id=eq.${user.id}`,
+          table: 'user_selected_music_track',
+          filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('Music preferences updated:', payload);
+          console.log('Music track selection updated:', payload);
           loadUserSelectedTrack();
         }
       )
