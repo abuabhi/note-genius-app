@@ -62,3 +62,6 @@ verify_jwt = true
 
 [functions.get-study-music]
 verify_jwt = true
+
+[functions.audio-proxy]
+verify_jwt = false

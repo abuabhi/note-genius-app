@@ -45,16 +45,29 @@ class StudyMusicManager {
     }
 
     try {
-      // Get signed URL from Supabase using the actual audio file path
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data: signedUrlData, error: urlError } = await supabase.storage
-        .from('study-music')
-        .createSignedUrl(track.audio_file_path, 3600);
+      let audioUrl: string;
 
-      if (urlError || !signedUrlData?.signedUrl) {
-        console.error('Failed to get signed URL:', urlError);
-        this.isPlaying = false;
-        return;
+      // Check if we're in development environment
+      const { config } = await import("@/config/environment");
+      
+      if (config.isDevelopment) {
+        // Use audio proxy in development to bypass CSP restrictions
+        audioUrl = `https://zuhcmwujzfddmafozubd.supabase.co/functions/v1/audio-proxy?path=${encodeURIComponent(track.audio_file_path)}`;
+        console.log('🎵 Using audio proxy for development:', audioUrl);
+      } else {
+        // Use direct signed URL in production
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data: signedUrlData, error: urlError } = await supabase.storage
+          .from('study-music')
+          .createSignedUrl(track.audio_file_path, 3600);
+
+        if (urlError || !signedUrlData?.signedUrl) {
+          console.error('Failed to get signed URL:', urlError);
+          this.isPlaying = false;
+          return;
+        }
+        
+        audioUrl = signedUrlData.signedUrl;
       }
 
       // Create and configure audio element
@@ -114,7 +127,7 @@ class StudyMusicManager {
       };
 
       // Load the audio source
-      this.audio.src = signedUrlData.signedUrl;
+      this.audio.src = audioUrl;
       this.audio.load();
       
     } catch (error) {
