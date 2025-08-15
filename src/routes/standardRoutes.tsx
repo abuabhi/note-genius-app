@@ -151,4 +151,8 @@ export const standardRoutes: RouteConfig[] = [
     path: '/audio-trial',
     element: <AudioTrialPage />
   },
+  {
+    path: '/audio-simple',
+    element: React.lazy(() => import('../pages/AudioTrialPageStandalone'))
+  },
 ];
