@@ -35,7 +35,47 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
 
   useEffect(() => {
     fetchStudyTracks();
+    ensureUserHasDefaultTracks();
   }, []);
+
+  const ensureUserHasDefaultTracks = async () => {
+    if (!user) return;
+    
+    try {
+      // Check if user has any selected tracks
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('study_music_preferences')
+        .eq('id', user.id)
+        .single();
+
+      const preferences = profile?.study_music_preferences as { selectedTracks?: string[] } | null;
+      const existingTracks = preferences?.selectedTracks || [];
+      
+      if (existingTracks.length === 0) {
+        // Auto-assign first 3 default tracks
+        const defaultTracks = ['lofi-1', 'ambient-1', 'classical-1'];
+        form.setValue('selectedStudyTracks', defaultTracks);
+        
+        // Also save to database
+        await supabase
+          .from('profiles')
+          .update({
+            study_music_preferences: { selectedTracks: defaultTracks },
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
+      } else {
+        // Load existing selections into form
+        form.setValue('selectedStudyTracks', existingTracks);
+      }
+    } catch (error) {
+      console.error('Error ensuring default tracks:', error);
+      // Fallback to setting form defaults
+      const defaultTracks = ['lofi-1', 'ambient-1', 'classical-1'];
+      form.setValue('selectedStudyTracks', defaultTracks);
+    }
+  };
 
   useEffect(() => {
     return () => {

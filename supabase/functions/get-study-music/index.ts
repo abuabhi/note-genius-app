@@ -182,12 +182,49 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { category = 'all', limit = 15, userId = null, autoAssign = false } = await req.json().catch(() => ({}));
+    const { category = 'all', limit = 15, userId = null, autoAssign = false, ensureDefaults = false } = await req.json().catch(() => ({}));
 
     // Get available tracks (filter by category if specified)
     let availableTracks = CURATED_YOUTUBE_TRACKS;
     if (category && category !== 'all') {
       availableTracks = CURATED_YOUTUBE_TRACKS.filter(track => track.category === category);
+    }
+
+    // Auto-assign first 3 tracks as defaults if user has no selections
+    if (ensureDefaults && userId) {
+      console.log('Checking if user needs default tracks assigned:', userId);
+      
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('study_music_preferences')
+          .eq('id', userId)
+          .single();
+
+        const preferences = profile?.study_music_preferences as { selectedTracks?: string[] } | null;
+        const existingTracks = preferences?.selectedTracks || [];
+        
+        if (existingTracks.length === 0) {
+          console.log('User has no tracks, assigning first 3 defaults');
+          const defaultTracks = ['lofi-1', 'ambient-1', 'classical-1'];
+          
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              study_music_preferences: { selectedTracks: defaultTracks },
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', userId);
+
+          if (updateError) {
+            console.error('Error setting default tracks:', updateError);
+          } else {
+            console.log('Successfully set default tracks:', defaultTracks);
+          }
+        }
+      } catch (err) {
+        console.error('Error in ensureDefaults:', err);
+      }
     }
 
     // If autoAssign is true and userId provided, auto-assign 3 random tracks
