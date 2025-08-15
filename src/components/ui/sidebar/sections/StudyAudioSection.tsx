@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Music, Play, Pause } from "lucide-react";
+import { Music, PlayCircle, PauseCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -175,21 +175,21 @@ export const StudyAudioSection = ({ isCollapsed }: StudyAudioSectionProps) => {
         {!isCollapsed && (
           <>
             <div className="flex-1 text-left min-w-0">
-              <div className="text-sm font-medium truncate">{currentTrackName}</div>
+              <div className="text-sm font-medium truncate">Study Music</div>
             </div>
             {isPlayingMusic ? (
-              <Pause className="h-4 w-4 shrink-0" />
+              <PauseCircle className="h-5 w-5 shrink-0" />
             ) : (
-              <Play className="h-4 w-4 shrink-0" />
+              <PlayCircle className="h-5 w-5 shrink-0" />
             )}
           </>
         )}
         {isCollapsed && (
           <>
             {isPlayingMusic ? (
-              <Pause className="h-4 w-4" />
+              <PauseCircle className="h-4 w-4" />
             ) : (
-              <Play className="h-4 w-4" />
+              <PlayCircle className="h-4 w-4" />
             )}
           </>
         )}

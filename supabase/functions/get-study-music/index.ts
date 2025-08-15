@@ -255,12 +255,12 @@ serve(async (req) => {
       }
     }
 
-    // Shuffle tracks for variety
-    const shuffledTracks = [...availableTracks].sort(() => Math.random() - 0.5);
+    // Return tracks in consistent order (no shuffling)
+    const orderedTracks = availableTracks;
 
     return new Response(JSON.stringify({ 
-      tracks: shuffledTracks.slice(0, limit),
-      total: shuffledTracks.length,
+      tracks: orderedTracks.slice(0, limit),
+      total: orderedTracks.length,
       source: 'youtube-curated',
       availableCategories: ['all', 'lofi', 'ambient', 'classical', 'nature', 'jazz', 'electronic', 'meditation', 'binaural']
     }), {

@@ -53,18 +53,24 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
       const existingTracks = preferences?.selectedTracks || [];
       
       if (existingTracks.length === 0) {
-        // Auto-assign default track
-        const defaultTracks = ['lofi-1'];
-        form.setValue('selectedStudyTracks', defaultTracks);
+        // Use edge function to ensure defaults (consolidates logic)
+        await supabase.functions.invoke('get-study-music', {
+          body: { 
+            userId: user.id, 
+            ensureDefaults: true,
+            limit: 15 
+          }
+        });
         
-        // Also save to database
-        await supabase
+        // Reload to get the assigned default
+        const { data: updatedProfile } = await supabase
           .from('profiles')
-          .update({
-            study_music_preferences: { selectedTracks: defaultTracks },
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', user.id);
+          .select('study_music_preferences')
+          .eq('id', user.id)
+          .single();
+          
+        const updatedPreferences = updatedProfile?.study_music_preferences as { selectedTracks?: string[] } | null;
+        form.setValue('selectedStudyTracks', updatedPreferences?.selectedTracks || ['lofi-1']);
       } else {
         // Load existing selections into form
         form.setValue('selectedStudyTracks', existingTracks);
@@ -276,15 +282,20 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      {/* Thumbnail */}
-                      <div className="w-16 h-12 bg-muted rounded overflow-hidden flex-shrink-0">
-                        <img 
-                          src={track.thumbnailUrl} 
-                          alt={track.name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
+                       {/* Thumbnail */}
+                       <div className="w-16 h-12 bg-muted rounded overflow-hidden flex-shrink-0">
+                         <img 
+                           src={track.thumbnailUrl} 
+                           alt={track.name}
+                           className="w-full h-full object-cover"
+                           loading="lazy"
+                           onError={(e) => {
+                             e.currentTarget.src = '/placeholder.svg';
+                             e.currentTarget.style.backgroundColor = 'hsl(var(--muted))';
+                             e.currentTarget.style.padding = '0.5rem';
+                           }}
+                         />
+                       </div>
                       
                       {/* Track info */}
                       <div className="flex-1 min-w-0">
