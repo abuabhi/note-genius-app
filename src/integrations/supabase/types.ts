@@ -2933,6 +2933,7 @@ export type Database = {
           duration_seconds: number | null
           id: string
           is_active: boolean | null
+          is_default: boolean
           name: string
           sort_order: number | null
           tags: string[] | null
@@ -2948,6 +2949,7 @@ export type Database = {
           duration_seconds?: number | null
           id?: string
           is_active?: boolean | null
+          is_default?: boolean
           name: string
           sort_order?: number | null
           tags?: string[] | null
@@ -2963,6 +2965,7 @@ export type Database = {
           duration_seconds?: number | null
           id?: string
           is_active?: boolean | null
+          is_default?: boolean
           name?: string
           sort_order?: number | null
           tags?: string[] | null

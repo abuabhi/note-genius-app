@@ -7,10 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Upload, Music, Edit, Trash2, Save, X } from 'lucide-react';
+import { Plus, Upload, Music, Edit, Trash2, Save, X, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth';
+import { AdminMusicBreadcrumb } from '@/components/admin/music/AdminMusicBreadcrumb';
 
 interface StudyMusicTrack {
   id: string;
@@ -22,6 +23,7 @@ interface StudyMusicTrack {
   category: string;
   tags: string[];
   is_active: boolean;
+  is_default: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -40,7 +42,6 @@ const AdminMusicPage = () => {
     name: '',
     artist: '',
     category: 'lofi',
-    tags: '',
     audio_file: null as File | null,
     thumbnail_file: null as File | null,
   });
@@ -111,7 +112,7 @@ const AdminMusicPage = () => {
           thumbnail_path: thumbnailPath,
           duration_seconds: Math.round(audioDuration),
           category: formData.category,
-          tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+          tags: [],
           sort_order: tracks.length,
           created_by: user?.id
         })
@@ -150,7 +151,6 @@ const AdminMusicPage = () => {
       name: '',
       artist: '',
       category: 'lofi',
-      tags: '',
       audio_file: null,
       thumbnail_file: null,
     });
@@ -162,7 +162,6 @@ const AdminMusicPage = () => {
       name: track.name,
       artist: track.artist,
       category: track.category,
-      tags: track.tags.join(', '),
       audio_file: null,
       thumbnail_file: null,
     });
@@ -178,7 +177,6 @@ const AdminMusicPage = () => {
         name: formData.name,
         artist: formData.artist,
         category: formData.category,
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
       };
 
       // Upload new audio file if provided
@@ -264,6 +262,42 @@ const AdminMusicPage = () => {
     }
   };
 
+  const toggleDefaultTrack = async (track: StudyMusicTrack) => {
+    try {
+      // If setting as default, first unset current default
+      if (!track.is_default) {
+        await supabase
+          .from('study_music_tracks')
+          .update({ is_default: false })
+          .eq('is_default', true);
+      }
+
+      const { data, error } = await supabase
+        .from('study_music_tracks')
+        .update({ is_default: !track.is_default })
+        .eq('id', track.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Refresh tracks to get updated state
+      loadTracks();
+      toast.success(`Track ${data.is_default ? 'set as' : 'removed as'} default`);
+    } catch (error) {
+      console.error('Error toggling default track:', error);
+      toast.error('Failed to update default track');
+    }
+  };
+
+  const getThumbnailUrl = (thumbnailPath?: string) => {
+    if (!thumbnailPath) return null;
+    const { data } = supabase.storage
+      .from('study-music')
+      .getPublicUrl(thumbnailPath);
+    return data.publicUrl;
+  };
+
   const formatDuration = (seconds?: number) => {
     if (!seconds) return 'Unknown';
     const mins = Math.floor(seconds / 60);
@@ -284,6 +318,8 @@ const AdminMusicPage = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        <AdminMusicBreadcrumb />
+        
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Study Music Management</h1>
@@ -326,31 +362,20 @@ const AdminMusicPage = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="category">Category</Label>
-                    <select
-                      id="category"
-                      value={formData.category}
-                      onChange={(e) => setFormData({...formData, category: e.target.value})}
-                      className="w-full h-10 px-3 py-2 text-sm ring-offset-background border border-input bg-background rounded-md"
-                    >
-                      <option value="lofi">Lo-Fi</option>
-                      <option value="classical">Classical</option>
-                      <option value="ambient">Ambient</option>
-                      <option value="nature">Nature</option>
-                      <option value="piano">Piano</option>
-                    </select>
-                  </div>
-                  <div>
-                    <Label htmlFor="tags">Tags (comma-separated)</Label>
-                    <Input
-                      id="tags"
-                      value={formData.tags}
-                      onChange={(e) => setFormData({...formData, tags: e.target.value})}
-                      placeholder="chill, focus, study"
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="category">Category</Label>
+                  <select
+                    id="category"
+                    value={formData.category}
+                    onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    className="w-full h-10 px-3 py-2 text-sm ring-offset-background border border-input bg-background rounded-md"
+                  >
+                    <option value="lofi">Lo-Fi</option>
+                    <option value="classical">Classical</option>
+                    <option value="ambient">Ambient</option>
+                    <option value="nature">Nature</option>
+                    <option value="piano">Piano</option>
+                  </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -408,11 +433,29 @@ const AdminMusicPage = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Music className="h-6 w-6 text-primary" />
+                    <div className="relative">
+                      {getThumbnailUrl(track.thumbnail_path) ? (
+                        <img 
+                          src={getThumbnailUrl(track.thumbnail_path)!} 
+                          alt={track.name}
+                          className="w-16 h-16 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center">
+                          <Music className="h-6 w-6 text-primary" />
+                        </div>
+                      )}
                     </div>
                     <div>
-                      <h3 className="font-semibold">{track.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{track.name}</h3>
+                        {track.is_default && (
+                          <Badge variant="default" className="gap-1 bg-yellow-100 text-yellow-800 border-yellow-200">
+                            <Star className="h-3 w-3" />
+                            Default
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">{track.artist}</p>
                       <div className="flex items-center gap-2 mt-2">
                         <Badge variant={track.is_active ? "default" : "secondary"}>
@@ -423,18 +466,18 @@ const AdminMusicPage = () => {
                           {formatDuration(track.duration_seconds)}
                         </span>
                       </div>
-                      {track.tags.length > 0 && (
-                        <div className="flex gap-1 mt-2">
-                          {track.tags.map((tag, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant={track.is_default ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => toggleDefaultTrack(track)}
+                      className="gap-2"
+                    >
+                      <Star className="h-4 w-4" />
+                      {track.is_default ? 'Default' : 'Set Default'}
+                    </Button>
                     <Switch
                       checked={track.is_active}
                       onCheckedChange={() => toggleTrackStatus(track)}
