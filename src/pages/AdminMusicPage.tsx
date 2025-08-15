@@ -427,79 +427,94 @@ const AdminMusicPage = () => {
           </Card>
         )}
 
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tracks.map((track) => (
-            <Card key={track.id}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-start gap-4">
-                    <div className="relative">
-                      {getThumbnailUrl(track.thumbnail_path) ? (
-                        <img 
-                          src={getThumbnailUrl(track.thumbnail_path)!} 
-                          alt={track.name}
-                          className="w-16 h-16 rounded-lg object-cover"
-                        />
-                      ) : (
-                        <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center">
-                          <Music className="h-6 w-6 text-primary" />
-                        </div>
-                      )}
+            <Card key={track.id} className="overflow-hidden">
+              <CardContent className="p-6 flex flex-col h-full">
+                <div className="flex flex-col items-center text-center">
+                  {/* Large thumbnail */}
+                  <div className="relative mb-4">
+                    {getThumbnailUrl(track.thumbnail_path) ? (
+                      <img 
+                        src={getThumbnailUrl(track.thumbnail_path)!} 
+                        alt={track.name}
+                        className="w-48 h-48 rounded-lg object-cover shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-48 h-48 bg-primary/10 rounded-lg flex items-center justify-center shadow-sm">
+                        <Music className="h-12 w-12 text-primary" />
+                      </div>
+                    )}
+                    {track.is_default && (
+                      <Badge variant="default" className="absolute -top-2 -right-2 gap-1 bg-yellow-100 text-yellow-800 border-yellow-200">
+                        <Star className="h-3 w-3" />
+                        Default
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {/* Title and artist */}
+                  <div className="mb-4 w-full">
+                    <h3 className="font-semibold text-lg mb-1 line-clamp-2">{track.name}</h3>
+                    <p className="text-muted-foreground text-sm mb-3">{track.artist}</p>
+                    <div className="flex items-center justify-center gap-2">
+                      <Badge variant={track.is_active ? "default" : "secondary"}>
+                        {track.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                      <Badge variant="outline">{track.category}</Badge>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{track.name}</h3>
-                        {track.is_default && (
-                          <Badge variant="default" className="gap-1 bg-yellow-100 text-yellow-800 border-yellow-200">
-                            <Star className="h-3 w-3" />
-                            Default
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">{track.artist}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant={track.is_active ? "default" : "secondary"}>
-                          {track.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                        <Badge variant="outline">{track.category}</Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {formatDuration(track.duration_seconds)}
-                        </span>
-                      </div>
+                    <div className="mt-2">
+                      <span className="text-sm text-muted-foreground">
+                        {formatDuration(track.duration_seconds)}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant={track.is_default ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => toggleDefaultTrack(track)}
-                      className="gap-2"
-                    >
-                      <Star className="h-4 w-4" />
-                      {track.is_default ? 'Default' : 'Set Default'}
-                    </Button>
+                </div>
+                
+                {/* Action buttons at bottom */}
+                <div className="mt-auto space-y-3">
+                  <div className="flex items-center justify-center gap-2">
                     <Switch
                       checked={track.is_active}
                       onCheckedChange={() => toggleTrackStatus(track)}
                     />
+                    <Label className="text-sm text-muted-foreground">
+                      Active
+                    </Label>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
                     <Button
-                      variant="outline"
+                      variant={track.is_default ? "default" : "outline"}
                       size="sm"
-                      onClick={() => handleEdit(track)}
-                      className="gap-2"
+                      onClick={() => toggleDefaultTrack(track)}
+                      className="w-full gap-2"
                     >
-                      <Edit className="h-4 w-4" />
-                      Edit
+                      <Star className="h-4 w-4" />
+                      {track.is_default ? 'Default' : 'Set Default'}
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteTrack(track)}
-                      className="gap-2 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete
-                    </Button>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(track)}
+                        className="flex-1 gap-2"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Edit
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteTrack(track)}
+                        className="flex-1 gap-2 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
