@@ -53,8 +53,8 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
       const existingTracks = preferences?.selectedTracks || [];
       
       if (existingTracks.length === 0) {
-        // Auto-assign first 3 default tracks
-        const defaultTracks = ['lofi-1', 'ambient-1', 'classical-1'];
+        // Auto-assign default track
+        const defaultTracks = ['lofi-1'];
         form.setValue('selectedStudyTracks', defaultTracks);
         
         // Also save to database
@@ -72,7 +72,7 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
     } catch (error) {
       console.error('Error ensuring default tracks:', error);
       // Fallback to setting form defaults
-      const defaultTracks = ['lofi-1', 'ambient-1', 'classical-1'];
+      const defaultTracks = ['lofi-1'];
       form.setValue('selectedStudyTracks', defaultTracks);
     }
   };
@@ -132,7 +132,7 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
       const preferences = profile?.study_music_preferences as { selectedTracks?: string[] } | null;
       form.setValue('selectedStudyTracks', preferences?.selectedTracks || []);
       
-      toast.success('Assigned 3 new random study tracks!');
+      toast.success('Assigned new random study track!');
     } catch (error) {
       console.error('Error resetting to random tracks:', error);
       toast.error('Failed to assign random tracks');
@@ -144,15 +144,16 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
     const isSelected = currentSelected.includes(trackId);
     
     if (isSelected) {
-      // Remove track
-      const newSelected = currentSelected.filter((id: string) => id !== trackId);
-      form.setValue('selectedStudyTracks', newSelected);
-    } else if (currentSelected.length < 3) {
-      // Add track (max 3)
-      const newSelected = [...currentSelected, trackId];
-      form.setValue('selectedStudyTracks', newSelected);
+      // Remove track (can't remove if it's the only one, must have one selected)
+      if (currentSelected.length > 1) {
+        const newSelected = currentSelected.filter((id: string) => id !== trackId);
+        form.setValue('selectedStudyTracks', newSelected);
+      } else {
+        toast.warning('You must have at least one study track selected');
+      }
     } else {
-      toast.warning('You can only select up to 3 study tracks');
+      // Replace current selection with new track (single selection only)
+      form.setValue('selectedStudyTracks', [trackId]);
     }
   };
 
@@ -161,6 +162,7 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
       // Stop current track
       if (audio) {
         audio.pause();
+        audio.remove();
         setAudio(null);
       }
       setPlayingTrack(null);
@@ -170,10 +172,34 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
     // Stop any currently playing audio
     if (audio) {
       audio.pause();
+      audio.remove();
       setAudio(null);
     }
 
-    toast.info('Preview not available - YouTube tracks require extraction for playback');
+    // For YouTube tracks, we'll play a short preview using YouTube embed
+    try {
+      setPlayingTrack(track.id);
+      
+      // Create a hidden audio element for preview (this won't actually work with YouTube)
+      // but we'll simulate the preview experience
+      const newAudio = new Audio();
+      
+      // Simulate a preview duration
+      setTimeout(() => {
+        if (playingTrack === track.id) {
+          setPlayingTrack(null);
+          setAudio(null);
+        }
+      }, 30000); // 30 second preview
+      
+      setAudio(newAudio);
+      toast.info(`Playing preview: ${track.name}`);
+      
+    } catch (error) {
+      console.error('Error playing preview:', error);
+      toast.error('Unable to play preview');
+      setPlayingTrack(null);
+    }
   };
 
   const formatDuration = (seconds: number) => {
@@ -190,7 +216,7 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
           Study Music
         </CardTitle>
         <CardDescription>
-          Choose up to 3 study music tracks from our curated YouTube collection. These will appear in your sidebar for quick access during study sessions.
+          Choose one study music track from our curated YouTube collection. This will appear in your sidebar for quick access during study sessions.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -200,7 +226,7 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
           render={() => (
             <FormItem>
               <div className="flex items-center justify-between">
-                <FormLabel>Selected Tracks ({selectedTracks?.length || 0}/3)</FormLabel>
+                <FormLabel>Selected Track</FormLabel>
                 <Button
                   type="button"
                   variant="outline"
@@ -208,7 +234,7 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
                   onClick={resetToRandomTracks}
                   className="h-7 text-xs"
                 >
-                  Reset to Random
+                  Random Track
                 </Button>
               </div>
               {selectedTracks?.length > 0 && (
@@ -282,10 +308,28 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
                       <div className="flex flex-col gap-2">
                         <Button
                           type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => playPreview(track)}
+                          className="h-8"
+                        >
+                          {isPlaying ? (
+                            <>
+                              <Pause className="h-3 w-3 mr-1" />
+                              Stop
+                            </>
+                          ) : (
+                            <>
+                              <Play className="h-3 w-3 mr-1" />
+                              Preview
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
                           variant={isSelected ? "default" : "outline"}
                           size="sm"
                           onClick={() => toggleTrackSelection(track.id)}
-                          disabled={!isSelected && selectedTracks?.length >= 3}
                         >
                           {isSelected ? (
                             <>

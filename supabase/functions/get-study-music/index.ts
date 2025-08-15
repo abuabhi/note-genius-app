@@ -205,8 +205,8 @@ serve(async (req) => {
         const existingTracks = preferences?.selectedTracks || [];
         
         if (existingTracks.length === 0) {
-          console.log('User has no tracks, assigning first 3 defaults');
-          const defaultTracks = ['lofi-1', 'ambient-1', 'classical-1'];
+          console.log('User has no tracks, assigning default track');
+          const defaultTracks = ['lofi-1'];
           
           const { error: updateError } = await supabase
             .from('profiles')
@@ -227,29 +227,13 @@ serve(async (req) => {
       }
     }
 
-    // If autoAssign is true and userId provided, auto-assign 3 random tracks
+    // If autoAssign is true and userId provided, auto-assign 1 random track
     if (autoAssign && userId) {
-      console.log('Auto-assigning 3 random tracks for user:', userId);
+      console.log('Auto-assigning 1 random track for user:', userId);
       
-      // Get 3 random tracks from different categories for variety
-      const categories = ['lofi', 'ambient', 'classical', 'nature'];
-      const selectedTracks: string[] = [];
-      
-      for (const cat of categories) {
-        const categoryTracks = CURATED_YOUTUBE_TRACKS.filter(t => t.category === cat);
-        if (categoryTracks.length > 0 && selectedTracks.length < 3) {
-          const randomTrack = categoryTracks[Math.floor(Math.random() * categoryTracks.length)];
-          selectedTracks.push(randomTrack.id);
-        }
-      }
-      
-      // If we still need more tracks, add random ones
-      while (selectedTracks.length < 3) {
-        const remainingTracks = CURATED_YOUTUBE_TRACKS.filter(t => !selectedTracks.includes(t.id));
-        if (remainingTracks.length === 0) break;
-        const randomTrack = remainingTracks[Math.floor(Math.random() * remainingTracks.length)];
-        selectedTracks.push(randomTrack.id);
-      }
+      // Get 1 random track
+      const randomIndex = Math.floor(Math.random() * CURATED_YOUTUBE_TRACKS.length);
+      const selectedTracks = [CURATED_YOUTUBE_TRACKS[randomIndex].id];
 
       // Save to user preferences
       try {
