@@ -65,21 +65,22 @@ class SecurityHeadersManager {
   }
 
   private applyHeaders(): void {
-    // TEMPORARY DISABLE: Client-side CSP meta tags are unreliable and override server CSP
-    // This is causing audio playback issues. Server-side CSP configuration needed instead.
+    // Client-side CSP is disabled - server-side CSP is configured in vercel.json
+    // This ensures proper CSP enforcement without meta tag conflicts
     
     if (config.isDevelopment) {
-      console.log('🔒 [CSP DEBUG] Client-side CSP application DISABLED to resolve audio issues');
-      console.log('🔒 [CSP DEBUG] Generated CSP (not applied):', this.headers['Content-Security-Policy']);
+      console.log('🔒 [CSP INFO] Client-side CSP disabled - using server-side configuration');
+      console.log('🔒 [CSP INFO] Expected server CSP includes media-src for Supabase audio playback');
+      console.log('🔒 [CSP INFO] Generated CSP (reference only):', this.headers['Content-Security-Policy']);
+      console.log('🔒 [CSP INFO] Server CSP should include: media-src \'self\' https://zuhcmwujzfddmafozubd.supabase.co data: blob:');
     }
     
-    // Don't apply CSP meta tags - let server handle CSP properly
-    // this.addMetaTag('Content-Security-Policy', this.headers['Content-Security-Policy']);
-    
-    // Log security configuration  
+    // Log security configuration status
     if (config.isDevelopment) {
-      console.log('🔒 Security headers configured (client-side CSP disabled):', {
-        'Content-Security-Policy': '(disabled - server-side required)'
+      console.log('🔒 Security headers status:', {
+        'Content-Security-Policy': 'Server-side configured in vercel.json',
+        'Audio Support': 'Supabase media-src enabled',
+        'Client CSP': 'Disabled (recommended)'
       });
     }
   }
