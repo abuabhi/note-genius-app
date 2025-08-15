@@ -41,7 +41,7 @@ class SecurityHeadersManager {
     // SECURITY FIX: Allow dynamic imports for lazy-loaded components
     const scriptSrc = isDev 
       ? `script-src ${origins} 'unsafe-inline' 'unsafe-eval'` // Development only
-      : `script-src ${origins} 'strict-dynamic' 'unsafe-inline'`; // Production - need unsafe-inline for dynamic imports
+      : `script-src ${origins} 'unsafe-inline' 'unsafe-eval'`; // Production - need both for Vite dynamic imports
     
     const styleSrc = isDev
       ? `style-src ${origins} 'unsafe-inline'` // Development only  
@@ -73,19 +73,15 @@ class SecurityHeadersManager {
     this.addMetaTag('Content-Security-Policy', this.headers['Content-Security-Policy']);
     
     // Debug: Log what we're setting and what's actually in the DOM
-    console.log('🔒 [CSP DEBUG] Generated CSP:', this.headers['Content-Security-Policy']);
-    
-    // Check what's actually in the DOM after setting
-    setTimeout(() => {
-      const appliedCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
-      console.log('🔒 [CSP DEBUG] Applied CSP meta tag:', appliedCSP?.getAttribute('content'));
-      console.log('🔒 [CSP DEBUG] All meta tags in head:', 
-        Array.from(document.head.querySelectorAll('meta')).map(m => ({
-          httpEquiv: m.getAttribute('http-equiv'),
-          content: m.getAttribute('content')?.substring(0, 100) + '...'
-        }))
-      );
-    }, 100);
+    if (config.isDevelopment) {
+      console.log('🔒 [CSP DEBUG] Generated CSP:', this.headers['Content-Security-Policy']);
+      
+      // Check what's actually in the DOM after setting
+      setTimeout(() => {
+        const appliedCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+        console.log('🔒 [CSP DEBUG] Applied CSP meta tag:', appliedCSP?.getAttribute('content'));
+      }, 100);
+    }
     
     // Log security configuration
     if (config.isDevelopment) {
@@ -97,18 +93,26 @@ class SecurityHeadersManager {
 
   private addMetaTag(name: string, content: string): void {
     if (!content) {
-      console.warn('🔒 [CSP DEBUG] Empty content for meta tag:', name);
+      if (config.isDevelopment) {
+        console.warn('🔒 [CSP DEBUG] Empty content for meta tag:', name);
+      }
       return;
     }
     
-    console.log('🔒 [CSP DEBUG] Adding meta tag:', name, content.substring(0, 100) + '...');
+    if (config.isDevelopment) {
+      console.log('🔒 [CSP DEBUG] Adding meta tag:', name, content.substring(0, 100) + '...');
+    }
     
     const existing = document.querySelector(`meta[http-equiv="${name}"]`);
     if (existing) {
-      console.log('🔒 [CSP DEBUG] Updating existing meta tag');
+      if (config.isDevelopment) {
+        console.log('🔒 [CSP DEBUG] Updating existing meta tag');
+      }
       existing.setAttribute('content', content);
     } else {
-      console.log('🔒 [CSP DEBUG] Creating new meta tag');
+      if (config.isDevelopment) {
+        console.log('🔒 [CSP DEBUG] Creating new meta tag');
+      }
       const meta = document.createElement('meta');
       meta.setAttribute('http-equiv', name);
       meta.setAttribute('content', content);
@@ -116,8 +120,10 @@ class SecurityHeadersManager {
     }
     
     // Verify it was added
-    const verification = document.querySelector(`meta[http-equiv="${name}"]`);
-    console.log('🔒 [CSP DEBUG] Meta tag verification:', !!verification, verification?.getAttribute('content')?.substring(0, 50) + '...');
+    if (config.isDevelopment) {
+      const verification = document.querySelector(`meta[http-equiv="${name}"]`);
+      console.log('🔒 [CSP DEBUG] Meta tag verification:', !!verification, verification?.getAttribute('content')?.substring(0, 50) + '...');
+    }
   }
 
   // Public method to get headers for server-side implementation
