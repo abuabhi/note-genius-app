@@ -10,6 +10,7 @@ import { AdvancedCacheManager } from '@/components/performance/AdvancedCacheMana
 import { SystemAlertsManager } from '@/components/admin/monitoring/SystemAlertsManager';
 import { LoadTestingDashboard } from '@/components/admin/monitoring/LoadTestingDashboard';
 import { EdgeFunctionMonitor } from '@/components/admin/monitoring/EdgeFunctionMonitor';
+import { SentryTestingDashboard } from '@/components/monitoring/SentryTestingDashboard';
 import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
 import { Monitor } from 'lucide-react';
 
@@ -49,11 +50,12 @@ const AdminSystemMonitoringPage = () => {
 
       <div className="container mx-auto px-6 py-8">
         <Tabs defaultValue="health" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="health">Health Status</TabsTrigger>
             <TabsTrigger value="load-testing">Load Testing</TabsTrigger>
             <TabsTrigger value="edge-functions">Edge Functions</TabsTrigger>
             <TabsTrigger value="cache">Cache Management</TabsTrigger>
+            <TabsTrigger value="sentry">Sentry Testing</TabsTrigger>
             <TabsTrigger value="alerts">Alerts</TabsTrigger>
           </TabsList>
 
@@ -71,6 +73,10 @@ const AdminSystemMonitoringPage = () => {
 
           <TabsContent value="cache" className="space-y-4">
             <AdvancedCacheManager />
+          </TabsContent>
+
+          <TabsContent value="sentry" className="space-y-4">
+            <SentryTestingDashboard />
           </TabsContent>
 
           <TabsContent value="alerts" className="space-y-4">
