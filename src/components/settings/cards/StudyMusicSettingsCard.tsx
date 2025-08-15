@@ -6,6 +6,7 @@ import { Play, Pause, Check, Music, Loader2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/auth";
 import { toast } from "sonner";
 
 interface StudyTrack {
@@ -13,9 +14,10 @@ interface StudyTrack {
   name: string;
   artist: string;
   duration: number;
-  previewUrl: string;
+  youtubeUrl: string;
+  thumbnailUrl: string;
   tags: string[];
-  webformatURL: string;
+  category: string;
 }
 
 interface StudyMusicSettingsCardProps {
@@ -23,6 +25,7 @@ interface StudyMusicSettingsCardProps {
 }
 
 export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) => {
+  const { user } = useAuth();
   const [tracks, setTracks] = useState<StudyTrack[]>([]);
   const [loading, setLoading] = useState(true);
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
@@ -47,15 +50,15 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
     try {
       setLoading(true);
       const { data, error } = await supabase.functions.invoke('get-study-music', {
-        body: { category: 'music', limit: 15 }
+        body: { category: 'all', limit: 20 }
       });
 
       if (error) throw error;
       
       setTracks(data?.tracks || []);
       
-      if (data?.source === 'fallback') {
-        toast.info("Using curated study music collection");
+      if (data?.source === 'youtube-curated') {
+        toast.info("Loaded curated YouTube study music collection");
       }
     } catch (error) {
       console.error('Error fetching study tracks:', error);
@@ -63,6 +66,36 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
       setTracks([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const resetToRandomTracks = async () => {
+    try {
+      await supabase.functions.invoke('get-study-music', {
+        body: { 
+          userId: user?.id, 
+          autoAssign: true,
+          limit: 15 
+        }
+      });
+      
+      // Refresh tracks and selected tracks
+      await fetchStudyTracks();
+      
+      // Get updated user preferences
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('study_music_preferences')
+        .eq('id', user?.id)
+        .single();
+        
+      const preferences = profile?.study_music_preferences as { selectedTracks?: string[] } | null;
+      form.setValue('selectedStudyTracks', preferences?.selectedTracks || []);
+      
+      toast.success('Assigned 3 new random study tracks!');
+    } catch (error) {
+      console.error('Error resetting to random tracks:', error);
+      toast.error('Failed to assign random tracks');
     }
   };
 
@@ -100,33 +133,7 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
       setAudio(null);
     }
 
-    if (!track.previewUrl) {
-      toast.info('Preview not available for this track');
-      return;
-    }
-
-    try {
-      const newAudio = new Audio(track.previewUrl);
-      newAudio.volume = 0.3; // Lower volume for preview
-      
-      newAudio.onended = () => {
-        setPlayingTrack(null);
-        setAudio(null);
-      };
-      
-      newAudio.onerror = () => {
-        toast.error('Unable to play preview');
-        setPlayingTrack(null);
-        setAudio(null);
-      };
-
-      await newAudio.play();
-      setAudio(newAudio);
-      setPlayingTrack(track.id);
-    } catch (error) {
-      console.error('Error playing preview:', error);
-      toast.error('Unable to play preview');
-    }
+    toast.info('Preview not available - YouTube tracks require extraction for playback');
   };
 
   const formatDuration = (seconds: number) => {
@@ -143,7 +150,7 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
           Study Music
         </CardTitle>
         <CardDescription>
-          Choose up to 3 study music tracks to appear in your sidebar. These will replace the generated noise sounds with real music for better focus.
+          Choose up to 3 study music tracks from our curated YouTube collection. These will appear in your sidebar for quick access during study sessions.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -152,7 +159,18 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
           name="selectedStudyTracks"
           render={() => (
             <FormItem>
-              <FormLabel>Selected Tracks ({selectedTracks?.length || 0}/3)</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Selected Tracks ({selectedTracks?.length || 0}/3)</FormLabel>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={resetToRandomTracks}
+                  className="h-7 text-xs"
+                >
+                  Reset to Random
+                </Button>
+              </div>
               {selectedTracks?.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {selectedTracks.map((trackId: string) => {
@@ -191,14 +209,28 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
                         : 'border-border hover:border-primary/50'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start gap-3">
+                      {/* Thumbnail */}
+                      <div className="w-16 h-12 bg-muted rounded overflow-hidden flex-shrink-0">
+                        <img 
+                          src={track.thumbnailUrl} 
+                          alt={track.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                      
+                      {/* Track info */}
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium truncate">{track.name}</h4>
                         <p className="text-sm text-muted-foreground truncate">
                           {track.artist} • {formatDuration(track.duration)}
                         </p>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {track.tags.slice(0, 3).map((tag, index) => (
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {track.category}
+                          </Badge>
+                          {track.tags.slice(0, 2).map((tag, index) => (
                             <Badge key={index} variant="outline" className="text-xs">
                               {tag}
                             </Badge>
@@ -206,23 +238,8 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2 ml-4">
-                        {track.previewUrl && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => playPreview(track)}
-                            className="h-8 w-8 p-0"
-                          >
-                            {isPlaying ? (
-                              <Pause className="h-4 w-4" />
-                            ) : (
-                              <Play className="h-4 w-4" />
-                            )}
-                          </Button>
-                        )}
-                        
+                      {/* Actions */}
+                      <div className="flex flex-col gap-2">
                         <Button
                           type="button"
                           variant={isSelected ? "default" : "outline"}
