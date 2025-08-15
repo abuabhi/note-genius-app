@@ -53,7 +53,7 @@ class SecurityHeadersManager {
       styleSrc,
       `img-src ${origins} https://images.unsplash.com https://*.unsplash.com data: blob:`,
       `font-src ${origins} data:`,
-      `media-src ${origins} https://*.supabase.co`,
+      `media-src ${origins} https://*.supabase.co data: blob:`, // AUDIO FIX: Allow Supabase media
       `connect-src ${origins} https://*.supabase.co wss://*.supabase.co`,
       `frame-src 'none'`,
       `object-src 'none'`,
