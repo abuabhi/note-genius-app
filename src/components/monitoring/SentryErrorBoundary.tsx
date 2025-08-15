@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import * as Sentry from '@sentry/react';
 import { sentryService } from '@/services/sentry/sentryService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,16 @@ export class SentryErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Error caught by boundary:', error, errorInfo);
     
-    // Capture error with Sentry
+    // Capture error with both real Sentry and our service
+    Sentry.withScope((scope) => {
+      scope.setContext('errorBoundary', {
+        componentStack: errorInfo.componentStack,
+        errorInfo: errorInfo
+      });
+      Sentry.captureException(error);
+    });
+
+    // Also use our service for consistency
     sentryService.captureException(error, {
       errorBoundary: true,
       componentStack: errorInfo.componentStack,

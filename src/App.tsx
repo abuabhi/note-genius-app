@@ -8,6 +8,7 @@ import { ProductionOptimizationProvider } from '@/components/performance/Product
 import AppRoutes from './components/app/AppRoutes';
 import { useNotificationToasts } from '@/hooks/useNotificationToasts';
 import { useVersionLogger } from '@/hooks/useVersionLogger';
+import { sentryService } from '@/services/sentry/sentryService';
 
 function AppContent() {
   useNotificationToasts(); // Move this inside the providers
@@ -15,6 +16,9 @@ function AppContent() {
   
   useEffect(() => {
     document.title = 'PrepGenie';
+    
+    // Initialize Sentry
+    sentryService.initialize().catch(console.error);
   }, []);
 
   return <AppRoutes />;
