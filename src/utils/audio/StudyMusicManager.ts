@@ -33,8 +33,8 @@ class StudyMusicManager {
 
   async playTrack(trackId: string, fadeSeconds = 0.3) {
     const track = this.tracks.find(t => t.id === trackId);
-    if (!track || !track.url) {
-      console.warn('Track not found or no URL available:', trackId);
+    if (!track) {
+      console.warn('Track not found:', trackId);
       return;
     }
 
@@ -44,6 +44,18 @@ class StudyMusicManager {
     }
 
     try {
+      // Get signed URL from Supabase
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: signedUrlData, error: urlError } = await supabase.storage
+        .from('study-music')
+        .createSignedUrl(`tracks/${trackId}.mp3`, 3600);
+
+      if (urlError || !signedUrlData?.signedUrl) {
+        console.error('Failed to get signed URL:', urlError);
+        this.isPlaying = false;
+        return;
+      }
+
       // Create and configure audio element
       this.audio = new Audio();
       this.audio.crossOrigin = "anonymous";
@@ -101,7 +113,7 @@ class StudyMusicManager {
       };
 
       // Load the audio source
-      this.audio.src = track.url;
+      this.audio.src = signedUrlData.signedUrl;
       this.audio.load();
       
     } catch (error) {

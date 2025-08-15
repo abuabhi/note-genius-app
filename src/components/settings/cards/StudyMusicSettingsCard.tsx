@@ -250,32 +250,63 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
       setPlayingTrack(track.id);
       console.log('🎵 Preview track:', track.name);
       
-      // Generate signed URL directly for the track
+      // Generate signed URL using the actual track ID
       const { data: signedUrlData } = await supabase.storage
         .from('study-music')
-        .createSignedUrl(`tracks/focus-flow-study-sessions.mp3`, 3600);
+        .createSignedUrl(`tracks/${track.id}.mp3`, 3600);
       
       if (!signedUrlData?.signedUrl) {
-        toast.error('Cannot load audio file');
-        setPlayingTrack(null);
-        return;
+        // Try with the audio file path if it exists
+        if (track.audioUrl) {
+          const { data: fallbackUrlData } = await supabase.storage
+            .from('study-music')
+            .createSignedUrl(track.audioUrl, 3600);
+          
+          if (!fallbackUrlData?.signedUrl) {
+            toast.error('Cannot load audio file');
+            setPlayingTrack(null);
+            return;
+          }
+          
+          // Use fallback URL
+          var audioUrl = fallbackUrlData.signedUrl;
+        } else {
+          toast.error('Cannot load audio file');
+          setPlayingTrack(null);
+          return;
+        }
+      } else {
+        var audioUrl = signedUrlData.signedUrl;
       }
       
       const newAudio = new Audio();
       newAudio.volume = 0.4;
-      newAudio.src = signedUrlData.signedUrl;
+      newAudio.crossOrigin = "anonymous";
+      
+      // Create blob URL to bypass CSP restrictions
+      try {
+        const response = await fetch(audioUrl);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        newAudio.src = blobUrl;
+      } catch (fetchError) {
+        console.error('Blob creation failed, using direct URL:', fetchError);
+        newAudio.src = audioUrl;
+      }
       
       newAudio.onloadeddata = async () => {
         try {
           await newAudio.play();
           toast.success(`Playing: ${track.name}`);
-        } catch {
+        } catch (playError) {
+          console.error('Play error:', playError);
           toast.error('Cannot play audio');
           setPlayingTrack(null);
         }
       };
       
-      newAudio.onerror = () => {
+      newAudio.onerror = (errorEvent) => {
+        console.error('Audio error:', errorEvent);
         toast.error('Audio loading failed');
         setPlayingTrack(null);
       };
