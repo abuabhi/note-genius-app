@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -1907,6 +1907,7 @@ export type Database = {
           onboarding_completed: boolean | null
           referral_code: string | null
           school: string | null
+          study_music_preferences: Json | null
           timezone: string
           updated_at: string | null
           user_tier: Database["public"]["Enums"]["user_tier"]
@@ -1936,6 +1937,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           referral_code?: string | null
           school?: string | null
+          study_music_preferences?: Json | null
           timezone?: string
           updated_at?: string | null
           user_tier?: Database["public"]["Enums"]["user_tier"]
@@ -1965,6 +1967,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           referral_code?: string | null
           school?: string | null
+          study_music_preferences?: Json | null
           timezone?: string
           updated_at?: string | null
           user_tier?: Database["public"]["Enums"]["user_tier"]
@@ -2920,6 +2923,57 @@ export type Database = {
         }
         Relationships: []
       }
+      study_music_tracks: {
+        Row: {
+          artist: string
+          audio_file_path: string
+          category: string | null
+          created_at: string
+          created_by: string | null
+          duration_seconds: number | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean
+          name: string
+          sort_order: number | null
+          tags: string[] | null
+          thumbnail_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          artist: string
+          audio_file_path: string
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean
+          name: string
+          sort_order?: number | null
+          tags?: string[] | null
+          thumbnail_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          artist?: string
+          audio_file_path?: string
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean
+          name?: string
+          sort_order?: number | null
+          tags?: string[] | null
+          thumbnail_path?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       study_plan_sessions: {
         Row: {
           actual_end_time: string | null
@@ -3671,6 +3725,35 @@ export type Database = {
           },
         ]
       }
+      user_selected_music_track: {
+        Row: {
+          id: string
+          selected_at: string
+          track_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          selected_at?: string
+          track_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          selected_at?: string
+          track_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_selected_music_track_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "study_music_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_subjects: {
         Row: {
           created_at: string | null
@@ -3741,11 +3824,11 @@ export type Database = {
         Returns: undefined
       }
       award_achievement: {
-        Args: { p_user_id: string; p_achievement_title: string }
+        Args: { p_achievement_title: string; p_user_id: string }
         Returns: boolean
       }
       batch_dismiss_reminders: {
-        Args: { p_user_id: string; p_reminder_ids: string[] }
+        Args: { p_reminder_ids: string[]; p_user_id: string }
         Returns: {
           dismissed_count: number
           failed_ids: string[]
@@ -3781,9 +3864,9 @@ export type Database = {
       }
       calculate_session_quality: {
         Args: {
-          p_duration: number
-          p_cards_reviewed: number
           p_cards_correct: number
+          p_cards_reviewed: number
+          p_duration: number
           p_quiz_score: number
           p_quiz_total: number
         }
@@ -3810,9 +3893,9 @@ export type Database = {
       cleanup_old_reminders: {
         Args: { retention_days?: number }
         Returns: {
-          deleted_count: number
           archived_count: number
           cleanup_summary: Json
+          deleted_count: number
         }[]
       }
       create_next_recurring_reminder: {
@@ -3825,35 +3908,35 @@ export type Database = {
       }
       filter_user_flashcard_sets: {
         Args: {
-          p_user_id: string
-          p_search_term?: string
-          p_subject_name?: string
-          p_sort_by?: string
           p_page_num?: number
           p_page_size?: number
+          p_search_term?: string
+          p_sort_by?: string
+          p_subject_name?: string
+          p_user_id: string
         }
         Returns: Json
       }
       filter_user_notes: {
         Args: {
-          p_user_id: string
-          p_search_term?: string
-          p_subject_name?: string
-          p_show_archived?: boolean
-          p_sort_by?: string
           p_page_num?: number
           p_page_size?: number
+          p_search_term?: string
+          p_show_archived?: boolean
+          p_sort_by?: string
+          p_subject_name?: string
+          p_user_id: string
         }
         Returns: Json
       }
       filter_user_quizzes: {
         Args: {
-          p_user_id: string
-          p_search_term?: string
-          p_subject_name?: string
-          p_sort_by?: string
           p_page_num?: number
           p_page_size?: number
+          p_search_term?: string
+          p_sort_by?: string
+          p_subject_name?: string
+          p_user_id: string
         }
         Returns: Json
       }
@@ -3874,38 +3957,38 @@ export type Database = {
         Returns: string
       }
       get_active_announcements: {
-        Args: { user_tier_param?: string; current_page?: string }
+        Args: { current_page?: string; user_tier_param?: string }
         Returns: {
-          id: string
-          title: string
-          content: string
+          background_color: string
           compact_text: string
+          content: string
           cta_text: string
           cta_url: string
-          background_color: string
-          text_color: string
+          dismissible: boolean
+          id: string
           mobile_layout: string
           priority: number
-          dismissible: boolean
+          text_color: string
+          title: string
         }[]
       }
       get_ai_enrichment_count_for_billing_cycle: {
         Args: {
-          user_id_param: string
-          cycle_start_param: string
           cycle_end_param: string
+          cycle_start_param: string
+          user_id_param: string
         }
         Returns: number
       }
       get_digest_users: {
         Args: Record<PropertyKey, never>
         Returns: {
-          user_id: string
-          email: string
-          username: string
           digest_time: string
-          timezone: string
+          email: string
           last_digest_sent_at: string
+          timezone: string
+          user_id: string
+          username: string
         }[]
       }
       get_my_referral_code: {
@@ -3919,24 +4002,24 @@ export type Database = {
       get_overdue_goals: {
         Args: { p_user_id: string }
         Returns: {
-          goal_id: string
-          title: string
-          end_date: string
           days_overdue: number
+          end_date: string
+          goal_id: string
           in_grace_period: boolean
+          title: string
         }[]
       }
       get_overdue_todos: {
         Args: { p_user_id: string }
         Returns: {
-          todo_id: string
-          title: string
+          days_overdue: number
           description: string
           due_date: string
-          days_overdue: number
-          in_grace_period: boolean
           escalation_level: string
+          in_grace_period: boolean
           priority: string
+          title: string
+          todo_id: string
         }[]
       }
       get_reminder_system_health: {
@@ -3949,26 +4032,26 @@ export type Database = {
       }
       get_user_reminders_paginated: {
         Args: {
-          p_user_id: string
           p_limit?: number
           p_offset?: number
           p_status?: string[]
+          p_user_id: string
         }
         Returns: {
-          id: string
-          user_id: string
-          title: string
-          description: string
-          reminder_time: string
-          due_date: string
-          type: string
-          status: string
-          priority: string
-          escalation_level: string
-          delivery_methods: Json
-          recurrence: string
           created_at: string
+          delivery_methods: Json
+          description: string
+          due_date: string
+          escalation_level: string
+          id: string
+          priority: string
+          recurrence: string
+          reminder_time: string
+          status: string
+          title: string
+          type: string
           updated_at: string
+          user_id: string
         }[]
       }
       is_dean_user: {
@@ -3976,15 +4059,15 @@ export type Database = {
         Returns: boolean
       }
       log_quiz_creation_debug: {
-        Args: { quiz_data: Json; context?: string }
+        Args: { context?: string; quiz_data: Json }
         Returns: undefined
       }
       process_referral_signup: {
-        Args: { referred_user_id: string; referral_code_used: string }
+        Args: { referral_code_used: string; referred_user_id: string }
         Returns: boolean
       }
       update_user_tier: {
-        Args: { target_user_id: string; new_tier: string; reason?: string }
+        Args: { new_tier: string; reason?: string; target_user_id: string }
         Returns: boolean
       }
       validate_coupon: {
