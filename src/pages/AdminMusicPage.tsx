@@ -3,15 +3,13 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Plus, Upload, Music, Edit, Trash2, Save, X, Star } from 'lucide-react';
+import { Plus, Save, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth';
 import { AdminMusicBreadcrumb } from '@/components/admin/music/AdminMusicBreadcrumb';
+import { TrackCard } from '@/components/admin/music/TrackCard';
 
 interface StudyMusicTrack {
   id: string;
@@ -290,12 +288,29 @@ const AdminMusicPage = () => {
     }
   };
 
-  const getThumbnailUrl = (thumbnailPath?: string) => {
+  const getThumbnailUrl = async (thumbnailPath?: string): Promise<string | null> => {
     if (!thumbnailPath) return null;
-    const { data } = supabase.storage
-      .from('study-music')
-      .getPublicUrl(thumbnailPath);
-    return data.publicUrl;
+    
+    try {
+      // Try to get a signed URL for better reliability
+      const { data, error } = await supabase.storage
+        .from('study-music')
+        .createSignedUrl(thumbnailPath, 3600); // 1 hour expiry
+      
+      if (error) {
+        console.warn('Failed to create signed URL, falling back to public URL:', error);
+        // Fallback to public URL
+        const { data: publicData } = supabase.storage
+          .from('study-music')
+          .getPublicUrl(thumbnailPath);
+        return publicData.publicUrl;
+      }
+      
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error getting thumbnail URL:', error);
+      return null;
+    }
   };
 
   const formatDuration = (seconds?: number) => {
@@ -427,114 +442,36 @@ const AdminMusicPage = () => {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {tracks.map((track) => (
-            <Card key={track.id} className="overflow-hidden">
-              <CardContent className="p-6 flex flex-col h-full">
-                <div className="flex flex-col items-center text-center">
-                  {/* Large thumbnail */}
-                  <div className="relative mb-4">
-                    {getThumbnailUrl(track.thumbnail_path) ? (
-                      <img 
-                        src={getThumbnailUrl(track.thumbnail_path)!} 
-                        alt={track.name}
-                        className="w-48 h-48 rounded-lg object-cover shadow-sm"
-                      />
-                    ) : (
-                      <div className="w-48 h-48 bg-primary/10 rounded-lg flex items-center justify-center shadow-sm">
-                        <Music className="h-12 w-12 text-primary" />
-                      </div>
-                    )}
-                    {track.is_default && (
-                      <Badge variant="default" className="absolute -top-2 -right-2 gap-1 bg-yellow-100 text-yellow-800 border-yellow-200">
-                        <Star className="h-3 w-3" />
-                        Default
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  {/* Title and artist */}
-                  <div className="mb-4 w-full">
-                    <h3 className="font-semibold text-lg mb-1 line-clamp-2">{track.name}</h3>
-                    <p className="text-muted-foreground text-sm mb-3">{track.artist}</p>
-                    <div className="flex items-center justify-center gap-2">
-                      <Badge variant={track.is_active ? "default" : "secondary"}>
-                        {track.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                      <Badge variant="outline">{track.category}</Badge>
-                    </div>
-                    <div className="mt-2">
-                      <span className="text-sm text-muted-foreground">
-                        {formatDuration(track.duration_seconds)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Action buttons at bottom */}
-                <div className="mt-auto space-y-3">
-                  <div className="flex items-center justify-center gap-2">
-                    <Switch
-                      checked={track.is_active}
-                      onCheckedChange={() => toggleTrackStatus(track)}
-                    />
-                    <Label className="text-sm text-muted-foreground">
-                      Active
-                    </Label>
-                  </div>
-                  
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      variant={track.is_default ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => toggleDefaultTrack(track)}
-                      className="w-full gap-2"
-                    >
-                      <Star className="h-4 w-4" />
-                      {track.is_default ? 'Default' : 'Set Default'}
-                    </Button>
-                    
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(track)}
-                        className="flex-1 gap-2"
-                      >
-                        <Edit className="h-4 w-4" />
-                        Edit
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteTrack(track)}
-                        className="flex-1 gap-2 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <TrackCard 
+              key={track.id} 
+              track={track} 
+              onEdit={handleEdit} 
+              onDelete={deleteTrack} 
+              onToggleStatus={toggleTrackStatus} 
+              onToggleDefault={toggleDefaultTrack} 
+            />
           ))}
 
           {tracks.length === 0 && (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <Music className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No tracks yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Upload your first study music track to get started
-                </p>
-                <Button onClick={() => setIsCreating(true)} className="gap-2">
-                  <Upload className="h-4 w-4" />
-                  Upload Track
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="col-span-full">
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <div className="h-12 w-12 bg-muted rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <Plus className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">No tracks yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Upload your first study music track to get started
+                  </p>
+                  <Button onClick={() => setIsCreating(true)} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Upload Track
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
       </div>
