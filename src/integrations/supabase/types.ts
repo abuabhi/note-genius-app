@@ -2923,6 +2923,54 @@ export type Database = {
         }
         Relationships: []
       }
+      study_music_tracks: {
+        Row: {
+          artist: string
+          audio_file_path: string
+          category: string | null
+          created_at: string
+          created_by: string | null
+          duration_seconds: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          sort_order: number | null
+          tags: string[] | null
+          thumbnail_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          artist: string
+          audio_file_path: string
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          sort_order?: number | null
+          tags?: string[] | null
+          thumbnail_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          artist?: string
+          audio_file_path?: string
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          sort_order?: number | null
+          tags?: string[] | null
+          thumbnail_path?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       study_plan_sessions: {
         Row: {
           actual_end_time: string | null
@@ -3670,6 +3718,35 @@ export type Database = {
             columns: ["flashcard_id"]
             isOneToOne: false
             referencedRelation: "flashcards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_selected_music_track: {
+        Row: {
+          id: string
+          selected_at: string
+          track_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          selected_at?: string
+          track_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          selected_at?: string
+          track_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_selected_music_track_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "study_music_tracks"
             referencedColumns: ["id"]
           },
         ]
