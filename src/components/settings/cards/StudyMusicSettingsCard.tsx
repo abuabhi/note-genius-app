@@ -15,6 +15,7 @@ interface StudyTrack {
   artist: string;
   duration: number;
   youtubeUrl: string;
+  audioUrl?: string;
   thumbnailUrl: string;
   tags: string[];
   category: string;
@@ -47,44 +48,80 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
     if (!user) return;
     
     try {
-      // Check if user has any selected tracks
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('study_music_preferences')
-        .eq('id', user.id)
+      // Check if user has a selected track in the dedicated table
+      const { data: selectedTrack } = await supabase
+        .from('user_selected_music_track')
+        .select(`
+          track_id,
+          study_music_tracks (
+            id,
+            name,
+            is_default
+          )
+        `)
+        .eq('user_id', user.id)
         .single();
 
-      const preferences = profile?.study_music_preferences as { selectedTracks?: string[] } | null;
-      const existingTracks = preferences?.selectedTracks || [];
+      if (selectedTrack?.track_id) {
+        // User has a selected track, load it into form
+        form.setValue('selectedStudyTracks', [selectedTrack.track_id]);
+        return;
+      }
       
-      if (existingTracks.length === 0) {
-        // Use edge function to ensure defaults (consolidates logic)
-        await supabase.functions.invoke('get-study-music', {
-          body: { 
-            userId: user.id, 
-            ensureDefaults: true,
-            limit: 15 
-          }
-        });
+      // No user selection found, find and set the admin default
+      const { data: defaultTrack } = await supabase
+        .from('study_music_tracks')
+        .select('id')
+        .eq('is_default', true)
+        .eq('is_active', true)
+        .single();
+
+      if (defaultTrack) {
+        // Insert the default track as user's selection
+        await supabase
+          .from('user_selected_music_track')
+          .insert({
+            user_id: user.id,
+            track_id: defaultTrack.id
+          });
         
-        // Reload to get the assigned default
-        const { data: updatedProfile } = await supabase
-          .from('profiles')
-          .select('study_music_preferences')
-          .eq('id', user.id)
+        form.setValue('selectedStudyTracks', [defaultTrack.id]);
+      } else {
+        // No default track found, use first available track
+        const { data: firstTrack } = await supabase
+          .from('study_music_tracks')
+          .select('id')
+          .eq('is_active', true)
+          .limit(1)
           .single();
           
-        const updatedPreferences = updatedProfile?.study_music_preferences as { selectedTracks?: string[] } | null;
-        form.setValue('selectedStudyTracks', updatedPreferences?.selectedTracks || ['lofi-1']);
-      } else {
-        // Load existing selections into form
-        form.setValue('selectedStudyTracks', existingTracks);
+        if (firstTrack) {
+          await supabase
+            .from('user_selected_music_track')
+            .insert({
+              user_id: user.id,
+              track_id: firstTrack.id
+            });
+          
+          form.setValue('selectedStudyTracks', [firstTrack.id]);
+        }
       }
     } catch (error) {
       console.error('Error ensuring default tracks:', error);
-      // Fallback to setting form defaults
-      const defaultTracks = ['lofi-1'];
-      form.setValue('selectedStudyTracks', defaultTracks);
+      // Fallback: try to get any available track from database
+      try {
+        const { data: tracks } = await supabase
+          .from('study_music_tracks')
+          .select('id')
+          .eq('is_active', true)
+          .limit(1);
+          
+        if (tracks && tracks.length > 0) {
+          form.setValue('selectedStudyTracks', [tracks[0].id]);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback track loading failed:', fallbackError);
+      }
     }
   };
 
@@ -156,7 +193,7 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
     }
   };
 
-  const toggleTrackSelection = (trackId: string) => {
+  const toggleTrackSelection = async (trackId: string) => {
     const currentSelected = selectedTracks || [];
     const isSelected = currentSelected.includes(trackId);
     
@@ -165,12 +202,32 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
       if (currentSelected.length > 1) {
         const newSelected = currentSelected.filter((id: string) => id !== trackId);
         form.setValue('selectedStudyTracks', newSelected);
+        
+        // Update database with first remaining track
+        if (user && newSelected.length > 0) {
+          await supabase
+            .from('user_selected_music_track')
+            .upsert({
+              user_id: user.id,
+              track_id: newSelected[0]
+            });
+        }
       } else {
         toast.warning('You must have at least one study track selected');
       }
     } else {
       // Replace current selection with new track (single selection only)
       form.setValue('selectedStudyTracks', [trackId]);
+      
+      // Update database immediately
+      if (user) {
+        await supabase
+          .from('user_selected_music_track')
+          .upsert({
+            user_id: user.id,
+            track_id: trackId
+          });
+      }
     }
   };
 
@@ -193,27 +250,66 @@ export const StudyMusicSettingsCard = ({ form }: StudyMusicSettingsCardProps) =>
       setAudio(null);
     }
 
-    // For YouTube tracks, we'll play a short preview using YouTube embed
     try {
       setPlayingTrack(track.id);
       
-      // Create a hidden audio element for preview (this won't actually work with YouTube)
-      // but we'll simulate the preview experience
-      const newAudio = new Audio();
+      // Get the actual audio URL from Supabase storage
+      const audioPath = track.audioUrl || track.youtubeUrl;
+      const { data: signedUrl, error: urlError } = await supabase.storage
+        .from('study-music')
+        .createSignedUrl(audioPath, 3600);
       
-      // Simulate a preview duration
+      if (urlError) {
+        console.error('Error creating signed URL:', urlError);
+        toast.error('Unable to load audio preview');
+        setPlayingTrack(null);
+        return;
+      }
+      
+      // Create and configure audio element
+      const newAudio = new Audio();
+      newAudio.crossOrigin = "anonymous";
+      newAudio.volume = 0.4; // Lower volume for preview
+      newAudio.preload = "auto";
+      
+      // Set up event handlers
+      newAudio.oncanplaythrough = async () => {
+        try {
+          await newAudio.play();
+          toast.success(`Playing preview: ${track.name}`);
+        } catch (playError) {
+          console.error('Error playing audio:', playError);
+          toast.error('Unable to play audio preview');
+          setPlayingTrack(null);
+        }
+      };
+      
+      newAudio.onerror = (error) => {
+        console.error('Audio loading error:', error);
+        toast.error('Unable to load audio file');
+        setPlayingTrack(null);
+      };
+      
+      newAudio.onended = () => {
+        setPlayingTrack(null);
+        setAudio(null);
+      };
+      
+      // Auto-stop preview after 30 seconds
       setTimeout(() => {
-        if (playingTrack === track.id) {
+        if (playingTrack === track.id && newAudio) {
+          newAudio.pause();
           setPlayingTrack(null);
           setAudio(null);
         }
-      }, 30000); // 30 second preview
+      }, 30000);
       
+      // Load the audio
+      newAudio.src = signedUrl.signedUrl;
       setAudio(newAudio);
-      toast.info(`Playing preview: ${track.name}`);
       
     } catch (error) {
-      console.error('Error playing preview:', error);
+      console.error('Error setting up preview:', error);
       toast.error('Unable to play preview');
       setPlayingTrack(null);
     }
