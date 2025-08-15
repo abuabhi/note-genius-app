@@ -60,12 +60,9 @@ class AudioManager {
 
   setPreset(preset: StudyPreset) {
     this.currentPreset = preset;
-    // Always cleanup existing sources when preset changes
-    this.cleanupSources();
-    
+    // Only restart if already playing - let the UI handle transitions
     if (this.isPlaying) {
-      this.stop(0.1);
-      this.play(0.2);
+      this.cleanupSources();
     }
   }
 
