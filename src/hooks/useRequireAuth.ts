@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { DEBUG_CONFIG } from '@/config/debug';
 
 // Export the UserTier enum that other files depend on
 export enum UserTier {
@@ -56,14 +57,18 @@ export const useRequireAuth = (): UseRequireAuthReturn => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  console.log('🔐 [USE REQUIRE AUTH] Hook starting');
+  if (DEBUG_CONFIG.AUTH_LOGGING) {
+    console.log('🔐 [USE REQUIRE AUTH] Hook starting');
+  }
 
   useEffect(() => {
     let mounted = true;
 
     const getUser = async () => {
       try {
-        console.log('🔐 [USE REQUIRE AUTH] Getting current session...');
+        if (DEBUG_CONFIG.AUTH_LOGGING) {
+          console.log('🔐 [USE REQUIRE AUTH] Getting current session...');
+        }
         
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
@@ -77,7 +82,9 @@ export const useRequireAuth = (): UseRequireAuthReturn => {
         }
 
         if (!session?.user) {
-          console.log('🔐 [USE REQUIRE AUTH] No session found, redirecting to login');
+          if (DEBUG_CONFIG.AUTH_LOGGING) {
+            console.log('🔐 [USE REQUIRE AUTH] No session found, redirecting to login');
+          }
           if (mounted) {
             setLoading(false);
             navigate('/login');
@@ -85,10 +92,12 @@ export const useRequireAuth = (): UseRequireAuthReturn => {
           return;
         }
 
-        console.log('🔐 [USE REQUIRE AUTH] Session found:', {
-          userId: session.user.id,
-          email: session.user.email
-        });
+        if (DEBUG_CONFIG.AUTH_LOGGING) {
+          console.log('🔐 [USE REQUIRE AUTH] Session found:', {
+            userId: session.user.id,
+            email: session.user.email
+          });
+        }
 
         if (mounted) {
           setUser(session.user);
@@ -125,11 +134,15 @@ export const useRequireAuth = (): UseRequireAuthReturn => {
                   setTierLimits(limits as TierLimits);
                 }
               } catch (limitsError) {
-                console.log('🔐 [USE REQUIRE AUTH] No tier limits found (this is ok):', limitsError);
+                if (DEBUG_CONFIG.AUTH_LOGGING) {
+                  console.log('🔐 [USE REQUIRE AUTH] No tier limits found (this is ok):', limitsError);
+                }
               }
             }
           } catch (profileError) {
-            console.log('🔐 [USE REQUIRE AUTH] No profile found (this is ok):', profileError);
+            if (DEBUG_CONFIG.AUTH_LOGGING) {
+              console.log('🔐 [USE REQUIRE AUTH] No profile found (this is ok):', profileError);
+            }
           }
           
           setLoading(false);
@@ -146,7 +159,9 @@ export const useRequireAuth = (): UseRequireAuthReturn => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔐 [USE REQUIRE AUTH] Auth state changed:', event, { userId: session?.user?.id });
+        if (DEBUG_CONFIG.AUTH_LOGGING) {
+          console.log('🔐 [USE REQUIRE AUTH] Auth state changed:', event, { userId: session?.user?.id });
+        }
         
         if (event === 'SIGNED_OUT' || !session) {
           if (mounted) {

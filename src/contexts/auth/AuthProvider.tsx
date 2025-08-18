@@ -6,6 +6,7 @@ import AuthContext from './AuthContext';
 import { signOutAndCleanup } from '@/utils/authUtils';
 import { useAuthRedirects } from '@/hooks/auth/useAuthRedirects';
 import { ReferralSignupHandler } from '@/components/referrals/ReferralSignupHandler';
+import { DEBUG_CONFIG } from '@/config/debug';
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -20,13 +21,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  console.log('🔐 [AUTH PROVIDER] State:', { 
-    userId: user?.id, 
-    loading, 
-    onboardingCompleted, 
-    onboardingLoading,
-    currentPath: location.pathname 
-  });
+  if (DEBUG_CONFIG.AUTH_LOGGING) {
+    console.log('🔐 [AUTH PROVIDER] State:', { 
+      userId: user?.id, 
+      loading, 
+      onboardingCompleted, 
+      onboardingLoading,
+      currentPath: location.pathname 
+    });
+  }
   
   // Check onboarding status when user changes
   const checkOnboardingStatus = async (userId: string) => {
@@ -37,7 +40,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     try {
-      console.log('🔐 [AUTH PROVIDER] Checking onboarding status for:', userId);
+      if (DEBUG_CONFIG.AUTH_LOGGING) {
+        console.log('🔐 [AUTH PROVIDER] Checking onboarding status for:', userId);
+      }
       setOnboardingLoading(true);
       
       const { data, error } = await supabase
@@ -49,7 +54,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (error) throw error;
       
       const completed = data?.onboarding_completed ?? false;
-      console.log('🔐 [AUTH PROVIDER] Onboarding status result:', completed);
+      if (DEBUG_CONFIG.AUTH_LOGGING) {
+        console.log('🔐 [AUTH PROVIDER] Onboarding status result:', completed);
+      }
       setOnboardingCompleted(completed);
     } catch (error) {
       console.error('🔐 [AUTH PROVIDER] Error checking onboarding status:', error);
@@ -81,7 +88,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted) return;
-        console.log('🔐 [AUTH PROVIDER] Auth state changed:', event, { userId: session?.user?.id });
+        if (DEBUG_CONFIG.AUTH_LOGGING) {
+          console.log('🔐 [AUTH PROVIDER] Auth state changed:', event, { userId: session?.user?.id });
+        }
         setSession(session);
         setUser(session?.user ?? null);
         

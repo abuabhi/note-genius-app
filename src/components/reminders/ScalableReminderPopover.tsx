@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useUnifiedReminderSystem } from '@/hooks/useUnifiedReminderSystem';
 import { ScalableRemindersList } from './ScalableRemindersList';
 import { toast } from 'sonner';
+import { DEBUG_CONFIG } from '@/config/debug';
 
 export const ScalableReminderPopover = () => {
   const [open, setOpen] = useState(false);
@@ -28,11 +29,15 @@ export const ScalableReminderPopover = () => {
     enableRealtime: true,
   });
   
-  console.log('🔔 ScalableReminderPopover - Total reminders:', totalCount);
+  if (DEBUG_CONFIG.REMINDER_LOGGING) {
+    console.log('🔔 ScalableReminderPopover - Total reminders:', totalCount);
+  }
 
   // Handle dismiss all - simplified
   const handleDismissAll = useCallback(async () => {
-    console.log('🗑️ HandleDismissAll called - Current reminders:', reminders.length);
+    if (DEBUG_CONFIG.REMINDER_LOGGING) {
+      console.log('🗑️ HandleDismissAll called - Current reminders:', reminders.length);
+    }
     
     if (reminders.length === 0) {
       toast.info('No reminders to dismiss');
@@ -44,7 +49,9 @@ export const ScalableReminderPopover = () => {
 
   // Handle single dismiss - simplified
   const handleDismissSingle = useCallback(async (id: string) => {
-    console.log('🗑️ Dismissing single reminder:', id);
+    if (DEBUG_CONFIG.REMINDER_LOGGING) {
+      console.log('🗑️ Dismissing single reminder:', id);
+    }
     dismissReminder(id);
   }, [dismissReminder]);
 

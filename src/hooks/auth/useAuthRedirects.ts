@@ -1,6 +1,7 @@
 
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { DEBUG_CONFIG } from '@/config/debug';
 
 interface UseAuthRedirectsProps {
   user: any | null;
@@ -30,23 +31,29 @@ export const useAuthRedirects = ({
   const isPublicRoute = exactPublicPaths.has(normalizedPath) || publicPrefixes.some(prefix => normalizedPath.startsWith(prefix));
   
   useEffect(() => {
-    console.log('🚦 [AUTH REDIRECTS] State:', { 
-      userId: user?.id,
-      loading, 
-      onboardingLoading, 
-      onboardingCompleted, 
-      currentPath: location.pathname 
-    });
+    if (DEBUG_CONFIG.NAVIGATION_LOGGING) {
+      console.log('🚦 [AUTH REDIRECTS] State:', { 
+        userId: user?.id,
+        loading, 
+        onboardingLoading, 
+        onboardingCompleted, 
+        currentPath: location.pathname 
+      });
+    }
     
     // Skip redirection while still loading
     if (loading || onboardingLoading) {
-      console.log('🚦 [AUTH REDIRECTS] Skipping redirects - still loading');
+      if (DEBUG_CONFIG.NAVIGATION_LOGGING) {
+        console.log('🚦 [AUTH REDIRECTS] Skipping redirects - still loading');
+      }
       return;
     }
     
     // Redirect unauthenticated users to login (except for public routes)
     if (!user && !isPublicRoute) {
-      console.log('🚦 [AUTH REDIRECTS] Redirecting unauthenticated user to login');
+      if (DEBUG_CONFIG.NAVIGATION_LOGGING) {
+        console.log('🚦 [AUTH REDIRECTS] Redirecting unauthenticated user to login');
+      }
       navigate('/login', { replace: true });
       return;
     }
@@ -56,12 +63,16 @@ export const useAuthRedirects = ({
       if (onboardingCompleted === false) {
         // Redirect to onboarding if not completed (except for public routes)
         if (!location.pathname.includes('/onboarding') && !isPublicRoute) {
-          console.log('🚦 [AUTH REDIRECTS] Redirecting to onboarding - not completed');
+          if (DEBUG_CONFIG.NAVIGATION_LOGGING) {
+            console.log('🚦 [AUTH REDIRECTS] Redirecting to onboarding - not completed');
+          }
           navigate('/onboarding', { replace: true });
         }
       } else if (onboardingCompleted === true && location.pathname === '/onboarding') {
         // If onboarding is complete and user is on onboarding page, redirect to dashboard
-        console.log('🚦 [AUTH REDIRECTS] Redirecting to dashboard - onboarding completed');
+        if (DEBUG_CONFIG.NAVIGATION_LOGGING) {
+          console.log('🚦 [AUTH REDIRECTS] Redirecting to dashboard - onboarding completed');
+        }
         navigate('/dashboard', { replace: true });
       }
     }

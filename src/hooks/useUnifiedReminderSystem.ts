@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
+import { DEBUG_CONFIG } from '@/config/debug';
 
 export interface SimpleReminder {
   id: string;
@@ -58,7 +59,9 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
     queryFn: async () => {
       if (!user?.id) return [];
 
-      console.log('🔄 Fetching PENDING reminders only via UNIFIED SYSTEM...');
+      if (DEBUG_CONFIG.REMINDER_LOGGING) {
+        console.log('🔄 Fetching PENDING reminders only via UNIFIED SYSTEM...');
+      }
       
       const { data, error } = await supabase
         .from('reminders')
@@ -89,7 +92,9 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
         throw error;
       }
 
-      console.log(`✅ UNIFIED SYSTEM fetched ${data?.length || 0} pending reminders`);
+      if (DEBUG_CONFIG.REMINDER_LOGGING) {
+        console.log(`✅ UNIFIED SYSTEM fetched ${data?.length || 0} pending reminders`);
+      }
       return data as SimpleReminder[] || [];
     },
     enabled: !!user?.id,
@@ -101,7 +106,9 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
   useEffect(() => {
     if (!enableRealtime || !user?.id) return;
 
-    console.log('🔄 Setting up UNIFIED SYSTEM realtime subscription...');
+    if (DEBUG_CONFIG.REMINDER_LOGGING) {
+      console.log('🔄 Setting up UNIFIED SYSTEM realtime subscription...');
+    }
     
     const channel = supabase
       .channel('unified-reminders-changes')
@@ -114,7 +121,9 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('🔔 UNIFIED SYSTEM realtime update:', payload);
+          if (DEBUG_CONFIG.REMINDER_LOGGING) {
+            console.log('🔔 UNIFIED SYSTEM realtime update:', payload);
+          }
           
           // Invalidate and refetch on any change
           queryClient.invalidateQueries({ 
@@ -125,7 +134,9 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
       .subscribe();
 
     return () => {
-      console.log('🔄 Cleaning up UNIFIED SYSTEM realtime subscription');
+      if (DEBUG_CONFIG.REMINDER_LOGGING) {
+        console.log('🔄 Cleaning up UNIFIED SYSTEM realtime subscription');
+      }
       supabase.removeChannel(channel);
     };
   }, [enableRealtime, user?.id, queryClient]);
@@ -136,7 +147,9 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
       throw new Error('User not authenticated');
     }
 
-    console.log('➕ Creating reminder via UNIFIED SYSTEM:', params);
+    if (DEBUG_CONFIG.REMINDER_LOGGING) {
+      console.log('➕ Creating reminder via UNIFIED SYSTEM:', params);
+    }
 
     const { data, error } = await supabase
       .from('reminders')
@@ -160,7 +173,9 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
       throw error;
     }
 
-    console.log('✅ UNIFIED SYSTEM reminder created:', data);
+    if (DEBUG_CONFIG.REMINDER_LOGGING) {
+      console.log('✅ UNIFIED SYSTEM reminder created:', data);
+    }
 
     // Invalidate queries to refresh the list
     queryClient.invalidateQueries({ 
@@ -175,7 +190,9 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
     if (!user?.id || dismissingIds.current.has(id)) return;
     
     dismissingIds.current.add(id);
-    console.log('🗑️ UNIFIED SYSTEM dismissing reminder:', id);
+    if (DEBUG_CONFIG.REMINDER_LOGGING) {
+      console.log('🗑️ UNIFIED SYSTEM dismissing reminder:', id);
+    }
 
     // Optimistic update - remove from UI immediately
     queryClient.setQueryData(
@@ -198,7 +215,9 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
 
       if (error) throw error;
       
-      console.log('✅ UNIFIED SYSTEM reminder dismissed successfully');
+      if (DEBUG_CONFIG.REMINDER_LOGGING) {
+        console.log('✅ UNIFIED SYSTEM reminder dismissed successfully');
+      }
       toast.success('Reminder dismissed');
     } catch (error) {
       console.error('❌ UNIFIED SYSTEM dismiss error:', error);
@@ -217,7 +236,9 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
   const dismissAll = useCallback(async () => {
     if (!user?.id || reminders.length === 0) return;
     
-    console.log('🗑️ UNIFIED SYSTEM dismissing all reminders:', reminders.length);
+    if (DEBUG_CONFIG.REMINDER_LOGGING) {
+      console.log('🗑️ UNIFIED SYSTEM dismissing all reminders:', reminders.length);
+    }
     
     const reminderIds = reminders.map(r => r.id);
     
@@ -239,7 +260,9 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
 
       if (error) throw error;
       
-      console.log('✅ UNIFIED SYSTEM all reminders dismissed successfully');
+      if (DEBUG_CONFIG.REMINDER_LOGGING) {
+        console.log('✅ UNIFIED SYSTEM all reminders dismissed successfully');
+      }
       toast.success(`${reminderIds.length} reminders dismissed`);
     } catch (error) {
       console.error('❌ UNIFIED SYSTEM dismiss all error:', error);
@@ -253,7 +276,9 @@ export const useUnifiedReminderSystem = (options: UseUnifiedReminderSystemOption
   }, [user?.id, reminders, queryClient, limit]);
 
   const refresh = useCallback(() => {
-    console.log('🔄 UNIFIED SYSTEM manual refresh triggered');
+    if (DEBUG_CONFIG.REMINDER_LOGGING) {
+      console.log('🔄 UNIFIED SYSTEM manual refresh triggered');
+    }
     queryClient.invalidateQueries({ 
       queryKey: ['unified-reminders', user?.id] 
     });

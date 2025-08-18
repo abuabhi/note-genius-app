@@ -9,6 +9,9 @@ export const DEBUG_CONFIG = {
   UI_DEBUGGER: false,
   FLOW_TRACKER: false,
   SESSION_LOGGING: false, // Session recovery, persistence, and timer logs
+  AUTH_LOGGING: false, // Authentication provider, redirects, and user management logs
+  REMINDER_LOGGING: false, // Reminder system, subscriptions, and notifications logs
+  NAVIGATION_LOGGING: false, // Route and navigation redirect logs
 } as const;
 
 // Helper function to check if any debugging is enabled
