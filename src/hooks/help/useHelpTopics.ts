@@ -25,20 +25,31 @@ export const useHelpTopics = () => {
   return useQuery({
     queryKey: ['help-topics'],
     queryFn: async () => {
+      console.log('🔍 [HELP DEBUG] Fetching help topics...');
+      
       const { data, error } = await supabase
         .from('help_topics')
         .select('*')
         .eq('is_active', true)
         .order('priority', { ascending: true });
 
-      if (error) throw error;
-      return (data || []).map(item => ({
+      console.log('🔍 [HELP DEBUG] Query result:', { data, error });
+
+      if (error) {
+        console.error('🔍 [HELP DEBUG] Query error:', error);
+        throw error;
+      }
+      
+      const transformedData = (data || []).map(item => ({
         ...item,
         textContent: item.content, // Map database content to textContent for UI compatibility
         tags: Array.isArray(item.tags) ? item.tags as string[] : [],
         video_chapters: Array.isArray(item.video_chapters) ? item.video_chapters as { time: number; title: string; description?: string }[] : null,
         quick_tips: Array.isArray(item.quick_tips) ? item.quick_tips as string[] : null,
       })) as any[];
+      
+      console.log('🔍 [HELP DEBUG] Transformed data:', transformedData);
+      return transformedData;
     },
   });
 };
