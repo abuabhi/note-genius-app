@@ -3,6 +3,7 @@ export interface HelpTopicSection {
   title: string;
   content: string;
   image_url?: string;
+  image_urls?: string[];
   sort_order: number;
 }
 

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { X, Plus } from 'lucide-react';
 import { useCreateHelpTopic, HelpTopicSection } from '@/hooks/help/useHelpTopics';
+import { MultiImageField } from '@/components/admin/help/MultiImageField';
 import { toast } from 'sonner';
 
 interface HelpTopicCreateDialogProps {
@@ -56,6 +57,7 @@ export const HelpTopicCreateDialog = ({ open, onOpenChange }: HelpTopicCreateDia
         title: '',
         content: '',
         image_url: '',
+        image_urls: [],
         sort_order: prev.sections.length
       }]
     }));
@@ -68,7 +70,7 @@ export const HelpTopicCreateDialog = ({ open, onOpenChange }: HelpTopicCreateDia
     }));
   };
 
-  const updateSection = (index: number, field: keyof Omit<HelpTopicSection, 'id'>, value: string | number) => {
+  const updateSection = (index: number, field: keyof Omit<HelpTopicSection, 'id'>, value: string | number | string[]) => {
     setFormData(prev => ({
       ...prev,
       sections: prev.sections.map((section, i) => 
@@ -235,16 +237,15 @@ export const HelpTopicCreateDialog = ({ open, onOpenChange }: HelpTopicCreateDia
                     rows={4}
                     required
                   />
-                </div>
+               </div>
 
-                <div>
-                  <Label>Section Image URL</Label>
-                  <Input
-                    value={section.image_url || ''}
-                    onChange={(e) => updateSection(index, 'image_url', e.target.value)}
-                    placeholder="https://example.com/image.jpg"
-                  />
-                </div>
+               <div>
+                 <MultiImageField
+                   label="Section Images"
+                   images={section.image_urls || []}
+                   onChange={(images) => updateSection(index, 'image_urls', images)}
+                 />
+               </div>
               </div>
             ))}
           </div>

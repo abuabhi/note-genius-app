@@ -23,7 +23,8 @@ import { YouTubeComingSoonPlaceholder } from '@/components/help/YouTubeComingSoo
 import { HelpTopicEditDialog } from '@/components/help/HelpTopicEditDialog';
 import { HelpTopicCreateDialog } from '@/components/help/HelpTopicCreateDialog';
 import { YouTubePlayer } from '@/components/help/video/YouTubePlayer';
-import { formatSimpleText } from '@/utils/simpleTextFormatter';
+import { ImageGallery } from '@/components/help/ImageGallery';
+import { processContentForDisplay } from '@/utils/markdownConverter';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
@@ -249,31 +250,19 @@ const HelpPage = () => {
                     <div className="space-y-8">
                       {item.sections && item.sections.length > 0 ? (
                         item.sections.map((section, index) => (
-                          <div key={section.id} className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                            <div className="space-y-4">
-                              <h4 className="text-lg font-semibold text-gray-900">{section.title}</h4>
+                           <div key={section.id} className="space-y-4">
+                             <h4 className="text-lg font-semibold text-gray-900">{section.title}</h4>
                               <div 
                                 className="prose prose-sm max-w-none text-gray-700"
-                                dangerouslySetInnerHTML={{ __html: formatSimpleText(section.content) }}
+                                dangerouslySetInnerHTML={{ __html: processContentForDisplay(section.content) }}
                               />
-                            </div>
-                            <div className="flex justify-center">
-                              {section.image_url ? (
-                                <img
-                                  src={section.image_url}
-                                  alt={section.title}
-                                  className="max-w-full h-auto rounded-lg shadow-sm"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                  }}
-                                />
-                              ) : (
-                                <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
-                                  <BookOpen className="h-12 w-12 text-gray-400" />
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                             <ImageGallery 
+                               images={section.image_urls && section.image_urls.length > 0 
+                                 ? section.image_urls 
+                                 : (section.image_url ? [section.image_url] : [])
+                               }
+                             />
+                           </div>
                         ))
                       ) : (
                         <div className="text-gray-500 text-center py-8">

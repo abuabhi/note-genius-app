@@ -6,6 +6,7 @@ export interface HelpTopicSection {
   title: string;
   content: string;
   image_url?: string | null;
+  image_urls?: string[];
   sort_order: number;
 }
 
@@ -43,6 +44,7 @@ export const useHelpTopics = () => {
             title,
             content,
             image_url,
+            image_urls,
             sort_order
           )
         `)
@@ -76,6 +78,7 @@ export const useAllHelpTopics = () => {
             title,
             content,
             image_url,
+            image_urls,
             sort_order
           )
         `)
@@ -164,6 +167,7 @@ export const useUpdateHelpTopic = () => {
             title: section.title,
             content: section.content,
             image_url: section.image_url,
+            image_urls: section.image_urls || [],
             sort_order: index
           }));
 

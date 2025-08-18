@@ -11,6 +11,7 @@ import { useCreateHelpTopic, useUpdateHelpTopic, HelpTopic, HelpTopicSection } f
 import { toast } from 'sonner';
 import { RichTextEditor } from '@/components/ui/rich-text/RichTextEditor';
 import { htmlToMarkdown, markdownToHtml } from '@/utils/markdownConverter';
+import { MultiImageField } from '@/components/admin/help/MultiImageField';
 
 const categories = [
   { value: 'getting-started', label: 'Getting Started' },
@@ -74,6 +75,7 @@ export function HelpTopicEditDialog({ topic, open, onOpenChange }: HelpTopicEdit
         title: s.title,
         content: s.content,
         image_url: s.image_url,
+        image_urls: s.image_urls || (s.image_url ? [s.image_url] : []),
         sort_order: s.sort_order
       })) || []);
     } else {
@@ -99,6 +101,7 @@ export function HelpTopicEditDialog({ topic, open, onOpenChange }: HelpTopicEdit
       title: 'New Section',
       content: '',
       image_url: '',
+      image_urls: [],
       sort_order: sections.length
     }]);
   };
@@ -107,7 +110,7 @@ export function HelpTopicEditDialog({ topic, open, onOpenChange }: HelpTopicEdit
     setSections(sections.filter((_, i) => i !== index));
   };
 
-  const updateSection = (index: number, field: keyof HelpTopicSection, value: string) => {
+  const updateSection = (index: number, field: keyof HelpTopicSection, value: string | string[]) => {
     const updated = [...sections];
     updated[index] = { ...updated[index], [field]: value };
     setSections(updated);
@@ -290,23 +293,23 @@ export function HelpTopicEditDialog({ topic, open, onOpenChange }: HelpTopicEdit
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Section Title</Label>
-                    <Input
-                      value={section.title}
-                      onChange={(e) => updateSection(index, 'title', e.target.value)}
-                      placeholder="Section title"
-                    />
-                  </div>
-                  <div>
-                    <Label>Image URL</Label>
-                    <Input
-                      value={section.image_url || ''}
-                      onChange={(e) => updateSection(index, 'image_url', e.target.value)}
-                      placeholder="https://example.com/image.jpg"
-                    />
-                  </div>
-                </div>
+                 <div>
+                   <Label>Section Title</Label>
+                   <Input
+                     value={section.title}
+                     onChange={(e) => updateSection(index, 'title', e.target.value)}
+                     placeholder="Section title"
+                   />
+                 </div>
+               </div>
+
+               <div>
+                 <MultiImageField
+                   label="Section Images"
+                   images={section.image_urls || []}
+                   onChange={(images) => updateSection(index, 'image_urls', images)}
+                 />
+               </div>
 
                 <div>
                   <Label>Content</Label>

@@ -1059,6 +1059,7 @@ export type Database = {
           help_topic_id: string
           id: string
           image_url: string | null
+          image_urls: Json | null
           sort_order: number
           title: string
           updated_at: string
@@ -1069,6 +1070,7 @@ export type Database = {
           help_topic_id: string
           id?: string
           image_url?: string | null
+          image_urls?: Json | null
           sort_order?: number
           title: string
           updated_at?: string
@@ -1079,6 +1081,7 @@ export type Database = {
           help_topic_id?: string
           id?: string
           image_url?: string | null
+          image_urls?: Json | null
           sort_order?: number
           title?: string
           updated_at?: string
