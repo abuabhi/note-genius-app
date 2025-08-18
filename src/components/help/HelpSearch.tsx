@@ -104,6 +104,13 @@ export const HelpSearch: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Instructional Header */}
+      <div className="text-center py-2">
+        <p className="text-sm text-muted-foreground">
+          💡 Click on any help topic below to view detailed content and guides
+        </p>
+      </div>
+
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -144,7 +151,7 @@ export const HelpSearch: React.FC = () => {
             {contextualHelp.slice(0, 3).map(content => (
               <Card 
                 key={content.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-200 group border-l-4 border-l-primary/20 hover:border-l-primary"
                 onClick={() => handleContentClick(content)}
               >
                 <CardContent className="p-4">
@@ -157,7 +164,7 @@ export const HelpSearch: React.FC = () => {
                       {content.videoContent && (
                         <Video className="h-4 w-4 text-mint-600" />
                       )}
-                      <ArrowRight className="h-4 w-4 text-gray-400" />
+                      <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                     </div>
                   </div>
                 </CardContent>
@@ -202,7 +209,7 @@ export const HelpSearch: React.FC = () => {
             {filteredContent.map(content => (
               <Card 
                 key={content.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-200 group border-l-4 border-l-primary/20 hover:border-l-primary"
                 onClick={() => handleContentClick(content)}
               >
                 <CardContent className="p-4">
@@ -229,7 +236,7 @@ export const HelpSearch: React.FC = () => {
                         )}
                       </div>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-gray-400 ml-4 flex-shrink-0" />
+                    <ArrowRight className="h-4 w-4 text-gray-400 ml-4 flex-shrink-0 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                   </div>
                 </CardContent>
               </Card>
