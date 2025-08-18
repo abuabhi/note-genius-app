@@ -89,12 +89,15 @@ export const HelpTopicEditDialog = ({ topic, open, onOpenChange }: HelpTopicEdit
     e.preventDefault();
     
     try {
+      // Wait for the mutation and cache refresh to complete
       await updateTopic.mutateAsync({
         id: topic.id,
         ...formData
       });
       
       toast.success('Help topic updated successfully!');
+      
+      // Only close dialog after cache has been refreshed
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating help topic:', error);

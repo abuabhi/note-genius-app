@@ -98,9 +98,27 @@ export const useUpdateHelpTopic = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['help-topics'] });
-      queryClient.invalidateQueries({ queryKey: ['all-help-topics'] });
+    onSuccess: async (updatedTopic) => {
+      // Optimistic updates - immediately update the cache with new data
+      queryClient.setQueryData(['help-topics'], (oldData: HelpTopic[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(topic => 
+          topic.id === updatedTopic.id ? updatedTopic : topic
+        );
+      });
+
+      queryClient.setQueryData(['all-help-topics'], (oldData: HelpTopic[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(topic => 
+          topic.id === updatedTopic.id ? updatedTopic : topic
+        );
+      });
+
+      // Refetch to ensure data consistency and wait for completion
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['help-topics'] }),
+        queryClient.refetchQueries({ queryKey: ['all-help-topics'] })
+      ]);
     },
   });
 };
