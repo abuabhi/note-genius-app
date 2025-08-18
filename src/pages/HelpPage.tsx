@@ -23,7 +23,7 @@ import { YouTubeComingSoonPlaceholder } from '@/components/help/YouTubeComingSoo
 import { HelpTopicEditDialog } from '@/components/help/HelpTopicEditDialog';
 import { HelpTopicCreateDialog } from '@/components/help/HelpTopicCreateDialog';
 import { YouTubePlayer } from '@/components/help/video/YouTubePlayer';
-import { ImageGallery } from '@/components/help/ImageGallery';
+import ImageGallery from '@/components/help/ImageGallery';
 import { processContentForDisplay } from '@/utils/markdownConverter';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';

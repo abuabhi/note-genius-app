@@ -7,7 +7,7 @@ interface ImageGalleryProps {
   className?: string;
 }
 
-export const ImageGallery: React.FC<ImageGalleryProps> = ({ 
+const ImageGallery: React.FC<ImageGalleryProps> = ({ 
   images, 
   className = '' 
 }) => {
@@ -104,3 +104,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
     </div>
   );
 };
+
+// Export both named and default
+export { ImageGallery };
+export default ImageGallery;
