@@ -23,8 +23,7 @@ import { YouTubeComingSoonPlaceholder } from '@/components/help/YouTubeComingSoo
 import { HelpTopicEditDialog } from '@/components/help/HelpTopicEditDialog';
 import { HelpTopicCreateDialog } from '@/components/help/HelpTopicCreateDialog';
 import { YouTubePlayer } from '@/components/help/video/YouTubePlayer';
-import { processContentForDisplay } from '@/utils/markdownConverter';
-import { sanitizeHTML } from '@/utils/sanitize';
+import { formatSimpleText } from '@/utils/simpleTextFormatter';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
@@ -36,6 +35,7 @@ const HelpPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingTopic, setEditingTopic] = useState<HelpTopic | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showYouTubeVideos, setShowYouTubeVideos] = useState(true);
 
   const { data: helpContent = [], isLoading } = useHelpTopics();
   const deleteTopic = useDeleteHelpTopic();
@@ -146,23 +146,39 @@ const HelpPage = () => {
             />
           </div>
 
-          {/* Category Filter */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            {categories.map((category) => {
-              const IconComponent = category.icon;
-              return (
-                <Button
-                  key={category.id}
-                  variant={selectedCategory === category.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCategory(category.id)}
-                  className="flex items-center gap-2"
-                >
-                  <IconComponent className="h-4 w-4" />
-                  {category.label}
-                </Button>
-              );
-            })}
+          {/* Category Filter and YouTube Toggle */}
+          <div className="flex flex-col gap-4 mb-6">
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category) => {
+                const IconComponent = category.icon;
+                return (
+                  <Button
+                    key={category.id}
+                    variant={selectedCategory === category.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <IconComponent className="h-4 w-4" />
+                    {category.label}
+                  </Button>
+                );
+              })}
+            </div>
+            
+            {/* YouTube Videos Toggle */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <Video className="h-4 w-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">Show YouTube Videos</span>
+              <Button
+                variant={showYouTubeVideos ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowYouTubeVideos(!showYouTubeVideos)}
+                className="ml-auto"
+              >
+                {showYouTubeVideos ? 'Hide' : 'Show'}
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -216,10 +232,10 @@ const HelpPage = () => {
                 
                 <CollapsibleContent>
                   <CardContent className="pt-0">
-                    <div className="prose max-w-none mb-6 text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeHTML(processContentForDisplay(item.content)) }} />
+                    <div className="prose max-w-none mb-6 text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatSimpleText(item.content) }} />
 
                     {/* Video Content */}
-                    {(item.video_url || item.video_title) && (
+                    {showYouTubeVideos && (item.video_url || item.video_title) && (
                       <div className="mb-6">
                         {item.video_url && getYouTubeIdFromUrl(item.video_url) ? (
                           <YouTubePlayer
