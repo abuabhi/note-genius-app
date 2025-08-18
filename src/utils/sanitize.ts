@@ -6,7 +6,7 @@ export const sanitizeHTML = (html: string): string => {
   if (!html) return '';
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: [
-      'b','i','em','strong','u','s','br','p','span','ul','ol','li','h1','h2','h3','h4','h5','h6','blockquote','code','pre','hr','a'
+      'b','i','em','strong','u','s','br','p','span','div','ul','ol','li','h1','h2','h3','h4','h5','h6','blockquote','code','pre','hr','a'
     ],
     ALLOWED_ATTR: ['href','title','target','rel','class'],
     ALLOW_DATA_ATTR: false,
