@@ -1052,10 +1052,50 @@ export type Database = {
         }
         Relationships: []
       }
+      help_topic_sections: {
+        Row: {
+          content: string
+          created_at: string
+          help_topic_id: string
+          id: string
+          image_url: string | null
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          help_topic_id: string
+          id?: string
+          image_url?: string | null
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          help_topic_id?: string
+          id?: string
+          image_url?: string | null
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "help_topic_sections_help_topic_id_fkey"
+            columns: ["help_topic_id"]
+            isOneToOne: false
+            referencedRelation: "help_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       help_topics: {
         Row: {
           category: string
-          content: string
           created_at: string | null
           created_by: string | null
           description: string
@@ -1075,7 +1115,6 @@ export type Database = {
         }
         Insert: {
           category: string
-          content: string
           created_at?: string | null
           created_by?: string | null
           description: string
@@ -1095,7 +1134,6 @@ export type Database = {
         }
         Update: {
           category?: string
-          content?: string
           created_at?: string | null
           created_by?: string | null
           description?: string

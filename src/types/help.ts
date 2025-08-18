@@ -1,4 +1,12 @@
 
+export interface HelpTopicSection {
+  id: string;
+  title: string;
+  content: string;
+  image_url?: string;
+  sort_order: number;
+}
+
 export interface HelpContent {
   id: string;
   title: string;
@@ -6,7 +14,7 @@ export interface HelpContent {
   category: HelpCategory;
   context: HelpContext[];
   priority: number;
-  textContent?: string;
+  sections?: HelpTopicSection[];
   videoContent?: VideoContent;
   quickTips?: string[];
   tags: string[];

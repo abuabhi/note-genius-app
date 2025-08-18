@@ -6,10 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { RichTextEditor } from '@/components/ui/rich-text/RichTextEditor';
 import { X, Plus } from 'lucide-react';
-import { useCreateHelpTopic } from '@/hooks/help/useHelpTopics';
-import { htmlToMarkdown, markdownToHtml } from '@/utils/markdownConverter';
+import { useCreateHelpTopic, HelpTopicSection } from '@/hooks/help/useHelpTopics';
 import { toast } from 'sonner';
 
 interface HelpTopicCreateDialogProps {
@@ -35,20 +33,49 @@ export const HelpTopicCreateDialog = ({ open, onOpenChange }: HelpTopicCreateDia
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    content: '',
     category: 'getting-started',
     priority: 1,
     video_url: '',
     video_title: '',
     video_duration: '',
+    image_url: '',
     tags: [] as string[],
-    quick_tips: [] as string[]
+    quick_tips: [] as string[],
+    sections: [] as Omit<HelpTopicSection, 'id'>[]
   });
 
   const [newTag, setNewTag] = useState('');
   const [newTip, setNewTip] = useState('');
 
   const createTopic = useCreateHelpTopic();
+
+  const addSection = () => {
+    setFormData(prev => ({
+      ...prev,
+      sections: [...prev.sections, {
+        title: '',
+        content: '',
+        image_url: '',
+        sort_order: prev.sections.length
+      }]
+    }));
+  };
+
+  const removeSection = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      sections: prev.sections.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateSection = (index: number, field: keyof Omit<HelpTopicSection, 'id'>, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      sections: prev.sections.map((section, i) => 
+        i === index ? { ...section, [field]: value } : section
+      )
+    }));
+  };
 
   const addTag = () => {
     if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
@@ -100,14 +127,15 @@ export const HelpTopicCreateDialog = ({ open, onOpenChange }: HelpTopicCreateDia
       setFormData({
         title: '',
         description: '',
-        content: '',
         category: 'getting-started',
         priority: 1,
         video_url: '',
         video_title: '',
         video_duration: '',
+        image_url: '',
         tags: [],
-        quick_tips: []
+        quick_tips: [],
+        sections: []
       });
     } catch (error) {
       console.error('Error creating help topic:', error);
@@ -165,16 +193,60 @@ export const HelpTopicCreateDialog = ({ open, onOpenChange }: HelpTopicCreateDia
             />
           </div>
 
-          <div>
-            <Label>Content</Label>
-            <RichTextEditor
-              content={markdownToHtml(formData.content)}
-              onChange={(html) => setFormData(prev => ({ 
-                ...prev, 
-                content: htmlToMarkdown(html) 
-              }))}
-              placeholder="Enter help topic content..."
-            />
+          {/* Sections */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Content Sections</h3>
+              <Button type="button" onClick={addSection} variant="outline" size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Section
+              </Button>
+            </div>
+
+            {formData.sections.map((section, index) => (
+              <div key={`section-${index}`} className="border rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Section {index + 1}</h4>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeSection(index)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                <div>
+                  <Label>Section Title</Label>
+                  <Input
+                    value={section.title}
+                    onChange={(e) => updateSection(index, 'title', e.target.value)}
+                    placeholder="e.g., Manual Creation Steps"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label>Section Content</Label>
+                  <Textarea
+                    value={section.content}
+                    onChange={(e) => updateSection(index, 'content', e.target.value)}
+                    rows={4}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label>Section Image URL</Label>
+                  <Input
+                    value={section.image_url || ''}
+                    onChange={(e) => updateSection(index, 'image_url', e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Video Settings */}

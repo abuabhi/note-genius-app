@@ -1,14 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface HelpTopicSection {
+  id: string;
+  title: string;
+  content: string;
+  image_url?: string | null;
+  sort_order: number;
+}
+
 export interface HelpTopic {
   id: string;
   title: string;
   description: string;
-  content: string;
   category: string;
   priority: number;
   tags: string[];
+  sections: HelpTopicSection[];
   video_url?: string | null;
   video_title?: string | null;
   video_duration?: string | null;
@@ -26,31 +34,31 @@ export const useHelpTopics = () => {
   return useQuery({
     queryKey: ['help-topics'],
     queryFn: async () => {
-      console.log('🔍 [HELP DEBUG] Fetching help topics...');
-      
       const { data, error } = await supabase
         .from('help_topics')
-        .select('*')
+        .select(`
+          *,
+          help_topic_sections (
+            id,
+            title,
+            content,
+            image_url,
+            sort_order
+          )
+        `)
         .eq('is_active', true)
-        .order('priority', { ascending: true });
+        .order('priority', { ascending: false });
 
-      console.log('🔍 [HELP DEBUG] Query result:', { data, error });
+      if (error) throw error;
 
-      if (error) {
-        console.error('🔍 [HELP DEBUG] Query error:', error);
-        throw error;
-      }
-      
-      const transformedData = (data || []).map(item => ({
-        ...item,
-        textContent: item.content, // Map database content to textContent for UI compatibility
-        tags: Array.isArray(item.tags) ? item.tags as string[] : [],
-        video_chapters: Array.isArray(item.video_chapters) ? item.video_chapters as { time: number; title: string; description?: string }[] : null,
-        quick_tips: Array.isArray(item.quick_tips) ? item.quick_tips as string[] : null,
-      })) as any[];
-      
-      console.log('🔍 [HELP DEBUG] Transformed data:', transformedData);
-      return transformedData;
+      return (data || []).map(topic => ({
+        ...topic,
+        sections: (topic.help_topic_sections || [])
+          .sort((a, b) => a.sort_order - b.sort_order),
+        tags: Array.isArray(topic.tags) ? topic.tags as string[] : [],
+        video_chapters: Array.isArray(topic.video_chapters) ? topic.video_chapters as { time: number; title: string; description?: string }[] : null,
+        quick_tips: Array.isArray(topic.quick_tips) ? topic.quick_tips as string[] : null,
+      })) as HelpTopic[];
     },
   });
 };
@@ -61,17 +69,28 @@ export const useAllHelpTopics = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('help_topics')
-        .select('*')
-        .order('priority', { ascending: true });
+        .select(`
+          *,
+          help_topic_sections (
+            id,
+            title,
+            content,
+            image_url,
+            sort_order
+          )
+        `)
+        .order('priority', { ascending: false });
 
       if (error) throw error;
-      return (data || []).map(item => ({
-        ...item,
-        textContent: item.content, // Map database content to textContent for UI compatibility
-        tags: Array.isArray(item.tags) ? item.tags as string[] : [],
-        video_chapters: Array.isArray(item.video_chapters) ? item.video_chapters as { time: number; title: string; description?: string }[] : null,
-        quick_tips: Array.isArray(item.quick_tips) ? item.quick_tips as string[] : null,
-      })) as any[];
+      
+      return (data || []).map(topic => ({
+        ...topic,
+        sections: (topic.help_topic_sections || [])
+          .sort((a, b) => a.sort_order - b.sort_order),
+        tags: Array.isArray(topic.tags) ? topic.tags as string[] : [],
+        video_chapters: Array.isArray(topic.video_chapters) ? topic.video_chapters as { time: number; title: string; description?: string }[] : null,
+        quick_tips: Array.isArray(topic.quick_tips) ? topic.quick_tips as string[] : null,
+      })) as HelpTopic[];
     },
   });
 };
@@ -80,15 +99,33 @@ export const useCreateHelpTopic = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (topic: Omit<HelpTopic, 'id' | 'created_at' | 'updated_at'>) => {
-      const { data, error } = await supabase
+    mutationFn: async (topic: Omit<HelpTopic, 'id' | 'created_at' | 'updated_at' | 'sections'> & { sections: Omit<HelpTopicSection, 'id'>[] }) => {
+      const { sections, ...topicData } = topic;
+      
+      // Create the topic first
+      const { data: createdTopic, error: topicError } = await supabase
         .from('help_topics')
-        .insert([topic])
+        .insert([topicData])
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (topicError) throw topicError;
+
+      // Create sections if any
+      if (sections && sections.length > 0) {
+        const sectionsData = sections.map(section => ({
+          ...section,
+          help_topic_id: createdTopic.id
+        }));
+
+        const { error: sectionsError } = await supabase
+          .from('help_topic_sections')
+          .insert(sectionsData);
+
+        if (sectionsError) throw sectionsError;
+      }
+
+      return createdTopic;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['help-topics'] });
@@ -101,7 +138,8 @@ export const useUpdateHelpTopic = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<HelpTopic> & { id: string }) => {
+    mutationFn: async ({ id, sections, ...updates }: Partial<HelpTopic> & { id: string }) => {
+      // Update the main topic
       const { data, error } = await supabase
         .from('help_topics')
         .update(updates)
@@ -110,29 +148,38 @@ export const useUpdateHelpTopic = () => {
         .single();
 
       if (error) throw error;
+
+      // Handle sections if provided
+      if (sections) {
+        // Delete existing sections
+        await supabase
+          .from('help_topic_sections')
+          .delete()
+          .eq('help_topic_id', id);
+
+        // Insert new sections
+        if (sections.length > 0) {
+          const sectionsData = sections.map((section, index) => ({
+            help_topic_id: id,
+            title: section.title,
+            content: section.content,
+            image_url: section.image_url,
+            sort_order: index
+          }));
+
+          const { error: sectionsError } = await supabase
+            .from('help_topic_sections')
+            .insert(sectionsData);
+
+          if (sectionsError) throw sectionsError;
+        }
+      }
+
       return data;
     },
-    onSuccess: async (updatedTopic) => {
-      // Optimistic updates - immediately update the cache with new data
-      queryClient.setQueryData(['help-topics'], (oldData: HelpTopic[] | undefined) => {
-        if (!oldData) return oldData;
-        return oldData.map(topic => 
-          topic.id === updatedTopic.id ? updatedTopic : topic
-        );
-      });
-
-      queryClient.setQueryData(['all-help-topics'], (oldData: HelpTopic[] | undefined) => {
-        if (!oldData) return oldData;
-        return oldData.map(topic => 
-          topic.id === updatedTopic.id ? updatedTopic : topic
-        );
-      });
-
-      // Refetch to ensure data consistency and wait for completion
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ['help-topics'] }),
-        queryClient.refetchQueries({ queryKey: ['all-help-topics'] })
-      ]);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['help-topics'] });
+      queryClient.invalidateQueries({ queryKey: ['all-help-topics'] });
     },
   });
 };
@@ -142,6 +189,7 @@ export const useDeleteHelpTopic = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // Sections will be deleted automatically due to CASCADE
       const { error } = await supabase
         .from('help_topics')
         .delete()
