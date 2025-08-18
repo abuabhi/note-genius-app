@@ -3,7 +3,7 @@ import React, { ReactNode } from 'react';
 import { QueryProvider } from '@/components/app/QueryProvider';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/toaster';
-import { HelpProvider } from '@/contexts/HelpContext';
+import { SimpleHelpProvider } from '@/contexts/SimpleHelpContext';
 import { ErrorProvider } from '@/contexts/ErrorContext';
 import { MonitoringProvider } from '@/providers/MonitoringProvider';
 import { SecurityProvider } from '@/components/security/SecurityProvider';
@@ -17,7 +17,7 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   return (
     <MonitoringProvider>
       <SecurityErrorBoundary>
-        <HelpProvider>
+        <SimpleHelpProvider>
           <ErrorProvider>
             <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
               <SecurityProvider>
@@ -26,7 +26,7 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
               </SecurityProvider>
             </ThemeProvider>
           </ErrorProvider>
-        </HelpProvider>
+        </SimpleHelpProvider>
       </SecurityErrorBoundary>
     </MonitoringProvider>
   );

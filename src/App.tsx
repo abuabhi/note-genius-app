@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { QueryProvider } from './components/app/QueryProvider';
 import { AuthProvider } from './contexts/auth/AuthProvider';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
-import { HelpProvider } from './contexts/HelpContext';
+import { SimpleHelpProvider } from './contexts/SimpleHelpContext';
 import { ProductionOptimizationProvider } from '@/components/performance/ProductionOptimizationProvider';
 import AppRoutes from './components/app/AppRoutes';
 import { useNotificationToasts } from '@/hooks/useNotificationToasts';
@@ -30,9 +30,9 @@ function App() {
       <AuthProvider>
         <ProductionOptimizationProvider>
           <SubscriptionProvider>
-            <HelpProvider>
+            <SimpleHelpProvider>
               <AppContent />
-            </HelpProvider>
+            </SimpleHelpProvider>
           </SubscriptionProvider>
         </ProductionOptimizationProvider>
       </AuthProvider>

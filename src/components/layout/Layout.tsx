@@ -4,12 +4,17 @@ import NavBar from './NavBar';
 import Footer from './Footer';
 import { Helmet } from 'react-helmet';
 import { FloatingSessionTimer } from '@/components/ui/floating/FloatingSessionTimer';
+import { HelpFloatingButton } from '@/components/help/HelpFloatingButton';
+import { SimpleHelpDialog } from '@/components/help/SimpleHelpDialog';
+import { useSimpleHelp } from '@/contexts/SimpleHelpContext';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout = ({ children }: LayoutProps) => {
+  const { isOpen, closeHelp } = useSimpleHelp();
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-mint-50 via-white to-blue-50">
       <NavBar />
@@ -42,6 +47,8 @@ const Layout = ({ children }: LayoutProps) => {
       </main>
       <Footer />
       <FloatingSessionTimer />
+      <HelpFloatingButton />
+      <SimpleHelpDialog open={isOpen} onOpenChange={(open) => !open && closeHelp()} />
     </div>
   );
 };
