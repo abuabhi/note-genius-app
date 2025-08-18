@@ -42,11 +42,6 @@ const HelpPage = () => {
   const { userProfile } = useRequireAuth();
   const isAdmin = userProfile?.user_tier === UserTier.DEAN;
 
-  // Debug logging for help content
-  console.log('🔍 [HELP PAGE] helpContent:', helpContent);
-  console.log('🔍 [HELP PAGE] isLoading:', isLoading);
-  console.log('🔍 [HELP PAGE] helpContent length:', helpContent.length);
-
   const toggleSection = (sectionId: string) => {
     setOpenSections(prev => 
       prev.includes(sectionId) 
@@ -96,12 +91,6 @@ const HelpPage = () => {
       (Array.isArray(item.tags) && item.tags.some(tag => tag.toLowerCase().includes(lower)));
     return matchesCategory && matchesSearch;
   });
-
-  // Debug logging for filtered content
-  console.log('🔍 [HELP PAGE] selectedCategory:', selectedCategory);
-  console.log('🔍 [HELP PAGE] searchTerm:', searchTerm);
-  console.log('🔍 [HELP PAGE] filteredContent:', filteredContent);
-  console.log('🔍 [HELP PAGE] filteredContent length:', filteredContent.length);
 
   if (isLoading) {
     return (

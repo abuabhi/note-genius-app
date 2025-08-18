@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, Play, Pause, Square, GripVertical, AlertTriangle, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DEBUG_CONFIG } from '@/config/debug';
 
 interface Position {
   x: number;
@@ -25,15 +26,17 @@ export const FloatingSessionTimer = () => {
   } = useUnifiedSessionTracker();
 
   // Debug logging
-  console.log('🔍 [FLOATING TIMER DEBUG]', {
-    isActive,
-    isRecovering,
-    elapsedSeconds,
-    currentTitle,
-    currentSubject,
-    isPaused,
-    showInactivityWarning
-  });
+  if (DEBUG_CONFIG.SESSION_LOGGING) {
+    console.log('🔍 [FLOATING TIMER DEBUG]', {
+      isActive,
+      isRecovering,
+      elapsedSeconds,
+      currentTitle,
+      currentSubject,
+      isPaused,
+      showInactivityWarning
+    });
+  }
 
   // Get default bottom-left position
   const getDefaultPosition = useCallback((): Position => {

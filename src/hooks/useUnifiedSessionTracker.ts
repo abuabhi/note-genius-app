@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { useSessionPersistence } from './useSessionPersistence';
 import { useTabVisibility } from '@/hooks/performance/useTabVisibility';
+import { DEBUG_CONFIG } from '@/config/debug';
 
 export interface SessionData {
   title: string;
@@ -98,30 +99,38 @@ export const useUnifiedSessionTracker = () => {
   useEffect(() => {
     const attemptRecoveryWithRetry = async (attemptNumber = 1) => {
       if (!user) {
-        console.log('🔄 [SESSION RECOVERY] No user available, resetting recovery state');
+        if (DEBUG_CONFIG.SESSION_LOGGING) {
+          console.log('🔄 [SESSION RECOVERY] No user available, resetting recovery state');
+        }
         recoveryAttempts.current = 0;
         setSessionState(prev => ({ ...prev, isRecovering: false }));
         return;
       }
 
       if (attemptNumber > maxRecoveryAttempts) {
-        console.log('🔄 [SESSION RECOVERY] Max recovery attempts reached, giving up');
+        if (DEBUG_CONFIG.SESSION_LOGGING) {
+          console.log('🔄 [SESSION RECOVERY] Max recovery attempts reached, giving up');
+        }
         setSessionState(prev => ({ ...prev, isRecovering: false }));
         return;
       }
       
-      console.log(`🔄 [SESSION RECOVERY] Attempt ${attemptNumber}/${maxRecoveryAttempts} for user:`, user.id);
+      if (DEBUG_CONFIG.SESSION_LOGGING) {
+        console.log(`🔄 [SESSION RECOVERY] Attempt ${attemptNumber}/${maxRecoveryAttempts} for user:`, user.id);
+      }
       
       try {
         const recoveredSession = await recoverActiveSession();
         
         if (recoveredSession) {
-          console.log('✅ [SESSION RECOVERY] Session recovered:', {
-            sessionId: recoveredSession.sessionId,
-            title: recoveredSession.title,
-            elapsedSeconds: recoveredSession.elapsedSeconds,
-            activityType: recoveredSession.activityType
-          });
+          if (DEBUG_CONFIG.SESSION_LOGGING) {
+            console.log('✅ [SESSION RECOVERY] Session recovered:', {
+              sessionId: recoveredSession.sessionId,
+              title: recoveredSession.title,
+              elapsedSeconds: recoveredSession.elapsedSeconds,
+              activityType: recoveredSession.activityType
+            });
+          }
           
           const recoveredState = {
             isActive: true,
@@ -142,16 +151,22 @@ export const useUnifiedSessionTracker = () => {
           recoveryAttempts.current = 0;
           toast.success('Study session resumed');
         } else {
-          console.log('ℹ️ [SESSION RECOVERY] No active session found');
+          if (DEBUG_CONFIG.SESSION_LOGGING) {
+            console.log('ℹ️ [SESSION RECOVERY] No active session found');
+          }
           setSessionState(prev => ({ ...prev, isRecovering: false }));
           recoveryAttempts.current = 0;
         }
       } catch (error) {
-        console.error(`❌ [SESSION RECOVERY] Error during recovery attempt ${attemptNumber}:`, error);
+        if (DEBUG_CONFIG.SESSION_LOGGING) {
+          console.error(`❌ [SESSION RECOVERY] Error during recovery attempt ${attemptNumber}:`, error);
+        }
         
         if (attemptNumber < maxRecoveryAttempts) {
           const retryDelay = Math.min(1000 * Math.pow(2, attemptNumber - 1), 5000); // Exponential backoff, max 5s
-          console.log(`🔄 [SESSION RECOVERY] Retrying in ${retryDelay}ms...`);
+          if (DEBUG_CONFIG.SESSION_LOGGING) {
+            console.log(`🔄 [SESSION RECOVERY] Retrying in ${retryDelay}ms...`);
+          }
           
           recoveryTimeoutRef.current = setTimeout(() => {
             attemptRecoveryWithRetry(attemptNumber + 1);
