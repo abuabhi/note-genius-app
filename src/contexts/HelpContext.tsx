@@ -164,7 +164,7 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
           category: topic.category,
           context: [state.currentContext!], // Simplified context matching
           priority: topic.priority,
-          textContent: topic.content,
+          sections: topic.sections || [],
           videoContent: topic.video_url ? {
             youtubeId: extractYouTubeId(topic.video_url),
             title: topic.video_title || topic.title,
@@ -175,7 +175,7 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
           tags: Array.isArray(topic.tags) ? topic.tags : [],
           lastUpdated: new Date(topic.updated_at).toISOString().split('T')[0]
         }))
-        .filter(content => content.textContent); // Only show content with actual text
+        .filter(content => content.sections.length > 0); // Only show content with sections
     } catch (error) {
       console.error('Error getting contextual help:', error);
       return [];

@@ -51,7 +51,7 @@ export function HelpTopicEditDialog({ topic, open, onOpenChange }: HelpTopicEdit
     quick_tips: [] as string[]
   });
 
-  const [sections, setSections] = useState<Omit<HelpTopicSection, 'id'>[]>([]);
+  const [sections, setSections] = useState<HelpTopicSection[]>([]);
   const [newTag, setNewTag] = useState('');
   const [newTip, setNewTip] = useState('');
 
@@ -70,6 +70,7 @@ export function HelpTopicEditDialog({ topic, open, onOpenChange }: HelpTopicEdit
         quick_tips: topic.quick_tips || []
       });
       setSections(topic.sections?.map(s => ({
+        id: s.id,
         title: s.title,
         content: s.content,
         image_url: s.image_url,
@@ -94,6 +95,7 @@ export function HelpTopicEditDialog({ topic, open, onOpenChange }: HelpTopicEdit
 
   const addSection = () => {
     setSections([...sections, {
+      id: `temp-${Date.now()}`,
       title: 'New Section',
       content: '',
       image_url: '',
@@ -105,7 +107,7 @@ export function HelpTopicEditDialog({ topic, open, onOpenChange }: HelpTopicEdit
     setSections(sections.filter((_, i) => i !== index));
   };
 
-  const updateSection = (index: number, field: keyof Omit<HelpTopicSection, 'id'>, value: string) => {
+  const updateSection = (index: number, field: keyof HelpTopicSection, value: string) => {
     const updated = [...sections];
     updated[index] = { ...updated[index], [field]: value };
     setSections(updated);
