@@ -36,7 +36,7 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/terms", element: <TermsPage /> }, // TermsPage already has Layout internally
   { path: "/privacy", element: <PrivacyPage /> }, // PrivacyPage already has Layout internally
   { path: "/features", element: <FeaturesPage /> }, // FeaturesPage already has Layout internally
-  { path: "/help", element: <HelpPage /> },
+  { path: "/help", element: <HelpPage /> }, // HelpPage already has Layout internally
   { path: "/help-center", element: <Navigate to="/help" replace /> },
   { path: "/help-centre", element: <Navigate to="/help" replace /> },
   { path: "/faq", element: <FAQPage /> },
