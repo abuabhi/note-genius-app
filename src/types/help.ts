@@ -1,4 +1,3 @@
-
 export interface HelpTopicSection {
   id: string;
   title: string;
@@ -14,7 +13,7 @@ export interface HelpContent {
   category: HelpCategory;
   context: HelpContext[];
   priority: number;
-  sections?: HelpTopicSection[];
+  sections: HelpTopicSection[];
   videoContent?: VideoContent;
   quickTips?: string[];
   tags: string[];

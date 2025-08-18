@@ -87,7 +87,10 @@ const HelpPage = () => {
     const matchesSearch = searchTerm === '' || 
       item.title.toLowerCase().includes(lower) ||
       item.description.toLowerCase().includes(lower) ||
-      item.content.toLowerCase().includes(lower) ||
+      (item.sections && item.sections.some(section => 
+        section.title.toLowerCase().includes(lower) || 
+        section.content.toLowerCase().includes(lower)
+      )) ||
       (Array.isArray(item.tags) && item.tags.some(tag => tag.toLowerCase().includes(lower)));
     return matchesCategory && matchesSearch;
   });
@@ -243,78 +246,112 @@ const HelpPage = () => {
                 
                 <CollapsibleContent>
                   <CardContent className="pt-0">
-                    <div className="prose max-w-none mb-6 text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatSimpleText(item.content) }} />
-
-                    {/* Video Content */}
-                    {showYouTubeVideos && (item.video_url || item.video_title) && (
-                      <div className="mb-6">
-                        {item.video_url && getYouTubeIdFromUrl(item.video_url) ? (
-                          <YouTubePlayer
-                            video={{
-                              youtubeId: getYouTubeIdFromUrl(item.video_url) || '',
-                              title: item.video_title || item.title,
-                              duration: item.video_duration || '0:00'
-                            }}
-                            contentId={item.id}
-                            className="w-full"
-                          />
-                        ) : (
-                          <YouTubeComingSoonPlaceholder
-                            title={item.video_title || 'Video Tutorial'}
-                            duration={item.video_duration || '0:00'}
-                            className="w-full"
-                          />
-                        )}
-
-                        {/* Video Chapters */}
-                        {item.video_chapters && item.video_chapters.length > 0 && (
-                          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                            <h5 className="font-medium text-gray-900 mb-3">Video Chapters</h5>
-                            <div className="space-y-2">
-                              {item.video_chapters.map((chapter, index) => (
-                                <div key={index} className="text-sm text-gray-600 pl-4 border-l-2 border-mint-200">
-                                  <span className="font-medium">{Math.floor(chapter.time / 60)}:{(chapter.time % 60).toString().padStart(2, '0')}</span>
-                                  {' - '}
-                                  <span className="font-medium">{chapter.title}</span>
-                                  {chapter.description && <p className="text-gray-500">{chapter.description}</p>}
+                    <div className="space-y-8">
+                      {item.sections && item.sections.length > 0 ? (
+                        item.sections.map((section, index) => (
+                          <div key={section.id} className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                            <div className="space-y-4">
+                              <h4 className="text-lg font-semibold text-gray-900">{section.title}</h4>
+                              <div 
+                                className="prose prose-sm max-w-none text-gray-700"
+                                dangerouslySetInnerHTML={{ __html: formatSimpleText(section.content) }}
+                              />
+                            </div>
+                            <div className="flex justify-center">
+                              {section.image_url ? (
+                                <img
+                                  src={section.image_url}
+                                  alt={section.title}
+                                  className="max-w-full h-auto rounded-lg shadow-sm"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                                  <BookOpen className="h-12 w-12 text-gray-400" />
                                 </div>
-                              ))}
+                              )}
                             </div>
                           </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Quick Tips */}
-                    {item.quick_tips && item.quick_tips.length > 0 && (
-                      <div className="p-4 bg-mint-50 rounded-lg">
-                        <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                          <Lightbulb className="h-5 w-5 text-mint-600" />
-                          Quick Tips
-                        </h4>
-                        <ul className="space-y-2">
-                          {item.quick_tips.map((tip, index) => (
-                            <li key={index} className="text-gray-700 flex items-start gap-2">
-                              <span className="text-mint-600 font-bold">•</span>
-                              <span>{tip}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Tags */}
-                    {item.tags && item.tags.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-gray-200">
-                        <div className="flex flex-wrap gap-2">
-                          {item.tags.map((tag) => (
-                            <Badge key={tag} variant="outline" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
+                        ))
+                      ) : (
+                        <div className="text-gray-500 text-center py-8">
+                          No sections available for this topic.
                         </div>
-                      </div>
-                    )}
+                      )}
+                      
+                      {/* Video Content */}
+                      {showYouTubeVideos && (item.video_url || item.video_title) && (
+                        <div className="mb-6">
+                          {item.video_url && getYouTubeIdFromUrl(item.video_url) ? (
+                            <YouTubePlayer
+                              video={{
+                                youtubeId: getYouTubeIdFromUrl(item.video_url) || '',
+                                title: item.video_title || item.title,
+                                duration: item.video_duration || '0:00'
+                              }}
+                              contentId={item.id}
+                              className="w-full"
+                            />
+                          ) : (
+                            <YouTubeComingSoonPlaceholder
+                              title={item.video_title || 'Video Tutorial'}
+                              duration={item.video_duration || '0:00'}
+                              className="w-full"
+                            />
+                          )}
+
+                          {/* Video Chapters */}
+                          {item.video_chapters && item.video_chapters.length > 0 && (
+                            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                              <h5 className="font-medium text-gray-900 mb-3">Video Chapters</h5>
+                              <div className="space-y-2">
+                                {item.video_chapters.map((chapter, index) => (
+                                  <div key={index} className="text-sm text-gray-600 pl-4 border-l-2 border-mint-200">
+                                    <span className="font-medium">{Math.floor(chapter.time / 60)}:{(chapter.time % 60).toString().padStart(2, '0')}</span>
+                                    {' - '}
+                                    <span className="font-medium">{chapter.title}</span>
+                                    {chapter.description && <p className="text-gray-500">{chapter.description}</p>}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Quick Tips */}
+                      {item.quick_tips && item.quick_tips.length > 0 && (
+                        <div className="p-4 bg-mint-50 rounded-lg">
+                          <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                            <Lightbulb className="h-5 w-5 text-mint-600" />
+                            Quick Tips
+                          </h4>
+                          <ul className="space-y-2">
+                            {item.quick_tips.map((tip, index) => (
+                              <li key={index} className="text-gray-700 flex items-start gap-2">
+                                <span className="text-mint-600 font-bold">•</span>
+                                <span>{tip}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Tags */}
+                      {item.tags && item.tags.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <div className="flex flex-wrap gap-2">
+                            {item.tags.map((tag) => (
+                              <Badge key={tag} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </CollapsibleContent>
               </Collapsible>
