@@ -43,6 +43,7 @@ export const NoteContentField = ({
               content={field.value || ''} 
               onChange={field.onChange} 
               defaultAlignment={defaultAlignment}
+              enhanced={true}
             />
           </FormControl>
           <FormMessage />

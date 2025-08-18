@@ -161,7 +161,7 @@ export const markdownToHtml = (markdown: string): string => {
   return processedBlocks.join('\n');
 };
 
-// Process any content to ensure consistent markdown formatting
+// Enhanced content processor that handles both rich HTML and markdown
 export const processContentForDisplay = (content: string): string => {
   if (!content) return '';
   
@@ -177,20 +177,34 @@ export const processContentForDisplay = (content: string): string => {
     return content;
   }
   
-  // Check if content is already properly formatted HTML
-  // Look for common HTML block elements that indicate structured content
-  const hasHtmlStructure = content.includes('<p>') || 
-                          content.includes('<div>') || 
-                          content.includes('<h1>') || 
-                          content.includes('<h2>') || 
-                          content.includes('<h3>') || 
-                          content.includes('<ul>') || 
-                          content.includes('<ol>') || 
-                          content.includes('<li>') ||
-                          content.includes('<br>');
+  // Check if content is rich HTML from Tiptap (has advanced formatting)
+  const isRichHTML = content.includes('<p>') || 
+                     content.includes('<strong>') || 
+                     content.includes('<em>') || 
+                     content.includes('<h1>') || 
+                     content.includes('<h2>') || 
+                     content.includes('<h3>') || 
+                     content.includes('<table>') ||
+                     content.includes('<img>') ||
+                     content.includes('<a ') ||
+                     content.includes('font-size:') ||
+                     content.includes('color:') ||
+                     content.includes('<ul>') || 
+                     content.includes('<ol>') || 
+                     content.includes('<li>') ||
+                     content.includes('<blockquote>');
   
-  if (hasHtmlStructure) {
-    // Content is already HTML, return as-is to avoid corruption
+  if (isRichHTML) {
+    // Content is rich HTML from editor, return as-is to preserve formatting
+    return content;
+  }
+  
+  // Check if content is basic structured HTML
+  const hasBasicHtmlStructure = content.includes('<br>') || 
+                               content.includes('<div>');
+  
+  if (hasBasicHtmlStructure) {
+    // Content is basic HTML, return as-is to avoid corruption
     return content;
   }
   
@@ -201,6 +215,6 @@ export const processContentForDisplay = (content: string): string => {
     return markdownToHtml(cleanMarkdown);
   }
   
-  // If pure markdown or hybrid content, process directly
+  // If pure markdown or plain text, process it
   return markdownToHtml(content);
 };

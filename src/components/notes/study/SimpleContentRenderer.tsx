@@ -1,6 +1,7 @@
 import React from 'react';
 import { TextAlignType } from './hooks/useStudyViewState';
 import { processContentForDisplay } from '@/utils/markdownConverter';
+import { RichTextDisplay } from '@/components/ui/rich-text/RichTextDisplay';
 import './SimpleContentRenderer.css';
 import { sanitizeHTML } from '@/utils/sanitize';
 
@@ -27,10 +28,32 @@ export const SimpleContentRenderer: React.FC<SimpleContentRendererProps> = ({
     lineHeight: 1.6
   };
 
-  const containerClass = `simple-content ${className}`;
-
   // Process all content through our unified markdown converter
   const processedContent = processContentForDisplay(content);
+
+  // Check if content is rich HTML that should use the enhanced display
+  const isRichHTML = processedContent.includes('<p>') || 
+                     processedContent.includes('<strong>') || 
+                     processedContent.includes('<table>') ||
+                     processedContent.includes('<img>') ||
+                     processedContent.includes('<a ') ||
+                     processedContent.includes('font-size:') ||
+                     processedContent.includes('color:');
+
+  if (isRichHTML) {
+    // Use enhanced rich text display for rich HTML content
+    return (
+      <RichTextDisplay
+        content={processedContent}
+        fontSize={fontSize}
+        textAlign={textAlign}
+        className={className}
+      />
+    );
+  }
+
+  // Fallback to original simple content renderer for basic content
+  const containerClass = `simple-content ${className}`;
 
   return (
     <div 

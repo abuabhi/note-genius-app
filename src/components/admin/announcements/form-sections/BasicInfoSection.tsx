@@ -50,6 +50,7 @@ export const BasicInfoSection = ({ control }: BasicInfoSectionProps) => {
                 onChange={field.onChange}
                 defaultAlignment="center"
                 placeholder="Enter the announcement content"
+                enhanced={true}
               />
             </FormControl>
             <FormDescription>
