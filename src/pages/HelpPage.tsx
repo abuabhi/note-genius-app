@@ -95,7 +95,7 @@ const HelpPage = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-gray-200 rounded w-1/4"></div>
             <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -117,7 +117,7 @@ const HelpPage = () => {
         <meta name="description" content="Guides, tutorials, and FAQs to help you get the most out of PrepGenie." />
         <link rel="canonical" href={typeof window !== 'undefined' ? `${window.location.origin}/help` : '/help'} />
       </Helmet>
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Help Center</h1>
           <div className="flex items-center justify-between">
@@ -194,7 +194,18 @@ const HelpPage = () => {
                   <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4 flex-1">
-                        <div className="p-2 bg-mint-100 rounded-lg">
+                        {item.image_url ? (
+                          <img
+                            src={item.image_url}
+                            alt={item.title}
+                            className="w-16 h-16 object-cover rounded-lg"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <div className={`p-2 bg-mint-100 rounded-lg ${item.image_url ? 'hidden' : ''}`}>
                           <BookOpen className="h-6 w-6 text-mint-600" />
                         </div>
                         <div className="flex-1">

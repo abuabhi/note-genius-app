@@ -14,6 +14,7 @@ export interface HelpTopic {
   video_duration?: string | null;
   video_chapters?: { time: number; title: string; description?: string }[] | null;
   quick_tips?: string[] | null;
+  image_url?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;

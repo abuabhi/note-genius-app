@@ -1060,6 +1060,7 @@ export type Database = {
           created_by: string | null
           description: string
           id: string
+          image_url: string | null
           is_active: boolean | null
           last_edited_by: string | null
           priority: number
@@ -1079,6 +1080,7 @@ export type Database = {
           created_by?: string | null
           description: string
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
           last_edited_by?: string | null
           priority?: number
@@ -1098,6 +1100,7 @@ export type Database = {
           created_by?: string | null
           description?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
           last_edited_by?: string | null
           priority?: number
