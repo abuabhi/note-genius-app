@@ -177,8 +177,26 @@ export const processContentForDisplay = (content: string): string => {
     return content;
   }
   
-  // If content has HTML tags, convert to clean markdown first, then back to HTML
+  // Check if content is already properly formatted HTML
+  // Look for common HTML block elements that indicate structured content
+  const hasHtmlStructure = content.includes('<p>') || 
+                          content.includes('<div>') || 
+                          content.includes('<h1>') || 
+                          content.includes('<h2>') || 
+                          content.includes('<h3>') || 
+                          content.includes('<ul>') || 
+                          content.includes('<ol>') || 
+                          content.includes('<li>') ||
+                          content.includes('<br>');
+  
+  if (hasHtmlStructure) {
+    // Content is already HTML, return as-is to avoid corruption
+    return content;
+  }
+  
+  // If content has basic HTML tags but no structure, it might need conversion
   if (content.includes('<') && content.includes('>')) {
+    // Check if it's just inline tags or malformed - convert safely
     const cleanMarkdown = htmlToMarkdown(content);
     return markdownToHtml(cleanMarkdown);
   }
