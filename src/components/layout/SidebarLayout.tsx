@@ -7,16 +7,12 @@ import { ReminderNavPopover } from '@/components/reminders/ReminderNavPopover';
 import { UserSection } from '@/components/ui/sidebar/UserSection';
 import { Menu } from 'lucide-react';
 import { FloatingSessionTimer } from '@/components/ui/floating/FloatingSessionTimer';
-import { HelpFloatingButton } from '@/components/help/HelpFloatingButton';
-import { SimpleHelpDialog } from '@/components/help/SimpleHelpDialog';
-import { useSimpleHelp } from '@/contexts/SimpleHelpContext';
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
 }
 
 const SidebarLayout = ({ children }: SidebarLayoutProps) => {
-  const { isOpen, closeHelp } = useSimpleHelp();
 
   return (
     <div className="min-h-screen flex w-full bg-gradient-to-br from-mint-50 via-white to-blue-50">
@@ -71,8 +67,6 @@ const SidebarLayout = ({ children }: SidebarLayoutProps) => {
         </SidebarInset>
       </div>
       <FloatingSessionTimer />
-      <HelpFloatingButton />
-      <SimpleHelpDialog open={isOpen} onOpenChange={(open) => !open && closeHelp()} />
     </div>
   );
 };
