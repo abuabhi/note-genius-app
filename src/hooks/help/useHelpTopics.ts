@@ -34,10 +34,11 @@ export const useHelpTopics = () => {
       if (error) throw error;
       return (data || []).map(item => ({
         ...item,
-        tags: Array.isArray(item.tags) ? item.tags : [],
-        video_chapters: Array.isArray(item.video_chapters) ? item.video_chapters : null,
-        quick_tips: Array.isArray(item.quick_tips) ? item.quick_tips : null,
-      })) as HelpTopic[];
+        textContent: item.content, // Map database content to textContent for UI compatibility
+        tags: Array.isArray(item.tags) ? item.tags as string[] : [],
+        video_chapters: Array.isArray(item.video_chapters) ? item.video_chapters as { time: number; title: string; description?: string }[] : null,
+        quick_tips: Array.isArray(item.quick_tips) ? item.quick_tips as string[] : null,
+      })) as any[];
     },
   });
 };
@@ -54,10 +55,11 @@ export const useAllHelpTopics = () => {
       if (error) throw error;
       return (data || []).map(item => ({
         ...item,
-        tags: Array.isArray(item.tags) ? item.tags : [],
-        video_chapters: Array.isArray(item.video_chapters) ? item.video_chapters : null,
-        quick_tips: Array.isArray(item.quick_tips) ? item.quick_tips : null,
-      })) as HelpTopic[];
+        textContent: item.content, // Map database content to textContent for UI compatibility
+        tags: Array.isArray(item.tags) ? item.tags as string[] : [],
+        video_chapters: Array.isArray(item.video_chapters) ? item.video_chapters as { time: number; title: string; description?: string }[] : null,
+        quick_tips: Array.isArray(item.quick_tips) ? item.quick_tips as string[] : null,
+      })) as any[];
     },
   });
 };

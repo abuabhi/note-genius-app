@@ -16,9 +16,9 @@ export const HelpContentText: React.FC<HelpContentTextProps> = ({ content }) => 
           <div className="prose prose-sm max-w-none">
             <p className="text-gray-600 mb-4">{content.description}</p>
             
-            {content.textContent && (
+            {(content.textContent || (content as any).content) && (
               <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
-                {content.textContent}
+                {content.textContent || (content as any).content}
               </div>
             )}
           </div>
