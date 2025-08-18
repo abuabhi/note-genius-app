@@ -1,9 +1,9 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { HelpState, HelpContent, HelpContext as HelpContextType } from '@/types/help';
-import { getHelpByContext } from '@/data/helpContent';
 import { useLocation } from 'react-router-dom';
 import { useHelpAnalytics } from '@/hooks/help/useHelpAnalytics';
+import { useHelpTopics } from '@/hooks/help/useHelpTopics';
 
 interface HelpContextValue extends HelpState {
   openHelp: (content?: HelpContent) => void;
@@ -45,9 +45,16 @@ const getContextFromPath = (pathname: string): HelpContextType | null => {
   return null;
 };
 
+// Helper function to extract YouTube ID from URL
+const extractYouTubeId = (url: string): string => {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+  return match ? match[1] : url;
+};
+
 export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const analytics = useHelpAnalytics();
+  const { data: helpTopics = [] } = useHelpTopics();
   
   const [state, setState] = useState<HelpState>({
     isOpen: false,
@@ -146,13 +153,34 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const getContextualHelp = useCallback((): HelpContent[] => {
     try {
-      if (!state.currentContext) return [];
-      return getHelpByContext(state.currentContext);
+      if (!state.currentContext || !helpTopics.length) return [];
+      
+      // Transform database HelpTopic to HelpContent and filter by context
+      return helpTopics
+        .map((topic: any) => ({
+          id: topic.id,
+          title: topic.title,
+          description: topic.description,
+          category: topic.category,
+          context: [state.currentContext!], // Simplified context matching
+          priority: topic.priority,
+          textContent: topic.content,
+          videoContent: topic.video_url ? {
+            youtubeId: extractYouTubeId(topic.video_url),
+            title: topic.video_title || topic.title,
+            duration: topic.video_duration || '0:00',
+            chapters: Array.isArray(topic.video_chapters) ? topic.video_chapters : [],
+          } : undefined,
+          quickTips: Array.isArray(topic.quick_tips) ? topic.quick_tips : [],
+          tags: Array.isArray(topic.tags) ? topic.tags : [],
+          lastUpdated: new Date(topic.updated_at).toISOString().split('T')[0]
+        }))
+        .filter(content => content.textContent); // Only show content with actual text
     } catch (error) {
       console.error('Error getting contextual help:', error);
       return [];
     }
-  }, [state.currentContext]);
+  }, [state.currentContext, helpTopics]);
 
   const value: HelpContextValue = {
     ...state,
