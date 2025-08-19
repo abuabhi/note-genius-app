@@ -44,7 +44,13 @@ const LoginPage = () => {
     
     try {
       const { error } = await signIn(formData.email, formData.password);
-      if (!error && isEmailConfirmed) {
+      
+      if (error) {
+        setError(error.message || "Login failed. Please check your credentials.");
+        return;
+      }
+      
+      if (isEmailConfirmed) {
         // Redirect to tier selection after successful login from email confirmation
         navigate('/tier-selection');
       }
