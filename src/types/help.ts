@@ -71,6 +71,7 @@ export type HelpContext =
   | 'import'
   | 'export'
   | 'ai-chat'
+  | 'ai-features'
   | 'note-enhancement'
   | 'reminders'
   | 'analytics';
