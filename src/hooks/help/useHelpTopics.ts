@@ -25,6 +25,7 @@ export interface HelpTopic {
   quick_tips?: string[] | null;
   image_url?: string | null;
   is_active: boolean;
+  show_video: boolean;
   created_at: string;
   updated_at: string;
   created_by?: string | null;

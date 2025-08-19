@@ -40,6 +40,7 @@ export const HelpTopicCreateDialog = ({ open, onOpenChange }: HelpTopicCreateDia
     video_title: '',
     video_duration: '',
     image_url: '',
+    show_video: false,
     tags: [] as string[],
     quick_tips: [] as string[],
     sections: [] as Omit<HelpTopicSection, 'id'>[]
@@ -135,6 +136,7 @@ export const HelpTopicCreateDialog = ({ open, onOpenChange }: HelpTopicCreateDia
         video_title: '',
         video_duration: '',
         image_url: '',
+        show_video: false,
         tags: [],
         quick_tips: [],
         sections: []
@@ -253,6 +255,27 @@ export const HelpTopicCreateDialog = ({ open, onOpenChange }: HelpTopicCreateDia
           {/* Video Settings */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Video Settings</h3>
+            
+            {/* Admin-only Show Video Toggle */}
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
+              <div>
+                <Label className="text-base font-medium">Show Video to Users</Label>
+                <p className="text-sm text-gray-600">Control whether the video content is visible to users</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="show_video"
+                  checked={formData.show_video}
+                  onChange={(e) => setFormData(prev => ({ ...prev, show_video: e.target.checked }))}
+                  className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                />
+                <Label htmlFor="show_video" className="text-sm">
+                  {formData.show_video ? 'Enabled' : 'Hidden'}
+                </Label>
+              </div>
+            </div>
+            
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="video_url">YouTube URL</Label>

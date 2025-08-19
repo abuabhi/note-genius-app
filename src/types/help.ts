@@ -19,6 +19,7 @@ export interface HelpContent {
   quickTips?: string[];
   tags: string[];
   lastUpdated: string;
+  show_video: boolean;
 }
 
 export interface VideoContent {

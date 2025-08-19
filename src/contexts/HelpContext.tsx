@@ -173,7 +173,8 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } : undefined,
           quickTips: Array.isArray(topic.quick_tips) ? topic.quick_tips : [],
           tags: Array.isArray(topic.tags) ? topic.tags : [],
-          lastUpdated: new Date(topic.updated_at).toISOString().split('T')[0]
+          lastUpdated: new Date(topic.updated_at).toISOString().split('T')[0],
+          show_video: topic.show_video || false
         }))
         .filter(content => content.sections.length > 0); // Only show content with sections
     } catch (error) {

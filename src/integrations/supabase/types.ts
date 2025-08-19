@@ -1108,6 +1108,7 @@ export type Database = {
           last_edited_by: string | null
           priority: number
           quick_tips: Json | null
+          show_video: boolean
           tags: Json | null
           title: string
           updated_at: string | null
@@ -1127,6 +1128,7 @@ export type Database = {
           last_edited_by?: string | null
           priority?: number
           quick_tips?: Json | null
+          show_video?: boolean
           tags?: Json | null
           title: string
           updated_at?: string | null
@@ -1146,6 +1148,7 @@ export type Database = {
           last_edited_by?: string | null
           priority?: number
           quick_tips?: Json | null
+          show_video?: boolean
           tags?: Json | null
           title?: string
           updated_at?: string | null
