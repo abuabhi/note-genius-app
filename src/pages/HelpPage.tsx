@@ -236,49 +236,22 @@ const HelpPage = () => {
                     <div className="space-y-8">
                       {item.sections && item.sections.length > 0 ? (
                         item.sections.map((section, index) => (
-                           <div 
-                             key={section.id} 
-                             className="w-full"
-                             style={{
-                               display: 'grid',
-                               gridTemplateColumns: '1fr',
-                               gridTemplateRows: 'auto auto auto',
-                               gap: '1rem',
-                               width: '100%',
-                               clear: 'both'
-                             }}
-                           >
-                              <h4 className="text-lg font-semibold text-gray-900">{section.title}</h4>
-                               <div 
-                                 className="w-full text-gray-700 leading-relaxed"
-                                 style={{ 
-                                   display: 'block',
-                                   width: '100%',
-                                   float: 'none',
-                                   clear: 'both'
-                                 }}
-                                 dangerouslySetInnerHTML={{ __html: processContentForDisplay(section.content) }}
-                               />
-                              {(section.image_urls && section.image_urls.length > 0) || section.image_url ? (
-                                <div 
-                                  className="w-full mt-6 pt-4 border-t border-gray-100"
-                                  style={{
-                                    display: 'block',
-                                    width: '100%',
-                                    clear: 'both',
-                                    float: 'none',
-                                    gridColumn: '1 / -1'
-                                  }}
-                                >
-                                  <ImageGallery 
-                                    images={section.image_urls && section.image_urls.length > 0 
-                                      ? section.image_urls 
-                                      : (section.image_url ? [section.image_url] : [])
-                                    }
-                                    className="w-full"
-                                  />
-                                </div>
-                              ) : null}
+                          <div key={section.id} className="help-section">
+                            <h4 className="text-lg font-semibold text-gray-900">{section.title}</h4>
+                            <div 
+                              className="help-content"
+                              dangerouslySetInnerHTML={{ __html: processContentForDisplay(section.content) }}
+                            />
+                            {(section.image_urls && section.image_urls.length > 0) || section.image_url ? (
+                              <div className="help-images">
+                                <ImageGallery 
+                                  images={section.image_urls && section.image_urls.length > 0 
+                                    ? section.image_urls 
+                                    : (section.image_url ? [section.image_url] : [])
+                                  }
+                                />
+                              </div>
+                            ) : null}
                             </div>
                         ))
                       ) : (

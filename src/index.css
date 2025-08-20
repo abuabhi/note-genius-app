@@ -224,3 +224,29 @@
   background-color: hsl(var(--primary) / 0.2);
   color: hsl(var(--primary-foreground));
 }
+
+/* Simple help section layout */
+.help-section {
+  display: block !important;
+  width: 100% !important;
+  clear: both !important;
+  margin-bottom: 2rem;
+}
+
+.help-content {
+  display: block !important;
+  width: 100% !important;
+  clear: both !important;
+  margin-bottom: 1.5rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.6;
+}
+
+.help-images {
+  display: block !important;
+  width: 100% !important;
+  clear: both !important;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid hsl(var(--border));
+}
