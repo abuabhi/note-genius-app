@@ -43,6 +43,8 @@ export type HelpCategory =
   | 'flashcards'
   | 'quiz'
   | 'study-sessions'
+  | 'goals'
+  | 'todos'
   | 'progress'
   | 'settings'
   | 'ai-features'

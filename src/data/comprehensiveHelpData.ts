@@ -809,33 +809,243 @@ export const comprehensiveHelpData: HelpContent[] = [
 
   // ============= SETTINGS CATEGORY =============
   {
-    id: 'account-settings',
-    title: 'Managing Account Settings',
-    description: 'Customize your account preferences and personal information',
+    id: 'account-information',
+    title: 'Account Information Management',
+    description: 'Update your personal information and account details',
     category: 'settings',
     context: ['settings'],
     priority: 1,
     show_video: false,
     sections: [
       {
-        id: 'profile-management',
-        title: 'Profile Settings',
-        content: '• Update personal information\n• Change password and security settings\n• Manage notification preferences\n• Set timezone and language\n• Configure privacy settings',
+        id: 'personal-info',
+        title: 'Personal Information',
+        content: '**Profile Details**:\n• Update your display name\n• Change email address\n• Add profile picture\n• Set personal bio or description\n• Update contact information\n\n**Account Status**:\n• View account creation date\n• Check current subscription tier\n• Review usage statistics\n• Monitor account activity',
         sort_order: 1
       },
       {
-        id: 'study-preferences',
-        title: 'Study Preferences',
-        content: '• Set default study session lengths\n• Configure spaced repetition intervals\n• Choose preferred question types\n• Set difficulty levels\n• Customize study reminders',
+        id: 'account-verification',
+        title: 'Account Verification',
+        content: '• Email verification status\n• Phone number verification\n• Two-factor authentication setup\n• Account recovery options\n• Security question management',
         sort_order: 2
       }
     ],
     quickTips: [
-      'Review settings regularly to optimize your experience',
-      'Enable notifications to stay on track with studies',
-      'Backup important data before making major changes'
+      'Keep your email address current for important notifications',
+      'Add a profile picture to personalize your account',
+      'Verify your email to ensure account security'
     ],
-    tags: ['settings', 'account', 'preferences'],
+    tags: ['settings', 'account', 'profile', 'verification'],
+    lastUpdated: '2024-01-15'
+  },
+  {
+    id: 'subjects-management',
+    title: 'Adding and Deleting Subjects',
+    description: 'Organize your studies by managing subject categories',
+    category: 'settings',
+    context: ['settings', 'notes-list'],
+    priority: 2,
+    show_video: false,
+    sections: [
+      {
+        id: 'adding-subjects',
+        title: 'Adding New Subjects',
+        content: '**Creating Subjects**:\n• Go to Settings > Subjects\n• Click "Add New Subject"\n• Enter subject name and description\n• Choose a color theme\n• Set subject-specific preferences\n\n**Subject Organization**:\n• Use clear, descriptive names\n• Group related topics together\n• Set up hierarchical structures if needed\n• Apply consistent naming conventions',
+        sort_order: 1
+      },
+      {
+        id: 'deleting-subjects',
+        title: 'Removing Subjects',
+        content: '**Safe Deletion Process**:\n• Review all content in the subject first\n• Move important notes to other subjects\n• Export data if needed for backup\n• Confirm deletion in settings\n• Content will be archived, not permanently deleted\n\n**Bulk Operations**:\n• Select multiple subjects\n• Merge subjects together\n• Reorganize subject hierarchies',
+        sort_order: 2
+      }
+    ],
+    quickTips: [
+      'Review content before deleting subjects',
+      'Use descriptive names for better organization',
+      'Color-code subjects for quick visual identification'
+    ],
+    tags: ['settings', 'subjects', 'organization', 'management'],
+    lastUpdated: '2024-01-15'
+  },
+  {
+    id: 'subscription-management',
+    title: 'Subscription Management',
+    description: 'Manage your subscription plan, billing, and payment methods',
+    category: 'settings',
+    context: ['settings'],
+    priority: 3,
+    show_video: false,
+    sections: [
+      {
+        id: 'plan-overview',
+        title: 'Current Subscription Plan',
+        content: '**Plan Information**:\n• Current tier (Scholar, Graduate, Master, Dean)\n• Subscription start and renewal dates\n• Features included in your plan\n• Usage limits and current usage\n• Next billing date and amount\n\n**Plan Comparison**:\n• View features of all tiers\n• Calculate potential savings\n• Understand upgrade benefits\n• Preview downgrade limitations',
+        sort_order: 1
+      },
+      {
+        id: 'payment-management',
+        title: 'Payment Methods and Billing',
+        content: '**Payment Options**:\n• Add or update credit cards\n• Set up PayPal payments\n• Configure automatic renewals\n• Download billing receipts\n• Update billing address\n\n**Billing History**:\n• View past transactions\n• Download invoices\n• Track payment status\n• Handle failed payments',
+        sort_order: 2
+      },
+      {
+        id: 'plan-changes',
+        title: 'Upgrading or Downgrading',
+        content: '**Upgrade Process**:\n• Select new tier from settings\n• Preview feature changes\n• Confirm upgrade and billing\n• Access new features immediately\n\n**Downgrade Process**:\n• Review feature limitations\n• Export data if needed\n• Confirm downgrade\n• Changes effective next billing cycle\n\n**Cancellation**:\n• Cancel anytime from settings\n• Access continues until period end\n• Data remains available for 30 days',
+        sort_order: 3
+      }
+    ],
+    quickTips: [
+      'Upgrade anytime for immediate access to new features',
+      'Downgrades take effect at the next billing cycle',
+      'Export important data before canceling'
+    ],
+    tags: ['settings', 'subscription', 'billing', 'payment'],
+    lastUpdated: '2024-01-15'
+  },
+  {
+    id: 'notifications-management',
+    title: 'Notifications Management',
+    description: 'Control how and when you receive notifications',
+    category: 'settings',
+    context: ['settings', 'reminders'],
+    priority: 4,
+    show_video: false,
+    sections: [
+      {
+        id: 'notification-types',
+        title: 'Notification Categories',
+        content: '**Study Reminders**:\n• Daily study session notifications\n• Spaced repetition alerts\n• Goal deadline reminders\n• Streak maintenance notifications\n\n**Progress Updates**:\n• Achievement notifications\n• Weekly progress summaries\n• Milestone celebrations\n• Performance insights\n\n**Account Notifications**:\n• Security alerts\n• Billing and subscription updates\n• Feature announcements\n• System maintenance notices',
+        sort_order: 1
+      },
+      {
+        id: 'delivery-methods',
+        title: 'Notification Delivery',
+        content: '**Delivery Options**:\n• In-app notifications\n• Email notifications\n• Push notifications (mobile)\n• Browser notifications\n\n**Timing Controls**:\n• Set quiet hours (no notifications)\n• Configure frequency limits\n• Set timezone for accurate timing\n• Schedule notification summaries',
+        sort_order: 2
+      },
+      {
+        id: 'customization',
+        title: 'Notification Customization',
+        content: '• Choose notification sounds\n• Set different tones for different types\n• Customize notification text\n• Set priority levels\n• Configure do-not-disturb periods\n• Create custom notification rules',
+        sort_order: 3
+      }
+    ],
+    quickTips: [
+      'Set quiet hours to avoid interruptions during sleep',
+      'Customize notification frequency to avoid overwhelm',
+      'Enable important notifications like security alerts'
+    ],
+    tags: ['settings', 'notifications', 'reminders', 'customization'],
+    lastUpdated: '2024-01-15'
+  },
+  {
+    id: 'study-preferences',
+    title: 'Study Preferences',
+    description: 'Customize your learning experience and study behavior',
+    category: 'settings',
+    context: ['settings', 'study-session'],
+    priority: 5,
+    show_video: false,
+    sections: [
+      {
+        id: 'session-preferences',
+        title: 'Study Session Preferences',
+        content: '**Default Settings**:\n• Preferred session duration\n• Break interval timing\n• Auto-pause behavior\n• Session goal types\n• Progress tracking preferences\n\n**Focus Mode Options**:\n• Distraction blocking settings\n• Background noise preferences\n• Screen dimming options\n• Notification blocking during sessions',
+        sort_order: 1
+      },
+      {
+        id: 'learning-preferences',
+        title: 'Learning Method Preferences',
+        content: '**Flashcard Settings**:\n• Spaced repetition intervals\n• Difficulty adjustment algorithms\n• Review scheduling preferences\n• Card presentation options\n\n**Quiz Preferences**:\n• Default question types\n• Time limits and pressure settings\n• Feedback timing\n• Retry and review options\n\n**Content Preferences**:\n• Font size and readability\n• Color themes and contrast\n• Layout and spacing options',
+        sort_order: 2
+      },
+      {
+        id: 'goal-preferences',
+        title: 'Goal and Progress Preferences',
+        content: '• Default goal types and durations\n• Progress measurement methods\n• Achievement celebration styles\n• Milestone notification preferences\n• Performance tracking granularity\n• Weekly/monthly review schedules',
+        sort_order: 3
+      }
+    ],
+    quickTips: [
+      'Adjust settings based on your learning style',
+      'Experiment with different session lengths',
+      'Enable focus mode for distraction-free studying'
+    ],
+    tags: ['settings', 'preferences', 'customization', 'learning'],
+    lastUpdated: '2024-01-15'
+  },
+  {
+    id: 'adaptive-learning',
+    title: 'Adaptive Learning Settings',
+    description: 'Configure how the system adapts to your learning patterns',
+    category: 'settings',
+    context: ['settings', 'ai-features'],
+    priority: 6,
+    show_video: false,
+    sections: [
+      {
+        id: 'adaptation-features',
+        title: 'Adaptive Learning Features',
+        content: '**Automatic Adjustments**:\n• Difficulty progression based on performance\n• Spaced repetition interval optimization\n• Content recommendation algorithms\n• Study schedule suggestions\n• Personalized learning path creation\n\n**Performance Tracking**:\n• Learning velocity monitoring\n• Retention rate analysis\n• Weakness pattern identification\n• Strength area recognition\n• Progress prediction modeling',
+        sort_order: 1
+      },
+      {
+        id: 'customization-controls',
+        title: 'Adaptation Customization',
+        content: '**Control Settings**:\n• Enable/disable automatic difficulty adjustment\n• Set learning pace preferences (fast, medium, slow)\n• Configure recommendation sensitivity\n• Override system suggestions when needed\n• Set adaptation boundaries and limits\n\n**Manual Overrides**:\n• Force specific difficulty levels\n• Skip suggested content\n• Adjust repetition schedules\n• Modify learning goals\n• Reset adaptation algorithms',
+        sort_order: 2
+      },
+      {
+        id: 'privacy-controls',
+        title: 'Learning Data Privacy',
+        content: '• Control what learning data is collected\n• Manage data sharing preferences\n• Export your learning analytics\n• Delete learning history if desired\n• Opt out of personalization features\n• Review data usage for improvements',
+        sort_order: 3
+      }
+    ],
+    quickTips: [
+      'Let the system adapt for a few weeks before making manual adjustments',
+      'Review adaptation suggestions before accepting them',
+      'Use manual overrides when you know your needs better'
+    ],
+    tags: ['settings', 'adaptive', 'ai', 'personalization'],
+    lastUpdated: '2024-01-15'
+  },
+  {
+    id: 'password-security',
+    title: 'Password and Security Settings',
+    description: 'Manage your account security, passwords, and authentication',
+    category: 'settings',
+    context: ['settings'],
+    priority: 7,
+    show_video: false,
+    sections: [
+      {
+        id: 'password-management',
+        title: 'Password Management',
+        content: '**Changing Your Password**:\n• Go to Settings > Security\n• Enter current password for verification\n• Create a strong new password\n• Confirm the password change\n• Log out of other devices if desired\n\n**Password Requirements**:\n• Minimum 8 characters\n• Include uppercase and lowercase letters\n• Add numbers and special characters\n• Avoid common dictionary words\n• Don\'t reuse previous passwords',
+        sort_order: 1
+      },
+      {
+        id: 'two-factor-auth',
+        title: 'Two-Factor Authentication',
+        content: '**Setting Up 2FA**:\n• Enable 2FA in security settings\n• Choose authentication method (app, SMS, email)\n• Scan QR code with authenticator app\n• Enter verification code to confirm\n• Save backup codes securely\n\n**Managing 2FA**:\n• Generate new backup codes\n• Change authentication methods\n• Temporarily disable for account recovery\n• Update phone number for SMS codes',
+        sort_order: 2
+      },
+      {
+        id: 'security-features',
+        title: 'Advanced Security Features',
+        content: '**Account Security**:\n• Review active sessions and devices\n• Monitor login history and locations\n• Set up login alerts for new devices\n• Configure session timeouts\n• Enable account lockout after failed attempts\n\n**Data Security**:\n• Encryption settings for stored data\n• Secure data export options\n• Account deletion and data removal\n• Privacy settings for shared content\n• Third-party app permissions',
+        sort_order: 3
+      }
+    ],
+    quickTips: [
+      'Use a unique, strong password for your account',
+      'Enable two-factor authentication for extra security',
+      'Regularly review active sessions and devices'
+    ],
+    tags: ['settings', 'security', 'password', 'authentication'],
     lastUpdated: '2024-01-15'
   },
 
@@ -903,12 +1113,12 @@ export const comprehensiveHelpData: HelpContent[] = [
     lastUpdated: '2024-01-15'
   },
 
-  // ============= GOALS & TODOS =============
+  // ============= GOALS =============
   {
-    id: 'goals-todos-overview',
-    title: 'Managing Goals and Todos',
-    description: 'Set, track, and achieve your learning goals with our integrated task management',
-    category: 'goals-todos',
+    id: 'goals-setting',
+    title: 'Setting and Managing Study Goals',
+    description: 'Set, track, and achieve your learning goals effectively',
+    category: 'goals',
     context: ['reminders', 'dashboard'],
     priority: 1,
     show_video: false,
@@ -920,10 +1130,16 @@ export const comprehensiveHelpData: HelpContent[] = [
         sort_order: 1
       },
       {
-        id: 'managing-todos',
-        title: 'Task Management',
-        content: '• Break large goals into smaller tasks\n• Set priorities and deadlines\n• Use reminders and notifications\n• Track completion and progress\n• Review and adjust regularly',
+        id: 'tracking-goals',
+        title: 'Tracking Goal Progress',
+        content: '• Monitor daily and weekly progress\n• Use visual progress indicators\n• Set milestone celebrations\n• Adjust timelines when needed\n• Review and reflect on achievements',
         sort_order: 2
+      },
+      {
+        id: 'goal-strategies',
+        title: 'Goal Achievement Strategies',
+        content: '• Break large goals into smaller milestones\n• Create accountability systems\n• Use habit stacking for consistency\n• Set up environmental cues\n• Track both process and outcome goals',
+        sort_order: 3
       }
     ],
     quickTips: [
@@ -931,7 +1147,143 @@ export const comprehensiveHelpData: HelpContent[] = [
       'Review and adjust goals regularly based on progress',
       'Celebrate completions to maintain motivation'
     ],
-    tags: ['goals', 'todos', 'planning', 'productivity'],
+    tags: ['goals', 'planning', 'achievement', 'motivation'],
+    lastUpdated: '2024-01-15'
+  },
+
+  // ============= TODOS =============
+  {
+    id: 'todos-management',
+    title: 'Managing Tasks and Todos',
+    description: 'Organize and track your study tasks effectively',
+    category: 'todos',
+    context: ['reminders', 'dashboard'],
+    priority: 1,
+    show_video: false,
+    sections: [
+      {
+        id: 'creating-todos',
+        title: 'Creating Effective Todos',
+        content: '**Todo Best Practices**:\n• Write clear, actionable task descriptions\n• Set specific deadlines\n• Assign priority levels (high, medium, low)\n• Break complex tasks into smaller steps\n• Include context or resources needed\n\n**Todo Categories**:\n• Study session tasks\n• Review and revision items\n• Assignment deadlines\n• Exam preparation tasks\n• Administrative tasks',
+        sort_order: 1
+      },
+      {
+        id: 'organizing-todos',
+        title: 'Organizing Your Task List',
+        content: '• Use priority matrices (urgent/important)\n• Group related tasks together\n• Set realistic daily task limits\n• Use tags for better categorization\n• Schedule tasks at optimal times',
+        sort_order: 2
+      },
+      {
+        id: 'completing-todos',
+        title: 'Task Completion Strategies',
+        content: '• Start with high-priority or quick wins\n• Use time-blocking for focused work\n• Set timers for task duration\n• Mark completed items immediately\n• Review incomplete tasks regularly',
+        sort_order: 3
+      }
+    ],
+    quickTips: [
+      'Keep task descriptions specific and actionable',
+      'Set realistic deadlines to avoid overwhelm',
+      'Review and update your todo list daily'
+    ],
+    tags: ['todos', 'tasks', 'productivity', 'organization'],
+    lastUpdated: '2024-01-15'
+  },
+
+  // ============= ANALYTICS =============
+  {
+    id: 'analytics-overview',
+    title: 'Understanding Your Learning Analytics',
+    description: 'Learn how to interpret and use your study data for better learning outcomes',
+    category: 'analytics',
+    context: ['analytics', 'progress-overview'],
+    priority: 1,
+    show_video: false,
+    sections: [
+      {
+        id: 'analytics-dashboard',
+        title: 'Analytics Dashboard Overview',
+        content: '**Key Metrics Displayed**:\n• Study time and consistency\n• Learning streak information\n• Subject-wise performance\n• Quiz and flashcard accuracy\n• Progress toward goals\n• Weekly and monthly trends\n\n**Understanding the Data**:\n• Green indicators show positive trends\n• Red indicators suggest areas for improvement\n• Hover over charts for detailed information\n• Use date filters to analyze specific periods',
+        sort_order: 1
+      },
+      {
+        id: 'performance-metrics',
+        title: 'Performance Metrics Explained',
+        content: '**Study Consistency Metrics**:\n• Daily study streaks\n• Average session duration\n• Study frequency patterns\n• Peak performance times\n\n**Learning Effectiveness Metrics**:\n• Retention rates for flashcards\n• Quiz accuracy trends\n• Concept mastery levels\n• Knowledge gap identification\n\n**Progress Indicators**:\n• Goal completion percentages\n• Milestone achievements\n• Subject progression rates\n• Skill development tracking',
+        sort_order: 2
+      },
+      {
+        id: 'using-analytics',
+        title: 'Using Analytics for Improvement',
+        content: '**Identify Patterns**:\n• Best study times and conditions\n• Most effective learning methods\n• Subject-specific challenges\n• Consistent weak areas\n\n**Make Data-Driven Decisions**:\n• Adjust study schedules based on peak times\n• Focus more time on challenging subjects\n• Modify study methods for better retention\n• Set realistic goals based on historical data\n\n**Track Long-Term Progress**:\n• Monitor improvement trends over time\n• Celebrate consistent achievements\n• Identify and address learning plateaus',
+        sort_order: 3
+      }
+    ],
+    quickTips: [
+      'Check your analytics weekly to identify trends',
+      'Focus on consistent patterns rather than daily variations',
+      'Use insights to optimize your study schedule and methods'
+    ],
+    tags: ['analytics', 'data', 'performance', 'insights', 'optimization'],
+    lastUpdated: '2024-01-15'
+  },
+  {
+    id: 'analytics-study-patterns',
+    title: 'Analyzing Your Study Patterns',
+    description: 'Deep dive into your study habits and identify opportunities for optimization',
+    category: 'analytics',
+    context: ['analytics', 'study-session'],
+    priority: 2,
+    show_video: false,
+    sections: [
+      {
+        id: 'time-analysis',
+        title: 'Study Time Analysis',
+        content: '**Time Distribution**:\n• Total study hours per week/month\n• Time spent per subject area\n• Session duration patterns\n• Break frequency and effectiveness\n• Peak productivity hours\n\n**Efficiency Metrics**:\n• Study time vs. learning outcomes\n• Quality of focused study time\n• Distraction frequency patterns\n• Most productive session types\n• Optimal study session length',
+        sort_order: 1
+      },
+      {
+        id: 'learning-velocity',
+        title: 'Learning Velocity Tracking',
+        content: '**Velocity Indicators**:\n• Concepts mastered per study hour\n• Flashcard progression rates\n• Quiz improvement speeds\n• Note creation and enhancement pace\n• Knowledge retention over time\n\n**Acceleration Strategies**:\n• Identify your fastest learning methods\n• Optimize content difficulty progression\n• Balance new learning with review\n• Leverage spaced repetition effectiveness',
+        sort_order: 2
+      }
+    ],
+    quickTips: [
+      'Look for consistent patterns across multiple weeks',
+      'Experiment with different study schedules based on your peak times',
+      'Track both quantity and quality of study time'
+    ],
+    tags: ['analytics', 'patterns', 'efficiency', 'optimization'],
+    lastUpdated: '2024-01-15'
+  },
+  {
+    id: 'analytics-performance-insights',
+    title: 'Performance Insights and Recommendations',
+    description: 'Get personalized recommendations based on your learning data',
+    category: 'analytics',
+    context: ['analytics', 'progress-overview'],
+    priority: 3,
+    show_video: false,
+    sections: [
+      {
+        id: 'strength-analysis',
+        title: 'Identifying Your Learning Strengths',
+        content: '**Strength Indicators**:\n• Subjects with highest retention rates\n• Most effective study methods for you\n• Optimal session durations\n• Best performance times of day\n• Most engaging content types\n\n**Leveraging Strengths**:\n• Apply successful methods to weaker subjects\n• Schedule difficult topics during peak times\n• Use preferred content formats when possible\n• Build confidence through strength areas',
+        sort_order: 1
+      },
+      {
+        id: 'improvement-opportunities',
+        title: 'Identifying Areas for Improvement',
+        content: '**Challenge Areas**:\n• Subjects with low retention rates\n• Inconsistent study patterns\n• Declining performance trends\n• Knowledge gaps and weak concepts\n• Time management inefficiencies\n\n**Improvement Strategies**:\n• Increase practice in weak areas\n• Vary study methods for difficult topics\n• Set up accountability systems\n• Break down complex concepts\n• Seek additional resources for challenges',
+        sort_order: 2
+      }
+    ],
+    quickTips: [
+      'Focus on 1-2 improvement areas at a time',
+      'Use your strengths to tackle challenging subjects',
+      'Set small, measurable improvement goals'
+    ],
+    tags: ['analytics', 'insights', 'improvement', 'recommendations'],
     lastUpdated: '2024-01-15'
   },
 
