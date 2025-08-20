@@ -236,19 +236,20 @@ const HelpPage = () => {
                     <div className="space-y-8">
                       {item.sections && item.sections.length > 0 ? (
                         item.sections.map((section, index) => (
-                           <div key={section.id} className="space-y-4">
+                           <div key={section.id} className="flex flex-col w-full space-y-4">
                               <h4 className="text-lg font-semibold text-gray-900">{section.title}</h4>
                                <div 
-                                 className="prose prose-sm max-w-none text-gray-700"
+                                 className="w-full text-gray-700 leading-relaxed"
                                  dangerouslySetInnerHTML={{ __html: processContentForDisplay(section.content) }}
                                />
                               {(section.image_urls && section.image_urls.length > 0) || section.image_url ? (
-                                <div className="mt-6 pt-4 border-t border-gray-100">
+                                <div className="w-full mt-6 pt-4 border-t border-gray-100 block">
                                   <ImageGallery 
                                     images={section.image_urls && section.image_urls.length > 0 
                                       ? section.image_urls 
                                       : (section.image_url ? [section.image_url] : [])
                                     }
+                                    className="w-full block"
                                   />
                                 </div>
                               ) : null}
