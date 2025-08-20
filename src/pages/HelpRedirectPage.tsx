@@ -4,9 +4,8 @@ import Layout from '@/components/layout/Layout';
 
 const HelpRedirectPage = () => {
   useEffect(() => {
-    // Replace with your actual GitBook domain
-    // Example: https://help.yourdomain.com or https://yourorg.gitbook.io/help
-    const gitbookUrl = 'https://help.yourdomain.com'; // Update this URL
+    // GitBook help documentation URL
+    const gitbookUrl = 'https://prepgenie.gitbook.io/help/';
     
     // Redirect after a short delay to show the message
     const timer = setTimeout(() => {
@@ -39,7 +38,7 @@ const HelpRedirectPage = () => {
           <div className="text-sm text-muted-foreground">
             <p>If you're not redirected automatically,</p>
             <a 
-              href="https://help.yourdomain.com" 
+              href="https://prepgenie.gitbook.io/help/" 
               className="text-primary hover:underline font-medium"
               target="_blank"
               rel="noopener noreferrer"
