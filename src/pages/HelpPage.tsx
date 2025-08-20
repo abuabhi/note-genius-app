@@ -23,7 +23,8 @@ import { YouTubeComingSoonPlaceholder } from '@/components/help/YouTubeComingSoo
 import { HelpTopicEditDialog } from '@/components/help/HelpTopicEditDialog';
 import { HelpTopicCreateDialog } from '@/components/help/HelpTopicCreateDialog';
 import { YouTubePlayer } from '@/components/help/video/YouTubePlayer';
-import ImageGallery from '@/components/help/ImageGallery';
+import RobustImageGallery from '@/components/help/RobustImageGallery';
+import RobustVideoPlayer from '@/components/help/RobustVideoPlayer';
 import { processContentForDisplay } from '@/utils/markdownConverter';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
@@ -184,18 +185,18 @@ const HelpPage = () => {
                   <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center gap-4 flex-1">
-                        {item.image_url ? (
-                          <img
-                            src={item.image_url}
-                            alt={item.title}
-                            className="w-16 h-16 object-cover rounded-lg"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                        ) : null}
-                        <div className={`p-2 bg-mint-100 rounded-lg ${item.image_url ? 'hidden' : ''}`}>
+                         {item.image_urls && item.image_urls.length > 0 ? (
+                           <img
+                             src={item.image_urls[0]}
+                             alt={item.title}
+                             className="w-16 h-16 object-cover rounded-lg"
+                             onError={(e) => {
+                               e.currentTarget.style.display = 'none';
+                               e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                             }}
+                           />
+                         ) : null}
+                         <div className={`p-2 bg-mint-100 rounded-lg ${item.image_urls && item.image_urls.length > 0 ? 'hidden' : ''}`}>
                           <BookOpen className="h-6 w-6 text-mint-600" />
                         </div>
                         <div className="flex-1">
@@ -242,17 +243,14 @@ const HelpPage = () => {
                               className="help-content"
                               dangerouslySetInnerHTML={{ __html: processContentForDisplay(section.content) }}
                             />
-                            {(section.image_urls && section.image_urls.length > 0) || section.image_url ? (
-                              <div className="help-images">
-                                <ImageGallery 
-                                  images={section.image_urls && section.image_urls.length > 0 
-                                    ? section.image_urls 
-                                    : (section.image_url ? [section.image_url] : [])
-                                  }
-                                />
-                              </div>
-                            ) : null}
-                            </div>
+                             {section.image_urls && section.image_urls.length > 0 && (
+                               <div className="help-images">
+                                 <RobustImageGallery 
+                                   images={section.image_urls || []}
+                                 />
+                               </div>
+                             )}
+                           </div>
                         ))
                       ) : (
                         <div className="text-gray-500 text-center py-8">

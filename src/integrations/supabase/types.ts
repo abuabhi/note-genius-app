@@ -1058,7 +1058,6 @@ export type Database = {
           created_at: string
           help_topic_id: string
           id: string
-          image_url: string | null
           image_urls: Json | null
           sort_order: number
           title: string
@@ -1069,7 +1068,6 @@ export type Database = {
           created_at?: string
           help_topic_id: string
           id?: string
-          image_url?: string | null
           image_urls?: Json | null
           sort_order?: number
           title: string
@@ -1080,7 +1078,6 @@ export type Database = {
           created_at?: string
           help_topic_id?: string
           id?: string
-          image_url?: string | null
           image_urls?: Json | null
           sort_order?: number
           title?: string
@@ -1103,12 +1100,11 @@ export type Database = {
           created_by: string | null
           description: string
           id: string
-          image_url: string | null
+          image_urls: Json | null
           is_active: boolean | null
           last_edited_by: string | null
           priority: number
           quick_tips: Json | null
-          show_video: boolean
           tags: Json | null
           title: string
           updated_at: string | null
@@ -1123,12 +1119,11 @@ export type Database = {
           created_by?: string | null
           description: string
           id?: string
-          image_url?: string | null
+          image_urls?: Json | null
           is_active?: boolean | null
           last_edited_by?: string | null
           priority?: number
           quick_tips?: Json | null
-          show_video?: boolean
           tags?: Json | null
           title: string
           updated_at?: string | null
@@ -1143,12 +1138,11 @@ export type Database = {
           created_by?: string | null
           description?: string
           id?: string
-          image_url?: string | null
+          image_urls?: Json | null
           is_active?: boolean | null
           last_edited_by?: string | null
           priority?: number
           quick_tips?: Json | null
-          show_video?: boolean
           tags?: Json | null
           title?: string
           updated_at?: string | null

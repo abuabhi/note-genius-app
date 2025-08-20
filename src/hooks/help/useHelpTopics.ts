@@ -5,7 +5,6 @@ export interface HelpTopicSection {
   id: string;
   title: string;
   content: string;
-  image_url?: string | null;
   image_urls?: string[];
   sort_order: number;
 }
@@ -23,9 +22,8 @@ export interface HelpTopic {
   video_duration?: string | null;
   video_chapters?: { time: number; title: string; description?: string }[] | null;
   quick_tips?: string[] | null;
-  image_url?: string | null;
+  image_urls?: string[];
   is_active: boolean;
-  show_video: boolean;
   created_at: string;
   updated_at: string;
   created_by?: string | null;
@@ -44,7 +42,6 @@ export const useHelpTopics = () => {
             id,
             title,
             content,
-            image_url,
             image_urls,
             sort_order
           )
@@ -78,7 +75,6 @@ export const useAllHelpTopics = () => {
             id,
             title,
             content,
-            image_url,
             image_urls,
             sort_order
           )
@@ -167,7 +163,6 @@ export const useUpdateHelpTopic = () => {
             help_topic_id: id,
             title: section.title,
             content: section.content,
-            image_url: section.image_url,
             image_urls: section.image_urls || [],
             sort_order: index
           }));

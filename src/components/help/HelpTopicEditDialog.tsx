@@ -47,8 +47,6 @@ export function HelpTopicEditDialog({ topic, open, onOpenChange }: HelpTopicEdit
     video_url: '',
     video_title: '',
     video_duration: '',
-    image_url: '',
-    show_video: false,
     tags: [] as string[],
     quick_tips: [] as string[]
   });
@@ -67,8 +65,6 @@ export function HelpTopicEditDialog({ topic, open, onOpenChange }: HelpTopicEdit
         video_url: topic.video_url || '',
         video_title: topic.video_title || '',
         video_duration: topic.video_duration || '',
-        image_url: topic.image_url || '',
-        show_video: topic.show_video || false,
         tags: topic.tags || [],
         quick_tips: topic.quick_tips || []
       });
@@ -76,8 +72,7 @@ export function HelpTopicEditDialog({ topic, open, onOpenChange }: HelpTopicEdit
         id: s.id,
         title: s.title,
         content: s.content,
-        image_url: s.image_url,
-        image_urls: s.image_urls || (s.image_url ? [s.image_url] : []),
+        image_urls: s.image_urls || [],
         sort_order: s.sort_order
       })) || []);
     } else {
@@ -89,8 +84,6 @@ export function HelpTopicEditDialog({ topic, open, onOpenChange }: HelpTopicEdit
         video_url: '',
         video_title: '',
         video_duration: '',
-        image_url: '',
-        show_video: false,
         tags: [],
         quick_tips: []
       });
@@ -103,7 +96,6 @@ export function HelpTopicEditDialog({ topic, open, onOpenChange }: HelpTopicEdit
       id: `temp-${Date.now()}`,
       title: 'New Section',
       content: '',
-      image_url: '',
       image_urls: [],
       sort_order: sections.length
     }]);
