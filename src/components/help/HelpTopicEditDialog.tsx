@@ -318,38 +318,9 @@ export function HelpTopicEditDialog({ topic, open, onOpenChange }: HelpTopicEdit
             ))}
           </div>
 
-          {/* Image & Video Settings */}
+          {/* Video Settings */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium">Additional Settings</h3>
-            <div>
-              <Label htmlFor="image_url">Topic Thumbnail URL</Label>
-              <Input
-                id="image_url"
-                value={formData.image_url}
-                onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-                placeholder="https://example.com/image.jpg"
-              />
-            </div>
-            
-            {/* Admin-only Show Video Toggle */}
-            <div className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
-              <div>
-                <Label className="text-base font-medium">Show Video to Users</Label>
-                <p className="text-sm text-gray-600">Control whether the video content is visible to users</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="show_video"
-                  checked={formData.show_video}
-                  onChange={(e) => setFormData(prev => ({ ...prev, show_video: e.target.checked }))}
-                  className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                />
-                <Label htmlFor="show_video" className="text-sm">
-                  {formData.show_video ? 'Enabled' : 'Hidden'}
-                </Label>
-              </div>
-            </div>
+            <h3 className="text-lg font-medium">Video Settings</h3>
             
             <div className="grid grid-cols-3 gap-4">
               <div>
