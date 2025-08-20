@@ -23,7 +23,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         <img
           src={images[0]}
           alt="Help illustration"
-          className="w-full max-w-5xl min-h-96 mx-auto rounded-lg shadow-md object-cover aspect-video"
+          className="w-full max-w-4xl min-h-96 max-h-[600px] mx-auto rounded-lg shadow-md object-contain bg-muted/30"
           onError={(e) => {
             e.currentTarget.style.display = 'none';
           }}
@@ -47,7 +47,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         <img
           src={images[currentIndex]}
           alt={`Help illustration ${currentIndex + 1}`}
-          className="w-full max-w-5xl min-h-96 mx-auto rounded-lg shadow-md object-cover aspect-video"
+          className="w-full max-w-4xl min-h-96 max-h-[600px] mx-auto rounded-lg shadow-md object-contain bg-muted/30"
           onError={(e) => {
             e.currentTarget.style.display = 'none';
           }}
