@@ -50,7 +50,7 @@ export const useHelpTopics = () => {
           )
         `)
         .eq('is_active', true)
-        .order('priority', { ascending: false });
+        .order('priority', { ascending: true });
 
       if (error) throw error;
 
@@ -83,7 +83,7 @@ export const useAllHelpTopics = () => {
             sort_order
           )
         `)
-        .order('priority', { ascending: false });
+        .order('priority', { ascending: true });
 
       if (error) throw error;
       
