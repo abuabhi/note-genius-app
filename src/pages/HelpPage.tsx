@@ -182,7 +182,7 @@ const HelpPage = () => {
               >
                 <CollapsibleTrigger asChild>
                   <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2">
                       <div className="flex items-center gap-4 flex-1">
                         {item.image_url ? (
                           <img
