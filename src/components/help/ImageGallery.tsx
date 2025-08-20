@@ -23,7 +23,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         <img
           src={images[0]}
           alt="Help illustration"
-          className="w-full max-w-4xl min-h-96 max-h-[600px] mx-auto rounded-lg shadow-md object-contain bg-muted/30"
+          className="w-full min-h-[600px] max-h-[800px] rounded-lg shadow-md object-contain bg-muted/30"
           onError={(e) => {
             e.currentTarget.style.display = 'none';
           }}
@@ -47,7 +47,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         <img
           src={images[currentIndex]}
           alt={`Help illustration ${currentIndex + 1}`}
-          className="w-full max-w-4xl min-h-96 max-h-[600px] mx-auto rounded-lg shadow-md object-contain bg-muted/30"
+          className="w-full min-h-[600px] max-h-[800px] rounded-lg shadow-md object-contain bg-muted/30"
           onError={(e) => {
             e.currentTarget.style.display = 'none';
           }}
@@ -79,7 +79,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           <button
             key={index}
             onClick={() => setCurrentIndex(index)}
-            className={`flex-shrink-0 w-20 h-20 rounded border-2 overflow-hidden transition-all ${
+            className={`flex-shrink-0 w-24 h-24 rounded border-2 overflow-hidden transition-all ${
               index === currentIndex 
                 ? 'border-primary shadow-lg' 
                 : 'border-border hover:border-primary/50'
