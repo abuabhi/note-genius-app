@@ -79,29 +79,29 @@ const Logos3: React.FC<Logos3Props> = ({
       id: `logo-${num}`,
       description: `School logo ${num}`,
       image: `/lovable-uploads/schools/${num}.svg?v=1`,
-      className: "h-16 w-auto md:h-20",
+      className: "h-12 w-auto sm:h-16 md:h-20",
     };
   });
 
   const data = logos && logos.length > 0 ? logos : defaultLogos;
 
   return (
-    <section className={"py-12 " + (className ?? "")}>
-      <div className="container mx-auto flex flex-col items-center text-center">
+    <section className={"py-8 sm:py-12 " + (className ?? "")}>
+      <div className="container mx-auto flex flex-col items-center text-center px-4 sm:px-6">
         
-        <h3 className="mb-6 text-2xl font-bold tracking-tight lg:text-3xl">{heading}</h3>
+        <h3 className="mb-4 sm:mb-6 text-lg sm:text-2xl font-bold tracking-tight lg:text-3xl">{heading}</h3>
       </div>
-      <div className="pt-6 md:pt-8">
+      <div className="pt-4 sm:pt-6 md:pt-8">
         <div className="relative mx-auto flex items-center justify-center lg:max-w-5xl">
           <Carousel opts={{ loop: true }} plugins={[AutoScroll({ playOnInit: true, speed: 1 })]}>
             <CarouselContent className="ml-0">
               {data.map((logo) => (
                 <CarouselItem
                   key={logo.id}
-                  className="flex basis-1/3 justify-center pl-0 sm:basis-1/4 md:basis-1/5 lg:basis-1/6"
+                  className="flex basis-1/2 justify-center pl-0 xs:basis-1/3 sm:basis-1/4 md:basis-1/5 lg:basis-1/6"
                 >
-                  <div className="mx-8 flex shrink-0 items-center justify-center">
-                    <div className="px-4 py-3 md:px-6 md:py-4">
+                  <div className="mx-4 sm:mx-6 lg:mx-8 flex shrink-0 items-center justify-center">
+                    <div className="px-2 py-2 sm:px-4 sm:py-3 md:px-6 md:py-4">
                       <ImageWithFallback src={logo.image} alt={logo.description} className={[logo.className, "object-contain"].filter(Boolean).join(" ")} />
                     </div>
                   </div>

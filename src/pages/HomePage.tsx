@@ -47,7 +47,7 @@ const HomePage = () => {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </Helmet>
 
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30 overflow-x-hidden">
         <Hero />
         <Logos3 heading="Trusted by students at" count={17} />
         <Features />
