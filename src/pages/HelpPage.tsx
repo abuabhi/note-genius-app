@@ -72,15 +72,16 @@ const HelpPage = () => {
     { id: 'notes', label: 'Notes', icon: FileText },
     { id: 'flashcards', label: 'Flashcards', icon: MessageCircle },
     { id: 'quiz', label: 'Quiz', icon: FileText },
-    { id: 'ai-features', label: 'AI Features', icon: MessageCircle },
     { id: 'study-sessions', label: 'Study Sessions', icon: BookOpen },
-    { id: 'goals', label: 'Goal Setting', icon: BookOpen },
-    { id: 'todos', label: 'Todos', icon: MessageCircle },
-    { id: 'reminders', label: 'Reminders', icon: MessageCircle },
-    { id: 'analytics', label: 'Analytics', icon: MessageCircle },
+    { id: 'goals', label: 'Goals', icon: BookOpen },
+    { id: 'todos', label: 'Todo', icon: MessageCircle },
     { id: 'progress', label: 'Progress', icon: BookOpen },
+    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'ai-features', label: 'AI Features', icon: MessageCircle },
+    { id: 'reminders', label: 'Reminders', icon: MessageCircle },
     { id: 'import-export', label: 'Import & Export', icon: FileText },
-    { id: 'settings', label: 'Settings', icon: Settings }
+    { id: 'analytics', label: 'Analytics', icon: MessageCircle },
+    { id: 'upgrade', label: 'Upgrade', icon: BookOpen }
   ];
 
   const filteredContent = helpContent.filter(item => {
