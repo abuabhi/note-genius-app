@@ -19,11 +19,11 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
 
   if (images.length === 1) {
     return (
-      <div className={`my-4 ${className}`}>
+      <div className={`my-8 w-full ${className}`}>
         <img
           src={images[0]}
           alt="Help illustration"
-          className="w-full min-h-[600px] max-h-[800px] rounded-lg shadow-md object-contain bg-muted/30"
+          className="w-full min-h-[700px] max-h-[900px] rounded-lg shadow-lg object-contain bg-background"
           onError={(e) => {
             e.currentTarget.style.display = 'none';
           }}
@@ -41,13 +41,13 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   };
 
   return (
-    <div className={`my-4 ${className}`}>
+    <div className={`my-8 w-full ${className}`}>
       {/* Main Image Display */}
-      <div className="relative">
+      <div className="relative w-full">
         <img
           src={images[currentIndex]}
           alt={`Help illustration ${currentIndex + 1}`}
-          className="w-full min-h-[600px] max-h-[800px] rounded-lg shadow-md object-contain bg-muted/30"
+          className="w-full min-h-[700px] max-h-[900px] rounded-lg shadow-lg object-contain bg-background"
           onError={(e) => {
             e.currentTarget.style.display = 'none';
           }}

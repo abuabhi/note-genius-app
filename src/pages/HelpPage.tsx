@@ -101,7 +101,7 @@ const HelpPage = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-gray-200 rounded w-1/4"></div>
             <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -123,7 +123,7 @@ const HelpPage = () => {
         <meta name="description" content="Guides, tutorials, and FAQs to help you get the most out of PrepGenie." />
         <link rel="canonical" href={typeof window !== 'undefined' ? `${window.location.origin}/help` : '/help'} />
       </Helmet>
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Help Center</h1>
           <div className="flex items-center justify-between">
@@ -260,8 +260,8 @@ const HelpPage = () => {
                         </div>
                       )}
                       
-                      {/* Video Content - Admin controlled per topic */}
-                      {item.show_video && (item.video_url || item.video_title) && (
+                      {/* Video Content - Shows automatically when URL exists */}
+                      {(item.video_url || item.video_title) && (
                         <div className="mb-6">
                           {item.video_url && getYouTubeIdFromUrl(item.video_url) ? (
                             <YouTubePlayer
