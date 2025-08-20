@@ -14,7 +14,7 @@ import PublicCouponPage from "@/pages/PublicCouponPage";
 import TierSelectionPage from "@/pages/TierSelectionPage";
 import PaymentPage from "@/pages/PaymentPage";
 import SignupPage from "@/pages/SignupPage";
-import HelpPage from "@/pages/HelpPage";
+import HelpRedirectPage from "@/pages/HelpRedirectPage";
 import FAQPage from "@/pages/FAQPage";
 import SiteMapPage from "@/pages/SiteMapPage";
 
@@ -36,7 +36,7 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/terms", element: <TermsPage /> }, // TermsPage already has Layout internally
   { path: "/privacy", element: <PrivacyPage /> }, // PrivacyPage already has Layout internally
   { path: "/features", element: <FeaturesPage /> }, // FeaturesPage already has Layout internally
-  { path: "/help", element: <HelpPage /> }, // HelpPage already has Layout internally
+  { path: "/help", element: <HelpRedirectPage /> },
   { path: "/help-center", element: <Navigate to="/help" replace /> },
   { path: "/help-centre", element: <Navigate to="/help" replace /> },
   { path: "/faq", element: <FAQPage /> },

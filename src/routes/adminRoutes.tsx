@@ -15,7 +15,7 @@ import AdminFeedbackPage from "@/pages/AdminFeedbackPage";
 import AdminFeedbackSettingsPage from "@/pages/AdminFeedbackSettingsPage";
 import AdminSystemMonitoringPage from "@/pages/AdminSystemMonitoringPage";
 import AdminContactSubmissionsPage from "@/pages/AdminContactSubmissionsPage";
-import AdminHelpManagementPage from "@/pages/AdminHelpManagementPage";
+// AdminHelpManagementPage removed - now using external GitBook
 import AdminInfluencersPage from "@/pages/AdminInfluencersPage";
 import AdminCouponsPage from "@/pages/AdminCouponsPage";
 import AdminPayoutsPage from "@/pages/AdminPayoutsPage";
@@ -40,7 +40,7 @@ export const adminRoutes: RouteConfig[] = [
   { path: "/admin/subjects", element: <AdminSubjectsPage /> },
   { path: "/admin/csv-import", element: <AdminCSVImportPage /> },
   { path: "/admin/tier-limits", element: <AdminTierLimitsPage /> },
-  { path: "/admin/help", element: <AdminHelpManagementPage /> },
+  // Help management removed - now using external GitBook
   { path: "/admin/coupons", element: <AdminCouponsPage /> },
   { path: "/admin/payouts", element: <AdminPayoutsPage /> },
 ];
