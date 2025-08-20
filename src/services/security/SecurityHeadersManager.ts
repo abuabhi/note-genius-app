@@ -51,7 +51,7 @@ class SecurityHeadersManager {
       `default-src ${origins}`,
       scriptSrc,
       styleSrc,
-      `img-src ${origins} https://images.unsplash.com https://*.unsplash.com https://i.vimeocdn.com https://img.youtube.com https://i.ytimg.com data: blob:`,
+      `img-src ${origins} https://images.unsplash.com https://*.unsplash.com https://i.vimeocdn.com https://img.youtube.com https://i.ytimg.com https://www.prepgenie.io https://*.lovable.app data: blob:`,
       `font-src ${origins} data:`,
       `connect-src ${origins} https://*.supabase.co wss://*.supabase.co`,
       `frame-src ${origins} https://www.youtube.com https://youtube.com`,
