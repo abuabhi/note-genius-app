@@ -1,8 +1,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSessionPersistence } from './useSessionPersistence';
 import { useTabVisibility } from '@/hooks/performance/useTabVisibility';
 import { DEBUG_CONFIG } from '@/config/debug';
@@ -32,6 +33,7 @@ export interface UnifiedSessionState {
 
 export const useUnifiedSessionTracker = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { 
     saveSessionState, 
     clearPersistedSession, 
@@ -469,6 +471,22 @@ export const useUnifiedSessionTracker = () => {
       broadcastState(endedState);
 
       clearPersistedSession();
+      
+      // Invalidate analytics cache to refresh "Today's Study" and other metrics
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && (
+            key.includes('analytics') || 
+            key.includes('study-sessions') || 
+            key.includes('stats') ||
+            key.includes('study-planner-analytics') ||
+            key.includes('unified-analytics') ||
+            key.includes('session-stats')
+          );
+        }
+      });
+      
       toast.success(`Session ended (${Math.round(duration / 60)} minutes)`);
 
     } catch (error) {
