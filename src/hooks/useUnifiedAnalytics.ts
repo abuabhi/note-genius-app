@@ -30,7 +30,7 @@ export interface UnifiedAnalytics {
 export const useUnifiedAnalytics = () => {
   const { user } = useAuth();
 
-  console.log('📊 [UNIFIED ANALYTICS] Using only real sessions from unified tracker');
+  // Removed console logging to improve performance - this was running on every render
 
   // Query for unified session data (real sessions only)
   const { data: sessions = [], isLoading } = useQuery({
@@ -49,7 +49,9 @@ export const useUnifiedAnalytics = () => {
       return data || [];
     },
     enabled: !!user,
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 5 * 60 * 1000, // 5 minutes - reduced frequent refetching to prevent timer conflicts
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false, // Prevent refetch on focus that could cause flickering
   });
 
   // Query for flashcard sets count
@@ -67,7 +69,9 @@ export const useUnifiedAnalytics = () => {
       return data || [];
     },
     enabled: !!user,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes - flashcard sets don't change frequently
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Query for flashcard progress
@@ -85,7 +89,9 @@ export const useUnifiedAnalytics = () => {
       return data || [];
     },
     enabled: !!user,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes - progress doesn't change rapidly
+    gcTime: 30 * 60 * 1000, // 30 minutes  
+    refetchOnWindowFocus: false,
   });
 
   // Calculate unified analytics

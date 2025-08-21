@@ -193,42 +193,63 @@ export const useUnifiedSessionTracker = () => {
     }
   }, [user, recoverActiveSession]);
 
-  // Persist session state changes
+  // Persist session state changes (debounced to reduce frequent updates)
   useEffect(() => {
     if (sessionState.isActive && sessionState.currentSessionId && !sessionState.isRecovering) {
-      saveSessionState({
-        sessionId: sessionState.currentSessionId,
-        startTime: sessionState.startTime?.toISOString() || new Date().toISOString(),
-        title: sessionState.currentTitle || 'Study Session',
-        subject: sessionState.currentSubject || undefined,
-        activityType: sessionState.activityType || 'general',
-        studyPlanId: sessionState.studyPlanId || undefined,
-        elapsedSeconds: sessionState.elapsedSeconds
-      });
+      // Only persist every 10 seconds to reduce frequent writes
+      if (sessionState.elapsedSeconds % 10 === 0 || sessionState.elapsedSeconds === 1) {
+        saveSessionState({
+          sessionId: sessionState.currentSessionId,
+          startTime: sessionState.startTime?.toISOString() || new Date().toISOString(),
+          title: sessionState.currentTitle || 'Study Session',
+          subject: sessionState.currentSubject || undefined,
+          activityType: sessionState.activityType || 'general',
+          studyPlanId: sessionState.studyPlanId || undefined,
+          elapsedSeconds: sessionState.elapsedSeconds
+        });
+      }
     } else if (!sessionState.isActive) {
       clearPersistedSession();
     }
   }, [sessionState.isActive, sessionState.currentSessionId, sessionState.elapsedSeconds, sessionState.isRecovering, saveSessionState, clearPersistedSession]);
 
-  // Timer logic
+  // Consolidated timer logic with functional updates to prevent race conditions
   useEffect(() => {
+    // Clear any existing timer first
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    // Only start timer if session is active, not paused, and not recovering
     if (sessionState.isActive && !sessionState.isPaused && !sessionState.isRecovering) {
       timerRef.current = setInterval(() => {
-        setSessionState(prev => ({
-          ...prev,
-          elapsedSeconds: prev.elapsedSeconds + 1
-        }));
+        setSessionState(prev => {
+          // Double-check state before updating to prevent conflicts
+          if (!prev.isActive || prev.isPaused || prev.isRecovering) {
+            return prev;
+          }
+          
+          const updatedState = {
+            ...prev,
+            elapsedSeconds: prev.elapsedSeconds + 1
+          };
+          
+          // Broadcast state change with debounce-like behavior (only every 5 seconds to reduce flickering)
+          if (updatedState.elapsedSeconds % 5 === 0) {
+            // Use requestAnimationFrame to prevent rapid state broadcasts
+            requestAnimationFrame(() => broadcastState(updatedState));
+          }
+          
+          return updatedState;
+        });
       }, 1000);
-    } else {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
     }
 
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
+        timerRef.current = null;
       }
     };
   }, [sessionState.isActive, sessionState.isPaused, sessionState.isRecovering]);
@@ -458,17 +479,22 @@ export const useUnifiedSessionTracker = () => {
 
   const togglePause = () => {
     setSessionState(prev => {
-      const next = { ...prev, isPaused: !prev.isPaused };
-      broadcastState(next);
-      return next;
+      const newPausedState = !prev.isPaused;
+      const updatedState = { ...prev, isPaused: newPausedState };
+      
+      // Use setTimeout to prevent race condition with immediate state broadcast
+      setTimeout(() => broadcastState(updatedState), 0);
+      
+      // Show appropriate toast based on new state
+      if (newPausedState) {
+        toast.info('Session paused');
+      } else {
+        toast.info('Session resumed');
+        trackActivity();
+      }
+      
+      return updatedState;
     });
-    
-    if (!sessionState.isPaused) {
-      toast.info('Session paused');
-    } else {
-      toast.info('Session resumed');
-      trackActivity();
-    }
   };
 
   const dismissInactivityWarning = () => {
