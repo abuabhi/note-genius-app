@@ -166,6 +166,13 @@ export const EnhancedSessionHistory = () => {
                         >
                           {session.session_quality || 'good'}
                         </Badge>
+
+                        {/* Manual/Offline Session Indicator */}
+                        {(session.session_source === 'offline' || session.manual_entry_date) && (
+                          <Badge variant="outline" className="text-xs bg-orange-100 text-orange-700 border-orange-300">
+                            📱 Offline Entry
+                          </Badge>
+                        )}
                         
                         {session.activity_type && (
                           <Badge variant="secondary" className="text-xs bg-mint-100 text-mint-700">
@@ -178,6 +185,11 @@ export const EnhancedSessionHistory = () => {
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-mint-600" />
                           {session.start_time ? format(new Date(session.start_time), 'MMM d, yyyy • h:mm a') : 'Unknown time'}
+                          {session.manual_entry_date && session.manual_entry_date !== session.start_time?.split('T')[0] && (
+                            <span className="text-orange-600 text-xs ml-2">
+                              (Added manually)
+                            </span>
+                          )}
                         </div>
                         
                         {session.duration && (
@@ -236,6 +248,15 @@ export const EnhancedSessionHistory = () => {
                     <div className="mt-4 pt-4 border-t border-mint-100">
                       <p className="text-sm text-gray-600 italic bg-gray-50 p-3 rounded-lg">
                         💭 "{session.notes}"
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Manual Entry Notes */}
+                  {session.manual_entry_notes && (
+                    <div className="mt-4 pt-4 border-t border-orange-100">
+                      <p className="text-sm text-orange-600 italic bg-orange-50 p-3 rounded-lg border-l-4 border-orange-300">
+                        📝 Manual Entry: "{session.manual_entry_notes}"
                       </p>
                     </div>
                   )}

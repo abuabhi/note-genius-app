@@ -117,7 +117,7 @@ export const useUltraSimpleAnalytics = () => {
     const todaySessions = sessions.filter(s => new Date(s.start_time) >= today);
     const weeklySessions = sessions.filter(s => new Date(s.start_time) >= weekAgo);
 
-    // Calculate times
+    // Calculate times - session.duration is in seconds, convert to minutes
     const totalMinutes = completedSessions.reduce((acc, session) => acc + (session.duration || 0), 0) / 60;
     const todayMinutes = todaySessions.reduce((acc, session) => acc + (session.duration || 0), 0) / 60;
     const weeklyMinutes = weeklySessions.reduce((acc, session) => acc + (session.duration || 0), 0) / 60;
