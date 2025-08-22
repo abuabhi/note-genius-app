@@ -131,7 +131,7 @@ export const useUnifiedAnalytics = () => {
     const todayMinutes = todaySessions.filter(s => !s.is_active && s.duration).reduce((acc, session) => acc + (session.duration || 0), 0) / 60;
     const weeklyMinutes = weeklySessions.filter(s => !s.is_active && s.duration).reduce((acc, session) => acc + (session.duration || 0), 0) / 60;
     
-    const totalHours = Math.round(totalMinutes * 10) / 10;
+    const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
     const averageDuration = completedSessions.length ? Math.round((totalMinutes * 60) / completedSessions.length) : 0;
     
     const totalCardsReviewed = sessions.reduce((acc, s) => acc + (s.cards_reviewed || 0), 0);
