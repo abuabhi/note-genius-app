@@ -104,7 +104,7 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
             studyPlan={studyPlan}
             isConverting={isConverting}
             isDeleting={isDeleting}
-            onConvertToGoal={() => setShowGoalDialog(true)}
+            onConvertToGoal={() => convertToGoal(studyPlan)}
             onSettings={() => setShowSettingsDialog(true)}
             onDelete={() => setShowDeleteDialog(true)}
           />
