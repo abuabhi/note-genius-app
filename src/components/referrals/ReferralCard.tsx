@@ -1,5 +1,6 @@
 
 import { Suspense } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,7 @@ import { Share2, Copy, Trophy, Users, Gift, Loader2 } from 'lucide-react';
 import { useReferralData } from '@/hooks/referrals/useReferralData';
 
 const ReferralCardContent = () => {
+  const navigate = useNavigate();
   const { 
     referralStats, 
     contests, 
@@ -149,7 +151,7 @@ const ReferralCardContent = () => {
               size="sm"
               onClick={() => {
                 // Open the main referrals page for more sharing options
-                window.location.href = '/referrals';
+                navigate('/referrals');
               }}
               disabled={!referralStats.referralCode || referralStats.referralCode === 'LOADING...'}
               className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"

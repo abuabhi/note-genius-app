@@ -316,7 +316,7 @@ export const BulkPdfImportTab = ({ onSaveNote }: BulkPdfImportTabProps) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div data-processing={isProcessing.toString()} className="space-y-6">
       {fileStatuses.length === 0 ? (
         <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-mint-400 transition-colors bg-gradient-to-br from-gray-50 to-white">
           <div className="space-y-4">

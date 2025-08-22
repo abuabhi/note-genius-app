@@ -118,12 +118,19 @@ export const EnhancedRichTextToolbar = ({ editor }: EnhancedRichTextToolbarProps
     if (file) {
       setImageFile(file);
       const reader = new FileReader();
+      
       reader.onload = () => {
         const result = reader.result as string;
         editor.chain().focus().setImage({ src: result }).run();
         setIsImageDialogOpen(false);
         setImageFile(null);
       };
+      
+      reader.onerror = () => {
+        console.error('Error reading file');
+        setImageFile(null);
+      };
+      
       reader.readAsDataURL(file);
     }
   };

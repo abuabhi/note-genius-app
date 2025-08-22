@@ -1,5 +1,6 @@
 
 import React, { Component, ReactNode } from 'react';
+import { NavigateFunction } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
@@ -14,6 +15,7 @@ interface ErrorBoundaryState {
 
 interface EnhancedErrorBoundaryProps {
   children: ReactNode;
+  navigate?: NavigateFunction;
   fallback?: React.ComponentType<{ 
     error?: Error; 
     retry: () => void; 
@@ -85,7 +87,11 @@ class EnhancedErrorBoundary extends Component<EnhancedErrorBoundaryProps, ErrorB
   };
 
   handleGoHome = () => {
-    window.location.href = '/dashboard';
+    if (this.props.navigate) {
+      this.props.navigate('/dashboard');
+    } else {
+      window.location.href = '/dashboard';
+    }
   };
 
   handleReportError = () => {

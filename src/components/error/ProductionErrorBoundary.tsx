@@ -3,7 +3,7 @@ import React, { Component, ReactNode } from 'react';
 import { productionErrorTracker } from '@/services/errorTracking/ProductionErrorTracker';
 import { userSessionTracker } from '@/services/analytics/UserSessionTracker';
 import { logger } from '@/services/logging/ProductionLogger';
-import EnhancedErrorBoundary from './EnhancedErrorBoundary';
+import EnhancedErrorBoundaryWithRouter from './EnhancedErrorBoundaryWithRouter';
 
 interface ProductionErrorBoundaryProps {
   children: ReactNode;
@@ -78,7 +78,7 @@ export class ProductionErrorBoundary extends Component<
     if (this.state.hasError) {
       // Use the enhanced error boundary for UI, but we've added production tracking
       return (
-        <EnhancedErrorBoundary
+        <EnhancedErrorBoundaryWithRouter
           fallback={this.props.fallback}
           maxRetries={3}
           enableReporting={true}
@@ -87,7 +87,7 @@ export class ProductionErrorBoundary extends Component<
           }}
         >
           {this.props.children}
-        </EnhancedErrorBoundary>
+        </EnhancedErrorBoundaryWithRouter>
       );
     }
 

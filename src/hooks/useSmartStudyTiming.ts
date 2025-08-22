@@ -1,9 +1,11 @@
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NotificationTimingEngine } from '@/utils/notificationTimingEngine';
 import { useActiveStudySessionData } from './useActiveStudySessionData';
 
 export const useSmartStudyTiming = () => {
+  const navigate = useNavigate();
   const [browserNotificationPermission, setBrowserNotificationPermission] = useState<NotificationPermission>('default');
   const sessionData = useActiveStudySessionData();
 
@@ -55,7 +57,7 @@ export const useSmartStudyTiming = () => {
       notification.onclick = () => {
         if (actionUrl) {
           window.focus();
-          window.location.href = actionUrl;
+          navigate(actionUrl);
         } else {
           window.focus();
         }

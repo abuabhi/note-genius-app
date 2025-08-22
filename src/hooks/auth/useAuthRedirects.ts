@@ -33,12 +33,24 @@ export const useAuthRedirects = ({
   // Check if user is in an active upload/OCR session (prevent redirects during file operations)
   const isInUploadSession = () => {
     try {
-      const uploadState = sessionStorage.getItem('ocrUploadState');
-      if (uploadState) {
-        const state = JSON.parse(uploadState);
+      // Check OCR upload session
+      const ocrUploadState = sessionStorage.getItem('ocrUploadState');
+      if (ocrUploadState) {
+        const state = JSON.parse(ocrUploadState);
         const ageMinutes = (Date.now() - state.timestamp) / (1000 * 60);
-        return ageMinutes < 5; // Active if within last 5 minutes
+        if (ageMinutes < 5) return true; // Active if within last 5 minutes
       }
+      
+      // Check if any import dialogs or operations are active
+      const currentUrl = window.location.href;
+      if (currentUrl.includes('import') || currentUrl.includes('oauth') || currentUrl.includes('callback')) {
+        return true;
+      }
+      
+      // Check if we're in the middle of document processing
+      const isProcessingDocuments = document.querySelector('[data-processing="true"]') !== null;
+      if (isProcessingDocuments) return true;
+      
     } catch {
       // Ignore errors
     }

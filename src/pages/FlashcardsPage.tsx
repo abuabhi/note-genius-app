@@ -5,7 +5,7 @@ import { FlashcardsPageHeader } from "@/components/flashcards/page/FlashcardsPag
 import { FlashcardsContent } from "@/components/flashcards/page/FlashcardsContent";
 
 import { useFlashcardsPageState } from "@/components/flashcards/page/useFlashcardsPageState";
-import { ErrorBoundary } from "@/components/flashcards/components/ErrorBoundary";
+import { ErrorBoundaryWithRouter } from "@/components/flashcards/components/ErrorBoundaryWithRouter";
 import { FlashcardProvider } from "@/contexts/flashcards/index.tsx";
 import { Helmet } from "react-helmet";
 
@@ -26,7 +26,7 @@ const FlashcardsPage = () => {
   };
 
   return (
-    <ErrorBoundary>
+    <ErrorBoundaryWithRouter>
       <Helmet>
         <meta name="robots" content="noindex,nofollow" />
       </Helmet>
@@ -44,7 +44,7 @@ const FlashcardsPage = () => {
           </div>
         </div>
       </FlashcardProvider>
-    </ErrorBoundary>
+    </ErrorBoundaryWithRouter>
   );
 };
 

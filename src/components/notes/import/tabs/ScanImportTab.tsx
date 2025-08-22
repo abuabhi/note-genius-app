@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ImageUpload } from '../../scanning/ImageUpload';
 import { useImageUpload } from '../../scanning/hooks/useImageUpload';
@@ -20,6 +21,7 @@ interface ScanImportTabProps {
 }
 
 export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps) => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedLanguage, setSelectedLanguage] = React.useState("eng");
   const [recognizedText, setRecognizedText] = React.useState("");
@@ -248,6 +250,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
 
   if (processingMode === 'batch') {
     return (
+      <div data-processing="true">
         <BatchProcessingView
           processedImages={processedImages}
           batchProgress={batchProgress}
@@ -257,6 +260,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
           isSaving={isSaving}
           
         />
+      </div>
     );
   }
 
@@ -354,7 +358,7 @@ export const ScanImportTab = ({ onSaveNote, isPremiumUser }: ScanImportTabProps)
           setShowSuccessDialog(false);
           resetForm();
         }}
-        onViewNotes={() => window.location.href = '/notes'}
+        onViewNotes={() => navigate('/notes')}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useNotificationSettings } from '@/hooks/useNotificationSettings';
 import { useUnifiedReminderSystem } from '@/hooks/useUnifiedReminderSystem';
 import { useSmartStudyTiming } from '@/hooks/useSmartStudyTiming';
@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 export const AdaptiveNotificationManager = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { getEffectiveSettings } = useNotificationSettings();
   const { reminders } = useUnifiedReminderSystem({
     enableRealtime: true,
@@ -93,9 +94,9 @@ export const AdaptiveNotificationManager = () => {
           label: notification.actionText,
           onClick: () => {
             if (notification.studyPlanId) {
-              window.location.href = `/dashboard?startStudy=${notification.studyPlanId}`;
+              navigate(`/dashboard?startStudy=${notification.studyPlanId}`);
             } else {
-              window.location.href = '/dashboard';
+              navigate('/dashboard');
             }
           }
         },

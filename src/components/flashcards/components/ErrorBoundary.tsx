@@ -1,9 +1,11 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { NavigateFunction } from 'react-router-dom';
 import { FlashcardsErrorFallback } from '@/components/error/FlashcardsErrorFallback';
 
 interface Props {
   children: ReactNode;
+  navigate?: NavigateFunction;
   fallback?: React.ComponentType<{
     error?: Error;
     retry: () => void;
@@ -35,7 +37,11 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   handleGoHome = () => {
-    window.location.href = '/dashboard';
+    if (this.props.navigate) {
+      this.props.navigate('/dashboard');
+    } else {
+      window.location.href = '/dashboard';
+    }
   };
 
   render() {

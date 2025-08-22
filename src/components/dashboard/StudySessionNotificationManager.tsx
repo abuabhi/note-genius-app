@@ -1,10 +1,12 @@
 
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUnifiedReminderSystem } from '@/hooks/useUnifiedReminderSystem';
 import { toast } from 'sonner';
 import { Bell, BookOpen, Target, Trophy } from 'lucide-react';
 
 export const StudySessionNotificationManager = () => {
+  const navigate = useNavigate();
   const { reminders, dismissReminder } = useUnifiedReminderSystem({
     enableRealtime: true,
     limit: 50
@@ -57,10 +59,10 @@ export const StudySessionNotificationManager = () => {
     // Navigate to study session or dashboard
     if (notification.events?.id) {
       // Navigate to specific study session
-      window.location.href = `/dashboard?startStudy=${notification.events.id}`;
+      navigate(`/dashboard?startStudy=${notification.events.id}`);
     } else {
       // Navigate to dashboard
-      window.location.href = '/dashboard';
+      navigate('/dashboard');
     }
     
     dismissReminder(notification.id);
