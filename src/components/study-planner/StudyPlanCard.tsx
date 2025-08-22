@@ -161,6 +161,12 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
                     Active
                   </Badge>
                 )}
+                {studyPlan.is_converted_to_goals && (
+                  <Badge className="bg-green-100 text-green-800 border-green-200 font-medium px-2.5 py-1 rounded-full flex-shrink-0 shadow-sm">
+                    <CheckCircle className="h-3 w-3 mr-1.5" />
+                    Converted to Goal
+                  </Badge>
+                )}
               </div>
             </div>
           </div>

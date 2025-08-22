@@ -1,5 +1,5 @@
 import React from "react";
-import { MoreVertical, Clock, Target, Settings, Trash2 } from "lucide-react";
+import { MoreVertical, Clock, Target, Settings, Trash2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,6 +8,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { StudyPlan } from '@/types/studyPlanner';
 
 interface StudyPlanActionsMenuProps {
@@ -40,17 +46,44 @@ export const StudyPlanActionsMenu = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 bg-background shadow-xl border-gray-200/60 z-50">
-        <DropdownMenuItem
-          onClick={(e) => {
-            e.stopPropagation();
-            onConvertToGoal();
-          }}
-          disabled={isConverting || studyPlan.is_converted_to_goals}
-          className="cursor-pointer hover:bg-mint-50 hover:text-mint-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Target className="h-4 w-4 mr-3 text-mint-600" />
-          {isConverting ? 'Converting...' : 'Convert to Goal'}
-        </DropdownMenuItem>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!studyPlan.is_converted_to_goals && !isConverting) {
+                      onConvertToGoal();
+                    }
+                  }}
+                  disabled={isConverting || studyPlan.is_converted_to_goals}
+                  className={`cursor-pointer ${
+                    studyPlan.is_converted_to_goals 
+                      ? 'hover:bg-green-50 hover:text-green-700 text-green-600 disabled:opacity-100 disabled:cursor-default' 
+                      : 'hover:bg-mint-50 hover:text-mint-700'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {studyPlan.is_converted_to_goals ? (
+                    <CheckCircle2 className="h-4 w-4 mr-3 text-green-600" />
+                  ) : (
+                    <Target className="h-4 w-4 mr-3 text-mint-600" />
+                  )}
+                  {isConverting 
+                    ? 'Converting...' 
+                    : studyPlan.is_converted_to_goals 
+                      ? 'Already Converted' 
+                      : 'Convert to Goal'}
+                </DropdownMenuItem>
+              </div>
+            </TooltipTrigger>
+            {studyPlan.is_converted_to_goals && (
+              <TooltipContent>
+                <p>This study plan has already been converted to a goal</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
         
         <DropdownMenuItem
           onClick={(e) => {
