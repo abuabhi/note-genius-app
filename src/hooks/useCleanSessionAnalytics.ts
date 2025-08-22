@@ -19,8 +19,6 @@ export interface CleanSessionAnalytics {
 export const useCleanSessionAnalytics = () => {
   const { user } = useAuth();
 
-  console.log('📊 [CLEAN SESSION ANALYTICS] Using real sessions only (excluding auto-created)');
-
   // Query for real session data only (exclude auto-created fake sessions)
   const { data: sessions = [], isLoading } = useQuery({
     queryKey: ["clean-session-analytics", user?.id],
@@ -31,7 +29,7 @@ export const useCleanSessionAnalytics = () => {
         .from('study_sessions')
         .select('*')
         .eq('user_id', user.id)
-        .neq('auto_created', true) // Exclude auto-created sessions
+        .eq('auto_created', false) // Exclude auto-created sessions
         .order('start_time', { ascending: false });
 
       if (error) throw error;

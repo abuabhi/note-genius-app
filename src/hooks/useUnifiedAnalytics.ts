@@ -126,10 +126,10 @@ export const useUnifiedAnalytics = () => {
     const todaySessions = sessions.filter(s => new Date(s.start_time) >= today);
     const weeklySessions = sessions.filter(s => new Date(s.start_time) >= weekAgo);
     
-    // Fix: session.duration is already in seconds, convert to minutes
+    // Calculate study time: duration is in seconds, convert to minutes
     const totalMinutes = completedSessions.reduce((acc, session) => acc + (session.duration || 0), 0) / 60;
-    const todayMinutes = todaySessions.reduce((acc, session) => acc + (session.duration || 0), 0) / 60;
-    const weeklyMinutes = weeklySessions.reduce((acc, session) => acc + (session.duration || 0), 0) / 60;
+    const todayMinutes = todaySessions.filter(s => !s.is_active && s.duration).reduce((acc, session) => acc + (session.duration || 0), 0) / 60;
+    const weeklyMinutes = weeklySessions.filter(s => !s.is_active && s.duration).reduce((acc, session) => acc + (session.duration || 0), 0) / 60;
     
     const totalHours = Math.round(totalMinutes * 10) / 10;
     const averageDuration = completedSessions.length ? Math.round((totalMinutes * 60) / completedSessions.length) : 0;

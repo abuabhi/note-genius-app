@@ -36,8 +36,6 @@ export const useSaaSOptimizedSubjectAnalytics = () => {
         };
       }
 
-      console.log('📊 Fetching subject analytics for user:', user.id);
-
       try {
         // Get flashcard sets with progress
         const { data: flashcardSets } = await supabase
@@ -63,11 +61,12 @@ export const useSaaSOptimizedSubjectAnalytics = () => {
           .select('*')
           .eq('user_id', user.id);
 
-        // Get study sessions
+        // Get study sessions (exclude auto-created fake sessions)
         const { data: studySessions } = await supabase
           .from('study_sessions')
           .select('*')
           .eq('user_id', user.id)
+          .eq('auto_created', false)
           .gte('start_time', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString());
 
         // Get study plans
@@ -147,8 +146,11 @@ export const useSaaSOptimizedSubjectAnalytics = () => {
             sessionCount: 0,
           };
 
-          subject.sessionCount += 1;
-          subject.totalStudyTimeMinutes += Math.floor((session.duration || 0) / 60);
+          // Only count completed sessions with duration
+          if (!session.is_active && session.duration && session.duration > 0) {
+            subject.sessionCount += 1;
+            subject.totalStudyTimeMinutes += Math.floor(session.duration / 60);
+          }
           
           subjectMap.set(session.subject, subject);
         });
@@ -176,23 +178,30 @@ export const useSaaSOptimizedSubjectAnalytics = () => {
 
         // Calculate overall stats
         const subjects = Array.from(subjectMap.values());
-        const totalStudyTime = studySessions?.reduce((sum, session) => sum + (session.duration || 0), 0) || 0;
-        const totalStudyTimeHours = totalStudyTime / (1000 * 60 * 60);
+        // Fix: Only sum completed sessions for total time
+        const totalStudyTime = studySessions?.filter(session => 
+          !session.is_active && session.duration && session.duration > 0
+        ).reduce((sum, session) => sum + session.duration, 0) || 0;
+        // Fix: duration is in seconds, convert to hours (not milliseconds!)
+        const totalStudyTimeHours = totalStudyTime / 3600;
 
-        // Calculate sessions this week
+        // Calculate sessions this week (only completed sessions)
         const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
         const sessionsThisWeek = studySessions?.filter(session => 
-          new Date(session.start_time) >= oneWeekAgo
+          new Date(session.start_time) >= oneWeekAgo &&
+          !session.is_active && session.duration && session.duration > 0
         ).length || 0;
 
-        // Calculate formatted time periods
+        // Only count completed sessions in time periods
         const last7DaysMinutes = studySessions?.filter(session => 
-          new Date(session.start_time) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-        ).reduce((sum, session) => sum + Math.floor((session.duration || 0) / 60), 0) || 0;
+          new Date(session.start_time) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) &&
+          !session.is_active && session.duration && session.duration > 0
+        ).reduce((sum, session) => sum + Math.floor(session.duration / 60), 0) || 0;
 
         const last30DaysMinutes = studySessions?.filter(session => 
-          new Date(session.start_time) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        ).reduce((sum, session) => sum + Math.floor((session.duration || 0) / 60), 0) || 0;
+          new Date(session.start_time) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) &&
+          !session.is_active && session.duration && session.duration > 0
+        ).reduce((sum, session) => sum + Math.floor(session.duration / 60), 0) || 0;
 
         const formatTime = (minutes: number) => {
           if (minutes < 60) return `${minutes}m`;
@@ -235,6 +244,7 @@ export const useSaaSOptimizedSubjectAnalytics = () => {
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false, // Prevent unnecessary refetches
   });
 
   return {
