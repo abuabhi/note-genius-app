@@ -93,7 +93,7 @@ const EnhancedSubjectProgressDashboard = memo(() => {
                 <span>{subject.sessionCount} sessions</span>
               </>
             ) : (
-              <span className="text-xs text-amber-600 italic">{studyStatus.message}</span>
+              <span className="text-xs text-emerald-600 font-medium">{studyStatus.message}</span>
             )}
           </div>
         </CardContent>
@@ -168,7 +168,7 @@ const EnhancedSubjectProgressDashboard = memo(() => {
             <CardTitle className="text-lg font-semibold">Subject Performance Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
                   {subjectAnalytics.subjects.filter(s => s.completionPercentage >= 85).length}
@@ -183,9 +183,15 @@ const EnhancedSubjectProgressDashboard = memo(() => {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">
-                  {subjectAnalytics.subjects.filter(s => s.completionPercentage < 60).length}
+                  {subjectAnalytics.subjects.filter(s => s.completionPercentage > 0 && s.completionPercentage < 60).length}
                 </div>
-                <div className="text-sm text-gray-600">Needs Attention (&lt;60%)</div>
+                <div className="text-sm text-gray-600">Needs Attention (1-59%)</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-emerald-600">
+                  {subjectAnalytics.subjects.filter(s => s.completionPercentage === 0).length}
+                </div>
+                <div className="text-sm text-gray-600">Ready to Study</div>
               </div>
             </div>
           </CardContent>

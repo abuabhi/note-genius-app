@@ -110,20 +110,16 @@ export const standardizeSubjectName = (
 
 /**
  * Check if a subject has meaningful learning activity
+ * Now returns true for all subjects to show content discovery
  */
 export const hasValidLearningActivity = (subject: {
   completionPercentage: number;
   totalStudyTimeMinutes: number;
   sessionCount: number;
 }): boolean => {
-  // Subject is valid if it has either:
-  // 1. Study time/sessions (actual learning activity)
-  // 2. Meaningful progress with some indication of study
-  return (
-    subject.totalStudyTimeMinutes > 0 || 
-    subject.sessionCount > 0 || 
-    (subject.completionPercentage > 0 && subject.completionPercentage < 100)
-  );
+  // Always return true to show all subjects for content discovery
+  // This allows users to see their available study content even before starting
+  return true;
 };
 
 /**
@@ -141,12 +137,12 @@ export const getStudyStatusMessage = (subject: {
   if (subject.completionPercentage > 0) {
     return { 
       hasActivity: false, 
-      message: 'Progress from quizzes/flashcards - start study sessions to track time' 
+      message: 'Progress from flashcards - start study sessions to track time' 
     };
   }
   
   return { 
     hasActivity: false, 
-    message: 'No study activity yet' 
+    message: 'Ready to Study' 
   };
 };

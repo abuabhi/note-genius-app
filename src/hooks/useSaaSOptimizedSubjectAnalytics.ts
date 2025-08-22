@@ -38,12 +38,12 @@ export const useSaaSOptimizedSubjectAnalytics = () => {
       }
 
       try {
-        // Get flashcard sets with progress
+        // Get flashcard sets with progress (using LEFT JOIN to include unstudied flashcards)
         const { data: flashcardSets } = await supabase
           .from('flashcard_sets')
           .select(`
             *,
-            flashcards!inner(
+            flashcards!left(
               id,
               user_flashcard_progress(mastery_level, grade)
             )
@@ -104,9 +104,13 @@ export const useSaaSOptimizedSubjectAnalytics = () => {
             card.user_flashcard_progress?.[0]?.mastery_level >= 4
           ).length || 0;
 
+          // Always calculate progress, even if no cards have been studied yet
           if (totalCards > 0) {
             const flashcardProgress = Math.round((masteredCards / totalCards) * 100);
             subject.completionPercentage = Math.max(subject.completionPercentage, flashcardProgress);
+          } else {
+            // If no flashcards in set, mark as ready to study
+            subject.completionPercentage = Math.max(subject.completionPercentage, 0);
           }
           
           subjectMap.set(standardizedSubject, subject);
@@ -182,8 +186,8 @@ export const useSaaSOptimizedSubjectAnalytics = () => {
           subjectMap.set(standardizedSubject, subject);
         });
 
-        // Calculate overall stats - only include subjects with valid learning activity
-        const subjects = Array.from(subjectMap.values()).filter(hasValidLearningActivity);
+        // Include all subjects, even those without learning activity (for content discovery)
+        const subjects = Array.from(subjectMap.values());
         // Fix: Only sum completed sessions for total time
         const totalStudyTime = studySessions?.filter(session => 
           !session.is_active && session.duration && session.duration > 0
