@@ -10,6 +10,7 @@ import { FlashcardsAnalytics } from "@/components/analytics/redesigned/Flashcard
 import { QuizAnalytics } from "@/components/analytics/redesigned/QuizAnalytics";
 import { EnhancedSessionHistory } from "@/components/analytics/redesigned/EnhancedSessionHistory";
 import { OptimizedStudyAchievements } from "@/components/analytics/redesigned/OptimizedStudyAchievements";
+import { StudySessionChart } from "@/components/analytics/charts/StudySessionChart";
 import { FlashcardProvider } from "@/contexts/FlashcardContext";
 import { Helmet } from 'react-helmet';
 
@@ -144,7 +145,13 @@ const AnalyticsPage = () => {
               </TabsContent>
               
               <TabsContent value="sessions" className="mt-6">
-                <EnhancedSessionHistory />
+                <div className="space-y-6">
+                  {/* Study Sessions Chart */}
+                  <StudySessionChart />
+                  
+                  {/* Session History */}
+                  <EnhancedSessionHistory />
+                </div>
               </TabsContent>
               
               <TabsContent value="achievements" className="mt-6">
