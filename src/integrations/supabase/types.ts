@@ -3208,12 +3208,16 @@ export type Database = {
           id: string
           is_active: boolean | null
           learning_velocity: number | null
+          manual_entry_date: string | null
+          manual_entry_notes: string | null
+          manual_verified: boolean | null
           notes: string | null
           notes_created: number | null
           notes_reviewed: number | null
           quiz_score: number | null
           quiz_total_questions: number | null
           session_quality: string | null
+          session_source: string
           start_time: string
           study_plan_id: string | null
           subject: string | null
@@ -3235,12 +3239,16 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           learning_velocity?: number | null
+          manual_entry_date?: string | null
+          manual_entry_notes?: string | null
+          manual_verified?: boolean | null
           notes?: string | null
           notes_created?: number | null
           notes_reviewed?: number | null
           quiz_score?: number | null
           quiz_total_questions?: number | null
           session_quality?: string | null
+          session_source?: string
           start_time?: string
           study_plan_id?: string | null
           subject?: string | null
@@ -3262,12 +3270,16 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           learning_velocity?: number | null
+          manual_entry_date?: string | null
+          manual_entry_notes?: string | null
+          manual_verified?: boolean | null
           notes?: string | null
           notes_created?: number | null
           notes_reviewed?: number | null
           quiz_score?: number | null
           quiz_total_questions?: number | null
           session_quality?: string | null
+          session_source?: string
           start_time?: string
           study_plan_id?: string | null
           subject?: string | null

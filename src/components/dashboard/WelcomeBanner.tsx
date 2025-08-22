@@ -95,16 +95,16 @@ export function WelcomeBanner() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6 w-full lg:w-auto">
             {/* Today's Study Time */}
             <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 border border-white/30">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/20 rounded-lg">
-                  <Clock className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs text-mint-100 mb-1 font-medium">Today's Focus</p>
-                  <p className="text-xl font-bold text-white">
-                    {formatStudyTime(analytics.todayStudyTimeMinutes)}
-                  </p>
-                </div>
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-4 w-4 text-mint-200" />
+                <p className="text-sm font-medium text-white/90">Today's Study</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xl font-bold text-white">
+                  {formatStudyTime(analytics.todayStudyTimeMinutes)}
+                </p>
+                {/* Temporary: Show simple breakdown once implemented */}
+                <p className="text-xs text-white/80">No breakdown available yet</p>
               </div>
             </div>
 

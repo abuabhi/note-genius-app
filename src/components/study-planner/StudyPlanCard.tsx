@@ -14,6 +14,7 @@ import { format, differenceInDays } from 'date-fns';
 import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
 import { SessionSettingsDialog } from './SessionSettingsDialog';
 import { UnifiedDeleteDialog } from '@/components/ui/unified/UnifiedDeleteDialog';
+import { ManualStudyTimeForm } from './ManualStudyTimeForm';
 
 interface StudyPlanCardProps {
   studyPlan: StudyPlan;
@@ -187,11 +188,27 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
             </div>
           </div>
 
-          {/* Session Time Summary - Plan Specific */}
-          <div className="flex items-center justify-between p-2 bg-blue-50/50 rounded-lg">
-            <div className="text-xs text-blue-700">
-              <strong>This Plan:</strong> {formatTime(analytics.totalSessionTime)}
+          {/* Session Time Summary - Plan Specific with Online/Offline Breakdown */}
+          <div className="space-y-2 p-3 bg-blue-50/50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-blue-700 font-medium">This Plan Study Time</div>
+              <div className="text-xs text-blue-700 font-bold">{formatTime(analytics.totalSessionTime)}</div>
             </div>
+            
+            {/* Online/Offline Breakdown */}
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-4">
+                <span className="text-green-600">
+                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                  Online: {formatTime(analytics.totalSessionTime)} {/* Placeholder for now */}
+                </span>
+                <span className="text-blue-600">
+                  <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
+                  Offline: 0m {/* Placeholder for now */}
+                </span>
+              </div>
+            </div>
+            
             <div className="text-xs text-blue-700">
               <strong>This Week:</strong> {formatTime(analytics.weeklySessionTime)}
             </div>
@@ -240,8 +257,23 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
                 className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white px-4 py-2 h-8 text-xs font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex-1"
               >
                 <Play className="h-3 w-3 mr-1.5" />
-                {isActive ? 'Active Session' : 'Start Session'}
+                {isActive ? 'Active Session' : 'Start Online Session'}
               </Button>
+              
+              {/* Add Manual Study Time Button */}
+              <ManualStudyTimeForm 
+                studyPlan={studyPlan}
+                trigger={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 rounded-lg h-8 px-3 gap-1.5"
+                  >
+                    <Clock className="h-3 w-3" />
+                    Add Offline
+                  </Button>
+                }
+              />
               
               <Button
                 onClick={() => setShowGoalDialog(true)}

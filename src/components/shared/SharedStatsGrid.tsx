@@ -14,11 +14,12 @@ interface StatsGridProps {
     cardsReviewedToday: number;
     todayStudyMinutes: number;
   };
+  analytics?: any; // Add analytics prop for online/offline breakdown
   isLoading?: boolean;
   variant?: 'dashboard' | 'progress' | 'sessions';
 }
 
-export const SharedStatsGrid = ({ stats, isLoading, variant = 'dashboard' }: StatsGridProps) => {
+export const SharedStatsGrid = ({ stats, analytics, isLoading, variant = 'dashboard' }: StatsGridProps) => {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -83,8 +84,10 @@ export const SharedStatsGrid = ({ stats, isLoading, variant = 'dashboard' }: Sta
         {
           title: "Today's Study",
           value: formatTime(stats.todayStudyMinutes),
+          subtitle: 'Coming soon: Online/Offline breakdown',
           icon: Clock,
           description: "Minutes studied today",
+          trend: stats.todayStudyMinutes > 0 ? "up" : undefined,
           color: "text-blue-600"
         },
         ...baseStats.slice(0, 3)
@@ -108,12 +111,15 @@ export const SharedStatsGrid = ({ stats, isLoading, variant = 'dashboard' }: Sta
                 {stat.title}
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-1">
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-xs text-gray-500">{stat.description}</p>
-              </div>
-            </CardContent>
+             <CardContent>
+               <div className="space-y-1">
+                 <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                 {(stat as any).subtitle && (
+                   <p className="text-xs text-gray-600">{(stat as any).subtitle}</p>
+                 )}
+                 <p className="text-xs text-gray-500">{stat.description}</p>
+               </div>
+             </CardContent>
           </Card>
         );
       })}
