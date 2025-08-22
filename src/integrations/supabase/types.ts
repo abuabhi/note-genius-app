@@ -888,6 +888,7 @@ export type Database = {
           is_built_in: boolean | null
           last_reviewed_at: string | null
           next_review_at: string | null
+          set_id: string | null
           updated_at: string
           user_id: string | null
         }
@@ -900,6 +901,7 @@ export type Database = {
           is_built_in?: boolean | null
           last_reviewed_at?: string | null
           next_review_at?: string | null
+          set_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -912,10 +914,19 @@ export type Database = {
           is_built_in?: boolean | null
           last_reviewed_at?: string | null
           next_review_at?: string | null
+          set_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "flashcards_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_sets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       grades: {
         Row: {

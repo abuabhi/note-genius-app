@@ -23,7 +23,7 @@ export const FlashcardsAnalytics = () => {
           *,
           flashcards!inner(
             id,
-            user_flashcard_progress(mastery_level, last_reviewed_at, review_count)
+            user_flashcard_progress(mastery_level, last_reviewed_at, repetition)
           )
         `)
         .eq('user_id', user.id);
@@ -44,7 +44,7 @@ export const FlashcardsAnalytics = () => {
           const progress = card.user_flashcard_progress?.[0];
           if (progress) {
             reviewedCards++;
-            totalReviews += progress.review_count || 0;
+            totalReviews += progress.repetition || 0;
             const level = progress.mastery_level || 1;
             masteryData[level] = (masteryData[level] || 0) + 1;
             if (level >= 4) masteredCards++;
