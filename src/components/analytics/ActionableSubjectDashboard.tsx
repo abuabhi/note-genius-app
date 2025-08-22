@@ -85,8 +85,8 @@ const ActionableSubjectDashboard = memo(() => {
 
   const SubjectCard = memo(({ subject }: { subject: any }) => {
     const handleStudyNow = () => {
-      // Navigate to study session creation with pre-filled subject
-      router.push('/sessions/new');
+      // Navigate to study planner with pre-filled subject
+      router.push(`/study-planner?subject=${encodeURIComponent(subject.name)}`);
     };
 
     const handleCreateGoal = () => {
@@ -319,7 +319,7 @@ const ActionableSubjectDashboard = memo(() => {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => router.push('/sessions/new')}
+            onClick={() => router.push('/study-planner')}
           >
             <PlusCircle className="h-4 w-4 mr-2" />
             Start New Session
@@ -335,7 +335,7 @@ const ActionableSubjectDashboard = memo(() => {
                 <p className="text-muted-foreground text-center mb-4">
                   Start studying to see your subject analytics and personalized recommendations.
                 </p>
-                <Button onClick={() => router.push('/sessions/new')}>
+                <Button onClick={() => router.push('/study-planner')}>
                   <Play className="h-4 w-4 mr-2" />
                   Start Your First Session
                 </Button>
