@@ -56,9 +56,9 @@ export const useStudySessionChartData = (
       const completedSessions = daySessions.filter(s => !s.is_active && s.duration);
       
       // Calculate metrics for the day
-      const totalMinutes = completedSessions.reduce((acc, session) => acc + (session.duration || 0), 0);
-      const studyTimeHours = Math.round((totalMinutes / 60) * 10) / 10; // Convert seconds to hours, round to 1 decimal
-      const avgMinutes = completedSessions.length > 0 ? Math.round(totalMinutes / completedSessions.length / 60) : 0;
+      const totalMinutes = completedSessions.reduce((acc, session) => acc + (session.duration || 0), 0) / 60; // Convert seconds to minutes
+      const studyTimeHours = Math.round((totalMinutes / 60) * 10) / 10; // Convert minutes to hours, round to 1 decimal
+      const avgMinutes = completedSessions.length > 0 ? Math.round(totalMinutes / completedSessions.length) : 0;
       
       // Count manual/offline sessions
       const manualSessions = daySessions.filter(s => 
@@ -103,10 +103,10 @@ export const useStudySessionChartData = (
     });
 
     const completedSessions = filteredSessions.filter(s => !s.is_active && s.duration);
-    const totalMinutes = completedSessions.reduce((acc, session) => acc + (session.duration || 0), 0);
-    const totalHours = Math.round((totalMinutes / 60) * 10) / 10; // Convert seconds to hours
+    const totalMinutes = completedSessions.reduce((acc, session) => acc + (session.duration || 0), 0) / 60; // Convert seconds to minutes
+    const totalHours = Math.round((totalMinutes / 60) * 10) / 10; // Convert minutes to hours
     const avgSessionTime = completedSessions.length > 0 
-      ? Math.round(totalMinutes / completedSessions.length / 60) // Convert to minutes
+      ? Math.round(totalMinutes / completedSessions.length) // Average minutes per session
       : 0;
 
     return {
