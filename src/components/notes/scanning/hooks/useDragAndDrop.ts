@@ -1,5 +1,6 @@
 
 import { useState, useRef, useCallback } from "react";
+import { useFileReader } from '@/hooks/file/useFileReader';
 
 export interface DragDropHandlers {
   isDragOver: boolean;
@@ -14,6 +15,12 @@ export interface DragDropHandlers {
 export const useDragAndDrop = (): DragDropHandlers => {
   const [isDragOver, setIsDragOver] = useState(false);
   const dragCounter = useRef(0);
+  
+  const { readAsDataURL, abort } = useFileReader({
+    onError: (error) => {
+      console.error('❌ [DRAG DROP] File read error:', error);
+    }
+  });
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -69,15 +76,16 @@ export const useDragAndDrop = (): DragDropHandlers => {
     }
 
     if (imageFiles.length === 1) {
-      // Single image processing
+      // Single image processing with robust file reading
       const file = imageFiles[0];
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const imageUrl = event.target?.result as string;
-        console.log('Single image loaded for processing');
-        onSingleImage(imageUrl);
-      };
-      reader.readAsDataURL(file);
+      readAsDataURL(file)
+        .then((imageUrl) => {
+          console.log('Single image loaded for processing');
+          onSingleImage(imageUrl);
+        })
+        .catch((error) => {
+          console.error('❌ [DRAG DROP] Failed to read single image:', error);
+        });
     } else {
       // Multiple images - batch processing
       console.log(`Starting batch processing for ${imageFiles.length} images`);
@@ -88,7 +96,8 @@ export const useDragAndDrop = (): DragDropHandlers => {
   const resetDragState = useCallback(() => {
     dragCounter.current = 0;
     setIsDragOver(false);
-  }, []);
+    abort(); // Abort any ongoing file reading operations
+  }, [abort]);
 
   return {
     isDragOver,

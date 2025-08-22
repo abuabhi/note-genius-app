@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,6 +9,9 @@ import { useImageUpload } from "./hooks/useImageUpload";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
 import { useBatchProcessing } from "./hooks/useBatchProcessing";
 import { BatchProcessingView } from "./BatchProcessingView";
+import { useUploadPersistence } from '@/hooks/file/useUploadPersistence';
+import { useRouter } from '@/hooks/useRouter';
+import { UploadErrorBoundary } from '@/components/error/UploadErrorBoundary';
 
 import { PostSaveSuccessDialog } from "./PostSaveSuccessDialog";
 import { SingleImageCapture } from "./SingleImageCapture";
@@ -40,6 +43,14 @@ export const ScanWorkflow = ({
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [lastSaveResult, setLastSaveResult] = useState<{ count: number; mode: 'separate' | 'merged' }>({ count: 0, mode: 'separate' });
   
+  const router = useRouter();
+  const { 
+    saveUploadState, 
+    getPersistedUploadState, 
+    clearUploadState,
+    startAutoSave 
+  } = useUploadPersistence();
+  
   const { 
     capturedImage, 
     setCapturedImage, 
@@ -67,6 +78,33 @@ export const ScanWorkflow = ({
     uploadImageToStorage 
   });
 
+  // Try to recover state on mount
+  useEffect(() => {
+    const persistedState = getPersistedUploadState();
+    if (persistedState) {
+      console.log('🔄 [SCAN WORKFLOW] Recovering state:', persistedState);
+      
+      if (persistedState.capturedImage) {
+        handleImageCaptured(persistedState.capturedImage);
+      }
+      if (persistedState.recognizedText) {
+        setRecognizedText(persistedState.recognizedText);
+      }
+      if (persistedState.noteTitle) {
+        setNoteTitle(persistedState.noteTitle);
+      }
+      if (persistedState.noteSubject) {
+        setNoteSubject(persistedState.noteSubject);
+      }
+      if (persistedState.activeTab) {
+        setActiveTab(persistedState.activeTab);  
+      }
+      if (persistedState.processingMode) {
+        setProcessingMode(persistedState.processingMode);
+      }
+    }
+  }, [getPersistedUploadState, handleImageCaptured]);
+
   const resetForm = () => {
     setCapturedImage(null);
     setRecognizedText("");
@@ -77,11 +115,19 @@ export const ScanWorkflow = ({
     resetBatchProcessing();
     resetDragState();
     setShowSuccessDialog(false);
+    clearUploadState(); // Clear persisted state
   };
 
   const handleSingleImage = (imageUrl: string) => {
     console.log('Processing single image');
     handleImageCaptured(imageUrl);
+    
+    // Save state for persistence
+    saveUploadState({
+      activeTab,
+      capturedImage: imageUrl,
+      processingMode: 'single'
+    });
   };
 
   const handleMultipleImages = (files: File[]) => {
@@ -180,7 +226,9 @@ export const ScanWorkflow = ({
   };
 
   const handleViewNotes = () => {
-    window.location.href = '/notes';
+    // Use React Router navigation instead of hard navigation
+    router.push('/notes');
+    clearUploadState(); // Clear state after successful navigation
   };
 
   const handleScanMore = () => {
@@ -363,7 +411,7 @@ export const ScanWorkflow = ({
   };
 
   return (
-    <>
+    <UploadErrorBoundary onReset={resetForm}>
       {/* Render main content based on mode */}
       {renderMainContent()}
 
@@ -376,7 +424,7 @@ export const ScanWorkflow = ({
         onScanMore={handleScanMore}
         onViewNotes={handleViewNotes}
       />
-    </>
+    </UploadErrorBoundary>
   );
 };
 

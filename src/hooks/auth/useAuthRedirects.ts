@@ -30,6 +30,21 @@ export const useAuthRedirects = ({
   const publicPrefixes = ['/coupon/', '/auth/'];
   const isPublicRoute = exactPublicPaths.has(normalizedPath) || publicPrefixes.some(prefix => normalizedPath.startsWith(prefix));
   
+  // Check if user is in an active upload/OCR session (prevent redirects during file operations)
+  const isInUploadSession = () => {
+    try {
+      const uploadState = sessionStorage.getItem('ocrUploadState');
+      if (uploadState) {
+        const state = JSON.parse(uploadState);
+        const ageMinutes = (Date.now() - state.timestamp) / (1000 * 60);
+        return ageMinutes < 5; // Active if within last 5 minutes
+      }
+    } catch {
+      // Ignore errors
+    }
+    return false;
+  };
+  
   useEffect(() => {
     if (DEBUG_CONFIG.NAVIGATION_LOGGING) {
       console.log('🚦 [AUTH REDIRECTS] State:', { 
@@ -49,8 +64,8 @@ export const useAuthRedirects = ({
       return;
     }
     
-    // Redirect unauthenticated users to login (except for public routes)
-    if (!user && !isPublicRoute) {
+    // Redirect unauthenticated users to login (except for public routes or active upload sessions)
+    if (!user && !isPublicRoute && !isInUploadSession()) {
       if (DEBUG_CONFIG.NAVIGATION_LOGGING) {
         console.log('🚦 [AUTH REDIRECTS] Redirecting unauthenticated user to login');
       }
@@ -58,8 +73,8 @@ export const useAuthRedirects = ({
       return;
     }
     
-    // Handle authenticated user redirects
-    if (user && onboardingCompleted !== null) {
+    // Handle authenticated user redirects (but not during upload sessions)
+    if (user && onboardingCompleted !== null && !isInUploadSession()) {
       if (onboardingCompleted === false) {
         // Redirect to onboarding if not completed (except for public routes)
         if (!location.pathname.includes('/onboarding') && !isPublicRoute) {

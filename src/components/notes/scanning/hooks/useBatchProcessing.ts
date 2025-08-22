@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useFileReader } from '@/hooks/file/useFileReader';
 
 interface ProcessedImage {
   id: string;
@@ -21,6 +22,12 @@ interface BatchProcessingOptions {
 export const useBatchProcessing = ({ selectedLanguage, isPremiumUser, uploadImageToStorage }: BatchProcessingOptions) => {
   const [processedImages, setProcessedImages] = useState<ProcessedImage[]>([]);
   const [batchProgress, setBatchProgress] = useState(0);
+  
+  const { readAsDataURL } = useFileReader({
+    onError: (error) => {
+      console.error('❌ [BATCH PROCESSING] File read error:', error);
+    }
+  });
 
   const processBatchImages = async (files: File[]) => {
     const batchImages: ProcessedImage[] = files.map((file, index) => ({
@@ -51,13 +58,8 @@ export const useBatchProcessing = ({ selectedLanguage, isPremiumUser, uploadImag
             idx === imageIndex ? { ...img, status: 'processing' } : img
           ));
 
-          // Convert file to data URL first
-          const reader = new FileReader();
-          const dataUrl = await new Promise<string>((resolve, reject) => {
-            reader.onload = (event) => resolve(event.target?.result as string);
-            reader.onerror = () => reject(new Error('Failed to read file'));
-            reader.readAsDataURL(file);
-          });
+          // Convert file to data URL with robust error handling
+          const dataUrl = await readAsDataURL(file);
 
           console.log(`Processing image ${imageIndex + 1}: ${file.name}`);
 

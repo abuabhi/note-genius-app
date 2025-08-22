@@ -1,7 +1,8 @@
 
-import { useRef } from "react";
+import React, { useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Upload, FileText } from "lucide-react";
+import { useFileReader } from '@/hooks/file/useFileReader';
 
 interface ImageUploadProps {
   onImageUploaded: (imageUrl: string) => void;
@@ -22,7 +23,13 @@ export const ImageUpload = ({
   onDragLeave,
   onDrop
 }: ImageUploadProps) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  const { readAsDataURL } = useFileReader({
+    onError: (error) => {
+      console.error('❌ [IMAGE UPLOAD] File read error:', error);
+    }
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -34,25 +41,26 @@ export const ImageUpload = ({
 
     if (imageFiles.length === 1) {
       const file = imageFiles[0];
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const imageUrl = event.target?.result as string;
-        console.log('Single image loaded from file input');
-        onImageUploaded(imageUrl);
-      };
-      reader.readAsDataURL(file);
+      readAsDataURL(file)
+        .then((imageUrl) => {
+          console.log('Single image loaded from file input');
+          onImageUploaded(imageUrl);
+        })
+        .catch((error) => {
+          console.error('❌ [IMAGE UPLOAD] Failed to read file:', error);
+        });
     } else if (onMultipleImagesUploaded) {
       console.log(`Starting batch processing for ${imageFiles.length} selected images`);
       onMultipleImagesUploaded(imageFiles);
     }
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    if (inputRef.current) {
+      inputRef.current.value = '';
     }
   };
 
   const handleCardClick = () => {
-    fileInputRef.current?.click();
+    inputRef.current?.click();
   };
 
   return (
@@ -106,7 +114,7 @@ export const ImageUpload = ({
       
       <input
         type="file"
-        ref={fileInputRef}
+        ref={inputRef}
         accept="image/*"
         multiple
         onChange={handleFileChange}
