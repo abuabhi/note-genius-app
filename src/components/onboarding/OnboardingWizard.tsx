@@ -196,7 +196,7 @@ export const OnboardingWizard = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-16rem)] flex flex-col justify-center py-12 px-6 sm:px-6 lg:px-8 bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
+    <div className="flex flex-col justify-center py-12 px-6 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
         <WizardProgress currentStep={currentStep} totalSteps={totalSteps} />
         

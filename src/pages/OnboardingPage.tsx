@@ -28,18 +28,14 @@ const OnboardingPage = () => {
     console.log('📋 [ONBOARDING PAGE] Showing loading state');
     return (
       <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-          <LoadingState message="Setting up your account..." />
-        </div>
+        <LoadingState message="Setting up your account..." />
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-        <OnboardingWizard />
-      </div>
+      <OnboardingWizard />
     </Layout>
   );
 };
