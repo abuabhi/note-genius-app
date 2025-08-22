@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,12 +9,13 @@ import { useConvertStudyPlanToGoal } from '@/hooks/useConvertStudyPlanToGoal';
 import { useStudyPlannerAnalytics } from '@/hooks/useStudyPlannerAnalytics';
 import { useStudyPlanActions } from '@/hooks/useStudyPlanActions';
 import { useDeleteStudyPlan } from '@/hooks/useDeleteStudyPlan';
-import { Play, Settings, Target, Calendar, Clock, BookOpen, TrendingUp, Hash, AlertTriangle, RotateCcw, CheckCircle, Trash2 } from 'lucide-react';
+import { Play, Calendar, Clock, BookOpen, TrendingUp, Hash, AlertTriangle, RotateCcw, CheckCircle } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
 import { SessionSettingsDialog } from './SessionSettingsDialog';
 import { UnifiedDeleteDialog } from '@/components/ui/unified/UnifiedDeleteDialog';
 import { ManualStudyTimeForm } from './ManualStudyTimeForm';
+import { StudyPlanActionsMenu } from './StudyPlanActionsMenu';
 
 interface StudyPlanCardProps {
   studyPlan: StudyPlan;
@@ -29,6 +30,7 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
   const [showGoalDialog, setShowGoalDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const manualStudyTriggerRef = useRef<HTMLButtonElement>(null);
   
   const isActive = isStudyPlanActive(studyPlan.id);
   const daysLeft = differenceInDays(new Date(studyPlan.end_date), new Date());
@@ -250,7 +252,7 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
             </div>
           ) : (
             // Normal plan actions
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
               <Button
                 onClick={handleStartSession}
                 disabled={isActive}
@@ -260,49 +262,15 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
                 {isActive ? 'Active Session' : 'Start Online Session'}
               </Button>
               
-              {/* Add Manual Study Time Button */}
-              <ManualStudyTimeForm 
+              <StudyPlanActionsMenu
                 studyPlan={studyPlan}
-                trigger={
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 rounded-lg h-8 px-3 gap-1.5"
-                  >
-                    <Clock className="h-3 w-3" />
-                    Add Offline
-                  </Button>
-                }
+                isConverting={isConverting}
+                isDeleting={isDeleting}
+                onAddOfflineStudy={() => manualStudyTriggerRef.current?.click()}
+                onConvertToGoal={() => setShowGoalDialog(true)}
+                onSettings={() => setShowSettingsDialog(true)}
+                onDelete={() => setShowDeleteDialog(true)}
               />
-              
-              <Button
-                onClick={() => setShowGoalDialog(true)}
-                variant="outline"
-                size="sm"
-                disabled={isConverting || studyPlan.is_converted_to_goals}
-                className="border-mint-200 text-mint-700 hover:bg-gradient-to-r hover:from-mint-50 hover:to-mint-100 hover:border-mint-300 transition-all duration-200 rounded-lg h-8 w-8 p-0"
-              >
-                <Target className="h-3 w-3" />
-              </Button>
-              
-              <Button
-                onClick={() => setShowSettingsDialog(true)}
-                variant="outline"
-                size="sm"
-                className="border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 rounded-lg h-8 w-8 p-0"
-              >
-                <Settings className="h-3 w-3" />
-              </Button>
-              
-              <Button
-                onClick={() => setShowDeleteDialog(true)}
-                variant="outline"
-                size="sm"
-                disabled={isDeleting}
-                className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all duration-200 rounded-lg h-8 w-8 p-0"
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
             </div>
           )}
         </CardContent>
@@ -331,6 +299,16 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
         open={showSettingsDialog}
         onOpenChange={setShowSettingsDialog}
         studyPlan={studyPlan}
+      />
+
+      {/* Manual Study Time Form */}
+      <ManualStudyTimeForm 
+        studyPlan={studyPlan}
+        trigger={
+          <Button ref={manualStudyTriggerRef} className="hidden">
+            Add Offline Study
+          </Button>
+        }
       />
 
       {/* Delete Confirmation Dialog */}
