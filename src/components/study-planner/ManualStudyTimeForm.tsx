@@ -28,6 +28,7 @@ interface ManualStudyFormData {
   duration: number; // in minutes
   date: Date;
   subject: string;
+  topic: string;
   notes: string;
 }
 
@@ -42,10 +43,11 @@ export const ManualStudyTimeForm: React.FC<ManualStudyTimeFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ManualStudyFormData>({
     studyPlanId: studyPlan?.id || '',
-    title: '',
+    title: studyPlan?.title || '',
     duration: 0,
     date: new Date(),
     subject: studyPlan?.subject || '',
+    topic: '',
     notes: ''
   });
 
@@ -56,7 +58,7 @@ export const ManualStudyTimeForm: React.FC<ManualStudyTimeFormProps> = ({
       return;
     }
 
-    if (!formData.studyPlanId || !formData.title || formData.duration <= 0) {
+    if (!formData.studyPlanId || formData.duration <= 0) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -67,7 +69,7 @@ export const ManualStudyTimeForm: React.FC<ManualStudyTimeFormProps> = ({
       const sessionData = {
         user_id: user.id,
         study_plan_id: formData.studyPlanId,
-        title: formData.title,
+        title: `${formData.title}${formData.topic ? ` - ${formData.topic}` : ''}`,
         subject: formData.subject,
         start_time: new Date(formData.date).toISOString(),
         end_time: new Date(new Date(formData.date).getTime() + formData.duration * 60000).toISOString(),
@@ -102,15 +104,16 @@ export const ManualStudyTimeForm: React.FC<ManualStudyTimeFormProps> = ({
         }
       });
 
-      toast.success(`Added ${formData.duration} minutes of offline study time to ${formData.title}`);
+      toast.success(`Added ${formData.duration} minutes of offline study time to ${studyPlan?.title}`);
       
       // Reset form
       setFormData({
         studyPlanId: studyPlan?.id || '',
-        title: '',
+        title: studyPlan?.title || '',
         duration: 0,
         date: new Date(),
         subject: studyPlan?.subject || '',
+        topic: '',
         notes: ''
       });
       
@@ -143,82 +146,112 @@ export const ManualStudyTimeForm: React.FC<ManualStudyTimeFormProps> = ({
             <Clock className="h-5 w-5" />
             Add Offline Study Time
           </DialogTitle>
+          {studyPlan && (
+            <p className="text-sm text-muted-foreground">
+              Adding to study plan: <span className="font-medium">{studyPlan.title}</span>
+            </p>
+          )}
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Session Title *</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="e.g., Mathematics Review"
-              required
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Auto-populated fields from study plan */}
+          <div className="space-y-4 p-3 bg-muted/30 rounded-lg border">
+            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              From Study Plan
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Session Title</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  disabled
+                  className="bg-muted/50 text-muted-foreground cursor-not-allowed"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="subject">Subject</Label>
+                <Input
+                  id="subject"
+                  value={formData.subject}
+                  disabled
+                  className="bg-muted/50 text-muted-foreground cursor-not-allowed"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Editable fields */}
+          <div className="space-y-4">
+            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Study Session Details
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="duration">Duration (minutes) *</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  min="1"
+                  max="720"
+                  value={formData.duration || ''}
+                  onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 0 })}
+                  placeholder="60"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Study Date *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.date ? format(formData.date, "MMM dd, yyyy") : "Select date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.date}
+                      onSelect={(date) => date && setFormData({ ...formData, date })}
+                      disabled={(date) => date > new Date() || date < new Date("2020-01-01")}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="duration">Duration (minutes) *</Label>
+              <Label htmlFor="topic">Topic (Optional)</Label>
               <Input
-                id="duration"
-                type="number"
-                min="1"
-                max="720"
-                value={formData.duration || ''}
-                onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 0 })}
-                placeholder="60"
-                required
+                id="topic"
+                value={formData.topic}
+                onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+                placeholder="e.g., Algebra equations, Essay writing, etc."
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Study Date *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.date ? format(formData.date, "MMM dd, yyyy") : "Select date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={formData.date}
-                    onSelect={(date) => date && setFormData({ ...formData, date })}
-                    disabled={(date) => date > new Date() || date < new Date("2020-01-01")}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Add any notes about your offline study session..."
+                rows={3}
+              />
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="subject">Subject</Label>
-            <Input
-              id="subject"
-              value={formData.subject}
-              onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-              placeholder="Enter subject"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes (Optional)</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Add any notes about your offline study session..."
-              rows={3}
-            />
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
