@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { getFallbackSubjectAnalytics } from '@/utils/subjectAnalyticsUtils';
+import { standardizeSubjectName, hasValidLearningActivity } from '@/utils/subjectStandardization';
 
 interface SubjectAnalytics {
   id: string;
@@ -89,9 +90,10 @@ export const useSaaSOptimizedSubjectAnalytics = () => {
         flashcardSets?.forEach(set => {
           if (!set.subject) return;
           
-          const subject = subjectMap.get(set.subject) || {
-            id: set.subject,
-            name: set.subject,
+          const standardizedSubject = standardizeSubjectName(set.subject, 'flashcard');
+          const subject = subjectMap.get(standardizedSubject) || {
+            id: standardizedSubject,
+            name: standardizedSubject,
             completionPercentage: 0,
             totalStudyTimeMinutes: 0,
             sessionCount: 0,
@@ -107,16 +109,18 @@ export const useSaaSOptimizedSubjectAnalytics = () => {
             subject.completionPercentage = Math.max(subject.completionPercentage, flashcardProgress);
           }
           
-          subjectMap.set(set.subject, subject);
+          subjectMap.set(standardizedSubject, subject);
         });
 
         // Process quizzes and their results
         quizzes?.forEach(quiz => {
           if (!quiz.title) return;
           
-          const subject = subjectMap.get(quiz.title) || {
-            id: quiz.title,
-            name: quiz.title,
+          // Extract subject from quiz title instead of using title as subject
+          const standardizedSubject = standardizeSubjectName(quiz.title, 'quiz');
+          const subject = subjectMap.get(standardizedSubject) || {
+            id: standardizedSubject,
+            name: standardizedSubject,
             completionPercentage: 0,
             totalStudyTimeMinutes: 0,
             sessionCount: 0,
@@ -131,16 +135,17 @@ export const useSaaSOptimizedSubjectAnalytics = () => {
             subject.completionPercentage = Math.max(subject.completionPercentage, quizProgress);
           }
           
-          subjectMap.set(quiz.title, subject);
+          subjectMap.set(standardizedSubject, subject);
         });
 
         // Process study sessions
         studySessions?.forEach(session => {
           if (!session.subject) return;
           
-          const subject = subjectMap.get(session.subject) || {
-            id: session.subject,
-            name: session.subject,
+          const standardizedSubject = standardizeSubjectName(session.subject, 'session');
+          const subject = subjectMap.get(standardizedSubject) || {
+            id: standardizedSubject,
+            name: standardizedSubject,
             completionPercentage: 0,
             totalStudyTimeMinutes: 0,
             sessionCount: 0,
@@ -152,16 +157,17 @@ export const useSaaSOptimizedSubjectAnalytics = () => {
             subject.totalStudyTimeMinutes += Math.floor(session.duration / 60);
           }
           
-          subjectMap.set(session.subject, subject);
+          subjectMap.set(standardizedSubject, subject);
         });
 
         // Process study plans
         studyPlans?.forEach(plan => {
           if (!plan.subject) return;
           
-          const subject = subjectMap.get(plan.subject) || {
-            id: plan.subject,
-            name: plan.subject,
+          const standardizedSubject = standardizeSubjectName(plan.subject, 'plan');
+          const subject = subjectMap.get(standardizedSubject) || {
+            id: standardizedSubject,
+            name: standardizedSubject,
             completionPercentage: 0,
             totalStudyTimeMinutes: 0,
             sessionCount: 0,
@@ -173,11 +179,11 @@ export const useSaaSOptimizedSubjectAnalytics = () => {
             subject.completionPercentage = Math.max(subject.completionPercentage, 25);
           }
           
-          subjectMap.set(plan.subject, subject);
+          subjectMap.set(standardizedSubject, subject);
         });
 
-        // Calculate overall stats
-        const subjects = Array.from(subjectMap.values());
+        // Calculate overall stats - only include subjects with valid learning activity
+        const subjects = Array.from(subjectMap.values()).filter(hasValidLearningActivity);
         // Fix: Only sum completed sessions for total time
         const totalStudyTime = studySessions?.filter(session => 
           !session.is_active && session.duration && session.duration > 0

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useSaaSOptimizedSubjectAnalytics } from "@/hooks/useSaaSOptimizedSubjectAnalytics";
 import { Clock, Calendar, Trophy, TrendingUp, BookOpen } from "lucide-react";
+import { getStudyStatusMessage } from "@/utils/subjectStandardization";
 
 export const SubjectProgressDashboard = () => {
   const { subjectAnalytics, isLoading } = useSaaSOptimizedSubjectAnalytics();
@@ -129,28 +130,37 @@ export const SubjectProgressDashboard = () => {
                 </CardContent>
               </Card>
             ) : (
-              subjectAnalytics.subjects.map((subject) => (
-                <Card key={subject.id} className="bg-white border-gray-200 hover:shadow-sm transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-gray-900">{subject.name}</h3>
-                      <span className="text-sm text-gray-600">
-                        {subject.completionPercentage}%
-                      </span>
-                    </div>
-                    <div className="mb-2">
-                      <Progress 
-                        value={subject.completionPercentage} 
-                        className="h-2"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span>{formatTime(subject.totalStudyTimeMinutes)} studied</span>
-                      <span>{subject.sessionCount} sessions</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+              subjectAnalytics.subjects.map((subject) => {
+                const studyStatus = getStudyStatusMessage(subject);
+                return (
+                  <Card key={subject.id} className="bg-white border-gray-200 hover:shadow-sm transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">{subject.name}</h3>
+                        <span className="text-sm text-gray-600">
+                          {subject.completionPercentage}%
+                        </span>
+                      </div>
+                      <div className="mb-2">
+                        <Progress 
+                          value={subject.completionPercentage} 
+                          className="h-2"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-sm text-gray-600">
+                        {studyStatus.hasActivity ? (
+                          <>
+                            <span>{formatTime(subject.totalStudyTimeMinutes)} studied</span>
+                            <span>{subject.sessionCount} sessions</span>
+                          </>
+                        ) : (
+                          <span className="text-xs text-amber-600 italic">{studyStatus.message}</span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </div>
         </div>
