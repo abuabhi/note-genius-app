@@ -6,8 +6,8 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30 * 1000, // 30 seconds - more responsive for navigation
-      gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache longer for better UX
+      staleTime: 5 * 60 * 1000, // 5 minutes - prevent excessive refetches on analytics page
+      gcTime: 15 * 60 * 1000, // 15 minutes - longer cache for stable analytics data
       retry: (failureCount, error) => {
         // Don't retry on authentication errors
         if (error?.message?.includes('auth') || error?.message?.includes('unauthorized')) {
@@ -17,8 +17,9 @@ const queryClient = new QueryClient({
         return failureCount < 2;
       },
       retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
-      refetchOnWindowFocus: false, // Don't refetch on window focus for better performance
+      refetchOnWindowFocus: false, // Critical: Prevent focus-triggered refetches
       refetchOnReconnect: true, // Do refetch when connection is restored
+      refetchInterval: false, // Disable automatic interval refetching
     },
     mutations: {
       retry: 1, // Retry mutations once

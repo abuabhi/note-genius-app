@@ -9,7 +9,7 @@ export const useTimezoneAwareAnalytics = () => {
   const { timezone, isLoading: timezoneLoading } = useTimezone();
   const { userProfile } = useRequireAuth();
 
-  // Removed frequent console logging to improve performance
+  // Console logging removed for production performance
 
   // Get today's date in user's timezone for filtering
   const todayString = useMemo(() => {

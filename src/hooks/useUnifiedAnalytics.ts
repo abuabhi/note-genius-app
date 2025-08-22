@@ -49,8 +49,8 @@ export const useUnifiedAnalytics = () => {
       return data || [];
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes - reduced frequent refetching to prevent timer conflicts
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes - longer cache for stable analytics data
     refetchOnWindowFocus: false, // Prevent refetch on focus that could cause flickering
   });
 
@@ -69,8 +69,8 @@ export const useUnifiedAnalytics = () => {
       return data || [];
     },
     enabled: !!user,
-    staleTime: 10 * 60 * 1000, // 10 minutes - flashcard sets don't change frequently
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes - flashcard sets change infrequently
     refetchOnWindowFocus: false,
   });
 
@@ -89,8 +89,8 @@ export const useUnifiedAnalytics = () => {
       return data || [];
     },
     enabled: !!user,
-    staleTime: 10 * 60 * 1000, // 10 minutes - progress doesn't change rapidly
-    gcTime: 30 * 60 * 1000, // 30 minutes  
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes - progress changes infrequently
     refetchOnWindowFocus: false,
   });
 

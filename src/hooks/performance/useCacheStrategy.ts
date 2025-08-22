@@ -70,7 +70,7 @@ export const useCacheStrategy = () => {
       }
     });
     
-    console.log('🧹 Cleaned up stale queries');
+    // Removed console log for production performance
   }, [queryClient]);
 
   // Prefetch strategy for better UX
@@ -116,12 +116,8 @@ export const useCacheStrategy = () => {
     const interval = setInterval(() => {
       const metrics = getCacheMetrics();
       
-      // Log cache health (in production, send to monitoring service)
-      console.log('📊 Cache Health:', metrics);
-      
-      // Auto-cleanup if cache gets too large
+      // Auto-cleanup if cache gets too large (removed console logs for performance)
       if (metrics.cacheSize > 10 * 1024 * 1024) { // 10MB
-        console.log('🔧 Cache size exceeded threshold, cleaning up...');
         cleanupStaleQueries();
       }
     }, 60000); // Every minute

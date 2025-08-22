@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { logger } from '@/config/environment';
-import { useTabVisibility } from './useTabVisibility';
+import { useStableTabVisibility } from './useStableTabVisibility';
 
 interface ConsolidatedMetrics {
   memoryUsage: number;
@@ -38,7 +38,7 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 
 export const useOptimizedPerformanceMonitor = (enabled = true) => {
   const queryClient = useQueryClient();
-  const isTabVisible = useTabVisibility();
+  const isTabVisible = useStableTabVisibility(1000); // 1 second debounce for performance
   const [metrics, setMetrics] = useState<ConsolidatedMetrics>({
     memoryUsage: 0,
     queryCount: 0,

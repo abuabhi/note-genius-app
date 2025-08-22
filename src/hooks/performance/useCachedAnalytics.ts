@@ -21,7 +21,7 @@ export const useCachedAnalytics = () => {
     queryFn: async (): Promise<AnalyticsData | null> => {
       if (!user) return null;
       
-      console.log('📊 Fetching analytics data...');
+      // Removed console log for production performance
       
       // Simulate API call - replace with actual analytics fetching
       const mockAnalytics: AnalyticsData = {
@@ -37,8 +37,9 @@ export const useCachedAnalytics = () => {
     },
     enabled: !!user,
     ...cacheConfigs.user,
-    // Use stale-while-revalidate for analytics
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    // Prevent unnecessary refetches on focus changes
+    refetchOnWindowFocus: false,
+    refetchInterval: false, // Disable automatic polling
   });
 
   // Prefetch related data
