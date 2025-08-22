@@ -14,7 +14,6 @@ interface StudyPlanActionsMenuProps {
   studyPlan: StudyPlan;
   isConverting: boolean;
   isDeleting: boolean;
-  onAddOfflineStudy: () => void;
   onConvertToGoal: () => void;
   onSettings: () => void;
   onDelete: () => void;
@@ -24,7 +23,6 @@ export const StudyPlanActionsMenu = ({
   studyPlan,
   isConverting,
   isDeleting,
-  onAddOfflineStudy,
   onConvertToGoal,
   onSettings,
   onDelete
@@ -42,17 +40,6 @@ export const StudyPlanActionsMenu = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 bg-background shadow-xl border-gray-200/60 z-50">
-        <DropdownMenuItem
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddOfflineStudy();
-          }}
-          className="cursor-pointer hover:bg-blue-50 hover:text-blue-700"
-        >
-          <Clock className="h-4 w-4 mr-3 text-blue-600" />
-          Add Offline Study Time
-        </DropdownMenuItem>
-        
         <DropdownMenuItem
           onClick={(e) => {
             e.stopPropagation();

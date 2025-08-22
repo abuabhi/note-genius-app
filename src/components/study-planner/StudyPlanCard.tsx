@@ -7,6 +7,7 @@ import { StudyPlan } from '@/types/studyPlanner';
 import { useStudyPlanSession } from '@/hooks/useStudyPlanSession';
 import { useConvertStudyPlanToGoal } from '@/hooks/useConvertStudyPlanToGoal';
 import { useStudyPlannerAnalytics } from '@/hooks/useStudyPlannerAnalytics';
+import { useStudyPlanProgress } from '@/hooks/useStudyPlanProgress';
 import { useStudyPlanActions } from '@/hooks/useStudyPlanActions';
 import { useDeleteStudyPlan } from '@/hooks/useDeleteStudyPlan';
 import { Play, Calendar, Clock, BookOpen, TrendingUp, Hash, AlertTriangle, RotateCcw, CheckCircle } from 'lucide-react';
@@ -25,6 +26,7 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
   const { startStudyPlanSession, isStudyPlanActive } = useStudyPlanSession();
   const { convertToGoal, isLoading: isConverting } = useConvertStudyPlanToGoal();
   const { analytics } = useStudyPlannerAnalytics(studyPlan.id); // Get plan-specific analytics
+  const { data: progress } = useStudyPlanProgress(studyPlan.id);
   const { extendPlan, completePlan, isExtending, isCompleting } = useStudyPlanActions();
   const { deleteStudyPlan, isLoading: isDeleting } = useDeleteStudyPlan();
   const [showGoalDialog, setShowGoalDialog] = useState(false);
@@ -96,6 +98,18 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
   return (
     <>
       <Card className={getCardStyling()}>
+        {/* Three Dots Menu - Top Right Corner */}
+        <div className="absolute top-3 right-3 z-10">
+          <StudyPlanActionsMenu
+            studyPlan={studyPlan}
+            isConverting={isConverting}
+            isDeleting={isDeleting}
+            onConvertToGoal={() => setShowGoalDialog(true)}
+            onSettings={() => setShowSettingsDialog(true)}
+            onDelete={() => setShowDeleteDialog(true)}
+          />
+        </div>
+
         {/* Gradient overlay for depth */}
         <div className={`absolute inset-0 bg-gradient-to-br ${
           isOverdue 
@@ -105,7 +119,7 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
             : 'from-white/80 via-transparent to-mint-50/20'
         } pointer-events-none`} />
         
-        <CardContent className="relative p-5 space-y-4">
+        <CardContent className="relative p-5 space-y-4 pr-12">
           {/* Header Section */}
           <div className="flex items-start gap-3 min-w-0">
             <div className="flex-1 min-w-0 space-y-3">
@@ -180,12 +194,12 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
           <div className="space-y-2 p-3 bg-gradient-to-r from-mint-50/80 to-blue-50/50 rounded-lg border border-mint-100/50">
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-mint-800">Progress</span>
-              <span className="text-sm font-bold text-mint-900">{studyPlan.completion_percentage}%</span>
+              <span className="text-sm font-bold text-mint-900">{progress?.completionPercentage || 0}%</span>
             </div>
             <div className="w-full bg-mint-100 rounded-full h-2.5 overflow-hidden">
               <div 
                 className="bg-gradient-to-r from-mint-500 to-mint-600 h-2.5 rounded-full transition-all duration-500 shadow-sm"
-                style={{ width: `${studyPlan.completion_percentage}%` }}
+                style={{ width: `${progress?.completionPercentage || 0}%` }}
               />
             </div>
           </div>
@@ -202,11 +216,11 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
               <div className="flex items-center gap-4">
                 <span className="text-green-600">
                   <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                  Online: {formatTime(analytics.totalSessionTime)} {/* Placeholder for now */}
+                  Online: {formatTime(progress?.onlineSessionTime || 0)}
                 </span>
                 <span className="text-blue-600">
                   <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
-                  Offline: 0m {/* Placeholder for now */}
+                  Offline: {formatTime(progress?.offlineSessionTime || 0)}
                 </span>
               </div>
             </div>
@@ -246,31 +260,44 @@ export const StudyPlanCard = ({ studyPlan }: StudyPlanCardProps) => {
                   {isCompleting ? 'Completing...' : 'Mark Complete'}
                 </Button>
               </div>
+              
+              {/* Add Offline Study Time Button - Always visible */}
+              <Button
+                onClick={() => manualStudyTriggerRef.current?.click()}
+                variant="outline"
+                className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 px-3 py-2 h-8 text-xs font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+              >
+                <Clock className="h-3 w-3 mr-1.5" />
+                Add Offline Study Time
+              </Button>
+              
               <div className="text-xs text-red-600 text-center bg-red-50 py-1 px-2 rounded border border-red-200">
                 This plan is overdue. Extend the deadline or mark it as complete.
               </div>
             </div>
           ) : (
             // Normal plan actions
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={handleStartSession}
-                disabled={isActive}
-                className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white px-4 py-2 h-8 text-xs font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex-1"
-              >
-                <Play className="h-3 w-3 mr-1.5" />
-                {isActive ? 'Active Session' : 'Start Online Session'}
-              </Button>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleStartSession}
+                  disabled={isActive}
+                  className="bg-gradient-to-r from-mint-600 to-mint-700 hover:from-mint-700 hover:to-mint-800 text-white px-4 py-2 h-8 text-xs font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex-1"
+                >
+                  <Play className="h-3 w-3 mr-1.5" />
+                  {isActive ? 'Active Session' : 'Start Online Session'}
+                </Button>
+              </div>
               
-              <StudyPlanActionsMenu
-                studyPlan={studyPlan}
-                isConverting={isConverting}
-                isDeleting={isDeleting}
-                onAddOfflineStudy={() => manualStudyTriggerRef.current?.click()}
-                onConvertToGoal={() => setShowGoalDialog(true)}
-                onSettings={() => setShowSettingsDialog(true)}
-                onDelete={() => setShowDeleteDialog(true)}
-              />
+              {/* Add Offline Study Time Button - Always visible */}
+              <Button
+                onClick={() => manualStudyTriggerRef.current?.click()}
+                variant="outline"
+                className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 px-3 py-2 h-8 text-xs font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+              >
+                <Clock className="h-3 w-3 mr-1.5" />
+                Add Offline Study Time
+              </Button>
             </div>
           )}
         </CardContent>
