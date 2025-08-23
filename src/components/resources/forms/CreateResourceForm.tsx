@@ -3,14 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Resource, ResourceFormData, DifficultyLevel } from '@/types/resource';
+import { Resource, ResourceFormData, DifficultyLevel, ResourceType } from '@/types/resource';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { extractMetadataFromUrl, validateUrl } from '@/components/resources/utils/metadataExtractor';
-import { getResourceTypeInfo, getResourceTypeLabel } from '@/components/resources/utils/resourceTypes';
+import { getResourceTypeInfo, getResourceTypeLabel, RESOURCE_TYPES } from '@/components/resources/utils/resourceTypes';
 import { toast } from 'sonner';
-import { Loader2, Link2, AlertCircle } from 'lucide-react';
+import { Loader2, Link2, AlertCircle, Youtube, FileText, Globe, GraduationCap, Presentation, Book, BookOpen, Calculator, Calendar, ClipboardList, CheckSquare } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface CreateResourceFormProps {
@@ -25,6 +25,22 @@ const DIFFICULTY_OPTIONS: { value: DifficultyLevel; label: string }[] = [
   { value: 'expert', label: 'Expert' },
 ];
 
+const RESOURCE_TYPE_ICONS: Record<ResourceType, React.ComponentType<any>> = {
+  youtube: Youtube,
+  article: FileText,
+  pdf: FileText,
+  website: Globe,
+  research_paper: GraduationCap,
+  lecture: Presentation,
+  textbook: Book,
+  reference: BookOpen,
+  dictionary: BookOpen,
+  calculator: Calculator,
+  syllabus: Calendar,
+  assignment: ClipboardList,
+  rubric: CheckSquare,
+};
+
 export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormProps) => {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
@@ -35,7 +51,8 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
   const [tags, setTags] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
-  const [detectedType, setDetectedType] = useState('');
+  const [detectedType, setDetectedType] = useState<ResourceType | ''>('');
+  const [selectedResourceType, setSelectedResourceType] = useState<ResourceType | ''>('');
   const [urlError, setUrlError] = useState('');
   
   const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
@@ -53,6 +70,7 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
       setDifficulty((initialData.difficulty_level as DifficultyLevel) || '');
       setTags(initialData.tags?.join(', ') || '');
       setDetectedType(initialData.resource_type || '');
+      setSelectedResourceType(initialData.resource_type || '');
     }
   }, [initialData, userSubjects]);
 
@@ -89,6 +107,10 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
         }
         
         setDetectedType(metadata.resource_type);
+        // Auto-select the detected type if no manual selection has been made
+        if (!selectedResourceType) {
+          setSelectedResourceType(metadata.resource_type);
+        }
       } catch (error) {
         console.error('Error extracting metadata:', error);
       } finally {
@@ -131,6 +153,7 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
         url: url.trim(),
         title: title.trim(),
         description: description.trim() || undefined,
+        resource_type: selectedResourceType || detectedType || 'website',
         author: author.trim() || undefined,
         subject_id: selectedSubjectObj?.id,
         difficulty_level: difficulty || undefined,
@@ -150,6 +173,7 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
         setDifficulty('');
         setTags('');
         setDetectedType('');
+        setSelectedResourceType('');
       }
     } catch (error) {
       console.error('Error saving resource:', error);
@@ -187,10 +211,57 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
           <div className="mt-2 flex items-center gap-2">
             <Link2 className="h-4 w-4 text-muted-foreground" />
             <Badge variant="outline" className="text-xs">
-              {getResourceTypeLabel(detectedType as any)} detected
+              {getResourceTypeLabel(detectedType as ResourceType)} auto-detected
             </Badge>
           </div>
         )}
+      </div>
+
+      <div>
+        <Label htmlFor="resource-type">Resource Type</Label>
+        <Select 
+          value={selectedResourceType} 
+          onValueChange={(value) => setSelectedResourceType(value as ResourceType)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select resource type...">
+              {selectedResourceType && (
+                <div className="flex items-center gap-2">
+                  {React.createElement(RESOURCE_TYPE_ICONS[selectedResourceType], { className: "h-4 w-4" })}
+                  <span>{getResourceTypeLabel(selectedResourceType)}</span>
+                  {detectedType && detectedType === selectedResourceType && (
+                    <Badge variant="outline" className="text-xs ml-auto">Auto-detected</Badge>
+                  )}
+                </div>
+              )}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="max-h-64">
+            {RESOURCE_TYPES.map(resourceType => {
+              const Icon = RESOURCE_TYPE_ICONS[resourceType.type];
+              const isDetected = detectedType === resourceType.type;
+              return (
+                <SelectItem key={resourceType.type} value={resourceType.type}>
+                  <div className="flex items-center gap-2 w-full">
+                    <Icon className="h-4 w-4" />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{resourceType.label}</span>
+                        {isDetected && (
+                          <Badge variant="outline" className="text-xs">Detected</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{resourceType.description}</p>
+                    </div>
+                  </div>
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground mt-1">
+          Resource type is auto-detected from URL, but you can override it manually
+        </p>
       </div>
 
       <div>
