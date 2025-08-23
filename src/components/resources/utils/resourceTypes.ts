@@ -2,7 +2,7 @@ import { ResourceType, ResourceTypeInfo } from '@/types/resource';
 
 export const RESOURCE_TYPES: ResourceTypeInfo[] = [
   {
-    type: 'youtube',
+    type: 'youtube_video',
     label: 'YouTube Video',
     icon: 'Youtube',
     description: 'Educational videos and tutorials',
@@ -16,7 +16,7 @@ export const RESOURCE_TYPES: ResourceTypeInfo[] = [
     urlPatterns: [/medium\.com/, /dev\.to/, /blog/, /article/]
   },
   {
-    type: 'pdf',
+    type: 'pdf_document',
     label: 'PDF Document',
     icon: 'FileText',
     description: 'PDF files and documents',
@@ -37,8 +37,8 @@ export const RESOURCE_TYPES: ResourceTypeInfo[] = [
     urlPatterns: [/arxiv\.org/, /scholar\.google/, /researchgate/, /\.edu/]
   },
   {
-    type: 'lecture',
-    label: 'Lecture',
+    type: 'lecture_recording',
+    label: 'Lecture Recording',
     icon: 'Presentation',
     description: 'Recorded lectures and presentations',
     urlPatterns: [/lecture/, /presentation/]
@@ -51,8 +51,8 @@ export const RESOURCE_TYPES: ResourceTypeInfo[] = [
     urlPatterns: [/textbook/, /ebook/]
   },
   {
-    type: 'reference',
-    label: 'Reference Material',
+    type: 'reference_site',
+    label: 'Reference Site',
     icon: 'BookOpen',
     description: 'Reference guides and documentation',
     urlPatterns: [/reference/, /guide/, /docs/, /documentation/]
@@ -79,8 +79,8 @@ export const RESOURCE_TYPES: ResourceTypeInfo[] = [
     urlPatterns: [/syllabus/, /curriculum/, /course/]
   },
   {
-    type: 'assignment',
-    label: 'Assignment',
+    type: 'assignment_sheet',
+    label: 'Assignment Sheet',
     icon: 'ClipboardList',
     description: 'Assignments and exercises',
     urlPatterns: [/assignment/, /homework/, /exercise/]

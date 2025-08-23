@@ -22,22 +22,21 @@ const DIFFICULTY_OPTIONS: { value: DifficultyLevel; label: string }[] = [
   { value: 'beginner', label: 'Beginner' },
   { value: 'intermediate', label: 'Intermediate' },
   { value: 'advanced', label: 'Advanced' },
-  { value: 'expert', label: 'Expert' },
 ];
 
 const RESOURCE_TYPE_ICONS: Record<ResourceType, React.ComponentType<any>> = {
-  youtube: Youtube,
+  youtube_video: Youtube,
   article: FileText,
-  pdf: FileText,
+  pdf_document: FileText,
   website: Globe,
   research_paper: GraduationCap,
-  lecture: Presentation,
+  lecture_recording: Presentation,
   textbook: Book,
-  reference: BookOpen,
+  reference_site: BookOpen,
   dictionary: BookOpen,
   calculator: Calculator,
   syllabus: Calendar,
-  assignment: ClipboardList,
+  assignment_sheet: ClipboardList,
   rubric: CheckSquare,
 };
 
@@ -50,8 +49,6 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
   const [difficulty, setDifficulty] = useState<DifficultyLevel | ''>('');
   const [tags, setTags] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [detectedType, setDetectedType] = useState<ResourceType | ''>('');
   const [selectedResourceType, setSelectedResourceType] = useState<ResourceType | ''>('');
   const [urlError, setUrlError] = useState('');
   
@@ -69,53 +66,18 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
       setSelectedSubject(subjectFromData?.name || '');
       setDifficulty((initialData.difficulty_level as DifficultyLevel) || '');
       setTags(initialData.tags?.join(', ') || '');
-      setDetectedType(initialData.resource_type || '');
       setSelectedResourceType(initialData.resource_type || '');
     }
   }, [initialData, userSubjects]);
 
-  const handleUrlChange = async (newUrl: string) => {
+  const handleUrlChange = (newUrl: string) => {
     setUrl(newUrl);
     setUrlError('');
     
-    if (!newUrl.trim()) {
-      setDetectedType('');
-      return;
-    }
-
     // Basic URL validation
-    if (!validateUrl(newUrl)) {
+    if (newUrl.trim() && !validateUrl(newUrl)) {
       setUrlError('Please enter a valid URL');
       return;
-    }
-
-    // Extract metadata if not editing
-    if (!initialData && newUrl.trim().length > 0) {
-      setIsExtracting(true);
-      try {
-        const metadata = await extractMetadataFromUrl(newUrl);
-        
-        // Auto-fill form fields only if they're empty
-        if (!title && metadata.title) {
-          setTitle(metadata.title);
-        }
-        if (!description && metadata.description) {
-          setDescription(metadata.description);
-        }
-        if (!author && metadata.author) {
-          setAuthor(metadata.author);
-        }
-        
-        setDetectedType(metadata.resource_type);
-        // Auto-select the detected type if no manual selection has been made
-        if (!selectedResourceType) {
-          setSelectedResourceType(metadata.resource_type);
-        }
-      } catch (error) {
-        console.error('Error extracting metadata:', error);
-      } finally {
-        setIsExtracting(false);
-      }
     }
   };
 
@@ -142,6 +104,11 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
       toast.error('Please select a subject');
       return;
     }
+    
+    if (!selectedResourceType || selectedResourceType.trim() === '') {
+      toast.error('Please select a resource type');
+      return;
+    }
 
     setIsSubmitting(true);
     
@@ -153,7 +120,7 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
         url: url.trim(),
         title: title.trim(),
         description: description.trim() || undefined,
-        resource_type: selectedResourceType || detectedType || 'website',
+        resource_type: selectedResourceType as ResourceType,
         author: author.trim() || undefined,
         subject_id: selectedSubjectObj?.id,
         difficulty_level: difficulty || undefined,
@@ -175,7 +142,6 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
         setSelectedSubject('');
         setDifficulty('');
         setTags('');
-        setDetectedType('');
         setSelectedResourceType('');
         }
       } else if (result.error) {
@@ -193,52 +159,35 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="url">URL <span className="text-destructive">*</span></Label>
-        <div className="relative">
-          <Input
-            id="url"
-            value={url}
-            onChange={(e) => handleUrlChange(e.target.value)}
-            placeholder="https://example.com/resource"
-            className={urlError ? 'border-destructive' : ''}
-            disabled={!!initialData} // Disable URL editing when editing existing resource
-          />
-          {isExtracting && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            </div>
-          )}
-        </div>
+        <Input
+          id="url"
+          value={url}
+          onChange={(e) => handleUrlChange(e.target.value)}
+          placeholder="https://example.com/resource"
+          className={urlError ? 'border-destructive' : ''}
+          disabled={!!initialData} // Disable URL editing when editing existing resource
+        />
         {urlError && (
           <p className="text-sm text-destructive mt-1 flex items-center gap-1">
             <AlertCircle className="h-3 w-3" />
             {urlError}
           </p>
         )}
-        {detectedType && (
-          <div className="mt-2 flex items-center gap-2">
-            <Link2 className="h-4 w-4 text-muted-foreground" />
-            <Badge variant="outline" className="text-xs">
-              {getResourceTypeLabel(detectedType as ResourceType)} auto-detected
-            </Badge>
-          </div>
-        )}
       </div>
 
       <div>
-        <Label htmlFor="resource-type">Resource Type</Label>
+        <Label htmlFor="resource-type">Resource Type <span className="text-destructive">*</span></Label>
         <Select 
           value={selectedResourceType} 
           onValueChange={(value) => setSelectedResourceType(value as ResourceType)}
+          required
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Select resource type...">
+          <SelectTrigger className={!selectedResourceType ? 'border-destructive/50' : ''}>
+            <SelectValue placeholder="Select resource type (required)">
               {selectedResourceType && (
                 <div className="flex items-center gap-2">
                   {React.createElement(RESOURCE_TYPE_ICONS[selectedResourceType], { className: "h-4 w-4" })}
                   <span>{getResourceTypeLabel(selectedResourceType)}</span>
-                  {detectedType && detectedType === selectedResourceType && (
-                    <Badge variant="outline" className="text-xs ml-auto">Auto-detected</Badge>
-                  )}
                 </div>
               )}
             </SelectValue>
@@ -246,18 +195,12 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
           <SelectContent className="max-h-64">
             {RESOURCE_TYPES.map(resourceType => {
               const Icon = RESOURCE_TYPE_ICONS[resourceType.type];
-              const isDetected = detectedType === resourceType.type;
               return (
                 <SelectItem key={resourceType.type} value={resourceType.type}>
                   <div className="flex items-center gap-2 w-full">
                     <Icon className="h-4 w-4" />
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{resourceType.label}</span>
-                        {isDetected && (
-                          <Badge variant="outline" className="text-xs">Detected</Badge>
-                        )}
-                      </div>
+                      <span className="font-medium">{resourceType.label}</span>
                       <p className="text-xs text-muted-foreground">{resourceType.description}</p>
                     </div>
                   </div>
@@ -266,9 +209,9 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
             })}
           </SelectContent>
         </Select>
-        <p className="text-xs text-muted-foreground mt-1">
-          Resource type is auto-detected from URL, but you can override it manually
-        </p>
+        {!selectedResourceType && (
+          <p className="text-sm text-destructive mt-1">Please select a resource type</p>
+        )}
       </div>
 
       <div>
@@ -367,19 +310,11 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
         </p>
       </div>
 
-      {isExtracting && (
-        <Alert>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <AlertDescription>
-            Extracting resource information from URL...
-          </AlertDescription>
-        </Alert>
-      )}
 
       <div className="flex justify-end gap-2 pt-4">
         <Button
           type="submit"
-          disabled={!url.trim() || !title.trim() || !selectedSubject || isSubmitting || isExtracting}
+          disabled={!url.trim() || !title.trim() || !selectedSubject || !selectedResourceType || isSubmitting}
         >
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isSubmitting ? 

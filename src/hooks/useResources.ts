@@ -67,29 +67,20 @@ export const useResources = () => {
 
       const normalizedUrl = normalizeUrl(formData.url);
       
-      // Extract metadata
-      const metadata = await extractMetadataFromUrl(normalizedUrl);
-      
       // Prepare resource data
       const resourceData = {
         user_id: user.id,
-        title: formData.title || metadata.title || 'Untitled Resource',
-        description: formData.description || metadata.description,
+        title: formData.title,
+        description: formData.description,
         url: normalizedUrl,
-        resource_type: formData.resource_type || metadata.resource_type,
-        thumbnail_url: metadata.thumbnail_url,
-        author: formData.author || metadata.author,
+        resource_type: formData.resource_type,
+        author: formData.author,
         language: 'en',
         difficulty_level: formData.difficulty_level,
         tags: formData.tags || [],
         subject_id: formData.subject_id,
         is_favorite: false,
-        duration_minutes: metadata.duration_minutes,
-        metadata: {
-          domain: metadata.domain,
-          auto_detected_type: metadata.resource_type,
-          extraction_timestamp: new Date().toISOString()
-        },
+        metadata: {},
         access_count: 0
       };
       
@@ -120,14 +111,10 @@ export const useResources = () => {
     onSuccess: (response) => {
       if (response.success && user?.id) {
         queryClient.invalidateQueries({ queryKey: ["resources", user.id] });
-        toast.success("Resource added successfully!");
-      } else if (response.error) {
-        toast.error(`Failed to add resource: ${response.error}`);
       }
     },
     onError: (error: Error) => {
       console.error("Error adding resource:", error);
-      toast.error(`Error adding resource: ${error.message}`);
     },
   });
 
@@ -143,12 +130,10 @@ export const useResources = () => {
     onSuccess: () => {
       if (user?.id) {
         queryClient.invalidateQueries({ queryKey: ["resources", user.id] });
-        toast.success("Resource updated successfully!");
       }
     },
     onError: (error: Error) => {
       console.error("Error updating resource:", error);
-      toast.error(`Error updating resource: ${error.message}`);
     },
   });
 

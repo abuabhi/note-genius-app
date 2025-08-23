@@ -22,25 +22,24 @@ export interface Resource {
 }
 
 export type ResourceType = 
-  | 'youtube'
+  | 'youtube_video'
   | 'article' 
-  | 'pdf'
+  | 'pdf_document'
   | 'website'
   | 'research_paper'
-  | 'lecture'
+  | 'lecture_recording'
   | 'textbook'
-  | 'reference'
+  | 'reference_site'
   | 'dictionary'
   | 'calculator'
   | 'syllabus'
-  | 'assignment'
+  | 'assignment_sheet'
   | 'rubric';
 
 export type DifficultyLevel = 
   | 'beginner'
   | 'intermediate'
-  | 'advanced'
-  | 'expert';
+  | 'advanced';
 
 export interface ResourceTypeInfo {
   type: ResourceType;
