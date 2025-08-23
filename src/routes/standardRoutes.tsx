@@ -27,6 +27,7 @@ const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
 const StudyPlannerPage = lazy(() => import('@/pages/StudyPlannerPage'));
 const QuizDetailsPage = lazy(() => import('@/pages/QuizDetailsPage'));
 const InfluencerDashboardPage = lazy(() => import('@/pages/InfluencerDashboardPage'));
+const ResourcesPage = lazy(() => import('@/pages/ResourcesPage'));
 
 
 // Legacy route redirects
@@ -146,5 +147,9 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/influencer',
     element: <InfluencerDashboardPage />
+  },
+  {
+    path: '/resources/*',
+    element: <ResourcesPage />
   },
 ];

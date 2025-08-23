@@ -91,6 +91,11 @@ export const routes: Route[] = [
     href: "/todos",
   },
   {
+    label: "Resources",
+    icon: Bookmark,
+    href: "/resources",
+  },
+  {
     label: "Analytics",
     icon: BarChart3,
     href: "/analytics",
@@ -169,6 +174,12 @@ export const navigationData: Group[] = [
         href: "/todos",
         icon: CheckSquare,
         description: "Manage your tasks and assignments",
+      },
+      {
+        label: "Resources",
+        href: "/resources",
+        icon: Bookmark,
+        description: "Save and organize study resources",
       },
     ],
   },
