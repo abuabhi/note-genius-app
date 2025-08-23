@@ -1,4 +1,4 @@
-import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Helmet } from 'react-helmet';
@@ -146,13 +146,8 @@ const ResourcesPageContent = () => {
       
       <div className="container mx-auto px-6 py-8">
         <ErrorBoundary
-          FallbackComponent={ErrorFallback}
-          onReset={() => {
-            console.log('Resetting resources page error boundary');
-          }}
-          onError={(error, errorInfo) => {
-            console.error('Resources page error caught by boundary:', error, errorInfo);
-          }}
+          fallback={<ErrorFallback error={new Error('Unknown error')} resetErrorBoundary={() => window.location.reload()} />}
+          label="Resources Page"
         >
           <div className="space-y-6">
             <div className="flex items-center justify-between">
