@@ -2,6 +2,15 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Helmet } from 'react-helmet';
+import { useState } from 'react';
+import { ResourcesPageHeader } from '@/components/resources/page/ResourcesPageHeader';
+import { ResourcesFilters } from '@/components/resources/ResourcesFilters';
+import { ResourcesGrid } from '@/components/resources/ResourcesGrid';
+import { useResources } from '@/hooks/useResources';
+import { useUniversalFilters } from '@/hooks/useUniversalFilters';
+import { useViewPreferences } from '@/hooks/useViewPreferences';
+import { Resource } from '@/types/resource';
+import { toast } from 'sonner';
 
 // Enhanced error fallback component
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => {
@@ -37,6 +46,76 @@ const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetError
 };
 
 const ResourcesPageContent = () => {
+  const { viewMode, setViewMode } = useViewPreferences('resources');
+  const [selectedResourceType, setSelectedResourceType] = useState('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState('all');
+  const [showFavorites, setShowFavorites] = useState(false);
+
+  const {
+    search,
+    subject,
+    sort,
+    setSearch,
+    setSubject,
+    setSort,
+    hasActiveFilters,
+    activeFilterCount,
+    clearFilters,
+    debouncedSearch
+  } = useUniversalFilters();
+
+  const {
+    resources,
+    isLoading,
+    error,
+    addResource,
+    updateResource,
+    deleteResource,
+    toggleFavorite
+  } = useResources();
+
+  const handleClearFilters = () => {
+    clearFilters();
+    setSelectedResourceType('all');
+    setSelectedDifficulty('all');
+    setShowFavorites(false);
+  };
+
+  const handleAddResource = () => {
+    toast.info('Add resource functionality coming soon');
+  };
+
+  const handleImportResource = () => {
+    toast.info('Import functionality coming soon');
+  };
+
+  const handleEditResource = (resource: Resource) => {
+    toast.info('Edit functionality coming soon');
+  };
+
+  const handleDeleteResource = async (id: string) => {
+    try {
+      await deleteResource(id);
+    } catch (error) {
+      // Error is handled by the hook
+    }
+  };
+
+  const handleViewResource = (resource: Resource) => {
+    window.open(resource.url, '_blank');
+  };
+
+  const handleToggleFavorite = async (id: string) => {
+    try {
+      const resource = resources.find(r => r.id === id);
+      if (resource) {
+        await toggleFavorite(id, resource.is_favorite);
+      }
+    } catch (error) {
+      // Error is handled by the hook
+    }
+  };
+
   return (
     <div className="h-full">
       <Helmet>
@@ -56,15 +135,46 @@ const ResourcesPageContent = () => {
           }}
         >
           <div className="space-y-6">
-            <div className="text-center py-12">
-              <h1 className="text-3xl font-bold text-primary mb-4">Resources</h1>
-              <p className="text-muted-foreground text-lg">
-                Save and organize your study resources
-              </p>
-              <p className="text-muted-foreground mt-2">
-                Coming soon - resource management functionality
-              </p>
-            </div>
+            <ResourcesPageHeader
+              loading={isLoading}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              onAddResource={handleAddResource}
+              onImportResource={handleImportResource}
+            />
+
+            <ResourcesFilters
+              searchTerm={search}
+              setSearchTerm={setSearch}
+              selectedSubject={subject}
+              setSelectedSubject={setSubject}
+              selectedResourceType={selectedResourceType}
+              setSelectedResourceType={setSelectedResourceType}
+              selectedDifficulty={selectedDifficulty}
+              setSelectedDifficulty={setSelectedDifficulty}
+              showFavorites={showFavorites}
+              setShowFavorites={setShowFavorites}
+              sortType={sort}
+              setSortType={setSort}
+              hasActiveFilters={hasActiveFilters || selectedResourceType !== 'all' || selectedDifficulty !== 'all' || showFavorites}
+              activeFilterCount={activeFilterCount + (selectedResourceType !== 'all' ? 1 : 0) + (selectedDifficulty !== 'all' ? 1 : 0) + (showFavorites ? 1 : 0)}
+              clearFilters={handleClearFilters}
+              loading={isLoading}
+              totalCount={resources.length}
+            />
+
+            <ResourcesGrid
+              resources={resources}
+              viewMode={viewMode}
+              onToggleFavorite={handleToggleFavorite}
+              onEdit={handleEditResource}
+              onDelete={handleDeleteResource}
+              onView={handleViewResource}
+              onAddResource={handleAddResource}
+              onImportResource={handleImportResource}
+              loading={isLoading}
+              hasActiveFilters={hasActiveFilters || selectedResourceType !== 'all' || selectedDifficulty !== 'all' || showFavorites}
+            />
           </div>
         </ErrorBoundary>
       </div>
