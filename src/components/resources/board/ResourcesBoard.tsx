@@ -62,20 +62,26 @@ export const ResourcesBoard = ({
     return '📖'; // default icon
   };
 
-  // Create subject columns (limit to top 3 most used subjects)
+  // Create subject columns (show all user subjects)
   const subjectColumns: SubjectColumn[] = useMemo(() => {
     if (!subjects?.length) return [];
     
-    // Get resource counts per subject to determine most used
+    // Get resource counts per subject to determine order
     const subjectResourceCounts = subjects.map(subject => {
       const resourceCount = resources.filter(r => r.subject_id === subject.id).length;
       return { subject, resourceCount };
     });
 
-    // Sort by resource count and take top 3
-    const topSubjects = subjectResourceCounts
-      .sort((a, b) => b.resourceCount - a.resourceCount)
-      .slice(0, 3)
+    // Sort by resource count (subjects with resources first) then alphabetically
+    const allSubjects = subjectResourceCounts
+      .sort((a, b) => {
+        // Subjects with resources first
+        if (a.resourceCount > 0 && b.resourceCount === 0) return -1;
+        if (a.resourceCount === 0 && b.resourceCount > 0) return 1;
+        // Within same category (has resources or not), sort by resource count desc, then name
+        if (a.resourceCount !== b.resourceCount) return b.resourceCount - a.resourceCount;
+        return a.subject.name.localeCompare(b.subject.name);
+      })
       .map(({ subject }, index) => ({
         id: subject.id,
         label: subject.name,
@@ -84,7 +90,7 @@ export const ResourcesBoard = ({
         subjectId: subject.id
       }));
 
-    return topSubjects;
+    return allSubjects;
   }, [subjects, resources]);
 
   // Add uncategorized column
@@ -227,8 +233,13 @@ export const ResourcesBoard = ({
         </div>
       )}
 
-      {/* Subject Board Grid - Max 3 columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Subject Board Grid - Responsive columns with horizontal scroll */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 min-h-0"
+           style={{ 
+             gridTemplateColumns: columns.length <= 4 
+               ? undefined 
+               : `repeat(${Math.min(columns.length, 6)}, minmax(300px, 1fr))`
+           }}>
         {columns.map(column => {
           const columnResources = organizedResources[column.id] || [];
           
