@@ -11,6 +11,8 @@ import { useUniversalFilters } from '@/hooks/useUniversalFilters';
 import { useViewPreferences } from '@/hooks/useViewPreferences';
 import { Resource } from '@/types/resource';
 import { toast } from 'sonner';
+import { AddResourceDialog } from '@/components/resources/dialogs/AddResourceDialog';
+import { EditResourceDialog } from '@/components/resources/dialogs/EditResourceDialog';
 
 // Enhanced error fallback component
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => {
@@ -50,6 +52,11 @@ const ResourcesPageContent = () => {
   const [selectedResourceType, setSelectedResourceType] = useState('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [showFavorites, setShowFavorites] = useState(false);
+  
+  // Dialog states
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingResource, setEditingResource] = useState<Resource | null>(null);
 
   const {
     search,
@@ -82,7 +89,7 @@ const ResourcesPageContent = () => {
   };
 
   const handleAddResource = () => {
-    toast.info('Add resource functionality coming soon');
+    setIsAddDialogOpen(true);
   };
 
   const handleImportResource = () => {
@@ -90,7 +97,8 @@ const ResourcesPageContent = () => {
   };
 
   const handleEditResource = (resource: Resource) => {
-    toast.info('Edit functionality coming soon');
+    setEditingResource(resource);
+    setIsEditDialogOpen(true);
   };
 
   const handleDeleteResource = async (id: string) => {
@@ -178,6 +186,23 @@ const ResourcesPageContent = () => {
           </div>
         </ErrorBoundary>
       </div>
+
+      {/* Dialogs */}
+      <AddResourceDialog 
+        open={isAddDialogOpen} 
+        onOpenChange={setIsAddDialogOpen}
+      />
+      
+      <EditResourceDialog 
+        open={isEditDialogOpen} 
+        onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) {
+            setEditingResource(null);
+          }
+        }}
+        resource={editingResource}
+      />
     </div>
   );
 };
