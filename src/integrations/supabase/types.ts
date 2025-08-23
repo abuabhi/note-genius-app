@@ -2587,6 +2587,83 @@ export type Database = {
           },
         ]
       }
+      resources: {
+        Row: {
+          access_count: number
+          author: string | null
+          created_at: string
+          description: string | null
+          difficulty_level: string | null
+          duration_minutes: number | null
+          file_size_mb: number | null
+          id: string
+          is_favorite: boolean
+          language: string | null
+          last_accessed_at: string | null
+          metadata: Json | null
+          resource_type: string
+          subject_id: string | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          access_count?: number
+          author?: string | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          duration_minutes?: number | null
+          file_size_mb?: number | null
+          id?: string
+          is_favorite?: boolean
+          language?: string | null
+          last_accessed_at?: string | null
+          metadata?: Json | null
+          resource_type: string
+          subject_id?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          access_count?: number
+          author?: string | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          duration_minutes?: number | null
+          file_size_mb?: number | null
+          id?: string
+          is_favorite?: boolean
+          language?: string | null
+          last_accessed_at?: string | null
+          metadata?: Json | null
+          resource_type?: string
+          subject_id?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resources_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "user_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scan_data: {
         Row: {
           confidence: number | null
