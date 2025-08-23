@@ -18,6 +18,7 @@ import {
   Activity, 
   Target, 
   CheckSquare, 
+  Bookmark,
   BarChart3,
   Gift,
   Heart,
@@ -118,6 +119,14 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                   icon={CheckSquare}
                   label="ToDo"
                   isActive={pathname.startsWith("/todos")}
+                  isCollapsed={isCollapsed}
+                />
+                
+                <NavLink
+                  to="/resources"
+                  icon={Bookmark}
+                  label="Resources"
+                  isActive={pathname.startsWith("/resources")}
                   isCollapsed={isCollapsed}
                 />
               </div>
