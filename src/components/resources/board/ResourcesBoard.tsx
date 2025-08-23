@@ -93,14 +93,6 @@ export const ResourcesBoard = ({
     return allSubjects;
   }, [subjects, resources]);
 
-  // Add uncategorized column
-  const columns = [...subjectColumns, {
-    id: 'uncategorized',
-    label: 'Uncategorized', 
-    icon: '📁',
-    color: 'bg-gray-50 border-gray-200',
-    subjectId: undefined
-  }];
 
   // Organize resources by subject with favorites sorted to top
   const organizedResources = useMemo(() => {
@@ -125,20 +117,11 @@ export const ResourcesBoard = ({
     // Organize by subjects
     const organized: Record<string, Resource[]> = {};
 
-    columns.forEach(column => {
-      let columnResources: Resource[];
-      
-      if (column.subjectId) {
-        // Get resources for this specific subject
-        columnResources = filteredResources.filter(resource => 
-          resource.subject_id === column.subjectId
-        );
-      } else {
-        // Uncategorized - resources with no subject_id
-        columnResources = filteredResources.filter(resource => 
-          !resource.subject_id
-        );
-      }
+    subjectColumns.forEach(column => {
+      // Get resources for this specific subject
+      const columnResources = filteredResources.filter(resource => 
+        resource.subject_id === column.subjectId
+      );
 
       // Sort within each column: favorites first, then by title
       columnResources.sort((a, b) => {
@@ -153,7 +136,7 @@ export const ResourcesBoard = ({
     });
 
     return organized;
-  }, [resources, searchTerm, showFavoritesOnly, columns]);
+  }, [resources, searchTerm, showFavoritesOnly, subjectColumns]);
 
   const totalFilteredResources = Object.values(organizedResources).flat().length;
   const hasActiveFilters = searchTerm !== '' || showFavoritesOnly;
@@ -233,14 +216,9 @@ export const ResourcesBoard = ({
         </div>
       )}
 
-      {/* Subject Board Grid - Responsive columns with horizontal scroll */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 min-h-0"
-           style={{ 
-             gridTemplateColumns: columns.length <= 4 
-               ? undefined 
-               : `repeat(${Math.min(columns.length, 6)}, minmax(300px, 1fr))`
-           }}>
-        {columns.map(column => {
+      {/* Subject Board Grid - Responsive columns with natural wrapping */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+        {subjectColumns.map(column => {
           const columnResources = organizedResources[column.id] || [];
           
           // Don't show empty columns when filters are active
