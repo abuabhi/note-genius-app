@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Resource, ResourceType } from '@/types/resource';
+import { Resource } from '@/types/resource';
 import { ResourceColumn } from './ResourceColumn';
 import { BoardResourceCard } from './BoardResourceCard';
 import { Input } from '@/components/ui/input';
@@ -18,13 +18,12 @@ interface ResourcesBoardProps {
   loading: boolean;
 }
 
-interface ResourceCategory {
+interface SubjectColumn {
   id: string;
   label: string;
   icon: string;
   color: string;
-  types?: ResourceType[];
-  filterFn?: (resource: Resource) => boolean;
+  subjectId?: string;
 }
 
 export const ResourcesBoard = ({
@@ -40,54 +39,65 @@ export const ResourcesBoard = ({
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const { subjects } = useUserSubjects();
 
-  // Define resource categories
-  const categories: ResourceCategory[] = [
-    {
-      id: 'videos',
-      label: 'Videos & Media',
-      icon: '🎥',
-      color: 'bg-red-50 border-red-200',
-      types: ['youtube_video', 'lecture_recording']
-    },
-    {
-      id: 'documents',
-      label: 'Documents',
-      icon: '📄',
-      color: 'bg-blue-50 border-blue-200',
-      types: ['pdf_document', 'textbook', 'research_paper']
-    },
-    {
-      id: 'articles',
-      label: 'Articles & Web',
-      icon: '📰',
-      color: 'bg-green-50 border-green-200',
-      types: ['article', 'website', 'reference_site']
-    },
-    {
-      id: 'tools',
-      label: 'Tools & Utilities',
-      icon: '🧮',
-      color: 'bg-purple-50 border-purple-200',
-      types: ['calculator', 'dictionary']
-    },
-    {
-      id: 'academic',
-      label: 'Academic Materials',
-      icon: '📚',
-      color: 'bg-orange-50 border-orange-200',
-      types: ['syllabus', 'assignment_sheet', 'rubric']
-    },
-    {
-      id: 'favorites',
-      label: 'Favorites',
-      icon: '⭐',
-      color: 'bg-yellow-50 border-yellow-200',
-      filterFn: (resource: Resource) => resource.is_favorite
-    }
+  // Define subject colors (cycling through a set)
+  const subjectColors = [
+    'bg-blue-50 border-blue-200',
+    'bg-green-50 border-green-200', 
+    'bg-purple-50 border-purple-200',
+    'bg-orange-50 border-orange-200',
+    'bg-pink-50 border-pink-200',
+    'bg-indigo-50 border-indigo-200'
   ];
 
-  // Categorize resources
-  const categorizedResources = useMemo(() => {
+  // Get subject icons (you can customize these or make them configurable)
+  const getSubjectIcon = (subjectName: string) => {
+    const name = subjectName.toLowerCase();
+    if (name.includes('math')) return '🔢';
+    if (name.includes('science')) return '🔬';
+    if (name.includes('english') || name.includes('language')) return '📚';
+    if (name.includes('history')) return '📜';
+    if (name.includes('art')) return '🎨';
+    if (name.includes('music')) return '🎵';
+    if (name.includes('computer') || name.includes('coding')) return '💻';
+    return '📖'; // default icon
+  };
+
+  // Create subject columns (limit to top 3 most used subjects)
+  const subjectColumns: SubjectColumn[] = useMemo(() => {
+    if (!subjects?.length) return [];
+    
+    // Get resource counts per subject to determine most used
+    const subjectResourceCounts = subjects.map(subject => {
+      const resourceCount = resources.filter(r => r.subject_id === subject.id).length;
+      return { subject, resourceCount };
+    });
+
+    // Sort by resource count and take top 3
+    const topSubjects = subjectResourceCounts
+      .sort((a, b) => b.resourceCount - a.resourceCount)
+      .slice(0, 3)
+      .map(({ subject }, index) => ({
+        id: subject.id,
+        label: subject.name,
+        icon: getSubjectIcon(subject.name),
+        color: subjectColors[index % subjectColors.length],
+        subjectId: subject.id
+      }));
+
+    return topSubjects;
+  }, [subjects, resources]);
+
+  // Add uncategorized column
+  const columns = [...subjectColumns, {
+    id: 'uncategorized',
+    label: 'Uncategorized', 
+    icon: '📁',
+    color: 'bg-gray-50 border-gray-200',
+    subjectId: undefined
+  }];
+
+  // Organize resources by subject with favorites sorted to top
+  const organizedResources = useMemo(() => {
     let filteredResources = resources;
 
     // Apply search filter
@@ -106,38 +116,40 @@ export const ResourcesBoard = ({
       filteredResources = filteredResources.filter(resource => resource.is_favorite);
     }
 
-    // Categorize the filtered resources
-    const categorized: Record<string, Resource[]> = {};
+    // Organize by subjects
+    const organized: Record<string, Resource[]> = {};
 
-    categories.forEach(category => {
-      if (category.filterFn) {
-        categorized[category.id] = filteredResources.filter(category.filterFn);
-      } else if (category.types) {
-        categorized[category.id] = filteredResources.filter(resource => 
-          category.types!.includes(resource.resource_type)
+    columns.forEach(column => {
+      let columnResources: Resource[];
+      
+      if (column.subjectId) {
+        // Get resources for this specific subject
+        columnResources = filteredResources.filter(resource => 
+          resource.subject_id === column.subjectId
         );
       } else {
-        categorized[category.id] = [];
+        // Uncategorized - resources with no subject_id
+        columnResources = filteredResources.filter(resource => 
+          !resource.subject_id
+        );
       }
+
+      // Sort within each column: favorites first, then by title
+      columnResources.sort((a, b) => {
+        // Favorites first
+        if (a.is_favorite && !b.is_favorite) return -1;
+        if (!a.is_favorite && b.is_favorite) return 1;
+        // Then alphabetical by title
+        return a.title.localeCompare(b.title);
+      });
+
+      organized[column.id] = columnResources;
     });
 
-    // Add uncategorized resources to a catch-all category
-    const categorizedResourceIds = new Set(
-      Object.values(categorized).flat().map(r => r.id)
-    );
-    
-    const uncategorized = filteredResources.filter(resource => 
-      !categorizedResourceIds.has(resource.id)
-    );
+    return organized;
+  }, [resources, searchTerm, showFavoritesOnly, columns]);
 
-    if (uncategorized.length > 0) {
-      categorized['other'] = uncategorized;
-    }
-
-    return categorized;
-  }, [resources, searchTerm, showFavoritesOnly, categories]);
-
-  const totalFilteredResources = Object.values(categorizedResources).flat().length;
+  const totalFilteredResources = Object.values(organizedResources).flat().length;
   const hasActiveFilters = searchTerm !== '' || showFavoritesOnly;
 
   const clearFilters = () => {
@@ -153,8 +165,8 @@ export const ResourcesBoard = ({
           <div className="h-10 bg-muted rounded animate-pulse flex-1" />
           <div className="h-10 bg-muted rounded animate-pulse w-32" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="space-y-4">
               <div className="h-8 bg-muted rounded animate-pulse" />
               <div className="space-y-2">
@@ -215,23 +227,23 @@ export const ResourcesBoard = ({
         </div>
       )}
 
-      {/* Resource Board Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-        {categories.map(category => {
-          const categoryResources = categorizedResources[category.id] || [];
+      {/* Subject Board Grid - Max 3 columns */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {columns.map(column => {
+          const columnResources = organizedResources[column.id] || [];
           
-          // Don't show empty categories when filters are active (unless it's favorites)
-          if (hasActiveFilters && categoryResources.length === 0 && category.id !== 'favorites') {
+          // Don't show empty columns when filters are active
+          if (hasActiveFilters && columnResources.length === 0) {
             return null;
           }
 
           return (
             <ResourceColumn
-              key={category.id}
-              title={category.label}
-              icon={category.icon}
-              color={category.color}
-              resources={categoryResources}
+              key={column.id}
+              title={column.label}
+              icon={column.icon}
+              color={column.color}
+              resources={columnResources}
               onToggleFavorite={onToggleFavorite}
               onEdit={onEdit}
               onDelete={onDelete}
@@ -241,22 +253,6 @@ export const ResourcesBoard = ({
             />
           );
         })}
-        
-        {/* Uncategorized resources */}
-        {categorizedResources['other'] && (
-          <ResourceColumn
-            title="Other"
-            icon="📁"
-            color="bg-gray-50 border-gray-200"
-            resources={categorizedResources['other']}
-            onToggleFavorite={onToggleFavorite}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onView={onView}
-            onAddResource={onAddResource}
-            searchTerm={searchTerm}
-          />
-        )}
       </div>
 
       {/* Empty State */}
