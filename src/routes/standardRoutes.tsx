@@ -149,7 +149,7 @@ export const standardRoutes: RouteConfig[] = [
     element: <InfluencerDashboardPage />
   },
   {
-    path: '/resources/*',
+    path: '/resources',
     element: <ResourcesPage />
   },
 ];
