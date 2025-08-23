@@ -162,8 +162,11 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
 
       console.log('Submitting resource form data:', formData);
       const result = await onSave(formData);
+      console.log('Form submission result:', result);
       
-      if (result.success && !initialData) {
+      if (result.success) {
+        toast.success(initialData ? 'Resource updated successfully!' : 'Resource added successfully!');
+        if (!initialData) {
         // Reset form only for new resources (not when editing)
         setUrl('');
         setTitle('');
@@ -174,9 +177,13 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
         setTags('');
         setDetectedType('');
         setSelectedResourceType('');
+        }
+      } else if (result.error) {
+        toast.error(`Failed to ${initialData ? 'update' : 'add'} resource: ${result.error}`);
       }
     } catch (error) {
       console.error('Error saving resource:', error);
+      toast.error(`Failed to ${initialData ? 'update' : 'add'} resource. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -373,7 +380,6 @@ export const CreateResourceForm = ({ onSave, initialData }: CreateResourceFormPr
         <Button
           type="submit"
           disabled={!url.trim() || !title.trim() || !selectedSubject || isSubmitting || isExtracting}
-          className="bg-primary hover:bg-primary/90"
         >
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isSubmitting ? 
