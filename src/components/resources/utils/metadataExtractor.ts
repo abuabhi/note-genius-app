@@ -26,10 +26,10 @@ export const extractMetadataFromUrl = async (url: string): Promise<ExtractedMeta
     };
     
     // Extract basic info from URL
-    if (resource_type === 'youtube') {
+    if (resource_type === 'youtube_video') {
       metadata.title = extractYouTubeTitle(cleanUrl);
       metadata.thumbnail_url = extractYouTubeThumbnail(cleanUrl);
-    } else if (resource_type === 'pdf') {
+    } else if (resource_type === 'pdf_document') {
       metadata.title = extractPDFTitle(cleanUrl);
     } else {
       // For general websites, try to extract title from URL path

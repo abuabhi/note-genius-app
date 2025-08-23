@@ -4,12 +4,19 @@ import { useAuth } from "@/contexts/auth";
 import { Resource, ResourceFormData, AddResourceResponse, ResourceType } from "@/types/resource";
 import { extractMetadataFromUrl, normalizeUrl, validateUrl } from "@/components/resources/utils/metadataExtractor";
 import { toast } from "sonner";
+import { useFilteredResources, ResourceFilters } from './useFilteredResources';
 
-export const useResources = () => {
+interface UseResourcesOptions {
+  filters?: ResourceFilters;
+}
+
+export const useResources = (options: UseResourcesOptions = {}) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  
+  const { filters } = options;
 
-  const { data: resources = [], isLoading, error, refetch } = useQuery({
+  const { data: allResources = [], isLoading, error, refetch } = useQuery({
     queryKey: ["resources", user?.id],
     queryFn: async () => {
       if (!user?.id) {
@@ -50,6 +57,22 @@ export const useResources = () => {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
+
+  // Apply client-side filtering if filters are provided
+  const filteredResources = useFilteredResources(
+    allResources,
+    filters || {
+      search: '',
+      subject: 'all',
+      resourceType: 'all',
+      difficultyLevel: 'all',
+      isFavorite: false,
+      sort: 'newest'
+    }
+  );
+
+  // Use filtered resources when filters are active, otherwise use all resources
+  const resources = filters ? filteredResources : allResources;
 
   const addResourceMutation = useMutation({
     mutationFn: async (formData: ResourceFormData): Promise<AddResourceResponse> => {

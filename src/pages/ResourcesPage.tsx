@@ -71,6 +71,16 @@ const ResourcesPageContent = () => {
     debouncedSearch
   } = useUniversalFilters();
 
+  // Create filter object for useResources
+  const resourceFilters = {
+    search: debouncedSearch,
+    subject,
+    resourceType: selectedResourceType,
+    difficultyLevel: selectedDifficulty,
+    isFavorite: showFavorites,
+    sort
+  };
+
   const {
     resources,
     isLoading,
@@ -79,7 +89,7 @@ const ResourcesPageContent = () => {
     updateResource,
     deleteResource,
     toggleFavorite
-  } = useResources();
+  } = useResources({ filters: resourceFilters });
 
   const handleClearFilters = () => {
     clearFilters();
