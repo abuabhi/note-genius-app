@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Resource } from '@/types/resource';
+import { useUserSubjects } from '@/hooks/useUserSubjects';
 
 export interface ResourceFilters {
   search: string;
@@ -17,6 +18,8 @@ export function useFilteredResources(
   resources: Resource[],
   filters: ResourceFilters
 ) {
+  const { subjects } = useUserSubjects();
+  
   return useMemo(() => {
     let filtered = resources;
 
@@ -34,9 +37,11 @@ export function useFilteredResources(
     // Subject filter
     if (filters.subject && filters.subject !== 'all') {
       filtered = filtered.filter(resource => {
-        // Check if resource has a subject_id that matches
-        // This would need to be enhanced with actual subject lookup
-        return true; // For now, keep all resources
+        if (resource.subject_id && subjects.length > 0) {
+          const foundSubject = subjects.find(s => s.id === resource.subject_id);
+          return foundSubject?.name === filters.subject;
+        }
+        return false;
       });
     }
 
@@ -76,5 +81,5 @@ export function useFilteredResources(
     });
 
     return sorted;
-  }, [resources, filters]);
+  }, [resources, filters, subjects]);
 }

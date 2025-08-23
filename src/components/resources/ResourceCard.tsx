@@ -113,9 +113,9 @@ export const ResourceCard = ({
             <span>{resource.access_count} views</span>
           </div>
 
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex gap-1">
             <Button
-              variant="ghost"
+              variant="default"
               size="sm"
               onClick={() => onView(resource)}
               className="flex-1 h-8 text-xs"
