@@ -1,8 +1,8 @@
 
-import { useUltraSimpleAnalytics } from './useUltraSimpleAnalytics';
+import { useAnalytics } from '@/contexts/AnalyticsContext';
 
 export const useConsolidatedAnalytics = () => {
-  const { analytics, isLoading } = useUltraSimpleAnalytics();
+  const { analytics, isLoading } = useAnalytics();
 
   return { 
     analytics, 
