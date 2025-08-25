@@ -106,7 +106,7 @@ const StudySessionsPage = () => {
           </div>
 
           {/* AI Study Suggestions */}
-          <StudySuggestions subjectAnalytics={analytics} />
+          <StudySuggestions />
 
           {/* Sessions Content */}
           <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-mint-100 p-6 shadow-lg">

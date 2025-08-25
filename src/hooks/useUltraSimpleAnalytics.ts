@@ -48,6 +48,40 @@ export const useUltraSimpleAnalytics = () => {
     staleTime: 2 * 60 * 1000,
   });
 
+  // Get user's weekly goal
+  const { data: weeklyGoal = 5, isLoading: goalLoading } = useQuery({
+    queryKey: ['weekly-goal', user?.id],
+    queryFn: async () => {
+      if (!user) return 5;
+
+      const { data, error } = await supabase
+        .from('study_goals')
+        .select('target_hours, end_date, start_date') 
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      // Calculate weekly hours from the most recent active goal
+      if (data && data.target_hours && data.start_date && data.end_date) {
+        const startDate = new Date(data.start_date);
+        const endDate = new Date(data.end_date);
+        const durationDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (durationDays >= 7) {
+          return Math.round((data.target_hours / durationDays) * 7);
+        }
+      }
+      
+      return 5; // Default fallback
+    },
+    enabled: !!user,
+    staleTime: 10 * 60 * 1000,
+  });
+
   // Get notes count
   const { data: notesCount = 0, isLoading: notesLoading } = useQuery({
     queryKey: ['ultra-simple-notes-count', user?.id],
@@ -151,14 +185,20 @@ export const useUltraSimpleAnalytics = () => {
 
     const masteredCards = flashcardProgress.filter(p => p.mastery_level >= 3).length;
 
-    // Calculate weekly changes (simplified)
-    const previousWeekMinutes = Math.max(0, weeklyMinutes - 30); // Placeholder
+    // Calculate weekly changes from real historical data
+    const twoWeeksAgo = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const previousWeekSessions = sessions.filter(s => {
+      const sessionDate = new Date(s.start_time);
+      return sessionDate >= twoWeeksAgo && sessionDate < weekAgo;
+    });
+    const previousWeekMinutes = previousWeekSessions.reduce((acc, session) => acc + (session.duration || 0), 0) / 60;
+    
     const weeklyChange = previousWeekMinutes > 0 
       ? Math.round(((weeklyMinutes - previousWeekMinutes) / previousWeekMinutes) * 100) 
-      : 0;
+      : weeklyMinutes > 0 ? 100 : 0;
 
-    // Calculate weekly goal progress
-    const weeklyGoalHours = 5; // Default goal
+    // Calculate weekly goal progress from user's actual goals
+    const weeklyGoalHours = weeklyGoal;
     const weeklyGoalProgress = weeklyMinutes > 0 
       ? Math.min(100, Math.round((weeklyMinutes / (weeklyGoalHours * 60)) * 100))
       : 0;
@@ -184,9 +224,9 @@ export const useUltraSimpleAnalytics = () => {
 
     console.log('[ULTRA-SIMPLE] Final analytics:', result);
     return result;
-  }, [sessions, notesCount, flashcardData]);
+  }, [sessions, notesCount, flashcardData, weeklyGoal]);
 
-  const isLoading = sessionsLoading || notesLoading || flashcardLoading;
+  const isLoading = sessionsLoading || notesLoading || flashcardLoading || goalLoading;
 
   return {
     analytics,

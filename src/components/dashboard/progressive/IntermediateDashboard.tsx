@@ -27,7 +27,7 @@ export const IntermediateDashboard = ({ progressState }: IntermediateDashboardPr
         <OnboardingChecklist />
         
         {/* AI Study Suggestions - Full Width */}
-        <StudySuggestions subjectAnalytics={analytics} />
+        <StudySuggestions />
         
         {/* Learning Toolkit Section */}
         <LearningToolkitSection />

@@ -24,7 +24,7 @@ export const AdvancedDashboard = ({ progressState }: AdvancedDashboardProps) => 
         <EnhancedDashboardHeroSection />
         
         {/* AI Study Suggestions */}
-        <StudySuggestions subjectAnalytics={analytics} />
+        <StudySuggestions />
         
         {/* Learning Toolkit Section */}
         <LearningToolkitSection />

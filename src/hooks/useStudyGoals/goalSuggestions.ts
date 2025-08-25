@@ -1,33 +1,55 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { GoalTemplate } from '@/types/study';
-
-const defaultSuggestions: GoalTemplate[] = [
-  {
-    title: "Master Mathematics Fundamentals",
-    description: "Build a strong foundation in core mathematical concepts",
-    target_hours: 20,
-    duration_days: 30,
-    subject: "Mathematics"
-  },
-  {
-    title: "Science Study Sprint",
-    description: "Intensive review of key science topics",
-    target_hours: 15,
-    duration_days: 21,
-    subject: "Science"
-  },
-  {
-    title: "Language Arts Excellence",
-    description: "Improve reading comprehension and writing skills",
-    target_hours: 18,
-    duration_days: 28,
-    subject: "English"
-  }
-];
+import { useUserSubjects } from '@/hooks/useUserSubjects';
 
 export const useGoalSuggestions = () => {
-  const [suggestions] = useState<GoalTemplate[]>(defaultSuggestions);
+  const { subjects: userSubjects } = useUserSubjects();
+  
+  // Generate dynamic goal suggestions based on user's subjects
+  const suggestions = useMemo((): GoalTemplate[] => {
+    if (!userSubjects?.length) {
+      return [
+        {
+          title: "Set Up Your Study Goals",
+          description: "Create your first study goal to track progress and stay motivated",
+          target_hours: 10,
+          duration_days: 14,
+          subject: "General"
+        }
+      ];
+    }
+
+    // Create goal suggestions for each user subject
+    return userSubjects.slice(0, 3).map((subject, index) => {
+      const goalTemplates = [
+        {
+          title: `Master ${subject.name} Fundamentals`,
+          description: `Build a strong foundation in core ${subject.name.toLowerCase()} concepts`,
+          target_hours: 20,
+          duration_days: 30
+        },
+        {
+          title: `${subject.name} Study Sprint`,
+          description: `Intensive review of key ${subject.name.toLowerCase()} topics`,
+          target_hours: 15,
+          duration_days: 21
+        },
+        {
+          title: `${subject.name} Excellence`,
+          description: `Improve understanding and performance in ${subject.name.toLowerCase()}`,
+          target_hours: 18,
+          duration_days: 28
+        }
+      ];
+
+      const template = goalTemplates[index % goalTemplates.length];
+      return {
+        ...template,
+        subject: subject.name
+      };
+    });
+  }, [userSubjects]);
   const [dismissedSuggestions, setDismissedSuggestions] = useState<string[]>([]);
   const [suggestionsEnabled, setSuggestionsEnabled] = useState(true);
 

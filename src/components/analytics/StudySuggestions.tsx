@@ -25,10 +25,10 @@ import {
 } from "lucide-react";
 
 interface StudySuggestionsProps {
-  subjectAnalytics?: any;
+  // No props needed - component is now self-contained
 }
 
-export const StudySuggestions = ({ subjectAnalytics }: StudySuggestionsProps) => {
+export const StudySuggestions = ({}: StudySuggestionsProps) => {
   const navigate = useNavigate();
   const progressState = useUserProgressState();
   const { suggestions, isLoading } = useEnhancedStudySuggestions(progressState);

@@ -233,10 +233,10 @@ export const useEnhancedSubjectAnalytics = () => {
           };
         });
 
-        // Generate suggested subjects based on activity patterns
-        const allSubjectNames = ['Mathematics', 'Science', 'History', 'Literature', 'Physics', 'Chemistry', 'Biology'];
+        // Generate suggested subjects based on user's existing subjects and PREDEFINED_SUBJECTS
+        const { PREDEFINED_SUBJECTS } = await import('@/types/subject');
         const existingSubjects = subjects.map(s => s.name);
-        const suggestedSubjects = allSubjectNames
+        const suggestedSubjects = PREDEFINED_SUBJECTS
           .filter(name => !existingSubjects.includes(name))
           .slice(0, 3);
 
