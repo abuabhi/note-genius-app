@@ -41,8 +41,6 @@ const sections: { title: string; links: { href: string; label: string }[] }[] = 
     title: "Misc",
     links: [
       { href: "/onboarding", label: "Onboarding" },
-      { href: "/test-enhancement", label: "Test Enhancement" },
-      { href: "/google-docs-test", label: "Google Docs Test" },
     ],
   },
 ];
