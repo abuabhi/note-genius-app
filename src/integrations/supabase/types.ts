@@ -4263,6 +4263,15 @@ export type Database = {
         Args: { context?: string; quiz_data: Json }
         Returns: undefined
       }
+      log_security_access: {
+        Args: {
+          p_action: string
+          p_error_message?: string
+          p_success?: boolean
+          p_table_name: string
+        }
+        Returns: undefined
+      }
       process_referral_signup: {
         Args: { referral_code_used: string; referred_user_id: string }
         Returns: boolean
