@@ -25,8 +25,10 @@ export const CacheMonitor = () => {
   });
   const [isVisible, setIsVisible] = useState(false);
 
-  // Calculate cache stats
+  // Calculate cache stats with reduced frequency
   useEffect(() => {
+    if (!isVisible) return; // Only update when visible
+    
     const updateStats = () => {
       const cache = queryClient.getQueryCache();
       const queries = cache.getAll();
@@ -41,9 +43,10 @@ export const CacheMonitor = () => {
     };
 
     updateStats();
-    const interval = setInterval(updateStats, 2000);
+    // Reduced frequency: 10 seconds instead of 2
+    const interval = setInterval(updateStats, 10000);
     return () => clearInterval(interval);
-  }, [queryClient]);
+  }, [queryClient, isVisible]);
 
   // Cache management actions
   const clearCache = () => {

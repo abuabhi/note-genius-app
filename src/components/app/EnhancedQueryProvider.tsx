@@ -99,27 +99,36 @@ export const EnhancedQueryProvider = ({ children }: EnhancedQueryProviderProps) 
     logger.info('Query client settings updated:', networkAwareSettings);
   }, [isOnline, isSlowConnection, queryClient]);
 
-  // Environment-specific cache cleanup
+  // Environment-specific cache cleanup - optimized intervals
   useEffect(() => {
     if (!config.isProduction) return; // Only cleanup in production
 
     const cleanup = () => {
-      const cache = queryClient.getQueryCache();
-      const queries = cache.getAll();
-      
-      // Remove stale queries older than configured cache time
-      const cutoffTime = Date.now() - config.cache.defaultCacheTime;
-      queries.forEach(query => {
-        if (query.state.dataUpdatedAt < cutoffTime && query.getObserversCount() === 0) {
-          cache.remove(query);
+      try {
+        const cache = queryClient.getQueryCache();
+        const queries = cache.getAll();
+        
+        // Remove stale queries older than configured cache time
+        const cutoffTime = Date.now() - config.cache.defaultCacheTime;
+        let removedCount = 0;
+        
+        queries.forEach(query => {
+          if (query.state.dataUpdatedAt < cutoffTime && query.getObserversCount() === 0) {
+            cache.remove(query);
+            removedCount++;
+          }
+        });
+        
+        if (removedCount > 0) {
+          logger.info(`Cache cleanup completed - removed ${removedCount} queries`);
         }
-      });
-      
-      logger.info('Cache cleanup completed');
+      } catch (error) {
+        logger.error('Cache cleanup error:', error);
+      }
     };
 
-    // Run cleanup based on environment
-    const cleanupInterval = config.isProduction ? 30 * 60 * 1000 : 15 * 60 * 1000;
+    // Much longer intervals to reduce memory pressure
+    const cleanupInterval = config.isProduction ? 60 * 60 * 1000 : 30 * 60 * 1000; // 1hr / 30min
     const interval = setInterval(cleanup, cleanupInterval);
     
     return () => clearInterval(interval);

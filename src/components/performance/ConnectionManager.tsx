@@ -65,17 +65,17 @@ export const useConnectionManager = () => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Check connection periodically when offline
-    const interval = setInterval(() => {
-      if (!connectionState.isOnline && connectionState.retryCount < 5) {
-        checkSupabaseConnection();
-      }
-    }, 30000); // Check every 30 seconds
+    // Check connection periodically when offline - reduced frequency
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (!connectionState.isOnline && connectionState.retryCount < 5) {
+      interval = setInterval(checkSupabaseConnection, 60000); // Check every minute instead of 30s
+    }
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      clearInterval(interval);
+      if (interval) clearInterval(interval);
     };
   }, [connectionState.isOnline, connectionState.retryCount, checkSupabaseConnection, handleRetry]);
 
