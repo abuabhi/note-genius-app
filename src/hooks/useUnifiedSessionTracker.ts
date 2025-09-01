@@ -57,7 +57,7 @@ export const useUnifiedSessionTracker = () => {
     currentSubject: null,
     studyPlanId: null,
     showInactivityWarning: false,
-    isRecovering: true
+    isRecovering: false // Start as false, will only become true during actual recovery
   });
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -66,6 +66,7 @@ export const useUnifiedSessionTracker = () => {
   const recoveryAttempts = useRef(0);
   const maxRecoveryAttempts = 3;
   const recoveryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasCompletedInitialRecovery = useRef(false);
 
   // Track tab visibility to implement away behavior
   const isTabVisible = useTabVisibility();
@@ -97,7 +98,7 @@ export const useUnifiedSessionTracker = () => {
     };
   };
 
-  // Session recovery with retry logic
+  // Session recovery with retry logic - runs only once per user session
   useEffect(() => {
     const attemptRecoveryWithRetry = async (attemptNumber = 1) => {
       if (!user) {
@@ -105,7 +106,16 @@ export const useUnifiedSessionTracker = () => {
           console.log('🔄 [SESSION RECOVERY] No user available, resetting recovery state');
         }
         recoveryAttempts.current = 0;
+        hasCompletedInitialRecovery.current = false;
         setSessionState(prev => ({ ...prev, isRecovering: false }));
+        return;
+      }
+
+      // Skip if we've already completed recovery for this user session
+      if (hasCompletedInitialRecovery.current) {
+        if (DEBUG_CONFIG.SESSION_LOGGING) {
+          console.log('🔄 [SESSION RECOVERY] Initial recovery already completed, skipping');
+        }
         return;
       }
 
@@ -113,6 +123,7 @@ export const useUnifiedSessionTracker = () => {
         if (DEBUG_CONFIG.SESSION_LOGGING) {
           console.log('🔄 [SESSION RECOVERY] Max recovery attempts reached, giving up');
         }
+        hasCompletedInitialRecovery.current = true;
         setSessionState(prev => ({ ...prev, isRecovering: false }));
         return;
       }
@@ -151,11 +162,13 @@ export const useUnifiedSessionTracker = () => {
           setSessionState(recoveredState);
           broadcastState(recoveredState);
           recoveryAttempts.current = 0;
+          hasCompletedInitialRecovery.current = true;
           toast.success('Study session resumed');
         } else {
           if (DEBUG_CONFIG.SESSION_LOGGING) {
             console.log('ℹ️ [SESSION RECOVERY] No active session found');
           }
+          hasCompletedInitialRecovery.current = true;
           setSessionState(prev => ({ ...prev, isRecovering: false }));
           recoveryAttempts.current = 0;
         }
@@ -174,6 +187,7 @@ export const useUnifiedSessionTracker = () => {
             attemptRecoveryWithRetry(attemptNumber + 1);
           }, retryDelay);
         } else {
+          hasCompletedInitialRecovery.current = true;
           setSessionState(prev => ({ ...prev, isRecovering: false }));
           recoveryAttempts.current = 0;
         }
@@ -181,7 +195,7 @@ export const useUnifiedSessionTracker = () => {
     };
 
     // Reset recovery attempts when user changes
-    if (user) {
+    if (user && !hasCompletedInitialRecovery.current) {
       recoveryAttempts.current = 0;
       // Increase initial delay to 500ms to ensure auth is fully loaded
       const timeout = setTimeout(() => attemptRecoveryWithRetry(), 500);
@@ -195,11 +209,11 @@ export const useUnifiedSessionTracker = () => {
     }
   }, [user, recoverActiveSession]);
 
-  // Persist session state changes (debounced to reduce frequent updates)
+  // Persist session state changes (optimized to reduce frequent writes)
   useEffect(() => {
     if (sessionState.isActive && sessionState.currentSessionId && !sessionState.isRecovering) {
-      // Only persist every 10 seconds to reduce frequent writes
-      if (sessionState.elapsedSeconds % 10 === 0 || sessionState.elapsedSeconds === 1) {
+      // Only persist every 30 seconds to reduce frequent writes, or on first second
+      if (sessionState.elapsedSeconds % 30 === 0 || sessionState.elapsedSeconds === 1) {
         saveSessionState({
           sessionId: sessionState.currentSessionId,
           startTime: sessionState.startTime?.toISOString() || new Date().toISOString(),
@@ -237,8 +251,8 @@ export const useUnifiedSessionTracker = () => {
             elapsedSeconds: prev.elapsedSeconds + 1
           };
           
-          // Broadcast state change with debounce-like behavior (only every 5 seconds to reduce flickering)
-          if (updatedState.elapsedSeconds % 5 === 0) {
+          // Broadcast state change with debounce-like behavior (only every 10 seconds to reduce flickering)
+          if (updatedState.elapsedSeconds % 10 === 0) {
             // Use requestAnimationFrame to prevent rapid state broadcasts
             requestAnimationFrame(() => broadcastState(updatedState));
           }
@@ -357,7 +371,9 @@ export const useUnifiedSessionTracker = () => {
     if (!user) throw new Error('User not authenticated');
 
     try {
-      console.log('🚀 [UNIFIED SESSION] Starting new session:', sessionData);
+      if (DEBUG_CONFIG.SESSION_LOGGING) {
+        console.log('🚀 [UNIFIED SESSION] Starting new session:', sessionData);
+      }
 
       // End any existing active session first
       if (sessionState.isActive && sessionState.currentSessionId) {
@@ -388,7 +404,9 @@ export const useUnifiedSessionTracker = () => {
 
       if (error) throw error;
 
-      console.log('✅ [UNIFIED SESSION] Session created successfully:', data.id);
+      if (DEBUG_CONFIG.SESSION_LOGGING) {
+        console.log('✅ [UNIFIED SESSION] Session created successfully:', data.id);
+      }
 
       const newState: UnifiedSessionState = {
         isActive: true,
@@ -419,12 +437,16 @@ export const useUnifiedSessionTracker = () => {
 
   const endSession = async (reason = 'Manual session end'): Promise<void> => {
     if (!sessionState.isActive || !sessionState.currentSessionId) {
-      console.log('⚠️ [UNIFIED SESSION] No active session to end');
+      if (DEBUG_CONFIG.SESSION_LOGGING) {
+        console.log('⚠️ [UNIFIED SESSION] No active session to end');
+      }
       return;
     }
 
     try {
-      console.log('🛑 [UNIFIED SESSION] Ending session:', sessionState.currentSessionId, 'Reason:', reason);
+      if (DEBUG_CONFIG.SESSION_LOGGING) {
+        console.log('🛑 [UNIFIED SESSION] Ending session:', sessionState.currentSessionId, 'Reason:', reason);
+      }
 
       const endTime = new Date();
       const duration = Math.round((endTime.getTime() - (sessionState.startTime?.getTime() || Date.now())) / 1000);
@@ -441,7 +463,9 @@ export const useUnifiedSessionTracker = () => {
 
       if (error) throw error;
 
-      console.log('✅ [UNIFIED SESSION] Session ended successfully. Duration:', Math.round(duration / 60), 'minutes');
+      if (DEBUG_CONFIG.SESSION_LOGGING) {
+        console.log('✅ [UNIFIED SESSION] Session ended successfully. Duration:', Math.round(duration / 60), 'minutes');
+      }
 
       // Clear all timers
       if (timerRef.current) {

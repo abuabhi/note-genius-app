@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { DEBUG_CONFIG } from '@/config/debug';
@@ -16,6 +16,7 @@ interface PersistedSessionState {
 
 export const useSessionPersistence = () => {
   const { user } = useAuth();
+  const recoveryInProgressRef = useRef(false);
 
   const saveSessionState = (sessionState: PersistedSessionState) => {
     if (typeof window !== 'undefined') {
@@ -40,13 +41,23 @@ export const useSessionPersistence = () => {
     }
   };
 
-  const recoverActiveSession = async () => {
+  const recoverActiveSession = useCallback(async () => {
     if (!user) {
       if (DEBUG_CONFIG.SESSION_LOGGING) {
         console.log('🔄 [SESSION PERSISTENCE] No user available for recovery');
       }
       return null;
     }
+
+    // Prevent concurrent recovery attempts
+    if (recoveryInProgressRef.current) {
+      if (DEBUG_CONFIG.SESSION_LOGGING) {
+        console.log('🔄 [SESSION PERSISTENCE] Recovery already in progress, skipping');
+      }
+      return null;
+    }
+
+    recoveryInProgressRef.current = true;
     
     if (DEBUG_CONFIG.SESSION_LOGGING) {
       console.log('🔄 [SESSION PERSISTENCE] Starting session recovery for user:', user.id, 'at', new Date().toISOString());
@@ -167,8 +178,10 @@ export const useSessionPersistence = () => {
       // Clear potentially corrupted localStorage
       clearPersistedSession();
       return null;
+    } finally {
+      recoveryInProgressRef.current = false;
     }
-  };
+  }, [user]);
 
   return {
     saveSessionState,

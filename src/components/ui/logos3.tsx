@@ -93,7 +93,7 @@ const Logos3: React.FC<Logos3Props> = ({
       </div>
       <div className="pt-4 sm:pt-6 md:pt-8">
         <div className="relative mx-auto flex items-center justify-center lg:max-w-5xl">
-          <Carousel opts={{ loop: true }} plugins={[AutoScroll({ playOnInit: true, speed: 1 })]}>
+          <Carousel opts={{ loop: true }} plugins={[AutoScroll({ playOnInit: true, speed: 1 }) as any]}>
             <CarouselContent className="ml-0">
               {data.map((logo) => (
                 <CarouselItem
