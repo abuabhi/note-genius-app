@@ -4215,6 +4215,10 @@ export type Database = {
         Args: { coupon_code_param: string }
         Returns: Json
       }
+      validate_coupon_secure: {
+        Args: { coupon_code_param: string }
+        Returns: Json
+      }
     }
     Enums: {
       grade_level:
