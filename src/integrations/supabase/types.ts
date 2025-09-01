@@ -4227,6 +4227,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_security_status: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_user_email_for_feedback: {
         Args: { feedback_user_id: string }
         Returns: string
@@ -4291,6 +4295,14 @@ export type Database = {
       validate_coupon_secure: {
         Args: { coupon_code_param: string }
         Returns: Json
+      }
+      verify_table_security: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          has_anon_access: boolean
+          has_public_access: boolean
+          table_name: string
+        }[]
       }
     }
     Enums: {
