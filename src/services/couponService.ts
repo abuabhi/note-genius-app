@@ -83,60 +83,27 @@ export class CouponService {
     commission_rate: number;
   }) {
     try {
-      // Record the order
-      const { error: orderError } = await supabase
-        .from('influencer_orders')
-        .insert({
-          stripe_session_id: params.stripe_session_id,
-          customer_email: params.customer_email,
-          influencer_id: params.influencer_id,
-          coupon_code: params.coupon_code,
-          order_amount: params.order_amount,
-          discount_amount: params.discount_amount,
-          commission_amount: params.commission_amount,
-          commission_rate: params.commission_rate,
-          status: 'completed',
-          processed_at: new Date().toISOString()
-        });
+      console.log('📊 Recording coupon usage via Edge Function...');
+      
+      // Use secure Edge Function instead of direct DB access
+      const { data, error } = await supabase.functions.invoke('record-coupon-usage', {
+        body: params
+      });
 
-      if (orderError) throw orderError;
+      if (error) {
+        console.error('❌ Edge Function error:', error);
+        throw error;
+      }
 
-      // Update coupon usage count by fetching current usage and incrementing
-      const { data: currentCoupon, error: fetchError } = await supabase
-        .from('influencer_coupons')
-        .select('current_usage')
-        .eq('coupon_code', params.coupon_code)
-        .single();
+      if (!data.success) {
+        console.error('❌ Edge Function returned failure:', data.error);
+        throw new Error(data.error);
+      }
 
-      if (fetchError) throw fetchError;
-
-      const { error: couponError } = await supabase
-        .from('influencer_coupons')
-        .update({ 
-          current_usage: (currentCoupon.current_usage || 0) + 1
-        })
-        .eq('coupon_code', params.coupon_code);
-
-      if (couponError) throw couponError;
-
-      // Record in the existing coupon_usage table for analytics
-      const { error: usageError } = await supabase
-        .from('coupon_usage')
-        .insert({
-          coupon_code: params.coupon_code,
-          user_id: null, // Customer not necessarily a user
-          influencer_id: params.influencer_id,
-          order_value: params.order_amount,
-          commission_rate: params.commission_rate,
-          commission_amount: params.commission_amount,
-          status: 'active'
-        });
-
-      if (usageError) throw usageError;
-
+      console.log('✅ Coupon usage recorded successfully');
       return { success: true };
     } catch (error) {
-      console.error('Error recording coupon usage:', error);
+      console.error('💥 Error recording coupon usage:', error);
       throw error;
     }
   }
