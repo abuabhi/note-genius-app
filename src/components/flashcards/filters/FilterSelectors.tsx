@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Grid2x2, LayoutList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FlashcardFilters } from "../components/AdvancedFlashcardFilters";
+import { useFlashcardSubjects } from "@/hooks/useFlashcardSubjects";
 
 interface FilterSelectorsProps {
   filters: FlashcardFilters;
@@ -17,6 +18,8 @@ export const FilterSelectors = ({
   onFiltersChange,
   hideViewMode = false
 }: FilterSelectorsProps) => {
+  const { subjectOptions } = useFlashcardSubjects();
+  
   const updateFilter = (key: keyof FlashcardFilters, value: any) => {
     onFiltersChange({ ...filters, [key]: value });
   };
@@ -31,13 +34,11 @@ export const FilterSelectors = ({
             <SelectValue placeholder="All subjects" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Subjects</SelectItem>
-            <SelectItem value="mathematics">Mathematics</SelectItem>
-            <SelectItem value="science">Science</SelectItem>
-            <SelectItem value="history">History</SelectItem>
-            <SelectItem value="literature">Literature</SelectItem>
-            <SelectItem value="languages">Languages</SelectItem>
-            <SelectItem value="other">Other</SelectItem>
+            {subjectOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

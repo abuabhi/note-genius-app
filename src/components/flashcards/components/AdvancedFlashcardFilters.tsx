@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Search, Filter, Grid, List, SortAsc, SortDesc } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useFlashcardSubjects } from "@/hooks/useFlashcardSubjects";
 
 export interface FlashcardFilters {
   searchQuery: string;
@@ -30,6 +31,8 @@ export const AdvancedFlashcardFilters = ({
   totalSets,
   hideViewMode = false
 }: AdvancedFlashcardFiltersProps) => {
+  const { subjectOptions } = useFlashcardSubjects();
+  
   const updateFilter = (key: keyof FlashcardFilters, value: any) => {
     onFiltersChange({
       ...filters,
@@ -101,12 +104,11 @@ export const AdvancedFlashcardFilters = ({
                 <SelectValue placeholder="All Subjects" />
               </SelectTrigger>
               <SelectContent className="z-50 bg-white border shadow-lg">
-                <SelectItem value="all">All Subjects</SelectItem>
-                <SelectItem value="math">Mathematics</SelectItem>
-                <SelectItem value="science">Science</SelectItem>
-                <SelectItem value="history">History</SelectItem>
-                <SelectItem value="english">English</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                {subjectOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

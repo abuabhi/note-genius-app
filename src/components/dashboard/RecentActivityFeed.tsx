@@ -36,24 +36,7 @@ const RecentActivityFeed = () => {
 
         if (error) {
           console.error("Error fetching activity:", error);
-          // Generate mock activity data as fallback
-          const mockActivity: Activity[] = [
-            { 
-              id: '1', 
-              user_id: user.id, 
-              activity_type: 'note_created', 
-              description: 'Study notes for Biology', 
-              created_at: new Date().toISOString()
-            },
-            { 
-              id: '2', 
-              user_id: user.id, 
-              activity_type: 'flashcard_set_created', 
-              description: 'Chemistry Formulas', 
-              created_at: new Date(Date.now() - 86400000).toISOString()
-            },
-          ];
-          setActivity(mockActivity);
+          setActivity([]);
         } else {
           // Convert study sessions to Activity format
           const formattedActivities: Activity[] = (data || []).map(session => ({
