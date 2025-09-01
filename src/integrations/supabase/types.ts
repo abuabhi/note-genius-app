@@ -4296,6 +4296,17 @@ export type Database = {
         Args: { coupon_code_param: string }
         Returns: Json
       }
+      verify_complete_lockdown: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          anon_can_insert: boolean
+          anon_can_select: boolean
+          public_can_select: boolean
+          rls_enabled: boolean
+          rls_forced: boolean
+          table_name: string
+        }[]
+      }
       verify_table_security: {
         Args: Record<PropertyKey, never>
         Returns: {
