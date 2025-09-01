@@ -15,7 +15,7 @@ export default function NavBar() {
   const { user } = useAuth();
   
   // Define which routes are public - added missing routes
-  const publicRoutes = ['/', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup', '/help', '/privacy', '/terms'];
+  const publicRoutes = ['/', '/v2', '/about', '/pricing', '/faq', '/contact', '/blog', '/features', '/login', '/signup', '/help', '/privacy', '/terms'];
   const isPublicRoute = publicRoutes.includes(pathname);
 
   const toggleMenu = () => {
