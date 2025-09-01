@@ -229,6 +229,30 @@ export type Database = {
           },
         ]
       }
+      contact_rate_limit: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string
+          submissions_count: number
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address: string
+          submissions_count?: number
+          window_start?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string
+          submissions_count?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
       contact_submissions: {
         Row: {
           admin_notes: string | null
@@ -4210,6 +4234,10 @@ export type Database = {
       update_user_tier: {
         Args: { new_tier: string; reason?: string; target_user_id: string }
         Returns: boolean
+      }
+      validate_contact_submission: {
+        Args: { p_email: string; p_ip_address: string; p_message: string }
+        Returns: Json
       }
       validate_coupon: {
         Args: { coupon_code_param: string }
