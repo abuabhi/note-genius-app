@@ -87,17 +87,21 @@ export const MonitoringDashboard: React.FC = () => {
   const [performanceMetrics, setPerformanceMetrics] = useState<any[]>([]);
   const [performanceAlerts, setPerformanceAlerts] = useState<any[]>([]);
 
-  // Update metrics every 30 seconds
+  // Update metrics every 60 seconds (reduced frequency)
   useEffect(() => {
     const updateMetrics = () => {
-      const metrics = getMetrics();
-      const alerts = getAlerts();
-      setPerformanceMetrics(metrics);
-      setPerformanceAlerts(alerts);
+      try {
+        const metrics = getMetrics();
+        const alerts = getAlerts();
+        setPerformanceMetrics(metrics);
+        setPerformanceAlerts(alerts);
+      } catch (error) {
+        console.error('Error updating monitoring metrics:', error);
+      }
     };
 
     updateMetrics();
-    const interval = setInterval(updateMetrics, 30000);
+    const interval = setInterval(updateMetrics, 60000); // Reduced from 30s to 60s
     return () => clearInterval(interval);
   }, [getMetrics, getAlerts]);
 

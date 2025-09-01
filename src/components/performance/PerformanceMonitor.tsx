@@ -4,9 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Monitor, Zap, Database, TrendingUp, RefreshCw } from 'lucide-react';
-import { useMemoryOptimization } from '@/hooks/performance/useMemoryOptimization';
-import { useConnectionOptimization } from '@/hooks/performance/useConnectionOptimization';
-import { useQueryOptimization } from '@/hooks/performance/useQueryOptimization';
+import { useConsolidatedMonitoring } from '@/hooks/performance/useConsolidatedMonitoring';
 
 interface PerformanceMonitorProps {
   show?: boolean;
@@ -16,33 +14,11 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
   show = process.env.NODE_ENV === 'development' 
 }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const { getMemoryStats, getCacheSize, performCleanup } = useMemoryOptimization();
-  const { getConnectionMetrics, resetMetrics } = useConnectionOptimization();
-  const { getQueryStats } = useQueryOptimization();
-  
-  const [stats, setStats] = useState({
-    memory: { current: 0, peak: 0 },
-    cache: { size: 0 },
-    connection: { activeConnections: 0, totalRequests: 0, averageResponseTime: 0, errorRate: 0 },
-    query: { hits: 0, misses: 0, errors: 0, total: 0, hitRate: '0%' }
+  const { metrics, resetAllMetrics, forceUpdate, performCleanup } = useConsolidatedMonitoring({
+    enabled: show && isVisible,
+    updateInterval: 30000, // 30 seconds instead of 2 seconds
+    enableLogging: false
   });
-
-  useEffect(() => {
-    if (!show || !isVisible) return;
-
-    const updateStats = () => {
-      setStats({
-        memory: getMemoryStats(),
-        cache: { size: getCacheSize() },
-        connection: getConnectionMetrics(),
-        query: getQueryStats()
-      });
-    };
-
-    updateStats();
-    const interval = setInterval(updateStats, 2000);
-    return () => clearInterval(interval);
-  }, [show, isVisible, getMemoryStats, getCacheSize, getConnectionMetrics, getQueryStats]);
 
   if (!show) return null;
 
@@ -83,9 +59,9 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
                 <span>Memory</span>
               </div>
               <div className="text-right">
-                <div>{Math.round(stats.memory.current)}MB / {Math.round(stats.memory.peak)}MB peak</div>
-                <Badge variant={stats.memory.current > 80 ? "destructive" : "secondary"} className="text-xs">
-                  {stats.cache.size} cached
+                <div>{Math.round(metrics.memory.current)}MB / {Math.round(metrics.memory.peak)}MB peak</div>
+                <Badge variant={metrics.memory.current > 80 ? "destructive" : "secondary"} className="text-xs">
+                  {metrics.memory.cacheSize} cached
                 </Badge>
               </div>
             </div>
@@ -97,9 +73,9 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
                 <span>Connections</span>
               </div>
               <div className="text-right">
-                <div>{stats.connection.activeConnections} active / {stats.connection.totalRequests} total</div>
+                <div>{metrics.connection.activeConnections} active / {metrics.connection.totalRequests} total</div>
                 <div className="text-gray-500">
-                  {Math.round(stats.connection.averageResponseTime)}ms avg
+                  {Math.round(metrics.connection.averageResponseTime)}ms avg
                 </div>
               </div>
             </div>
@@ -111,9 +87,9 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
                 <span>Queries</span>
               </div>
               <div className="text-right">
-                <div>Hit rate: {stats.query.hitRate}</div>
+                <div>Hit rate: {metrics.query.hitRate}</div>
                 <div className="text-gray-500">
-                  {stats.query.errors} errors / {stats.query.total} total
+                  {metrics.query.errors} errors / {metrics.query.total} total
                 </div>
               </div>
             </div>
@@ -130,7 +106,7 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
                 Cleanup
               </Button>
               <Button
-                onClick={resetMetrics}
+                onClick={resetAllMetrics}
                 size="sm"
                 variant="outline"
                 className="flex-1 h-7"

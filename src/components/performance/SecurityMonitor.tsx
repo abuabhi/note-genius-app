@@ -1,24 +1,37 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useSecurityValidation } from '@/hooks/performance/useSecurityValidation';
+import { useSecurityAudit } from '@/hooks/security/useSecurityAudit';
 import { Shield, AlertTriangle, Activity, Lock, Eye, EyeOff } from 'lucide-react';
 
 export const SecurityMonitor = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const { getSecurityMetrics, resetMetrics } = useSecurityValidation();
+  const { getAuditSummary, validateRLSCompliance } = useSecurityAudit();
   const [metrics, setMetrics] = useState(getSecurityMetrics());
+  const [auditSummary, setAuditSummary] = useState(getAuditSummary());
+
+  // Memoize the update function to prevent recreation
+  const updateMetrics = useCallback(() => {
+    setMetrics(getSecurityMetrics());
+    setAuditSummary(getAuditSummary());
+  }, [getSecurityMetrics, getAuditSummary]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics(getSecurityMetrics());
-    }, 5000);
+    if (!isVisible) return;
+
+    // Initial update
+    updateMetrics();
+
+    // Much less frequent updates - every 30 seconds when visible
+    const interval = setInterval(updateMetrics, 30000);
 
     return () => clearInterval(interval);
-  }, [getSecurityMetrics]);
+  }, [isVisible, updateMetrics]);
 
   if (!isVisible) {
     return (
@@ -127,7 +140,27 @@ export const SecurityMonitor = () => {
             <Activity className="h-3 w-3 mr-1" />
             Reset
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={validateRLSCompliance}
+            className="flex-1 text-xs"
+          >
+            <Shield className="h-3 w-3 mr-1" />
+            Audit
+          </Button>
         </div>
+
+        {showDetails && auditSummary.criticalEvents > 0 && (
+          <div className="mt-2 p-2 bg-red-50 rounded text-xs">
+            <div className="text-red-800 font-semibold">
+              🚨 {auditSummary.criticalEvents} critical security events detected
+            </div>
+            <div className="text-red-600 text-xs mt-1">
+              Sensitive tables accessed: {auditSummary.sensitiveTablesAccessed.join(', ') || 'None'}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
