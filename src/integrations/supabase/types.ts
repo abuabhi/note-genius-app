@@ -47,6 +47,39 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_rate_limiting: {
+        Row: {
+          action_type: string
+          block_expires_at: string | null
+          id: string
+          is_blocked: boolean | null
+          last_request_at: string | null
+          request_count: number | null
+          user_id: string
+          window_start: string | null
+        }
+        Insert: {
+          action_type: string
+          block_expires_at?: string | null
+          id?: string
+          is_blocked?: boolean | null
+          last_request_at?: string | null
+          request_count?: number | null
+          user_id: string
+          window_start?: string | null
+        }
+        Update: {
+          action_type?: string
+          block_expires_at?: string | null
+          id?: string
+          is_blocked?: boolean | null
+          last_request_at?: string | null
+          request_count?: number | null
+          user_id?: string
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       admin_settings: {
         Row: {
           created_at: string
@@ -2789,6 +2822,45 @@ export type Database = {
         }
         Relationships: []
       }
+      security_monitoring: {
+        Row: {
+          access_granted: boolean
+          action_type: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          resource_accessed: string
+          risk_level: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          access_granted?: boolean
+          action_type: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resource_accessed: string
+          risk_level?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          access_granted?: boolean
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resource_accessed?: string
+          risk_level?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       shared_flashcard_sets: {
         Row: {
           created_at: string
@@ -3955,6 +4027,48 @@ export type Database = {
           },
         ]
       }
+      user_sessions_security: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          failed_attempts: number | null
+          id: string
+          ip_address: string | null
+          is_active: boolean | null
+          last_activity: string | null
+          locked_until: string | null
+          session_token: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          failed_attempts?: number | null
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean | null
+          last_activity?: string | null
+          locked_until?: string | null
+          session_token: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          failed_attempts?: number | null
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean | null
+          last_activity?: string | null
+          locked_until?: string | null
+          session_token?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subjects: {
         Row: {
           created_at: string | null
@@ -4078,6 +4192,10 @@ export type Database = {
         Returns: {
           new_achievement_title: string
         }[]
+      }
+      check_session_security: {
+        Args: { p_ip_address: string; p_user_id: string }
+        Returns: Json
       }
       check_user_in_conversation: {
         Args: { conversation_uuid: string }
@@ -4226,6 +4344,18 @@ export type Database = {
       get_reminder_system_health: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      get_security_alerts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          alert_id: string
+          alert_type: string
+          created_at: string
+          message: string
+          metadata: Json
+          severity: string
+          user_email: string
+        }[]
       }
       get_security_status: {
         Args: Record<PropertyKey, never>

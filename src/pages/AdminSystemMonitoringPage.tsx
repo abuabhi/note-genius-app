@@ -13,6 +13,8 @@ import { EdgeFunctionMonitor } from '@/components/admin/monitoring/EdgeFunctionM
 import { SentryTestingDashboard } from '@/components/monitoring/SentryTestingDashboard';
 import UptimeRobotDashboard from '@/components/admin/monitoring/UptimeRobotDashboard';
 import { VisualUnitTestingDashboard } from '@/components/admin/monitoring/VisualUnitTestingDashboard';
+import { SecurityAuditDashboard } from '@/components/admin/security/SecurityAuditDashboard';
+import { AccessControlHardening } from '@/components/admin/security/AccessControlHardening';
 import { StandardPageHeader } from '@/components/ui/StandardPageHeader';
 import { Monitor } from 'lucide-react';
 
@@ -52,7 +54,7 @@ const AdminSystemMonitoringPage = () => {
 
       <div className="container mx-auto px-6 py-8">
         <Tabs defaultValue="health" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-10">
             <TabsTrigger value="health">Health Status</TabsTrigger>
             <TabsTrigger value="uptime">Uptime</TabsTrigger>
             <TabsTrigger value="load-testing">Load Testing</TabsTrigger>
@@ -61,6 +63,8 @@ const AdminSystemMonitoringPage = () => {
             <TabsTrigger value="cache">Cache Management</TabsTrigger>
             <TabsTrigger value="sentry">Sentry Testing</TabsTrigger>
             <TabsTrigger value="alerts">Alerts</TabsTrigger>
+            <TabsTrigger value="security-audit">Security Audit</TabsTrigger>
+            <TabsTrigger value="access-control">Access Control</TabsTrigger>
           </TabsList>
 
           <TabsContent value="health" className="space-y-4">
@@ -93,6 +97,14 @@ const AdminSystemMonitoringPage = () => {
 
           <TabsContent value="alerts" className="space-y-4">
             <SystemAlertsManager />
+          </TabsContent>
+
+          <TabsContent value="security-audit" className="space-y-4">
+            <SecurityAuditDashboard />
+          </TabsContent>
+
+          <TabsContent value="access-control" className="space-y-4">
+            <AccessControlHardening />
           </TabsContent>
         </Tabs>
       </div>
