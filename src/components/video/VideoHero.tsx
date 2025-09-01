@@ -24,7 +24,23 @@ const VideoHero = () => {
               Watch how AI transforms your notes into flashcards, creates smart quizzes, and builds personalized study plans. See every feature in action.
             </p>
           </div>
+        </div>
 
+        {/* Video Section */}
+        <div className="relative max-w-4xl mx-auto">
+          <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-mint-300 to-neutral-300 blur-2xl sm:blur-3xl opacity-20" />
+          <VimeoVideoPlayer 
+            videoId="1073481634" 
+            title="PrepGenie Platform Overview"
+            className="relative rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl w-full"
+          />
+          <div className="absolute -bottom-2 sm:-bottom-4 -right-2 sm:-right-4 bg-white rounded-lg shadow-lg p-2 sm:p-3 border border-mint-100">
+            <p className="text-xs text-gray-600 font-medium">🎥 See It In Action</p>
+          </div>
+        </div>
+
+        {/* Call to Action Section */}
+        <div className="text-center space-y-6">
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             <Button 
               size="lg" 
@@ -52,19 +68,6 @@ const VideoHero = () => {
           <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
             No credit card required • Join 15,000+ high school & college students
           </p>
-        </div>
-
-        {/* Video Section */}
-        <div className="relative max-w-4xl mx-auto">
-          <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-mint-300 to-neutral-300 blur-2xl sm:blur-3xl opacity-20" />
-          <VimeoVideoPlayer 
-            videoId="123456789" 
-            title="PrepGenie Platform Overview"
-            className="relative rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl w-full"
-          />
-          <div className="absolute -bottom-2 sm:-bottom-4 -right-2 sm:-right-4 bg-white rounded-lg shadow-lg p-2 sm:p-3 border border-mint-100">
-            <p className="text-xs text-gray-600 font-medium">🎥 See It In Action</p>
-          </div>
         </div>
 
         {/* Stats Section */}
