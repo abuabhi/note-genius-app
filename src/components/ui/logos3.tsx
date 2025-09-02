@@ -95,7 +95,7 @@ const Logos3: React.FC<Logos3Props> = ({
       id: `logo-${num}`,
       description: `School logo ${num}`,
       image: `/lovable-uploads/schools/${num}.svg?v=1`,
-      className: "h-12 w-auto sm:h-16 md:h-20",
+      className: "h-16 w-auto sm:h-20 md:h-24 lg:h-28",
     };
   });
 

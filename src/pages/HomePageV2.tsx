@@ -72,7 +72,7 @@ const HomePageV2 = () => {
         </div>
         
         {/* Trust Signal */}
-        <Logos3 heading="Trusted by students at" count={17} />
+        <Logos3 heading="Trusted by students at" layout="grid" count={12} />
 
         {/* Mid-Page CTA */}
         <div className="py-8 px-4 sm:px-6 lg:px-8">
