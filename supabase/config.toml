@@ -68,3 +68,6 @@ enabled = false
 
 [functions.admin-stripe-metrics]
 verify_jwt = true
+
+[functions.get-secret]
+verify_jwt = true

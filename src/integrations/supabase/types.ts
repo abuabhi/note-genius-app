@@ -4501,6 +4501,10 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: boolean
       }
+      is_dean_user_secure: {
+        Args: { user_id_param: string }
+        Returns: boolean
+      }
       log_quiz_creation_debug: {
         Args: { context?: string; quiz_data: Json }
         Returns: undefined
@@ -4512,6 +4516,10 @@ export type Database = {
           p_success?: boolean
           p_table_name: string
         }
+        Returns: undefined
+      }
+      log_sensitive_access: {
+        Args: { p_operation: string; p_table_name: string; p_user_id?: string }
         Returns: undefined
       }
       process_referral_signup: {

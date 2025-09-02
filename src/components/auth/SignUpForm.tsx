@@ -34,7 +34,10 @@ export const SignUpForm = () => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
       });
 
       console.log('🔐 [SIGNUP] Result:', { data, error });
