@@ -66,7 +66,7 @@ const HomePageV2 = () => {
             "Smart question creation from your content",
             "Support for PDF, Word, OneNote, and more"
           ]}
-          videoUrl="https://vimeo.com/605069004"
+          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
           icon={BookOpen}
           highlight="All-in-one"
         />
@@ -80,7 +80,7 @@ const HomePageV2 = () => {
             "Spaced repetition algorithm for optimal retention",
             "Difficulty adjustment based on your performance"
           ]}
-          videoUrl="https://vimeo.com/605069004"
+          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
           icon={Brain}
           highlight="Popular"
           reverse={true}
@@ -95,7 +95,7 @@ const HomePageV2 = () => {
             "Progress tracking across all quiz attempts",
             "Instant feedback to reinforce learning"
           ]}
-          videoUrl="https://vimeo.com/605069004"
+          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
           icon={Zap}
           highlight="AI-Powered"
         />
@@ -109,7 +109,7 @@ const HomePageV2 = () => {
             "Create flashcards directly from chat responses",
             "Context-aware answers from your specific materials"
           ]}
-          videoUrl="https://vimeo.com/605069004"
+          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
           icon={MessageSquare}
           highlight="New"
           reverse={true}
@@ -124,7 +124,7 @@ const HomePageV2 = () => {
             "Integration with calendar apps",
             "Realistic time estimates for each study session"
           ]}
-          videoUrl="https://vimeo.com/605069004"
+          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
           icon={Calendar}
           highlight="Adaptive"
         />
@@ -138,7 +138,7 @@ const HomePageV2 = () => {
             "Session-based task completion tracking",
             "Integration with study plans and goals"
           ]}
-          videoUrl="https://vimeo.com/605069004"
+          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
           icon={ListChecks}
           highlight="Organizer"
         />
@@ -152,7 +152,7 @@ const HomePageV2 = () => {
             "Knowledge gap identification",
             "Personalized recommendations for improvement"
           ]}
-          videoUrl="https://vimeo.com/605069004"
+          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
           icon={BarChart3}
           highlight="Analytics"
           reverse={true}
@@ -167,7 +167,7 @@ const HomePageV2 = () => {
             "Time tracking across all study activities",
             "Focus statistics and productivity insights"
           ]}
-          videoUrl="https://vimeo.com/605069004"
+          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
           icon={Timer}
           highlight="Pomodoro"
         />
@@ -181,7 +181,7 @@ const HomePageV2 = () => {
             "Achievement celebrations and streaks",
             "Goal adjustment based on performance data"
           ]}
-          videoUrl="https://vimeo.com/605069004"
+          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
           icon={Target}
           highlight="Motivation"
         />
@@ -195,7 +195,7 @@ const HomePageV2 = () => {
             "Website bookmarking with automatic tagging",
             "Integration with notes and flashcard creation"
           ]}
-          videoUrl="https://vimeo.com/605069004"
+          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
           icon={FolderOpen}
           highlight="Organization"
           reverse={true}

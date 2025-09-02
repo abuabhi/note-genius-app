@@ -30,8 +30,7 @@ const VideoHero = () => {
         <div className="relative max-w-4xl mx-auto">
           <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-mint-300 to-neutral-300 blur-2xl sm:blur-3xl opacity-20" />
           <ReactVideoPlayer 
-            url="https://vimeo.com/605069004" 
-            fallbackUrl="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            url="https://www.youtube.com/watch?v=UR94FhzUOg0" 
             title="PrepGenie Platform Overview"
             className="relative rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl w-full"
           />
