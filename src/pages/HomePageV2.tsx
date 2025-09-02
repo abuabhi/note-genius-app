@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import VideoHero from "@/components/video/VideoHero";
 import { VideoFeatureSection } from "@/components/video/VideoFeatureSection";
-import CTA from "@/components/landing/CTA";
 import StickyMobileCTA from "@/components/landing/StickyMobileCTA";
 
 import { ProgressBasedCTA } from "@/components/landing/ProgressBasedCTA";
@@ -268,6 +267,14 @@ const HomePageV2 = () => {
               <div className="flex flex-wrap justify-center gap-6 pt-6 text-sm text-mint-600">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-mint-600 rounded-full"></div>
+                  <span>Save 5+ Hours/Week</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-mint-600 rounded-full"></div>
+                  <span>95% Success Rate</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-mint-600 rounded-full"></div>
                   <span>Cancel anytime</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -287,7 +294,7 @@ const HomePageV2 = () => {
           <Testimonials />
         </Suspense>
 
-        <CTA />
+        
         <StickyMobileCTA />
         
         {/* Progressive CTAs */}
