@@ -15,11 +15,19 @@ import {
   Settings,
   Activity,
   HelpCircle,
-  Crown
+  Crown,
+  Video
 } from 'lucide-react';
 
 const AdminDashboardPage = () => {
   const adminSections = [
+    {
+      title: 'Video Management',
+      description: 'Manage video URLs for all landing page sections with analytics',
+      icon: Video,
+      href: '/admin/video-management',
+      color: 'bg-violet-500'
+    },
     {
       title: 'System Monitoring',
       description: 'Monitor system health, performance, and cache management',
