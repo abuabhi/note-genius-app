@@ -7,11 +7,8 @@ import { VideoFeatureSection } from "@/components/video/VideoFeatureSection";
 import CTA from "@/components/landing/CTA";
 import StickyMobileCTA from "@/components/landing/StickyMobileCTA";
 import { UrgencyBanner } from "@/components/landing/UrgencyBanner";
-import { StickyHeaderCTA } from "@/components/landing/StickyHeaderCTA";
-import { ExitIntentPopup } from "@/components/landing/ExitIntentPopup";
 import { ProgressBasedCTA } from "@/components/landing/ProgressBasedCTA";
 import { RealTimeSignupCounter } from "@/components/landing/RealTimeSignupCounter";
-import { RecentActivityFeed } from "@/components/landing/RecentActivityFeed";
 import { Logos3 } from "@/components/ui/logos3";
 import { Button } from "@/components/ui/button";
 import { useVideoSettings } from "@/hooks/admin/useAdminSettings";
@@ -64,15 +61,13 @@ const HomePageV2 = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30 overflow-x-hidden">
         <UrgencyBanner />
-        <StickyHeaderCTA />
         <VideoHero />
         
         {/* Social Proof Section */}
         <div className="py-8 px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-12">
+            <div className="flex items-center justify-center">
               <RealTimeSignupCounter />
-              <RecentActivityFeed />
             </div>
           </div>
         </div>
@@ -311,7 +306,6 @@ const HomePageV2 = () => {
           message="Almost done! See how these features work together in your free trial." 
         />
         
-        <ExitIntentPopup />
       </div>
     </Layout>
   );
