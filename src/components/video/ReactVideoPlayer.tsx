@@ -19,14 +19,39 @@ export const ReactVideoPlayer = ({
   const [currentUrl, setCurrentUrl] = useState(url);
   const [embedUrl, setEmbedUrl] = useState('');
 
+  // Add CSP violation detection
+  useEffect(() => {
+    const handleCSPViolation = (event: SecurityPolicyViolationEvent) => {
+      if (event.blockedURI?.includes('vimeo.com') || event.blockedURI?.includes('youtube.com')) {
+        console.error('🚫 CSP blocked video embed:', event.blockedURI);
+        setHasError(true);
+        setIsLoading(false);
+      }
+    };
+
+    document.addEventListener('securitypolicyviolation', handleCSPViolation);
+    return () => document.removeEventListener('securitypolicyviolation', handleCSPViolation);
+  }, []);
+
   // Convert URL to embed format
   useEffect(() => {
     const convertToEmbedUrl = (videoUrl: string) => {
+      console.log('🎥 Converting video URL:', videoUrl);
+      
+      // Handle numeric IDs (assume Vimeo)
+      if (/^\d+$/.test(videoUrl)) {
+        const embedUrl = `https://player.vimeo.com/video/${videoUrl}?autoplay=0&badge=0&title=0&byline=0&portrait=0`;
+        console.log('🎥 Generated Vimeo embed from ID:', embedUrl);
+        return embedUrl;
+      }
+      
       // Vimeo URL conversion
       if (videoUrl.includes('vimeo.com')) {
         const vimeoId = videoUrl.split('/').pop() || videoUrl.match(/\d+/)?.[0];
         if (vimeoId) {
-          return `https://player.vimeo.com/video/${vimeoId}?autoplay=0&badge=0&title=0&byline=0&portrait=0`;
+          const embedUrl = `https://player.vimeo.com/video/${vimeoId}?autoplay=0&badge=0&title=0&byline=0&portrait=0`;
+          console.log('🎥 Generated Vimeo embed URL:', embedUrl);
+          return embedUrl;
         }
       }
       
@@ -39,11 +64,14 @@ export const ReactVideoPlayer = ({
           videoId = videoUrl.split('watch?v=')[1].split('&')[0];
         }
         if (videoId) {
-          return `https://www.youtube.com/embed/${videoId}?autoplay=0&controls=1&rel=0`;
+          const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&controls=1&rel=0`;
+          console.log('🎥 Generated YouTube embed URL:', embedUrl);
+          return embedUrl;
         }
       }
       
       // Return original URL if no conversion needed
+      console.log('🎥 Using original URL:', videoUrl);
       return videoUrl;
     };
 
@@ -58,15 +86,16 @@ export const ReactVideoPlayer = ({
   };
 
   const handleError = () => {
-    console.error(`Failed to load video: ${currentUrl}`);
+    console.error('🚫 Video failed to load:', currentUrl, '→', embedUrl);
     
     // Try fallback URL if available and we haven't already tried it
     if (fallbackUrl && currentUrl === url) {
-      console.log(`Trying fallback URL: ${fallbackUrl}`);
+      console.log('🔄 Trying fallback URL:', fallbackUrl);
       setCurrentUrl(fallbackUrl);
       return;
     }
     
+    console.error('❌ No fallback available, showing error state');
     setIsLoading(false);
     setHasError(true);
   };
@@ -109,6 +138,9 @@ export const ReactVideoPlayer = ({
                 Watch Directly
               </a>
             </div>
+            <p className="text-xs text-gray-400 mt-2 font-mono">
+              Debug: {currentUrl} → {embedUrl}
+            </p>
           </div>
         </div>
       </div>
