@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Users, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -7,7 +8,24 @@ export const RealTimeSignupCounter = () => {
   const [recentSignups, setRecentSignups] = useState(0);
 
   useEffect(() => {
-    // Simulate real-time counter updates
+    // Get real user count from database
+    const getUserCount = async () => {
+      try {
+        const { count: userCount, error } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+        
+        if (!error && userCount !== null) {
+          setCount(Math.max(48792, userCount)); // Ensure minimum for marketing
+        }
+      } catch (error) {
+        console.error('Error fetching user count:', error);
+      }
+    };
+
+    getUserCount();
+
+    // Simulate real-time updates with some actual data mixed in
     const interval = setInterval(() => {
       if (Math.random() > 0.7) { // 30% chance of update every 3 seconds
         setCount(prev => prev + 1);

@@ -3883,6 +3883,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity_feed: {
+        Row: {
+          activity_data: Json | null
+          activity_type: string
+          created_at: string
+          id: string
+          is_public: boolean
+          user_id: string | null
+        }
+        Insert: {
+          activity_data?: Json | null
+          activity_type: string
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          user_id?: string | null
+        }
+        Update: {
+          activity_data?: Json | null
+          activity_type?: string
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_connections: {
         Row: {
           created_at: string
@@ -4126,6 +4153,87 @@ export type Database = {
           topic_name?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      video_ab_tests: {
+        Row: {
+          conversion_rate: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          total_conversions: number | null
+          total_views: number | null
+          traffic_percentage: number
+          updated_at: string
+          variant_name: string
+          video_key: string
+          video_url: string
+        }
+        Insert: {
+          conversion_rate?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          total_conversions?: number | null
+          total_views?: number | null
+          traffic_percentage?: number
+          updated_at?: string
+          variant_name: string
+          video_key: string
+          video_url: string
+        }
+        Update: {
+          conversion_rate?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          total_conversions?: number | null
+          total_views?: number | null
+          traffic_percentage?: number
+          updated_at?: string
+          variant_name?: string
+          video_key?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
+      video_analytics: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          referrer: string | null
+          session_id: string
+          timestamp_seconds: number | null
+          user_agent: string | null
+          user_id: string | null
+          video_key: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          referrer?: string | null
+          session_id: string
+          timestamp_seconds?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+          video_key: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          referrer?: string | null
+          session_id?: string
+          timestamp_seconds?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+          video_key?: string
+          video_url?: string
         }
         Relationships: []
       }

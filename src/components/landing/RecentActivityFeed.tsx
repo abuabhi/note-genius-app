@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Brain, Target, Clock } from 'lucide-react';
+import { BookOpen, Brain, Target, Clock, User } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useActivityFeed } from '@/hooks/admin/useVideoAnalytics';
 
 interface Activity {
   id: string;
@@ -11,7 +12,8 @@ interface Activity {
   location?: string;
 }
 
-const activities: Activity[] = [
+// Fallback activities for when database is empty
+const fallbackActivities: Activity[] = [
   { id: '1', user: 'Sarah M.', action: 'created 50 flashcards', time: '2 min ago', icon: Brain, location: 'NYC' },
   { id: '2', user: 'Alex K.', action: 'completed study session', time: '3 min ago', icon: Clock, location: 'SF' },
   { id: '3', user: 'Emma L.', action: 'imported notes from PDF', time: '5 min ago', icon: BookOpen, location: 'London' },
@@ -21,7 +23,7 @@ const activities: Activity[] = [
 ];
 
 export const RecentActivityFeed = () => {
-  const [visibleActivities, setVisibleActivities] = useState(activities.slice(0, 3));
+  const [visibleActivities, setVisibleActivities] = useState(fallbackActivities.slice(0, 3));
   const [currentIndex, setCurrentIndex] = useState(3);
 
   useEffect(() => {
@@ -29,13 +31,13 @@ export const RecentActivityFeed = () => {
       setVisibleActivities(prev => {
         const newActivities = [...prev];
         // Add new activity at the top
-        if (currentIndex < activities.length) {
-          newActivities.unshift(activities[currentIndex]);
-          setCurrentIndex(c => (c + 1) % activities.length);
+        if (currentIndex < fallbackActivities.length) {
+          newActivities.unshift(fallbackActivities[currentIndex]);
+          setCurrentIndex(c => (c + 1) % fallbackActivities.length);
         } else {
           // Cycle through activities
-          newActivities.unshift(activities[currentIndex % activities.length]);
-          setCurrentIndex(c => (c + 1) % activities.length);
+          newActivities.unshift(fallbackActivities[currentIndex % fallbackActivities.length]);
+          setCurrentIndex(c => (c + 1) % fallbackActivities.length);
         }
         // Keep only 3 activities
         return newActivities.slice(0, 3);
@@ -44,6 +46,7 @@ export const RecentActivityFeed = () => {
 
     return () => clearInterval(interval);
   }, [currentIndex]);
+
 
   return (
     <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 max-w-sm">

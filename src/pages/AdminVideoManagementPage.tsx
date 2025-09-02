@@ -4,9 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { useVideoSettings, useUpdateVideoSettings } from '@/hooks/admin/useAdminSettings';
-import { Play, Save, RotateCcw, ExternalLink, Check, AlertCircle } from 'lucide-react';
+import { VideoAnalyticsDashboard } from '@/components/admin/VideoAnalyticsDashboard';
+import { ABTestManager } from '@/components/admin/ABTestManager';
+import { Play, Save, RotateCcw, ExternalLink, Check, AlertCircle, Upload, BarChart3, TestTube } from 'lucide-react';
 import { toast } from 'sonner';
 
 const AdminVideoManagementPage = () => {
@@ -74,6 +77,28 @@ const AdminVideoManagementPage = () => {
     }
   };
 
+  const handleBulkUpdate = async (bulkData: Record<string, string>) => {
+    const errors: Record<string, string> = {};
+    
+    Object.entries(bulkData).forEach(([key, value]) => {
+      if (value && !validateVideoUrl(value)) {
+        errors[key] = 'Please enter a valid YouTube or Vimeo URL';
+      }
+    });
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+
+    try {
+      await updateVideoSettings.mutateAsync(bulkData);
+      setEditedSettings({});
+    } catch (error) {
+      console.error('Failed to bulk update video settings:', error);
+    }
+  };
+
   const handleReset = () => {
     setEditedSettings({});
     setValidationErrors({});
@@ -110,12 +135,12 @@ const AdminVideoManagementPage = () => {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-6 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Video Management</h1>
             <p className="text-gray-600 mt-2">
-              Manage video URLs for all sections on the landing page. Changes will be reflected immediately.
+              Manage video URLs, analytics, and A/B tests for landing page optimization.
             </p>
           </div>
           
@@ -137,91 +162,118 @@ const AdminVideoManagementPage = () => {
           )}
         </div>
 
-        <div className="grid gap-6">
-          {videoSections.map((section) => {
-            const currentUrl = getDisplayUrl(section.key);
-            const hasChanges = section.key in editedSettings;
-            const hasError = validationErrors[section.key];
-            const isValid = currentUrl && validateVideoUrl(currentUrl);
+        <Tabs defaultValue="videos" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="videos" className="gap-2">
+              <Upload className="h-4 w-4" />
+              Video URLs
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="ab-tests" className="gap-2">
+              <TestTube className="h-4 w-4" />
+              A/B Tests
+            </TabsTrigger>
+          </TabsList>
 
-            return (
-              <Card key={section.key} className={`transition-all ${hasChanges ? 'ring-2 ring-mint-500' : ''}`}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        {section.label}
-                        {hasChanges && <Badge variant="secondary" className="text-xs">Modified</Badge>}
-                      </CardTitle>
-                      <p className="text-sm text-gray-600 mt-1">{section.description}</p>
-                    </div>
+          <TabsContent value="videos" className="space-y-6">
+            <div className="grid gap-6">
+              {videoSections.map((section) => {
+                const currentUrl = getDisplayUrl(section.key);
+                const hasChanges = section.key in editedSettings;
+                const hasError = validationErrors[section.key];
+                const isValid = currentUrl && validateVideoUrl(currentUrl);
+
+                return (
+                  <Card key={section.key} className={`transition-all ${hasChanges ? 'ring-2 ring-mint-500' : ''}`}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            {section.label}
+                            {hasChanges && <Badge variant="secondary" className="text-xs">Modified</Badge>}
+                          </CardTitle>
+                          <p className="text-sm text-gray-600 mt-1">{section.description}</p>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          {isValid ? (
+                            <Check className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <AlertCircle className="h-5 w-5 text-amber-500" />
+                          )}
+                          
+                          {currentUrl && isValid && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openVideoPreview(currentUrl)}
+                              className="gap-2"
+                            >
+                              <Play className="h-4 w-4" />
+                              Preview
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
                     
-                    <div className="flex items-center gap-2">
-                      {isValid ? (
-                        <Check className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <AlertCircle className="h-5 w-5 text-amber-500" />
-                      )}
-                      
-                      {currentUrl && isValid && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openVideoPreview(currentUrl)}
-                          className="gap-2"
-                        >
-                          <Play className="h-4 w-4" />
-                          Preview
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent>
-                  <div className="space-y-2">
-                    <Label htmlFor={section.key} className="text-sm font-medium">
-                      Video URL
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id={section.key}
-                        value={currentUrl}
-                        onChange={(e) => handleInputChange(section.key, e.target.value)}
-                        placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..."
-                        className={hasError ? 'border-red-300 focus:border-red-500' : ''}
-                      />
-                      {currentUrl && isValid && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => openVideoPreview(currentUrl)}
-                          className="px-3"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    
-                    {hasError && (
-                      <p className="text-sm text-red-600 flex items-center gap-1">
-                        <AlertCircle className="h-4 w-4" />
-                        {hasError}
-                      </p>
-                    )}
-                    
-                    {!hasError && currentUrl && !isValid && (
-                      <p className="text-sm text-amber-600 flex items-center gap-1">
-                        <AlertCircle className="h-4 w-4" />
-                        Please enter a valid YouTube or Vimeo URL
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <Label htmlFor={section.key} className="text-sm font-medium">
+                          Video URL
+                        </Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id={section.key}
+                            value={currentUrl}
+                            onChange={(e) => handleInputChange(section.key, e.target.value)}
+                            placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..."
+                            className={hasError ? 'border-red-300 focus:border-red-500' : ''}
+                          />
+                          {currentUrl && isValid && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => openVideoPreview(currentUrl)}
+                              className="px-3"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {hasError && (
+                          <p className="text-sm text-red-600 flex items-center gap-1">
+                            <AlertCircle className="h-4 w-4" />
+                            {hasError}
+                          </p>
+                        )}
+                        
+                        {!hasError && currentUrl && !isValid && (
+                          <p className="text-sm text-amber-600 flex items-center gap-1">
+                            <AlertCircle className="h-4 w-4" />
+                            Please enter a valid YouTube or Vimeo URL
+                          </p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <VideoAnalyticsDashboard />
+          </TabsContent>
+
+          <TabsContent value="ab-tests">
+            <ABTestManager />
+          </TabsContent>
+        </Tabs>
 
         {hasUnsavedChanges && (
           <div className="fixed bottom-6 right-6 flex gap-2">
