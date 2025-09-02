@@ -1,12 +1,13 @@
 import React from 'react';
-import { VimeoVideoPlayer } from './VimeoVideoPlayer';
+import { ReactVideoPlayer } from './ReactVideoPlayer';
 import { LucideIcon } from 'lucide-react';
 
 interface VideoFeatureSectionProps {
   title: string;
   description: string;
   benefits: string[];
-  videoId: string;
+  videoUrl: string;
+  fallbackUrl?: string;
   icon: LucideIcon;
   highlight?: string;
   reverse?: boolean;
@@ -16,7 +17,8 @@ export const VideoFeatureSection = ({
   title, 
   description, 
   benefits, 
-  videoId, 
+  videoUrl,
+  fallbackUrl, 
   icon: Icon,
   highlight,
   reverse = false 
@@ -62,8 +64,9 @@ export const VideoFeatureSection = ({
           {/* Video Side */}
           <div className={`relative ${reverse ? 'lg:order-1' : ''}`}>
             <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-mint-300 to-neutral-300 blur-2xl sm:blur-3xl opacity-20" />
-            <VimeoVideoPlayer 
-              videoId={videoId}
+            <ReactVideoPlayer 
+              url={videoUrl}
+              fallbackUrl={fallbackUrl}
               title={`${title} Demo`}
               className="relative"
             />

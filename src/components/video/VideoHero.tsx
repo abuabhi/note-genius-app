@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
 import { HeroLogo } from "@/components/landing/HeroLogo";
-import { VimeoVideoPlayer } from "./VimeoVideoPlayer";
+import { ReactVideoPlayer } from "./ReactVideoPlayer";
 
 const VideoHero = () => {
   return (
@@ -29,8 +29,9 @@ const VideoHero = () => {
         {/* Video Section */}
         <div className="relative max-w-4xl mx-auto">
           <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-mint-300 to-neutral-300 blur-2xl sm:blur-3xl opacity-20" />
-          <VimeoVideoPlayer 
-            videoId="605069004" 
+          <ReactVideoPlayer 
+            url="https://vimeo.com/605069004" 
+            fallbackUrl="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
             title="PrepGenie Platform Overview"
             className="relative rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl w-full"
           />
