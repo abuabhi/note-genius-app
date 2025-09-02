@@ -55,17 +55,6 @@ const VideoHero = () => {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-2 border-mint-300 text-mint-700 hover:bg-mint-50 hover:border-mint-400 bg-white shadow-md hover:shadow-lg transition-all duration-200 min-h-[48px] text-base font-medium"
-              asChild
-            >
-              <Link to="/features">
-                <Play className="mr-2 h-4 w-4" />
-                Try Interactive Demo
-              </Link>
-            </Button>
           </div>
           
           <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">

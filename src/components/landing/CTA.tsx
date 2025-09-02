@@ -50,17 +50,6 @@ const CTA = () => {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-2 border-white/40 text-white hover:bg-white/10 backdrop-blur-sm bg-white/5 hover:border-white/60 transition-all duration-200"
-              asChild
-            >
-              <Link to="/features">
-                Try Interactive Demo
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
           </div>
           
           <p className="mt-6 text-sm text-mint-100">

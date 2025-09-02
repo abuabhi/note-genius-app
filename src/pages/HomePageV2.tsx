@@ -86,7 +86,7 @@ const HomePageV2 = () => {
                 size="lg" 
                 className="bg-white text-mint-600 hover:bg-mint-50 font-semibold"
               >
-                <Link to="/signup">Start Free Trial - No Credit Card Required</Link>
+                <Link to="/signup">Start Free Plan - No Credit Card</Link>
               </Button>
             </div>
           </div>
@@ -177,6 +177,7 @@ const HomePageV2 = () => {
           videoUrl={videoSettings?.video_todo_focus_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={ListChecks}
           highlight="Organizer"
+          reverse={true}
         />
 
         <VideoFeatureSection
@@ -220,6 +221,7 @@ const HomePageV2 = () => {
           videoUrl={videoSettings?.video_goals_progress_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={Target}
           highlight="Motivation"
+          reverse={true}
         />
 
         <VideoFeatureSection
@@ -253,7 +255,7 @@ const HomePageV2 = () => {
                   size="lg" 
                   className="bg-white text-mint-600 hover:bg-mint-50 font-semibold text-lg px-8 py-4"
                 >
-                  <Link to="/signup">Start Free Trial - No Credit Card</Link>
+                  <Link to="/signup">Start Free Plan - No Credit Card</Link>
                 </Button>
                 <Button 
                   asChild 
@@ -303,7 +305,7 @@ const HomePageV2 = () => {
         <ProgressBasedCTA 
           milestone={9} 
           total={10} 
-          message="Almost done! See how these features work together in your free trial." 
+          message="Almost done! See how these features work together in your free plan." 
         />
         
       </div>
