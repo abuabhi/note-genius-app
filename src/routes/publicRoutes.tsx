@@ -18,6 +18,10 @@ import HelpRedirectPage from "@/pages/HelpRedirectPage";
 import FAQPage from "@/pages/FAQPage";
 import SiteMapPage from "@/pages/SiteMapPage";
 import HomePageV2 from "@/pages/HomePageV2";
+import AIFlashcardsPage from "@/pages/features/AIFlashcardsPage";
+import StudyPlannerPage from "@/pages/features/StudyPlannerPage";
+import QuizGeneratorPage from "@/pages/features/QuizGeneratorPage";
+import StudyAnalyticsPage from "@/pages/features/StudyAnalyticsPage";
 
 export interface RouteConfig {
   path: string;
@@ -43,5 +47,11 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/help-centre", element: <Navigate to="/help" replace /> },
   { path: "/faq", element: <FAQPage /> },
   { path: "/sitemap", element: <SiteMapPage /> },
-  { path: "/coupon/:code", element: <PublicCouponPage /> } // Public coupon redemption page
+  { path: "/coupon/:code", element: <PublicCouponPage /> }, // Public coupon redemption page
+  
+  // Feature landing pages
+  { path: "/features/ai-flashcards", element: <AIFlashcardsPage /> },
+  { path: "/features/study-planner", element: <StudyPlannerPage /> },
+  { path: "/features/quiz-generator", element: <QuizGeneratorPage /> },
+  { path: "/features/study-analytics", element: <StudyAnalyticsPage /> }
 ];

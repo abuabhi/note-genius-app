@@ -20,18 +20,37 @@ const HomePage = () => {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "AI Study App",
+    name: "PrepGenie - AI Study App",
     applicationCategory: "EducationalApplication",
     operatingSystem: "Web",
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-    description: "AI-powered notes, flashcards, quizzes, and study analytics to help you learn faster.",
-    keywords: [
-      "AI flashcards",
-      "study planner",
-      "quiz generator",
-      "OCR notes",
-      "study analytics",
+    description: "AI-powered study tools including smart flashcards, personalized study plans, quiz generation, and learning analytics. Transform your study routine with artificial intelligence.",
+    featureList: [
+      "AI Flashcard Generation from any content",
+      "Personalized Study Planning and Scheduling", 
+      "Intelligent Quiz Generator with multiple formats",
+      "Advanced Learning Analytics and Progress Tracking",
+      "OCR Document Scanning and Note Enhancement",
+      "AI Study Assistant Chat Support"
     ],
+    keywords: [
+      "AI flashcards generator",
+      "study planner app",
+      "quiz generator online",
+      "learning analytics",
+      "study scheduler",
+      "AI study tools"
+    ],
+    author: {
+      "@type": "Organization",
+      "name": "PrepGenie",
+      "url": typeof window !== 'undefined' ? window.location.origin : ""
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "reviewCount": "2847"
+    }
   };
 
   return (

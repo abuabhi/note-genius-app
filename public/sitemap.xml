@@ -50,4 +50,24 @@
     <changefreq>monthly</changefreq>
     <priority>0.2</priority>
   </url>
+  <url>
+    <loc>https://www.prepgenie.io/features/ai-flashcards</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.prepgenie.io/features/study-planner</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.prepgenie.io/features/quiz-generator</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.prepgenie.io/features/study-analytics</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
 </urlset>
