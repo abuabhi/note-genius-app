@@ -25,7 +25,7 @@ export const useAuthRedirects = ({
     '/', '/about', '/pricing', '/faq', '/help', '/help-center', '/help-centre',
     '/contact', '/blog', '/features', '/login', '/signup', '/tier-selection', '/payment',
     '/oauth2callback', '/auth/google-docs/callback', '/auth/evernote/callback', '/auth/notion/callback', '/auth/microsoft/callback',
-    '/privacy', '/terms'
+    '/privacy', '/terms', '/v2'
   ]);
   const publicPrefixes = ['/coupon/', '/auth/'];
   const isPublicRoute = exactPublicPaths.has(normalizedPath) || publicPrefixes.some(prefix => normalizedPath.startsWith(prefix));

@@ -30,7 +30,7 @@ const VideoHero = () => {
         <div className="relative max-w-4xl mx-auto">
           <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-mint-300 to-neutral-300 blur-2xl sm:blur-3xl opacity-20" />
           <VimeoVideoPlayer 
-            videoId="1073481634" 
+            videoId="605069004" 
             title="PrepGenie Platform Overview"
             className="relative rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl w-full"
           />
