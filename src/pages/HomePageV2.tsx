@@ -6,7 +6,7 @@ import VideoHero from "@/components/video/VideoHero";
 import { VideoFeatureSection } from "@/components/video/VideoFeatureSection";
 import CTA from "@/components/landing/CTA";
 import StickyMobileCTA from "@/components/landing/StickyMobileCTA";
-import { UrgencyBanner } from "@/components/landing/UrgencyBanner";
+
 import { ProgressBasedCTA } from "@/components/landing/ProgressBasedCTA";
 import { RealTimeSignupCounter } from "@/components/landing/RealTimeSignupCounter";
 import { Logos3 } from "@/components/ui/logos3";
@@ -60,7 +60,7 @@ const HomePageV2 = () => {
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30 overflow-x-hidden">
-        <UrgencyBanner />
+        
         <VideoHero />
         
         {/* Social Proof Section */}
@@ -78,13 +78,13 @@ const HomePageV2 = () => {
         {/* Mid-Page CTA */}
         <div className="py-8 px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mx-auto text-center">
-            <div className="bg-gradient-to-r from-mint-500 to-mint-600 rounded-2xl p-6 shadow-lg">
-              <h3 className="text-xl font-bold text-white mb-2">Ready to Transform Your Study Process?</h3>
-              <p className="text-mint-100 mb-4">Join 50,000+ students who study smarter with AI</p>
+            <div className="bg-white border-2 border-mint-200 rounded-2xl p-6 shadow-lg">
+              <h3 className="text-xl font-bold text-mint-700 mb-2">Ready to Transform Your Study Process?</h3>
+              <p className="text-mint-600 mb-4">Join 50,000+ students who study smarter with AI</p>
               <Button 
                 asChild 
                 size="lg" 
-                className="bg-white text-mint-600 hover:bg-mint-50 font-semibold"
+                className="bg-mint-600 text-white hover:bg-mint-700 font-semibold"
               >
                 <Link to="/signup">Start Free Plan - No Credit Card</Link>
               </Button>
@@ -192,7 +192,6 @@ const HomePageV2 = () => {
           videoUrl={videoSettings?.video_analytics_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={BarChart3}
           highlight="Analytics"
-          reverse={true}
         />
 
         <VideoFeatureSection
@@ -207,6 +206,7 @@ const HomePageV2 = () => {
           videoUrl={videoSettings?.video_timer_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={Timer}
           highlight="Pomodoro"
+          reverse={true}
         />
 
         <VideoFeatureSection
@@ -221,7 +221,6 @@ const HomePageV2 = () => {
           videoUrl={videoSettings?.video_goals_progress_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={Target}
           highlight="Motivation"
-          reverse={true}
         />
 
         <VideoFeatureSection
@@ -242,18 +241,18 @@ const HomePageV2 = () => {
         {/* Strategic Mid-Page CTA */}
         <div className="py-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="bg-gradient-to-r from-mint-500 to-mint-600 rounded-3xl p-8 shadow-2xl">
-              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+            <div className="bg-white border-2 border-mint-200 rounded-3xl p-8 shadow-2xl">
+              <h3 className="text-2xl sm:text-3xl font-bold text-mint-700 mb-4">
                 Ready to Study Smarter, Not Harder?
               </h3>
-              <p className="text-mint-100 mb-6 text-lg">
+              <p className="text-mint-600 mb-6 text-lg">
                 Join 50,000+ students who improved their grades by 35% on average
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 
                   asChild 
                   size="lg" 
-                  className="bg-white text-mint-600 hover:bg-mint-50 font-semibold text-lg px-8 py-4"
+                  className="bg-mint-600 text-white hover:bg-mint-700 font-semibold text-lg px-8 py-4"
                 >
                   <Link to="/signup">Start Free Plan - No Credit Card</Link>
                 </Button>
@@ -261,22 +260,22 @@ const HomePageV2 = () => {
                   asChild 
                   variant="outline" 
                   size="lg" 
-                  className="border-2 border-white text-white hover:bg-white/10 text-lg px-8 py-4"
+                  className="border-2 border-mint-600 text-mint-600 hover:bg-mint-50 text-lg px-8 py-4"
                 >
                   <Link to="/features">See All Features</Link>
                 </Button>
               </div>
-              <div className="flex flex-wrap justify-center gap-6 pt-6 text-sm text-mint-100">
+              <div className="flex flex-wrap justify-center gap-6 pt-6 text-sm text-mint-600">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <div className="w-2 h-2 bg-mint-600 rounded-full"></div>
                   <span>Cancel anytime</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <div className="w-2 h-2 bg-mint-600 rounded-full"></div>
                   <span>Works on all devices</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <div className="w-2 h-2 bg-mint-600 rounded-full"></div>
                   <span>Free forever plan</span>
                 </div>
               </div>
