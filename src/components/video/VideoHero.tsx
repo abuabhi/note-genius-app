@@ -14,17 +14,17 @@ const VideoHero = () => {
         {/* Text Content Section */}
         <div className="text-center space-y-6 sm:space-y-8">
           <div className="inline-flex items-center px-3 sm:px-4 py-2 bg-mint-100 rounded-full text-mint-700 text-xs sm:text-sm">
-            <span>✨ See Your Learning Come Alive</span>
+            <span>🎯 All-In-One AI Study Platform</span>
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
-              See AI Transform Your Study Process
+              Your Personal AI Study Coach
               <span className="block text-mint-500 mt-1 sm:mt-2">
-                Into Better Grades, Faster
+                That Handles Everything
               </span>
             </h1>
             <p className="mt-4 sm:mt-6 text-base sm:text-lg text-gray-600 max-w-4xl mx-auto leading-relaxed">
-              Watch every feature in action. From uploading notes to generating flashcards, taking quizzes, and tracking progress - see how AI makes studying 3x more effective.
+              From notes to flashcards, quizzes to study plans, chat to analytics — one platform that replaces your entire study toolkit and gets you better grades.
             </p>
           </div>
         </div>
