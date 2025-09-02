@@ -1,11 +1,14 @@
 import React, { Suspense } from "react";
 import { Helmet } from "react-helmet";
+import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import VideoHero from "@/components/video/VideoHero";
 import { VideoFeatureSection } from "@/components/video/VideoFeatureSection";
 import CTA from "@/components/landing/CTA";
 import StickyMobileCTA from "@/components/landing/StickyMobileCTA";
 import { Logos3 } from "@/components/ui/logos3";
+import { Button } from "@/components/ui/button";
+import { useVideoSettings } from "@/hooks/admin/useAdminSettings";
 import { 
   BookOpen, 
   Brain, 
@@ -22,6 +25,7 @@ import {
 const Testimonials = React.lazy(() => import("@/components/landing/Testimonials"));
 
 const HomePageV2 = () => {
+  const { data: videoSettings } = useVideoSettings();
   const canonicalUrl = typeof window !== 'undefined' ? `${window.location.origin}/v2` : undefined;
   const jsonLd = {
     "@context": "https://schema.org",
@@ -54,7 +58,26 @@ const HomePageV2 = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30 overflow-x-hidden">
         <VideoHero />
+        
+        {/* Trust Signal */}
         <Logos3 heading="Trusted by students at" count={17} />
+
+        {/* Mid-Page CTA */}
+        <div className="py-8 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="bg-gradient-to-r from-mint-500 to-mint-600 rounded-2xl p-6 shadow-lg">
+              <h3 className="text-xl font-bold text-white mb-2">Ready to Transform Your Study Process?</h3>
+              <p className="text-mint-100 mb-4">Join 50,000+ students who study smarter with AI</p>
+              <Button 
+                asChild 
+                size="lg" 
+                className="bg-white text-mint-600 hover:bg-mint-50 font-semibold"
+              >
+                <Link to="/signup">Start Free Trial - No Credit Card Required</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
 
         {/* Feature Demo Sections */}
         <VideoFeatureSection
@@ -66,7 +89,7 @@ const HomePageV2 = () => {
             "Smart question creation from your content",
             "Support for PDF, Word, OneNote, and more"
           ]}
-          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
+          videoUrl={videoSettings?.video_notes_import_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={BookOpen}
           highlight="All-in-one"
         />
@@ -80,7 +103,7 @@ const HomePageV2 = () => {
             "Spaced repetition algorithm for optimal retention",
             "Difficulty adjustment based on your performance"
           ]}
-          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
+          videoUrl={videoSettings?.video_flashcard_generation_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={Brain}
           highlight="Popular"
           reverse={true}
@@ -95,7 +118,7 @@ const HomePageV2 = () => {
             "Progress tracking across all quiz attempts",
             "Instant feedback to reinforce learning"
           ]}
-          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
+          videoUrl={videoSettings?.video_smart_quizzes_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={Zap}
           highlight="AI-Powered"
         />
@@ -109,7 +132,7 @@ const HomePageV2 = () => {
             "Create flashcards directly from chat responses",
             "Context-aware answers from your specific materials"
           ]}
-          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
+          videoUrl={videoSettings?.video_ai_chat_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={MessageSquare}
           highlight="New"
           reverse={true}
@@ -124,7 +147,7 @@ const HomePageV2 = () => {
             "Integration with calendar apps",
             "Realistic time estimates for each study session"
           ]}
-          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
+          videoUrl={videoSettings?.video_study_plans_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={Calendar}
           highlight="Adaptive"
         />
@@ -138,7 +161,7 @@ const HomePageV2 = () => {
             "Session-based task completion tracking",
             "Integration with study plans and goals"
           ]}
-          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
+          videoUrl={videoSettings?.video_todo_focus_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={ListChecks}
           highlight="Organizer"
         />
@@ -152,7 +175,7 @@ const HomePageV2 = () => {
             "Knowledge gap identification",
             "Personalized recommendations for improvement"
           ]}
-          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
+          videoUrl={videoSettings?.video_analytics_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={BarChart3}
           highlight="Analytics"
           reverse={true}
@@ -167,7 +190,7 @@ const HomePageV2 = () => {
             "Time tracking across all study activities",
             "Focus statistics and productivity insights"
           ]}
-          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
+          videoUrl={videoSettings?.video_timer_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={Timer}
           highlight="Pomodoro"
         />
@@ -181,7 +204,7 @@ const HomePageV2 = () => {
             "Achievement celebrations and streaks",
             "Goal adjustment based on performance data"
           ]}
-          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
+          videoUrl={videoSettings?.video_goals_progress_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={Target}
           highlight="Motivation"
         />
@@ -195,11 +218,56 @@ const HomePageV2 = () => {
             "Website bookmarking with automatic tagging",
             "Integration with notes and flashcard creation"
           ]}
-          videoUrl="https://www.youtube.com/watch?v=UR94FhzUOg0"
+          videoUrl={videoSettings?.video_resources_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"}
           icon={FolderOpen}
           highlight="Organization"
           reverse={true}
         />
+
+        {/* Strategic Mid-Page CTA */}
+        <div className="py-16 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="bg-gradient-to-r from-mint-500 to-mint-600 rounded-3xl p-8 shadow-2xl">
+              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+                Ready to Study Smarter, Not Harder?
+              </h3>
+              <p className="text-mint-100 mb-6 text-lg">
+                Join 50,000+ students who improved their grades by 35% on average
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button 
+                  asChild 
+                  size="lg" 
+                  className="bg-white text-mint-600 hover:bg-mint-50 font-semibold text-lg px-8 py-4"
+                >
+                  <Link to="/signup">Start Free Trial - No Credit Card</Link>
+                </Button>
+                <Button 
+                  asChild 
+                  variant="outline" 
+                  size="lg" 
+                  className="border-2 border-white text-white hover:bg-white/10 text-lg px-8 py-4"
+                >
+                  <Link to="/features">See All Features</Link>
+                </Button>
+              </div>
+              <div className="flex flex-wrap justify-center gap-6 pt-6 text-sm text-mint-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <span>Cancel anytime</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <span>Works on all devices</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <span>Free forever plan</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <Suspense fallback={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16"><div className="h-72 rounded-2xl bg-white/60 border border-mint-100 animate-pulse" /></div>}>
           <Testimonials />

@@ -20,6 +20,7 @@ import AdminInfluencersPage from "@/pages/AdminInfluencersPage";
 import AdminCouponsPage from "@/pages/AdminCouponsPage";
 import AdminPayoutsPage from "@/pages/AdminPayoutsPage";
 import AdminTranscriptionsPage from "@/pages/AdminTranscriptionsPage";
+import AdminVideoManagementPage from "@/pages/AdminVideoManagementPage";
 import { RouteConfig } from './publicRoutes';
 
 // Admin routes - wrapped with SidebarLayout for sidebar/header
@@ -33,6 +34,7 @@ export const adminRoutes: RouteConfig[] = [
   { path: "/admin/feedback/settings", element: <AdminFeedbackSettingsPage /> },
   { path: "/admin/analytics", element: <AdminAnalyticsPage /> },
   { path: "/admin/transcriptions", element: <AdminTranscriptionsPage /> },
+  { path: "/admin/video-management", element: <AdminVideoManagementPage /> },
   { path: "/admin/announcements", element: <AdminAnnouncementsPage /> },
   { path: "/admin/flashcards", element: <AdminFlashcardPage /> },
   { path: "/admin/sections", element: <AdminSectionsPage /> },

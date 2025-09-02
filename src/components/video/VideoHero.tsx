@@ -3,8 +3,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
 import { HeroLogo } from "@/components/landing/HeroLogo";
 import { ReactVideoPlayer } from "./ReactVideoPlayer";
+import { useVideoSettings } from "@/hooks/admin/useAdminSettings";
 
 const VideoHero = () => {
+  const { data: videoSettings } = useVideoSettings();
+  
   return (
     <div className="px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-12 sm:pb-16 max-w-7xl mx-auto">
       <div className="space-y-8 sm:space-y-12">
@@ -15,13 +18,13 @@ const VideoHero = () => {
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
-              Transform Your Study Game
+              See AI Transform Your Study Process
               <span className="block text-mint-500 mt-1 sm:mt-2">
-                With Visual Learning Tools That Actually Work
+                Into Better Grades, Faster
               </span>
             </h1>
             <p className="mt-4 sm:mt-6 text-base sm:text-lg text-gray-600 max-w-4xl mx-auto leading-relaxed">
-              Watch how AI transforms your notes into flashcards, creates smart quizzes, and builds personalized study plans. See every feature in action.
+              Watch every feature in action. From uploading notes to generating flashcards, taking quizzes, and tracking progress - see how AI makes studying 3x more effective.
             </p>
           </div>
         </div>
@@ -30,7 +33,7 @@ const VideoHero = () => {
         <div className="relative max-w-4xl mx-auto">
           <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-mint-300 to-neutral-300 blur-2xl sm:blur-3xl opacity-20" />
           <ReactVideoPlayer 
-            url="https://www.youtube.com/watch?v=UR94FhzUOg0" 
+            url={videoSettings?.video_hero_url ?? "https://www.youtube.com/watch?v=UR94FhzUOg0"} 
             title="PrepGenie Platform Overview"
             className="relative rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl w-full"
           />
@@ -66,7 +69,7 @@ const VideoHero = () => {
           </div>
           
           <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
-            No credit card required • Join 15,000+ high school & college students
+            No credit card required • Join 50,000+ students getting better grades
           </p>
         </div>
 
