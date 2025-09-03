@@ -172,16 +172,19 @@ serve(async (req) => {
       `;
       goals.slice(0, 3).forEach((goal: any) => {
         const progressPercent = goal.progress || 0;
+        const isOverdue = goal.end_date && new Date(goal.end_date) < new Date();
         content += `
-          <div style="background: ${grayLight}; border: 1px solid #E5E7EB; padding: 20px; margin: 12px 0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <div style="background: ${isOverdue ? '#FEF2F2' : grayLight}; border: 1px solid ${isOverdue ? '#EF4444' : '#E5E7EB'}; border-left: 4px solid ${isOverdue ? '#EF4444' : mintPrimary}; padding: 20px; margin: 12px 0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
             <h4 style="margin: 0; color: ${grayDark}; font-size: 16px; font-weight: 600;">${goal.title}</h4>
             ${goal.description ? `<p style=\"margin: 8px 0; color: ${grayMedium}; font-size: 14px; line-height: 1.5;\">${goal.description}</p>` : ''}
-            <div style="background: #E5E7EB; height: 10px; border-radius: 5px; margin: 16px 0; overflow: hidden;">
-              <div style="background: ${mintPrimary}; height: 10px; border-radius: 5px; width: ${progressPercent}%;"></div>
+            <div style="background: #E5E7EB; height: 12px; border-radius: 6px; margin: 16px 0; overflow: hidden;">
+              <div style="background: ${isOverdue ? '#EF4444' : mintPrimary}; height: 12px; border-radius: 6px; width: ${progressPercent}%; transition: width 0.3s ease;"></div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 14px; color: ${mintDark}; font-weight: 600;">${progressPercent}% Complete</span>
-              <span style="font-size: 12px; color: ${grayMedium};">Due: ${fmtDate(goal.end_date)}</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+              <span style="font-size: 14px; color: ${isOverdue ? '#DC2626' : mintDark}; font-weight: 600; background: white; padding: 4px 8px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">${progressPercent}% Complete</span>
+              <span style="font-size: 12px; color: ${isOverdue ? '#DC2626' : grayMedium}; background: white; padding: 4px 8px; border-radius: 8px; font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                ${isOverdue ? '⚠️ OVERDUE' : '📅 Due'}: ${fmtDate(goal.end_date)}
+              </span>
             </div>
           </div>
         `;
