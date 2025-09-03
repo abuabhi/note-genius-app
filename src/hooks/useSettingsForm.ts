@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { settingsFormSchema, SettingsFormValues } from "@/components/settings/schemas/settingsFormSchema";
 
 export const useSettingsForm = () => {
+  // Consolidated settings form hook - v2 (cache refresh)
   const { user } = useAuth();
   const { userTier } = useUserTier();
   const { countries, userCountry, updateUserCountry } = useCountries();
