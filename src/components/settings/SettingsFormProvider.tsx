@@ -3,7 +3,7 @@ import { Form } from "@/components/ui/form";
 import { SettingsFormTabs } from "./SettingsFormTabs";
 import { SettingsFormActions } from "./SettingsFormActions";
 import { useSettingsForm } from "@/hooks/useSettingsForm";
-import UnsavedChangesDialog from "@/components/dialogs/UnsavedChangesDialog";
+import UnsavedChangesDialog from "@/components/settings/dialogs/UnsavedChangesDialog";
 
 export const SettingsFormProvider = () => {
   const {
