@@ -2,7 +2,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
-import { HeroLogo } from "./HeroLogo";
+
 
 
 const Hero = () => {
@@ -10,7 +10,7 @@ const Hero = () => {
     <div className="px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-12 sm:pb-16 max-w-7xl mx-auto">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         <div className="space-y-6 sm:space-y-8">
-          <HeroLogo />
+          
           <div className="inline-flex items-center px-3 sm:px-4 py-2 bg-mint-100 rounded-full text-mint-700 text-xs sm:text-sm">
             <span>✨ AI-Powered Study Tools</span>
           </div>

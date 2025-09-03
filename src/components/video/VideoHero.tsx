@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
-import { HeroLogo } from "@/components/landing/HeroLogo";
+
 import { ReactVideoPlayer } from "./ReactVideoPlayer";
 import { useVideoSettings } from "@/hooks/admin/useAdminSettings";
 
