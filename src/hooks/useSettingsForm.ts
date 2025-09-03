@@ -2,7 +2,7 @@ import { useEffect, useState, startTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useSearchParams, useBlocker } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from "@/contexts/auth";
 import { useUserTier, UserTier } from "@/hooks/useUserTier";
 import { useCountries } from "@/hooks/useCountries";
@@ -16,6 +16,7 @@ export const useSettingsForm = () => {
   const { countries, userCountry, updateUserCountry } = useCountries();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const queryClient = useQueryClient();
   
   const [activeTab, setActiveTab] = useState("account");
@@ -238,18 +239,35 @@ export const useSettingsForm = () => {
     }
   });
 
-  // React Router navigation blocking for unsaved changes
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      isDirty && currentLocation.pathname !== nextLocation.pathname
-  );
-
+  // Custom navigation blocking for unsaved changes
   useEffect(() => {
-    if (blocker.state === "blocked") {
-      setShowUnsavedChangesDialog(true);
-      setPendingNavigation(blocker.location.pathname);
-    }
-  }, [blocker.state, blocker.location]);
+    if (!isDirty) return;
+
+    // Custom event handler for navigation attempts
+    const handleBeforeNavigate = (event: any) => {
+      // Don't block if form is pristine (no changes)
+      if (!isDirty) return;
+
+      // If there's a nextPath, store it 
+      if (event.detail && event.detail.nextPath) {
+        event.preventDefault();
+        setPendingNavigation(event.detail.nextPath);
+        setShowUnsavedChangesDialog(true);
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('beforeNavigate', handleBeforeNavigate);
+
+    return () => {
+      window.removeEventListener('beforeNavigate', handleBeforeNavigate);
+    };
+  }, [isDirty, setShowUnsavedChangesDialog, setPendingNavigation]);
+
+  // Reset pending navigation when location changes
+  useEffect(() => {
+    setPendingNavigation(null);
+  }, [location, setPendingNavigation]);
 
   // Reset form when submission is successful
   useEffect(() => {
@@ -272,9 +290,6 @@ export const useSettingsForm = () => {
   // Confirm navigation and discard changes
   const confirmNavigation = () => {
     setShowUnsavedChangesDialog(false);
-    if (blocker.state === "blocked") {
-      blocker.proceed();
-    }
     if (pendingNavigation) {
       startTransition(() => {
         navigate(pendingNavigation);
