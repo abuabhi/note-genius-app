@@ -21,16 +21,16 @@ interface PerformanceAlert {
 }
 
 const PERFORMANCE_THRESHOLDS = {
-  memoryUsage: 200, // Increased from 150MB to 200MB for production
-  cacheHitRate: 50, // Reduced from 60% to 50% to be less aggressive
-  loadTime: 5000, // Increased from 3s to 5s for production
-  staleQueries: 50 // Increased from 20 to 50 to be less aggressive
+  memoryUsage: 300, // Increased to 300MB for production stability
+  cacheHitRate: 40, // Reduced to 40% to be even less aggressive
+  loadTime: 8000, // Increased to 8s for production stability
+  staleQueries: 100 // Increased to 100 to be much less aggressive
 };
 
-// Optimized intervals for production
+// Optimized intervals for production - Further reduced frequency
 const MONITORING_INTERVALS = {
-  development: 30000, // 30 seconds in dev (increased from 15s)
-  production: 600000  // 10 minutes in production (increased from 5min)
+  development: 120000, // 2 minutes in dev (was 30s - much less aggressive)
+  production: 1800000  // 30 minutes in production (was 10min - much less aggressive)
 };
 
 const MAX_ALERTS = 3;

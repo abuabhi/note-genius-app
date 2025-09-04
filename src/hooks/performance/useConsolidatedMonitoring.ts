@@ -41,7 +41,7 @@ interface ConsolidatedMonitoringConfig {
 export const useConsolidatedMonitoring = (config: Partial<ConsolidatedMonitoringConfig> = {}) => {
   const finalConfig: ConsolidatedMonitoringConfig = {
     enabled: process.env.NODE_ENV === 'development',
-    updateInterval: 60000, // 1 minute instead of 2-5 seconds
+    updateInterval: 300000, // 5 minutes instead of 1 minute - much less aggressive
     enableLogging: false, // Reduce console spam
     ...config
   };

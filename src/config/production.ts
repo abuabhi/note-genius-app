@@ -1,25 +1,27 @@
 // Production configuration and optimizations
 
 export const PRODUCTION_CONFIG = {
-  // Performance thresholds
-  MEMORY_WARNING_THRESHOLD: 200, // MB
+  // Performance thresholds - More lenient for production stability
+  MEMORY_WARNING_THRESHOLD: 250, // MB (increased from 200)
   MEMORY_CRITICAL_THRESHOLD: 500, // MB
   
-  // Polling intervals (in milliseconds)
+  // Polling intervals (in milliseconds) - Optimized for production
   INTERVALS: {
-    HEALTH_CHECK: 600000,      // 10 minutes
-    SUBSCRIPTION_CHECK: 600000, // 10 minutes  
-    REMINDER_CHECK: 300000,     // 5 minutes
-    ANALYTICS_REFRESH: 300000,  // 5 minutes
-    PERFORMANCE_MONITOR: 120000 // 2 minutes
+    HEALTH_CHECK: 1800000,      // 30 minutes (was 10)
+    SUBSCRIPTION_CHECK: 1800000, // 30 minutes (was 10)
+    REMINDER_CHECK: 900000,     // 15 minutes (was 5)
+    ANALYTICS_REFRESH: 900000,  // 15 minutes (was 5)
+    PERFORMANCE_MONITOR: 1800000 // 30 minutes (was 2)
   },
   
-  // Feature flags
+  // Feature flags - Production optimized
   FEATURES: {
     ENABLE_DEBUG_LOGS: false,
-    ENABLE_PERFORMANCE_MONITORING: false,
+    ENABLE_PERFORMANCE_MONITORING: false, // Disabled by default in production
     ENABLE_MOCK_DATA: false,
-    ENABLE_EXPENSIVE_OPERATIONS: false
+    ENABLE_EXPENSIVE_OPERATIONS: false,
+    ENABLE_CONSOLE_LOGGING: false, // New flag for console.log elimination
+    ENABLE_AGGRESSIVE_MONITORING: false // New flag for intensive monitoring
   },
   
   // Cache settings
@@ -40,18 +42,20 @@ export const PRODUCTION_CONFIG = {
 
 export const DEVELOPMENT_CONFIG = {
   INTERVALS: {
-    HEALTH_CHECK: 300000,      // 5 minutes
-    SUBSCRIPTION_CHECK: 30000, // 30 seconds
-    REMINDER_CHECK: 60000,     // 1 minute
-    ANALYTICS_REFRESH: 60000,  // 1 minute
-    PERFORMANCE_MONITOR: 30000 // 30 seconds
+    HEALTH_CHECK: 600000,      // 10 minutes (was 5 - less aggressive)
+    SUBSCRIPTION_CHECK: 120000, // 2 minutes (was 30s - less aggressive)
+    REMINDER_CHECK: 300000,     // 5 minutes (was 1 - less aggressive)
+    ANALYTICS_REFRESH: 300000,  // 5 minutes (was 1 - less aggressive)
+    PERFORMANCE_MONITOR: 120000 // 2 minutes (was 30s - less aggressive)
   },
   
   FEATURES: {
     ENABLE_DEBUG_LOGS: true,
     ENABLE_PERFORMANCE_MONITORING: true,
     ENABLE_MOCK_DATA: false, // Even in dev, prefer real data
-    ENABLE_EXPENSIVE_OPERATIONS: true
+    ENABLE_EXPENSIVE_OPERATIONS: true,
+    ENABLE_CONSOLE_LOGGING: true, // Allow console logging in dev
+    ENABLE_AGGRESSIVE_MONITORING: true // Allow intensive monitoring in dev
   },
   
   CACHE: {
