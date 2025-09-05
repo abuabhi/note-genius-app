@@ -1,10 +1,7 @@
 
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { Note } from '@/types/note';
-import { NotesContextProvider } from './notes/NotesContextProvider';
-import { useNotesData } from './notes/NotesDataContext';
-import { useNotesUI } from './notes/NotesUIContext';
-import { useNotesOperations } from './notes/NotesOperationsContext';
+import { NotesProvider, useNotes } from './notes/NotesProvider';
 
 interface OptimizedNotesContextType {
   // Core data
@@ -63,96 +60,15 @@ interface OptimizedNotesContextType {
 
 const OptimizedNotesContext = createContext<OptimizedNotesContextType | undefined>(undefined);
 
-// Inner component that consumes the split contexts and provides backward compatibility
+// Inner component that consumes the consolidated context and provides backward compatibility
 const OptimizedNotesProviderInner = React.memo(({ children }: { children: ReactNode }) => {
-  const dataContext = useNotesData();
-  const uiContext = useNotesUI();
-  const operationsContext = useNotesOperations();
+  const notesContext = useNotes();
 
-  // Enhanced refresh function that invalidates all related caches
-  const enhancedRefreshNotes = async () => {
-    // Call the original refresh
-    await dataContext.refreshNotes();
-    
-    // Add a small delay to ensure data is fresh
-    setTimeout(() => {
-      // Refresh completed
-    }, 100);
-  };
-
-  // Enhanced update function with immediate cache invalidation
-  const enhancedUpdateNote = async (id: string, updates: Partial<Note>) => {
-    console.log('🔄 Enhanced update note with cache invalidation');
-    
-    try {
-      await operationsContext.updateNote(id, updates);
-      
-      // Force immediate refresh if subject was updated
-      if (updates.subject || updates.subject_id) {
-        console.log('📝 Subject updated - forcing immediate refresh');
-        await enhancedRefreshNotes();
-      }
-    } catch (error) {
-      console.error('❌ Enhanced update note failed:', error);
-      throw error;
-    }
-  };
-
-  // Memoized context value that combines all split contexts for backward compatibility
+  // Memoized context value that provides the exact same interface as before
   const contextValue = useMemo(() => ({
-    // Core data
-    notes: dataContext.notes,
-    filteredNotes: dataContext.notes, // Same as notes since filtering is server-side
-    paginatedNotes: dataContext.notes, // Same as notes since pagination is server-side
-    totalCount: dataContext.totalCount,
-    loading: dataContext.loading,
-    isLoading: dataContext.loading,
-    isInitialLoading: dataContext.isInitialLoading,
-    error: dataContext.error,
-    
-    // Pagination
-    hasMore: dataContext.hasMore,
-    currentPage: dataContext.currentPage,
-    setCurrentPage: dataContext.setCurrentPage,
-    loadMore: dataContext.loadMore,
-    
-    // Additional properties for compatibility
-    refetch: enhancedRefreshNotes,
-    
-    // Enhanced search and filtering with state machine
-    searchTerm: uiContext.searchTerm,
-    setSearchTerm: uiContext.setSearchTerm,
-    sortType: uiContext.sortType,
-    setSortType: uiContext.setSortType,
-    showArchived: uiContext.showArchived,
-    setShowArchived: uiContext.setShowArchived,
-    selectedSubject: uiContext.selectedSubject,
-    setSelectedSubject: uiContext.setSelectedSubject,
-    clearFilters: uiContext.clearFilters,
-    hasActiveFilters: uiContext.hasActiveFilters,
-    activeFilterCount: uiContext.activeFilterCount,
-    isFiltering: uiContext.isFiltering,
-    filterError: uiContext.filterError,
-    
-    // Legacy pagination (for compatibility)
-    totalPages: Math.ceil(dataContext.totalCount / 20),
-    
-    // Operations with enhanced cache handling
-    refreshNotes: enhancedRefreshNotes,
-    addNote: operationsContext.addNote,
-    updateNote: enhancedUpdateNote,
-    deleteNote: operationsContext.deleteNote,
-    pinNote: operationsContext.pinNote,
-    archiveNote: operationsContext.archiveNote,
-    
-    // New React Query enhanced features
-    paginationMode: dataContext.paginationMode,
-    setPaginationMode: dataContext.setPaginationMode,
-    isCreating: operationsContext.isCreating,
-    isUpdating: operationsContext.isUpdating,
-    isDeleting: operationsContext.isDeleting,
-    isPinning: operationsContext.isPinning,
-  }), [dataContext, uiContext, operationsContext, enhancedRefreshNotes, enhancedUpdateNote]);
+    // All properties are already available from the consolidated hook
+    ...notesContext,
+  }), [notesContext]);
 
   return (
     <OptimizedNotesContext.Provider value={contextValue}>
@@ -166,11 +82,11 @@ OptimizedNotesProviderInner.displayName = 'OptimizedNotesProviderInner';
 // Main provider that wraps everything
 export const OptimizedNotesProvider = ({ children }: { children: ReactNode }) => {
   return (
-    <NotesContextProvider>
+    <NotesProvider>
       <OptimizedNotesProviderInner>
         {children}
       </OptimizedNotesProviderInner>
-    </NotesContextProvider>
+    </NotesProvider>
   );
 };
 
