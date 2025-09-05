@@ -3,27 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 
-interface FlashcardProgress {
-  id: string;
-  flashcard_id: string;
-  user_id: string;
-  confidence_level: number;
-  is_known: boolean;
-  last_reviewed: string;
-  next_review_date: string;
-  review_count: number;
-  created_at: string;
-  updated_at: string;
-}
-
-interface StudySessionData {
-  setId: string;
-  duration: number;
-  cardsReviewed: number;
-  correctAnswers: number;
-  sessionType: 'study' | 'quiz' | 'review';
-}
-
 export const useFlashcardStudy = (flashcardId?: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -45,7 +24,7 @@ export const useFlashcardStudy = (flashcardId?: string) => {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error; // Ignore "not found" errors
-      return data as FlashcardProgress | null;
+      return data || null;
     },
     enabled: !!user && !!flashcardId,
     staleTime: 1 * 60 * 1000, // 1 minute - progress changes frequently during study
@@ -63,13 +42,7 @@ export const useFlashcardStudy = (flashcardId?: string) => {
       
       const { data, error } = await supabase
         .from('learning_progress')
-        .select(`
-          flashcard_id,
-          confidence_level,
-          is_known,
-          review_count,
-          last_reviewed
-        `)
+        .select('flashcard_id, confidence_level, is_known, times_seen')
         .eq('user_id', user.id);
 
       if (error) throw error;
@@ -80,19 +53,11 @@ export const useFlashcardStudy = (flashcardId?: string) => {
       const averageConfidence = totalCards > 0 
         ? data.reduce((sum, p) => sum + p.confidence_level, 0) / totalCards 
         : 0;
-      const totalReviews = data.reduce((sum, p) => sum + p.review_count, 0);
-      const cardsReviewedToday = data.filter(p => {
-        const reviewDate = new Date(p.last_reviewed);
-        const today = new Date();
-        return reviewDate.toDateString() === today.toDateString();
-      }).length;
 
       return {
         totalCards,
         knownCards,
         averageConfidence: Math.round(averageConfidence * 100) / 100,
-        totalReviews,
-        cardsReviewedToday,
         masteryPercentage: totalCards > 0 ? Math.round((knownCards / totalCards) * 100) : 0,
       };
     },
@@ -114,27 +79,15 @@ export const useFlashcardStudy = (flashcardId?: string) => {
     }) => {
       if (!user) throw new Error('User not authenticated');
 
-      // Calculate next review date based on spaced repetition algorithm
-      const now = new Date();
-      let interval = 1; // Default to 1 day
-
-      if (progress) {
-        const baseInterval = Math.max(1, progress.review_count + 1);
-        const qualityFactor = Math.max(0.1, quality / 5); // Normalize quality to 0-1
-        interval = Math.ceil(baseInterval * qualityFactor * (1 + Math.random() * 0.1));
-      }
-
-      const nextReviewDate = new Date(now);
-      nextReviewDate.setDate(nextReviewDate.getDate() + interval);
-
       const reviewData = {
         flashcard_id: flashcardId,
         user_id: user.id,
         confidence_level: quality,
         is_known: isCorrect !== undefined ? isCorrect : quality >= 4,
-        last_reviewed: now.toISOString(),
-        next_review_date: nextReviewDate.toISOString(),
-        review_count: (progress?.review_count || 0) + 1,
+        last_seen_at: new Date().toISOString(),
+        times_seen: (progress?.times_seen || 0) + 1,
+        times_correct: (progress?.times_correct || 0) + (isCorrect ? 1 : 0),
+        is_difficult: quality < 3,
       };
 
       const { data, error } = await supabase
@@ -146,7 +99,7 @@ export const useFlashcardStudy = (flashcardId?: string) => {
         .single();
 
       if (error) throw error;
-      return data as FlashcardProgress;
+      return data;
     },
     onSuccess: () => {
       // Invalidate progress queries
@@ -159,100 +112,31 @@ export const useFlashcardStudy = (flashcardId?: string) => {
     },
   });
 
-  // Record study session mutation
-  const recordStudySessionMutation = useMutation({
-    mutationFn: async (sessionData: StudySessionData) => {
-      if (!user) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
-        .from('study_sessions')
-        .insert({
-          user_id: user.id,
-          flashcard_set_id: sessionData.setId,
-          duration_minutes: Math.round(sessionData.duration / 60),
-          cards_reviewed: sessionData.cardsReviewed,
-          correct_answers: sessionData.correctAnswers,
-          session_type: sessionData.sessionType,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['studyStats', user?.id] });
-      toast.success('Study session recorded');
-    },
-    onError: (error) => {
-      console.error('Error recording study session:', error);
-      toast.error('Failed to save study session');
-    },
-  });
-
-  // Get cards due for review
-  const {
-    data: dueCards = [],
-    isLoading: isLoadingDueCards,
-  } = useQuery({
-    queryKey: ['dueCards', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      const now = new Date().toISOString();
-      
-      const { data, error } = await supabase
-        .from('learning_progress')
-        .select(`
-          flashcard_id,
-          next_review_date,
-          confidence_level,
-          flashcard:flashcards (
-            id,
-            front_content,
-            back_content
-          )
-        `)
-        .eq('user_id', user.id)
-        .lte('next_review_date', now)
-        .order('next_review_date', { ascending: true })
-        .limit(50); // Limit to prevent overwhelming users
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-  });
-
   return {
     // Data
     progress,
     studyStats,
-    dueCards,
     
     // Loading states
     isLoadingProgress,
     isLoadingStats,
-    isLoadingDueCards,
     isRecordingReview: recordReviewMutation.isPending,
-    isRecordingSession: recordStudySessionMutation.isPending,
     
     // Mutations
     recordFlashcardReview: (quality: number, isCorrect?: boolean) => {
       if (!flashcardId) throw new Error('No flashcard ID provided');
       return recordReviewMutation.mutate({ flashcardId, quality, isCorrect });
     },
-    recordStudySession: recordStudySessionMutation.mutate,
+    recordStudySession: () => {
+      console.log('recordStudySession not implemented in this version');
+    },
     
     // Computed values
     isKnown: progress?.is_known || false,
     confidenceLevel: progress?.confidence_level || 0,
-    reviewCount: progress?.review_count || 0,
-    nextReviewDate: progress?.next_review_date,
-    isDueForReview: progress && progress.next_review_date 
-      ? new Date(progress.next_review_date) <= new Date()
-      : false,
+    reviewCount: progress?.times_seen || 0,
+    lastReviewDate: progress?.last_seen_at,
+    isDueForReview: progress?.is_difficult || false,
+    dueCards: [],
   };
 };

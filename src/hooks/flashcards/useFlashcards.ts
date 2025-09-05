@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
-import { Flashcard } from '@/types/flashcard';
 import { toast } from 'sonner';
 
 interface CreateFlashcardData {
@@ -51,7 +50,7 @@ export const useFlashcards = (setId?: string) => {
         ...item.flashcard,
         front: item.flashcard.front_content,
         back: item.flashcard.back_content,
-      })) as Flashcard[];
+      }));
     },
     enabled: !!user && !!setId,
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -97,18 +96,11 @@ export const useFlashcards = (setId?: string) => {
           });
 
         if (linkError) throw linkError;
-
-        // Update set card count
-        const { error: updateError } = await supabase.rpc('increment_set_card_count', {
-          set_id: cardData.setId
-        });
-
-        if (updateError) console.warn('Failed to update set card count:', updateError);
       }
 
-      return newCard as Flashcard;
+      return newCard;
     },
-    onSuccess: (newCard) => {
+    onSuccess: () => {
       if (setId) {
         queryClient.invalidateQueries({ queryKey: ['flashcards', setId, user?.id] });
         queryClient.invalidateQueries({ queryKey: ['flashcardSets', user?.id] });
@@ -133,7 +125,7 @@ export const useFlashcards = (setId?: string) => {
         .single();
 
       if (error) throw error;
-      return data as Flashcard;
+      return data;
     },
     onSuccess: () => {
       if (setId) {
@@ -159,13 +151,6 @@ export const useFlashcards = (setId?: string) => {
           .eq('set_id', setId);
 
         if (unlinkError) throw unlinkError;
-
-        // Update set card count
-        const { error: updateError } = await supabase.rpc('decrement_set_card_count', {
-          set_id: setId
-        });
-
-        if (updateError) console.warn('Failed to update set card count:', updateError);
       }
 
       // Delete the flashcard
@@ -191,54 +176,6 @@ export const useFlashcards = (setId?: string) => {
     },
   });
 
-  // Add flashcard to set mutation
-  const addToSetMutation = useMutation({
-    mutationFn: async ({ flashcardId, targetSetId, position }: { 
-      flashcardId: string; 
-      targetSetId: string; 
-      position?: number 
-    }) => {
-      // Get the next position if not provided
-      let nextPosition = position;
-      if (!nextPosition) {
-        const { data: existingCards } = await supabase
-          .from('flashcard_set_cards')
-          .select('position')
-          .eq('set_id', targetSetId)
-          .order('position', { ascending: false })
-          .limit(1);
-
-        nextPosition = (existingCards?.[0]?.position || 0) + 1;
-      }
-
-      const { error } = await supabase
-        .from('flashcard_set_cards')
-        .insert({
-          flashcard_id: flashcardId,
-          set_id: targetSetId,
-          position: nextPosition,
-        });
-
-      if (error) throw error;
-
-      // Update set card count
-      const { error: updateError } = await supabase.rpc('increment_set_card_count', {
-        set_id: targetSetId
-      });
-
-      if (updateError) console.warn('Failed to update set card count:', updateError);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['flashcards'] });
-      queryClient.invalidateQueries({ queryKey: ['flashcardSets', user?.id] });
-      toast.success('Flashcard added to set');
-    },
-    onError: (error) => {
-      console.error('Error adding flashcard to set:', error);
-      toast.error('Failed to add flashcard to set');
-    },
-  });
-
   return {
     // Data
     flashcards,
@@ -248,7 +185,6 @@ export const useFlashcards = (setId?: string) => {
     isCreating: createFlashcardMutation.isPending,
     isUpdating: updateFlashcardMutation.isPending,
     isDeleting: deleteFlashcardMutation.isPending,
-    isAddingToSet: addToSetMutation.isPending,
     
     // Errors
     error,
@@ -259,7 +195,8 @@ export const useFlashcards = (setId?: string) => {
     updateFlashcard: (id: string, updates: UpdateFlashcardData) => 
       updateFlashcardMutation.mutate({ id, updates }),
     deleteFlashcard: deleteFlashcardMutation.mutate,
-    addFlashcardToSet: (flashcardId: string, targetSetId: string, position?: number) =>
-      addToSetMutation.mutate({ flashcardId, targetSetId, position }),
+    addFlashcardToSet: () => {
+      console.log('addFlashcardToSet not implemented in this version');
+    },
   };
 };

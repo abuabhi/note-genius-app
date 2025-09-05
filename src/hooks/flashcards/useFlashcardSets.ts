@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
-import { FlashcardSet, CreateFlashcardSetPayload } from '@/types/flashcard';
 import { toast } from 'sonner';
 
 export const useFlashcardSets = () => {
@@ -20,22 +19,12 @@ export const useFlashcardSets = () => {
       
       const { data, error } = await supabase
         .from('flashcard_sets')
-        .select(`
-          *,
-          flashcard_set_cards (
-            id,
-            flashcard:flashcards (
-              id,
-              front_content,
-              back_content
-            )
-          )
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as FlashcardSet[];
+      return data || [];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -53,11 +42,11 @@ export const useFlashcardSets = () => {
         .from('flashcard_sets')
         .select('*')
         .is('user_id', null)
-        .eq('is_public', true)
+        .eq('is_built_in', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as FlashcardSet[];
+      return data || [];
     },
     staleTime: 30 * 60 * 1000, // 30 minutes - built-in sets change rarely
     gcTime: 60 * 60 * 1000, // 1 hour
@@ -65,24 +54,26 @@ export const useFlashcardSets = () => {
 
   // Create flashcard set mutation
   const createFlashcardSetMutation = useMutation({
-    mutationFn: async (setData: CreateFlashcardSetPayload) => {
+    mutationFn: async (setData: any) => {
       if (!user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
         .from('flashcard_sets')
         .insert({
-          ...setData,
+          name: setData.name,
+          description: setData.description,
+          subject: setData.subject,
           user_id: user.id,
         })
         .select()
         .single();
 
       if (error) throw error;
-      return data as FlashcardSet;
+      return data;
     },
-    onSuccess: (newSet) => {
+    onSuccess: (newSet: any) => {
       queryClient.invalidateQueries({ queryKey: ['flashcardSets', user?.id] });
-      toast.success(`Created flashcard set: ${newSet.title}`);
+      toast.success(`Created flashcard set: ${newSet.name}`);
     },
     onError: (error) => {
       console.error('Error creating flashcard set:', error);
@@ -92,7 +83,7 @@ export const useFlashcardSets = () => {
 
   // Update flashcard set mutation
   const updateFlashcardSetMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<CreateFlashcardSetPayload> }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
       const { data, error } = await supabase
         .from('flashcard_sets')
         .update(updates)
@@ -102,12 +93,11 @@ export const useFlashcardSets = () => {
         .single();
 
       if (error) throw error;
-      return data as FlashcardSet;
+      return data;
     },
-    onSuccess: (updatedSet) => {
+    onSuccess: (updatedSet: any) => {
       queryClient.invalidateQueries({ queryKey: ['flashcardSets', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['flashcardSet', updatedSet.id] });
-      toast.success(`Updated flashcard set: ${updatedSet.title}`);
+      toast.success(`Updated flashcard set: ${updatedSet.name}`);
     },
     onError: (error) => {
       console.error('Error updating flashcard set:', error);
@@ -137,80 +127,6 @@ export const useFlashcardSets = () => {
     },
   });
 
-  // Clone flashcard set mutation
-  const cloneFlashcardSetMutation = useMutation({
-    mutationFn: async (setId: string) => {
-      if (!user) throw new Error('User not authenticated');
-
-      // First, get the original set
-      const { data: originalSet, error: fetchError } = await supabase
-        .from('flashcard_sets')
-        .select(`
-          *,
-          flashcard_set_cards (
-            flashcard:flashcards (*)
-          )
-        `)
-        .eq('id', setId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      // Create new set
-      const { data: newSet, error: createError } = await supabase
-        .from('flashcard_sets')
-        .insert({
-          title: `${originalSet.title} (Copy)`,
-          description: originalSet.description,
-          subject: originalSet.subject,
-          user_id: user.id,
-        })
-        .select()
-        .single();
-
-      if (createError) throw createError;
-
-      // Clone flashcards if any
-      if (originalSet.flashcard_set_cards?.length > 0) {
-        const flashcardsToCreate = originalSet.flashcard_set_cards.map((card: any) => ({
-          front_content: card.flashcard.front_content,
-          back_content: card.flashcard.back_content,
-          user_id: user.id,
-        }));
-
-        const { data: newFlashcards, error: flashcardsError } = await supabase
-          .from('flashcards')
-          .insert(flashcardsToCreate)
-          .select();
-
-        if (flashcardsError) throw flashcardsError;
-
-        // Link flashcards to new set
-        const setCardLinks = newFlashcards.map((card, index) => ({
-          flashcard_id: card.id,
-          set_id: newSet.id,
-          position: index,
-        }));
-
-        const { error: linkError } = await supabase
-          .from('flashcard_set_cards')
-          .insert(setCardLinks);
-
-        if (linkError) throw linkError;
-      }
-
-      return newSet as FlashcardSet;
-    },
-    onSuccess: (clonedSet) => {
-      queryClient.invalidateQueries({ queryKey: ['flashcardSets', user?.id] });
-      toast.success(`Cloned flashcard set: ${clonedSet.title}`);
-    },
-    onError: (error) => {
-      console.error('Error cloning flashcard set:', error);
-      toast.error('Failed to clone flashcard set');
-    },
-  });
-
   return {
     // Data
     flashcardSets,
@@ -227,15 +143,13 @@ export const useFlashcardSets = () => {
     
     // Mutations
     createFlashcardSet: createFlashcardSetMutation.mutate,
-    updateFlashcardSet: (id: string, updates: Partial<CreateFlashcardSetPayload>) => 
+    updateFlashcardSet: (id: string, updates: any) => 
       updateFlashcardSetMutation.mutate({ id, updates }),
     deleteFlashcardSet: deleteFlashcardSetMutation.mutate,
-    cloneFlashcardSet: cloneFlashcardSetMutation.mutate,
     
     // Mutation states
     isCreating: createFlashcardSetMutation.isPending,
     isUpdating: updateFlashcardSetMutation.isPending,
     isDeleting: deleteFlashcardSetMutation.isPending,
-    isCloning: cloneFlashcardSetMutation.isPending,
   };
 };

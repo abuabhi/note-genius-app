@@ -13,29 +13,10 @@ interface FlashcardContextType {
   createFlashcardSet: (setData: any) => void;
   updateFlashcardSet: (id: string, updates: any) => void;
   deleteFlashcardSet: (id: string) => void;
-  cloneFlashcardSet: (id: string) => void;
   
-  // Individual Flashcards (requires setId)
-  getFlashcards: (setId?: string) => {
-    flashcards: any[];
-    isLoading: boolean;
-    createFlashcard: (cardData: any) => void;
-    updateFlashcard: (id: string, updates: any) => void;
-    deleteFlashcard: (id: string) => void;
-    addFlashcardToSet: (flashcardId: string, targetSetId: string, position?: number) => void;
-  };
-  
-  // Study Progress
-  getStudyProgress: (flashcardId?: string) => {
-    progress: any;
-    studyStats: any;
-    dueCards: any[];
-    recordFlashcardReview: (quality: number, isCorrect?: boolean) => void;
-    recordStudySession: (sessionData: any) => void;
-    isKnown: boolean;
-    confidenceLevel: number;
-    isDueForReview: boolean;
-  };
+  // Factory functions for component-specific data
+  getFlashcards: (setId?: string) => any;
+  getStudyProgress: (flashcardId?: string) => any;
   
   // Query Optimization
   prefetchRelatedQueries: (queryKey: readonly unknown[]) => void;

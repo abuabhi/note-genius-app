@@ -1,21 +1,17 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/auth';
-import { useManagedInterval } from '@/utils/performance';
+import { useManagedTimeout } from '@/utils/performance';
 
 interface QueryOptimizationConfig {
   enablePrefetching: boolean;
   enableBatchInvalidation: boolean;
-  enableIntelligentCaching: boolean;
-  prefetchThreshold: number; // Minutes before query becomes stale to prefetch
   batchInvalidationDelay: number; // ms to wait before executing batch invalidations
 }
 
 const DEFAULT_CONFIG: QueryOptimizationConfig = {
   enablePrefetching: true,
   enableBatchInvalidation: true,
-  enableIntelligentCaching: true,
-  prefetchThreshold: 2, // 2 minutes
   batchInvalidationDelay: 500, // 500ms
 };
 
@@ -26,25 +22,23 @@ export const useQueryOptimization = (config: Partial<QueryOptimizationConfig> = 
   
   // Batch invalidation queue
   const invalidationQueue = useRef<Set<string>>(new Set());
-  const invalidationTimeoutRef = useRef<NodeJS.Timeout>();
+  const [shouldInvalidate, setShouldInvalidate] = useState(false);
 
-  // Query patterns for intelligent prefetching
-  const commonQueryPatterns = useRef({
-    userDataQueries: [
-      ['userProfile', user?.id],
-      ['studyStats', user?.id],
-      ['flashcardSets', user?.id],
-    ],
-    dashboardQueries: [
-      ['todaysFocus', user?.id],
-      ['userActivity', user?.id],
-      ['goals', user?.id],
-    ],
-    flashcardQueries: (setId?: string) => [
-      ['flashcards', setId, user?.id],
-      ['flashcardProgress', setId, user?.id],
-    ],
-  });
+  // Managed timeout for batch invalidation
+  useManagedTimeout('batch-invalidation', () => {
+    const queriesToInvalidate = Array.from(invalidationQueue.current);
+    
+    // Process all queued invalidations at once
+    queriesToInvalidate.forEach(key => {
+      queryClient.invalidateQueries({ queryKey: [key] });
+    });
+
+    // Clear the queue
+    invalidationQueue.current.clear();
+    setShouldInvalidate(false);
+    
+    console.log(`📊 [Query Optimization] Batch invalidated ${queriesToInvalidate.length} query types`);
+  }, shouldInvalidate ? finalConfig.batchInvalidationDelay : null);
 
   // Intelligent prefetching based on user navigation patterns
   const prefetchRelatedQueries = useCallback((currentQueryKey: readonly unknown[]) => {
@@ -54,20 +48,15 @@ export const useQueryOptimization = (config: Partial<QueryOptimizationConfig> = 
 
     // Prefetch user data when any user-related query is accessed
     if (keyString.includes(user.id)) {
-      commonQueryPatterns.current.userDataQueries.forEach(queryKey => {
+      const userQueries = [
+        ['userProfile', user.id],
+        ['studyStats', user.id],
+        ['flashcardSets', user.id],
+      ];
+      
+      userQueries.forEach(queryKey => {
         queryClient.prefetchQuery({
           queryKey,
-          staleTime: 5 * 60 * 1000, // 5 minutes
-        });
-      });
-    }
-
-    // Prefetch dashboard data when navigating to dashboard
-    if (keyString.includes('dashboard') || keyString.includes('todaysFocus')) {
-      commonQueryPatterns.current.dashboardQueries.forEach(queryKey => {
-        queryClient.prefetchQuery({
-          queryKey,
-          staleTime: 2 * 60 * 1000, // 2 minutes
         });
       });
     }
@@ -81,11 +70,8 @@ export const useQueryOptimization = (config: Partial<QueryOptimizationConfig> = 
         const sets = flashcardSetsQuery.state.data as any[];
         // Prefetch the first few sets' flashcards
         sets.slice(0, 3).forEach(set => {
-          commonQueryPatterns.current.flashcardQueries(set.id).forEach(queryKey => {
-            queryClient.prefetchQuery({
-              queryKey,
-              staleTime: 3 * 60 * 1000, // 3 minutes
-            });
+          queryClient.prefetchQuery({
+            queryKey: ['flashcards', set.id, user.id],
           });
         });
       }
@@ -101,57 +87,8 @@ export const useQueryOptimization = (config: Partial<QueryOptimizationConfig> = 
 
     // Add to batch queue
     invalidationQueue.current.add(queryKey);
-
-    // Clear existing timeout
-    if (invalidationTimeoutRef.current) {
-      clearTimeout(invalidationTimeoutRef.current);
-    }
-
-    // Set new timeout to process batch
-    invalidationTimeoutRef.current = setTimeout(() => {
-      const queriesToInvalidate = Array.from(invalidationQueue.current);
-      
-      // Process all queued invalidations at once
-      queriesToInvalidate.forEach(key => {
-        queryClient.invalidateQueries({ queryKey: [key] });
-      });
-
-      // Clear the queue
-      invalidationQueue.current.clear();
-      
-      console.log(`📊 [Query Optimization] Batch invalidated ${queriesToInvalidate.length} query types`);
-    }, finalConfig.batchInvalidationDelay);
-  }, [queryClient, finalConfig.enableBatchInvalidation, finalConfig.batchInvalidationDelay]);
-
-  // Intelligent cache warming based on user activity
-  const warmCache = useCallback(() => {
-    if (!finalConfig.enableIntelligentCaching || !user) return;
-
-    const now = Date.now();
-    const cache = queryClient.getQueryCache();
-    const queries = cache.getAll();
-
-    queries.forEach(query => {
-      const timeSinceUpdate = now - (query.state.dataUpdatedAt || 0);
-      const staleTime = query.options.staleTime || 0;
-      
-      // Prefetch if approaching stale time
-      if (staleTime > 0 && timeSinceUpdate > staleTime - (finalConfig.prefetchThreshold * 60 * 1000)) {
-        if (query.queryKey[0] === 'flashcardSets' || 
-            query.queryKey[0] === 'userProfile' ||
-            query.queryKey[0] === 'studyStats') {
-          
-          queryClient.prefetchQuery({
-            queryKey: query.queryKey,
-            staleTime: staleTime,
-          });
-        }
-      }
-    });
-  }, [queryClient, user, finalConfig.enableIntelligentCaching, finalConfig.prefetchThreshold]);
-
-  // Periodic cache warming
-  useManagedInterval('query-cache-warming', warmCache, 2 * 60 * 1000); // Every 2 minutes
+    setShouldInvalidate(true);
+  }, [queryClient, finalConfig.enableBatchInvalidation]);
 
   // Query performance monitoring
   const getQueryPerformanceStats = useCallback(() => {
@@ -189,7 +126,6 @@ export const useQueryOptimization = (config: Partial<QueryOptimizationConfig> = 
     batchInvalidateQueries('studyStats');
     batchInvalidateQueries('flashcardSets');
     batchInvalidateQueries('goals');
-    batchInvalidateQueries('todos');
   }, [batchInvalidateQueries]);
 
   const invalidateFlashcardQueries = useCallback((setId?: string) => {
@@ -200,38 +136,19 @@ export const useQueryOptimization = (config: Partial<QueryOptimizationConfig> = 
     batchInvalidateQueries('flashcardSets');
   }, [batchInvalidateQueries]);
 
-  const invalidateStudyQueries = useCallback(() => {
-    batchInvalidateQueries('studyStats');
-    batchInvalidateQueries('dueCards');
-    batchInvalidateQueries('studySessions');
-  }, [batchInvalidateQueries]);
-
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (invalidationTimeoutRef.current) {
-        clearTimeout(invalidationTimeoutRef.current);
-      }
-    };
-  }, []);
-
   return {
     // Core optimization functions
     prefetchRelatedQueries,
     batchInvalidateQueries,
-    warmCache,
     
     // Specialized invalidation strategies
     invalidateUserQueries,
     invalidateFlashcardQueries,
-    invalidateStudyQueries,
     
     // Performance monitoring
     getQueryPerformanceStats,
     
     // Configuration
-    isOptimizationEnabled: finalConfig.enablePrefetching || 
-                          finalConfig.enableBatchInvalidation || 
-                          finalConfig.enableIntelligentCaching,
+    isOptimizationEnabled: finalConfig.enablePrefetching || finalConfig.enableBatchInvalidation,
   };
 };

@@ -11,13 +11,15 @@ interface NavigationPattern {
   lastAccess: number;
 }
 
+type PrefetchPriority = 'high' | 'medium' | 'low';
+
 interface PrefetchRule {
   routePattern: RegExp;
   prefetchQueries: (params: Record<string, any>) => Array<{
     queryKey: readonly unknown[];
     staleTime?: number;
   }>;
-  priority: 'high' | 'medium' | 'low';
+  priority: PrefetchPriority;
 }
 
 export const useIntelligentPrefetch = () => {
@@ -33,9 +35,8 @@ export const useIntelligentPrefetch = () => {
 
   // Prefetch rules based on common user patterns
   const prefetchRules = useRef<PrefetchRule[]>([
-    // Dashboard navigation
     {
-      routePattern: /^\\/dashboard/,
+      routePattern: /^\/dashboard/,
       priority: 'high',
       prefetchQueries: () => [
         { queryKey: ['userProfile', user?.id], staleTime: 10 * 60 * 1000 },
@@ -45,10 +46,8 @@ export const useIntelligentPrefetch = () => {
         { queryKey: ['userActivity', user?.id], staleTime: 5 * 60 * 1000 },
       ],
     },
-    
-    // Flashcards navigation
     {
-      routePattern: /^\\/flashcards/,
+      routePattern: /^\/flashcards/,
       priority: 'high',
       prefetchQueries: () => [
         { queryKey: ['flashcardSets', user?.id], staleTime: 5 * 60 * 1000 },
@@ -56,10 +55,8 @@ export const useIntelligentPrefetch = () => {
         { queryKey: ['userProfile', user?.id], staleTime: 10 * 60 * 1000 },
       ],
     },
-    
-    // Study session navigation
     {
-      routePattern: /^\\/study/,
+      routePattern: /^\/study/,
       priority: 'high',
       prefetchQueries: () => [
         { queryKey: ['flashcardSets', user?.id], staleTime: 5 * 60 * 1000 },
@@ -67,10 +64,8 @@ export const useIntelligentPrefetch = () => {
         { queryKey: ['studyStats', user?.id], staleTime: 5 * 60 * 1000 },
       ],
     },
-    
-    // Analytics navigation
     {
-      routePattern: /^\\/analytics/,
+      routePattern: /^\/analytics/,
       priority: 'medium',
       prefetchQueries: () => [
         { queryKey: ['studyStats', user?.id], staleTime: 5 * 60 * 1000 },
@@ -78,10 +73,8 @@ export const useIntelligentPrefetch = () => {
         { queryKey: ['userActivity', user?.id], staleTime: 5 * 60 * 1000 },
       ],
     },
-    
-    // Notes navigation
     {
-      routePattern: /^\\/notes/,
+      routePattern: /^\/notes/,
       priority: 'medium',
       prefetchQueries: () => [
         { queryKey: ['notes', user?.id], staleTime: 5 * 60 * 1000 },
@@ -149,7 +142,7 @@ export const useIntelligentPrefetch = () => {
     );
 
     // Sort by priority
-    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    const priorityOrder: Record<PrefetchPriority, number> = { high: 3, medium: 2, low: 1 };
     matchingRules.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
 
     // Execute prefetching for each rule
