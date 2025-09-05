@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { QueryProvider } from './components/app/QueryProvider';
+import { EnhancedQueryProvider } from './components/app/EnhancedQueryProvider';
 import { AuthProvider } from './contexts/auth/AuthProvider';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
 
@@ -26,7 +26,7 @@ function AppContent() {
 
 function App() {
   return (
-    <QueryProvider>
+    <EnhancedQueryProvider>
       <AuthProvider>
         <ProductionOptimizationProvider>
           <SubscriptionProvider>
@@ -34,7 +34,7 @@ function App() {
           </SubscriptionProvider>
         </ProductionOptimizationProvider>
       </AuthProvider>
-    </QueryProvider>
+    </EnhancedQueryProvider>
   );
 }
 
