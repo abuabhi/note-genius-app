@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { useManagedInterval } from '@/utils/performance';
 
 interface ConnectionState {
   isOnline: boolean;
@@ -65,19 +66,19 @@ export const useConnectionManager = () => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Check connection periodically when offline - reduced frequency
-    let interval: NodeJS.Timeout | null = null;
-    
-    if (!connectionState.isOnline && connectionState.retryCount < 5) {
-      interval = setInterval(checkSupabaseConnection, 60000); // Check every minute instead of 30s
-    }
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      if (interval) clearInterval(interval);
     };
-  }, [connectionState.isOnline, connectionState.retryCount, checkSupabaseConnection, handleRetry]);
+  }, [handleRetry]);
+
+  // Managed interval for connection checks when offline
+  const shouldCheckConnection = !connectionState.isOnline && connectionState.retryCount < 5;
+  useManagedInterval(
+    'connection-check',
+    checkSupabaseConnection,
+    shouldCheckConnection ? 60000 : null
+  );
 
   return {
     connectionState,

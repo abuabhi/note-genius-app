@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useRealTimeMonitoring } from '@/hooks/monitoring/useRealTimeMonitoring';
 import { useDatabaseMonitoring } from '@/hooks/monitoring/useDatabaseMonitoring';
+import { useManagedInterval } from '@/utils/performance';
 import { 
   Activity, 
   Database, 
@@ -87,22 +88,23 @@ export const MonitoringDashboard: React.FC = () => {
   const [performanceMetrics, setPerformanceMetrics] = useState<any[]>([]);
   const [performanceAlerts, setPerformanceAlerts] = useState<any[]>([]);
 
-  // Update metrics every 60 seconds (reduced frequency)
-  useEffect(() => {
-    const updateMetrics = () => {
-      try {
-        const metrics = getMetrics();
-        const alerts = getAlerts();
-        setPerformanceMetrics(metrics);
-        setPerformanceAlerts(alerts);
-      } catch (error) {
-        console.error('Error updating monitoring metrics:', error);
-      }
-    };
+  // Update metrics with managed interval
+  const updateMetrics = () => {
+    try {
+      const metrics = getMetrics();
+      const alerts = getAlerts();
+      setPerformanceMetrics(metrics);
+      setPerformanceAlerts(alerts);
+    } catch (error) {
+      console.error('Error updating monitoring metrics:', error);
+    }
+  };
 
+  useManagedInterval('monitoring-metrics', updateMetrics, 60000); // 60s interval
+  
+  // Initial metrics update
+  useEffect(() => {
     updateMetrics();
-    const interval = setInterval(updateMetrics, 60000); // Reduced from 30s to 60s
-    return () => clearInterval(interval);
   }, [getMetrics, getAlerts]);
 
   // Calculate performance statistics

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { StudyMode } from '@/pages/study/types';
 import { Flashcard } from '@/types/flashcard';
+import { useManagedInterval } from '@/utils/performance';
 
 interface UseQuizModeProps {
   setId: string;
@@ -112,23 +113,19 @@ export const useQuizMode = ({
     }
   }, [user, setId, mode]);
 
-  // Timer effect
-  useEffect(() => {
-    if (!isTimerActive || timeLeft <= 0) return;
+  // Managed timer for quiz countdown
+  const timerCallback = useCallback(() => {
+    setTimeLeft(prev => {
+      if (prev <= 1) {
+        setIsTimerActive(false);
+        handleQuizComplete();
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, []);
 
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          setIsTimerActive(false);
-          handleQuizComplete();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isTimerActive, timeLeft]);
+  useManagedInterval('quiz-timer', timerCallback, isTimerActive && timeLeft > 0 ? 1000 : null);
 
   const handleQuizComplete = useCallback(async () => {
     if (!user || !quizSession) return;

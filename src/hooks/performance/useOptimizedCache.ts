@@ -2,6 +2,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 import { logger } from '@/config/environment';
+import { useManagedInterval } from '@/utils/performance';
 
 interface CacheConfig {
   staleTime: number;
@@ -40,7 +41,6 @@ const MAX_CACHE_SIZE_MB = 50; // 50MB limit
 
 export const useOptimizedCache = () => {
   const queryClient = useQueryClient();
-  const cleanupIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastCleanupRef = useRef<number>(0);
 
   // Get cache config for query type
@@ -142,43 +142,31 @@ export const useOptimizedCache = () => {
     });
   }, [queryClient]);
 
-  // Setup automatic cleanup
+  // Set up managed cleanup intervals
+  useManagedInterval('cache-cleanup', performCleanup, CLEANUP_INTERVAL);
+  
+  // Initial cleanup
   useEffect(() => {
-    // Initial cleanup
     performCleanup();
-    
-    // Set up periodic cleanup
-    cleanupIntervalRef.current = setInterval(performCleanup, CLEANUP_INTERVAL);
-    
-    return () => {
-      if (cleanupIntervalRef.current) {
-        clearInterval(cleanupIntervalRef.current);
-        cleanupIntervalRef.current = null;
-      }
-    };
   }, [performCleanup]);
 
-  // Monitor cache health
-  useEffect(() => {
-    const checkCacheHealth = () => {
-      const cache = queryClient.getQueryCache();
-      const queries = cache.getAll();
-      const cacheSize = calculateCacheSize();
-      
-      if (queries.length > 100) {
-        logger.warn(`High query count: ${queries.length}`);
-      }
-      
-      if (cacheSize > MAX_CACHE_SIZE_MB * 0.8) { // 80% of limit
-        logger.warn(`Cache size approaching limit: ${cacheSize.toFixed(1)}MB`);
-        performCleanup();
-      }
-    };
+  // Monitor cache health with managed interval
+  const checkCacheHealth = useCallback(() => {
+    const cache = queryClient.getQueryCache();
+    const queries = cache.getAll();
+    const cacheSize = calculateCacheSize();
     
-    const healthCheckInterval = setInterval(checkCacheHealth, 2 * 60 * 1000); // Every 2 minutes
+    if (queries.length > 100) {
+      logger.warn(`High query count: ${queries.length}`);
+    }
     
-    return () => clearInterval(healthCheckInterval);
+    if (cacheSize > MAX_CACHE_SIZE_MB * 0.8) { // 80% of limit
+      logger.warn(`Cache size approaching limit: ${cacheSize.toFixed(1)}MB`);
+      performCleanup();
+    }
   }, [queryClient, calculateCacheSize, performCleanup]);
+
+  useManagedInterval('cache-health-check', checkCacheHealth, 2 * 60 * 1000);
 
   return {
     getCacheConfig,

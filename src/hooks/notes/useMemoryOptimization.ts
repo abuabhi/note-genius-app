@@ -1,5 +1,6 @@
 import { useCallback, useRef, useEffect } from 'react';
 import { Note } from '@/types/note';
+import { useManagedInterval } from '@/utils/performance';
 
 interface MemoryOptimizationConfig {
   enableLazyLoading: boolean;
@@ -30,7 +31,6 @@ export const useMemoryOptimization = ({
   const loadedImages = useRef<Set<string>>(new Set());
   const imageObserver = useRef<IntersectionObserver | null>(null);
   const offScreenComponents = useRef<Set<string>>(new Set());
-  const gcTimer = useRef<NodeJS.Timeout | null>(null);
   const memoryStats = useRef({
     imagesLoaded: 0,
     componentsCleanedUp: 0,
@@ -175,26 +175,22 @@ export const useMemoryOptimization = ({
     return 0;
   }, []);
 
-  // Setup automatic garbage collection
-  useEffect(() => {
-    if (!defaultConfig.enableGarbageCollection) return;
+  // Setup automatic garbage collection with managed interval
+  const gcCallback = useCallback(() => {
+    const currentMemory = getMemoryUsage();
+    
+    // Run GC if memory threshold is exceeded or if it's been a while
+    if (currentMemory > defaultConfig.memoryThreshold || 
+        Date.now() - memoryStats.current.lastGCRun > defaultConfig.gcInterval * 1000) {
+      performGarbageCollection();
+    }
+  }, [defaultConfig.memoryThreshold, defaultConfig.gcInterval, performGarbageCollection, getMemoryUsage]);
 
-    gcTimer.current = setInterval(() => {
-      const currentMemory = getMemoryUsage();
-      
-      // Run GC if memory threshold is exceeded or if it's been a while
-      if (currentMemory > defaultConfig.memoryThreshold || 
-          Date.now() - memoryStats.current.lastGCRun > defaultConfig.gcInterval * 1000) {
-        performGarbageCollection();
-      }
-    }, defaultConfig.gcInterval * 1000);
-
-    return () => {
-      if (gcTimer.current) {
-        clearInterval(gcTimer.current);
-      }
-    };
-  }, [defaultConfig.enableGarbageCollection, defaultConfig.memoryThreshold, defaultConfig.gcInterval, performGarbageCollection, getMemoryUsage]);
+  useManagedInterval(
+    'memory-gc',
+    gcCallback,
+    defaultConfig.enableGarbageCollection ? defaultConfig.gcInterval * 1000 : null
+  );
 
   // Initialize on mount
   useEffect(() => {
@@ -203,9 +199,6 @@ export const useMemoryOptimization = ({
     return () => {
       if (imageObserver.current) {
         imageObserver.current.disconnect();
-      }
-      if (gcTimer.current) {
-        clearInterval(gcTimer.current);
       }
     };
   }, [initializeImageObserver]);

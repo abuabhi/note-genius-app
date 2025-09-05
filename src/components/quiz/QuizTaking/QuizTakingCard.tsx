@@ -9,6 +9,7 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { Progress } from '@/components/ui/progress';
 import { useUserTier } from '@/hooks/useUserTier';
 import { Separator } from '@/components/ui/separator';
+import { useManagedInterval } from '@/utils/performance';
 
 interface QuizTakingCardProps {
   questions: (QuizQuestion & { options: QuizOption[] })[];
@@ -49,14 +50,12 @@ export const QuizTakingCard = ({ questions, onQuizComplete }: QuizTakingCardProp
     setQuestionStartTime(Date.now());
   }, [currentQuestionIndex]);
   
-  // Track total quiz time
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTotalTime(Date.now() - startTime);
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [startTime]);
+  // Track total quiz time with managed interval
+  const updateTotalTime = () => {
+    setTotalTime(Date.now() - startTime);
+  };
+  
+  useManagedInterval('quiz-timer', updateTotalTime, quizStarted ? 1000 : null);
   
   const handleOptionSelect = (optionId: string) => {
     // Start quiz timer on first interaction

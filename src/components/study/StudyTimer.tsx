@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, Pause, SkipForward, Clock, Coffee } from "lucide-react";
 import { formatTime } from "@/utils/formatTime";
+import { useManagedInterval } from "@/utils/performance";
 
 interface StudyTimerProps {
   isActive: boolean;
@@ -29,21 +30,15 @@ export const StudyTimer = ({
 }: StudyTimerProps) => {
   const [seconds, setSeconds] = useState(0);
   
-  // Timer logic
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (isActive) {
-      interval = setInterval(() => {
-        setSeconds(prev => (prev + 1) % 60);
-        if (seconds === 59) {
-          onTick();
-        }
-      }, 1000);
+  // Managed timer logic
+  const timerCallback = () => {
+    setSeconds(prev => (prev + 1) % 60);
+    if (seconds === 59) {
+      onTick();
     }
-    
-    return () => clearInterval(interval);
-  }, [isActive, seconds, onTick]);
+  };
+  
+  useManagedInterval('study-timer', timerCallback, isActive ? 1000 : null);
   
   return (
     <Card className="shadow-md">

@@ -7,6 +7,7 @@ import { Activity, Database, Globe, Zap, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { config, logger } from '@/config/environment';
 import { toast } from 'sonner';
+import { useManagedInterval } from '@/utils/performance';
 
 interface HealthStatus {
   database: 'healthy' | 'warning' | 'error';
@@ -111,13 +112,12 @@ export const HealthCheck = () => {
     }
   };
 
+  // Set up managed health check interval
+  useManagedInterval('health-check', performHealthCheck, HEALTH_CHECK_INTERVAL);
+  
+  // Initial health check
   useEffect(() => {
     performHealthCheck();
-    
-    // Much less frequent health checks
-    const interval = setInterval(performHealthCheck, HEALTH_CHECK_INTERVAL);
-    
-    return () => clearInterval(interval);
   }, []);
 
   const getStatusColor = (status: 'healthy' | 'warning' | 'error') => {

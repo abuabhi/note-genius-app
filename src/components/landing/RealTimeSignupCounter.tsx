@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useManagedInterval, useManagedTimeout } from '@/utils/performance';
 
 export const RealTimeSignupCounter = () => {
   const [count, setCount] = useState(48792);
   const [recentSignups, setRecentSignups] = useState(0);
+  const [shouldResetSignups, setShouldResetSignups] = useState(false);
 
   useEffect(() => {
     // Get real user count from database
@@ -24,20 +26,24 @@ export const RealTimeSignupCounter = () => {
     };
 
     getUserCount();
-
-    // Simulate real-time updates with some actual data mixed in
-    const interval = setInterval(() => {
-      if (Math.random() > 0.7) { // 30% chance of update every 3 seconds
-        setCount(prev => prev + 1);
-        setRecentSignups(prev => prev + 1);
-        
-        // Reset recent signups counter periodically
-        setTimeout(() => setRecentSignups(0), 10000);
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
   }, []);
+
+  // Managed interval for signup updates
+  const updateSignups = () => {
+    if (Math.random() > 0.7) { // 30% chance of update every 3 seconds
+      setCount(prev => prev + 1);
+      setRecentSignups(prev => prev + 1);
+      setShouldResetSignups(true);
+    }
+  };
+
+  useManagedInterval('signup-counter', updateSignups, 3000);
+
+  // Managed timeout to reset recent signups
+  useManagedTimeout('reset-signups', () => {
+    setRecentSignups(0);
+    setShouldResetSignups(false);
+  }, shouldResetSignups ? 10000 : null);
 
   return (
     <div className="flex items-center justify-center gap-4 py-4 px-6 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">

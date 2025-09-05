@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { logger } from '@/config/environment';
 import { useStableTabVisibility } from './useStableTabVisibility';
+import { useManagedInterval } from '@/utils/performance';
 
 interface ConsolidatedMetrics {
   memoryUsage: number;
@@ -51,7 +52,6 @@ export const useOptimizedPerformanceMonitor = (enabled = true) => {
   });
   
   const [alerts, setAlerts] = useState<PerformanceAlert[]>([]);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const alertThrottleRef = useRef<Set<string>>(new Set());
 
   const collectMetrics = useCallback((): ConsolidatedMetrics => {
@@ -144,29 +144,12 @@ export const useOptimizedPerformanceMonitor = (enabled = true) => {
     }
   }, [enabled, isTabVisible, collectMetrics, checkPerformanceThresholds]);
 
-  // Main monitoring effect
-  useEffect(() => {
-    if (!enabled) return;
-
-    // Run initial check only if tab is visible
-    if (isTabVisible) {
-      runMonitoring();
-    }
+  // Set up managed monitoring interval
+  const interval = enabled 
+    ? (isDevelopment ? MONITORING_INTERVALS.development : MONITORING_INTERVALS.production)
+    : null;
     
-    // Set up interval based on environment
-    const interval = isDevelopment 
-      ? MONITORING_INTERVALS.development 
-      : MONITORING_INTERVALS.production;
-    
-    intervalRef.current = setInterval(runMonitoring, interval);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [enabled, runMonitoring, isTabVisible]);
+  useManagedInterval('performance-monitor', runMonitoring, interval);
 
   const clearAlerts = useCallback(() => setAlerts([]), []);
   

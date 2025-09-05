@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useManagedTimeout } from '@/utils/performance';
 
 interface DebouncedInputProps {
   value: string;
@@ -23,28 +24,23 @@ export const DebouncedInput = React.memo(({
 
   // Use ref to track the last onChange call to prevent infinite updates
   const lastChangeRef = React.useRef<string>('');
+  const [pendingValue, setPendingValue] = React.useState<string | null>(null);
 
-  // Debounced change handler - only call onChange if value actually changed
-  const debouncedOnChange = React.useMemo(() => {
-    let timeoutId: NodeJS.Timeout;
-    
-    return (newValue: string) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        if (newValue !== lastChangeRef.current) {
-          console.log('🔍 [DEBOUNCED INPUT] Calling onChange with:', newValue);
-          lastChangeRef.current = newValue;
-          onChange(newValue);
-        }
-      }, debounceMs);
-    };
-  }, [onChange, debounceMs]);
+  // Set up managed timeout for debouncing
+  useManagedTimeout('debounced-input', () => {
+    if (pendingValue !== null && pendingValue !== lastChangeRef.current) {
+      console.log('🔍 [DEBOUNCED INPUT] Calling onChange with:', pendingValue);
+      lastChangeRef.current = pendingValue;
+      onChange(pendingValue);
+      setPendingValue(null);
+    }
+  }, pendingValue !== null ? debounceMs : null);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     console.log('🔍 [DEBOUNCED INPUT] Input changed to:', newValue);
-    debouncedOnChange(newValue);
-  }, [debouncedOnChange]);
+    setPendingValue(newValue);
+  }, []);
 
   const clearInput = useCallback(() => {
     console.log('🔍 [DEBOUNCED INPUT] Clearing input');

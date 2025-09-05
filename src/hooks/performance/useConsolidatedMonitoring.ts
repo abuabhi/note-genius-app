@@ -3,6 +3,7 @@ import { useMemoryOptimization } from './useMemoryOptimization';
 import { useConnectionOptimization } from './useConnectionOptimization';
 import { useQueryOptimization } from './useQueryOptimization';
 import { useSecurityValidation } from './useSecurityValidation';
+import { useManagedInterval } from '@/utils/performance';
 
 interface ConsolidatedMetrics {
   memory: {
@@ -98,19 +99,16 @@ export const useConsolidatedMonitoring = (config: Partial<ConsolidatedMonitoring
     }
   }, [finalConfig.enabled, finalConfig.enableLogging, getMemoryStats, getCacheSize, getConnectionMetrics, getQueryStats, getSecurityMetrics, performCleanup]);
 
-  // Single interval for all monitoring
+  // Set up managed monitoring interval
+  const interval = finalConfig.enabled ? finalConfig.updateInterval : null;
+  useManagedInterval('consolidated-monitoring', updateMetrics, interval);
+  
+  // Initial update
   useEffect(() => {
-    if (!finalConfig.enabled) return;
-
-    // Initial update
-    updateMetrics();
-
-    const interval = setInterval(updateMetrics, finalConfig.updateInterval);
-    
-    return () => {
-      clearInterval(interval);
-    };
-  }, [finalConfig.enabled, finalConfig.updateInterval, updateMetrics]);
+    if (finalConfig.enabled) {
+      updateMetrics();
+    }
+  }, [finalConfig.enabled, updateMetrics]);
 
   const resetAllMetrics = useCallback(() => {
     resetConnectionMetrics();

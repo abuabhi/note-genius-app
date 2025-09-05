@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useCallback } from 'react';
+import { useManagedInterval } from '@/utils/performance';
 
 interface MemoryOptimizationConfig {
   maxCacheSize: number;
@@ -14,7 +15,6 @@ export const useMemoryOptimization = (config: MemoryOptimizationConfig = {
 }) => {
   const cacheRef = useRef(new Map());
   const memoryStatsRef = useRef({ peak: 0, current: 0 });
-  const cleanupIntervalRef = useRef<NodeJS.Timeout>();
 
   const measureMemoryUsage = useCallback(() => {
     if ('memory' in performance) {
@@ -96,16 +96,8 @@ export const useMemoryOptimization = (config: MemoryOptimizationConfig = {
     }
   }, [config.maxMemoryUsage, measureMemoryUsage, clearCache]);
 
-  // Set up automatic cleanup
-  useEffect(() => {
-    cleanupIntervalRef.current = setInterval(performCleanup, config.cleanupInterval);
-    
-    return () => {
-      if (cleanupIntervalRef.current) {
-        clearInterval(cleanupIntervalRef.current);
-      }
-    };
-  }, [performCleanup, config.cleanupInterval]);
+  // Set up managed cleanup interval
+  useManagedInterval('memory-cleanup', performCleanup, config.cleanupInterval);
 
   // Cleanup on unmount
   useEffect(() => {

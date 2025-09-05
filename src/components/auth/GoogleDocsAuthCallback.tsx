@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useManagedTimeout } from '@/utils/performance';
 
 // Immediate file load verification
 console.log('🚀 [GOOGLE DOCS CALLBACK] Component file loaded at:', new Date().toISOString());
@@ -28,6 +29,13 @@ console.log('🚀 [GOOGLE DOCS CALLBACK] Window properties at file load:', {
 export const GoogleDocsAuthCallback = () => {
   console.log('🎯 [GOOGLE DOCS CALLBACK] Component function called');
   const [message, setMessage] = useState('Processing authorization...');
+  const [shouldAutoClose, setShouldAutoClose] = useState(false);
+
+  // Managed timeout for auto-closing
+  useManagedTimeout('google-docs-auto-close', () => {
+    console.log('🔚 [GOOGLE DOCS CALLBACK] Auto-closing popup');
+    window.close();
+  }, shouldAutoClose ? 2000 : null);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -83,10 +91,7 @@ export const GoogleDocsAuthCallback = () => {
         setMessage('Authentication failed. Please wait...');
         
         // Auto-close after posting error message
-        setTimeout(() => {
-          console.log('🔚 [GOOGLE DOCS CALLBACK] Auto-closing popup after error');
-          window.close();
-        }, 2000);
+        setShouldAutoClose(true);
         return;
       }
       
@@ -122,7 +127,7 @@ export const GoogleDocsAuthCallback = () => {
             }
             
             // Additional retry mechanism
-            setTimeout(() => {
+            useManagedTimeout('google-docs-retry', () => {
               if (window.opener && !window.opener.closed) {
                 try {
                   window.opener.postMessage({
@@ -148,8 +153,8 @@ export const GoogleDocsAuthCallback = () => {
         
         setMessage('Authorization successful! Please wait...');
         
-        // Auto-close after posting success message
-        setTimeout(() => {
+        // Auto-close after posting success message  
+        useManagedTimeout('google-docs-success-close', () => {
           console.log('🔚 [GOOGLE DOCS CALLBACK] Auto-closing popup after success');
           window.close();
         }, 1500);
@@ -182,10 +187,7 @@ export const GoogleDocsAuthCallback = () => {
         setMessage('Authorization failed. Please wait...');
         
         // Auto-close after posting no-code error
-        setTimeout(() => {
-          console.log('🔚 [GOOGLE DOCS CALLBACK] Auto-closing popup after no-code error');
-          window.close();
-        }, 2000);
+        setShouldAutoClose(true);
       }
     };
     
