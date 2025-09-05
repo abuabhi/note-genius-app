@@ -37,7 +37,7 @@ export const useIntelligentPrefetch = () => {
   const prefetchRules = useRef<PrefetchRule[]>([
     {
       routePattern: /^\/dashboard/,
-      priority: 'high',
+      priority: 'high' as PrefetchPriority,
       prefetchQueries: () => [
         { queryKey: ['userProfile', user?.id], staleTime: 10 * 60 * 1000 },
         { queryKey: ['studyStats', user?.id], staleTime: 5 * 60 * 1000 },
@@ -48,7 +48,7 @@ export const useIntelligentPrefetch = () => {
     },
     {
       routePattern: /^\/flashcards/,
-      priority: 'high',
+      priority: 'high' as PrefetchPriority,
       prefetchQueries: () => [
         { queryKey: ['flashcardSets', user?.id], staleTime: 5 * 60 * 1000 },
         { queryKey: ['builtInFlashcardSets'], staleTime: 30 * 60 * 1000 },
@@ -57,7 +57,7 @@ export const useIntelligentPrefetch = () => {
     },
     {
       routePattern: /^\/study/,
-      priority: 'high',
+      priority: 'high' as PrefetchPriority,
       prefetchQueries: () => [
         { queryKey: ['flashcardSets', user?.id], staleTime: 5 * 60 * 1000 },
         { queryKey: ['dueCards', user?.id], staleTime: 2 * 60 * 1000 },
@@ -66,7 +66,7 @@ export const useIntelligentPrefetch = () => {
     },
     {
       routePattern: /^\/analytics/,
-      priority: 'medium',
+      priority: 'medium' as PrefetchPriority,
       prefetchQueries: () => [
         { queryKey: ['studyStats', user?.id], staleTime: 5 * 60 * 1000 },
         { queryKey: ['flashcardStats', user?.id], staleTime: 10 * 60 * 1000 },
@@ -75,7 +75,7 @@ export const useIntelligentPrefetch = () => {
     },
     {
       routePattern: /^\/notes/,
-      priority: 'medium',
+      priority: 'medium' as PrefetchPriority,
       prefetchQueries: () => [
         { queryKey: ['notes', user?.id], staleTime: 5 * 60 * 1000 },
         { queryKey: ['noteSummaries', user?.id], staleTime: 10 * 60 * 1000 },

@@ -60,3 +60,10 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     </FlashcardContext.Provider>
   );
 };
+
+// Export modern hooks for components that want to use them directly
+export { useFlashcardSets } from '@/hooks/flashcards/useFlashcardSets';
+export { useFlashcards as useFlashcardsHook } from '@/hooks/flashcards/useFlashcards';
+export { useFlashcardStudy } from '@/hooks/flashcards/useFlashcardStudy';
+export { useQueryOptimization } from '@/hooks/query/useQueryOptimization';
+export { useIntelligentPrefetch } from '@/hooks/query/useIntelligentPrefetch';
