@@ -15,6 +15,7 @@ export const DesktopNavLinks = ({ isPublicRoute }: DesktopNavLinksProps) => {
   const publicNavItems = [
     { name: 'Features', href: '/features' },
     { name: 'Pricing', href: '/pricing' },
+    { name: 'Blog', href: '/blog' },
     { name: 'About', href: '/about' },
     { name: 'FAQ', href: '/faq' },
     { name: 'Contact', href: '/contact' },
