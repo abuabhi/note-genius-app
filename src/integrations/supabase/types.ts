@@ -206,6 +206,47 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_analytics: {
+        Row: {
+          avg_time_on_page: number | null
+          bounce_rate: number | null
+          created_at: string | null
+          date: string
+          id: string
+          post_id: string | null
+          unique_visitors: number | null
+          views: number | null
+        }
+        Insert: {
+          avg_time_on_page?: number | null
+          bounce_rate?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          post_id?: string | null
+          unique_visitors?: number | null
+          views?: number | null
+        }
+        Update: {
+          avg_time_on_page?: number | null
+          bounce_rate?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          post_id?: string | null
+          unique_visitors?: number | null
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_analytics_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_categories: {
         Row: {
           color: string | null
@@ -235,6 +276,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      blog_generation_queue: {
+        Row: {
+          content_type: string | null
+          created_at: string | null
+          error_message: string | null
+          generated_post_id: string | null
+          id: string
+          processed_at: string | null
+          status: string | null
+          target_keywords: string[] | null
+          topic: string
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          generated_post_id?: string | null
+          id?: string
+          processed_at?: string | null
+          status?: string | null
+          target_keywords?: string[] | null
+          topic: string
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          generated_post_id?: string | null
+          id?: string
+          processed_at?: string | null
+          status?: string | null
+          target_keywords?: string[] | null
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_generation_queue_generated_post_id_fkey"
+            columns: ["generated_post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       blog_post_tags: {
         Row: {
@@ -275,15 +360,19 @@ export type Database = {
       blog_posts: {
         Row: {
           author_id: string | null
+          auto_publish: boolean | null
           category_id: string | null
           content: string
           created_at: string
           excerpt: string | null
           featured_image_url: string | null
           id: string
+          is_ai_generated: boolean | null
           is_featured: boolean | null
+          keywords: string[] | null
           published_at: string | null
           reading_time_minutes: number | null
+          scheduled_for: string | null
           seo_description: string | null
           seo_title: string | null
           slug: string
@@ -294,15 +383,19 @@ export type Database = {
         }
         Insert: {
           author_id?: string | null
+          auto_publish?: boolean | null
           category_id?: string | null
           content: string
           created_at?: string
           excerpt?: string | null
           featured_image_url?: string | null
           id?: string
+          is_ai_generated?: boolean | null
           is_featured?: boolean | null
+          keywords?: string[] | null
           published_at?: string | null
           reading_time_minutes?: number | null
+          scheduled_for?: string | null
           seo_description?: string | null
           seo_title?: string | null
           slug: string
@@ -313,15 +406,19 @@ export type Database = {
         }
         Update: {
           author_id?: string | null
+          auto_publish?: boolean | null
           category_id?: string | null
           content?: string
           created_at?: string
           excerpt?: string | null
           featured_image_url?: string | null
           id?: string
+          is_ai_generated?: boolean | null
           is_featured?: boolean | null
+          keywords?: string[] | null
           published_at?: string | null
           reading_time_minutes?: number | null
+          scheduled_for?: string | null
           seo_description?: string | null
           seo_title?: string | null
           slug?: string
@@ -4398,6 +4495,10 @@ export type Database = {
     }
     Functions: {
       auto_escalate_overdue_todos: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      auto_publish_scheduled_posts: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
