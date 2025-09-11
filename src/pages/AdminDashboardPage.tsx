@@ -16,11 +16,28 @@ import {
   Activity,
   HelpCircle,
   Crown,
-  Video
+  Video,
+  PenTool,
+  Bot,
+  TrendingUp
 } from 'lucide-react';
 
 const AdminDashboardPage = () => {
   const adminSections = [
+    {
+      title: 'Blog Management',
+      description: 'Create, edit, and manage blog posts with SEO optimization',
+      icon: PenTool,
+      href: '/admin/blog',
+      color: 'bg-blue-600'
+    },
+    {
+      title: 'AI Blog Generator',
+      description: 'Auto-generate SEO-optimized blog content with AI assistance',
+      icon: Bot,
+      href: '/admin/blog/ai-generate',
+      color: 'bg-purple-600'
+    },
     {
       title: 'Video Management',
       description: 'Manage video URLs for all landing page sections with analytics',
