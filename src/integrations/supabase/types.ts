@@ -247,6 +247,167 @@ export type Database = {
           },
         ]
       }
+      blog_campaign_runs: {
+        Row: {
+          blog_post_id: string | null
+          campaign_id: string
+          completed_at: string | null
+          error_message: string | null
+          id: string
+          run_at: string
+          status: string
+          topic_used: string | null
+        }
+        Insert: {
+          blog_post_id?: string | null
+          campaign_id: string
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          run_at?: string
+          status?: string
+          topic_used?: string | null
+        }
+        Update: {
+          blog_post_id?: string | null
+          campaign_id?: string
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          run_at?: string
+          status?: string
+          topic_used?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_campaign_runs_blog_post_id_fkey"
+            columns: ["blog_post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_campaign_runs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "blog_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_campaign_topics: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          is_used: boolean | null
+          last_used_at: string | null
+          sort_order: number | null
+          topic: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          is_used?: boolean | null
+          last_used_at?: string | null
+          sort_order?: number | null
+          topic: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          is_used?: boolean | null
+          last_used_at?: string | null
+          sort_order?: number | null
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_campaign_topics_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "blog_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_campaigns: {
+        Row: {
+          auto_publish: boolean
+          category_id: string | null
+          content_type: string | null
+          created_at: string
+          description: string | null
+          fixed_topic: string | null
+          frequency_type: string
+          frequency_value: number
+          id: string
+          is_active: boolean
+          keywords: string[] | null
+          last_run_at: string | null
+          max_word_count: number | null
+          min_word_count: number | null
+          name: string
+          next_run_at: string | null
+          publish_delay_hours: number | null
+          seo_keywords: string[] | null
+          status: string
+          topic_strategy: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_publish?: boolean
+          category_id?: string | null
+          content_type?: string | null
+          created_at?: string
+          description?: string | null
+          fixed_topic?: string | null
+          frequency_type?: string
+          frequency_value?: number
+          id?: string
+          is_active?: boolean
+          keywords?: string[] | null
+          last_run_at?: string | null
+          max_word_count?: number | null
+          min_word_count?: number | null
+          name: string
+          next_run_at?: string | null
+          publish_delay_hours?: number | null
+          seo_keywords?: string[] | null
+          status?: string
+          topic_strategy?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_publish?: boolean
+          category_id?: string | null
+          content_type?: string | null
+          created_at?: string
+          description?: string | null
+          fixed_topic?: string | null
+          frequency_type?: string
+          frequency_value?: number
+          id?: string
+          is_active?: boolean
+          keywords?: string[] | null
+          last_run_at?: string | null
+          max_word_count?: number | null
+          min_word_count?: number | null
+          name?: string
+          next_run_at?: string | null
+          publish_delay_hours?: number | null
+          seo_keywords?: string[] | null
+          status?: string
+          topic_strategy?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       blog_categories: {
         Row: {
           color: string | null
@@ -4541,6 +4702,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      calculate_next_campaign_run: {
+        Args: {
+          p_frequency_type: string
+          p_frequency_value: number
+          p_last_run?: string
+        }
+        Returns: string
+      }
       calculate_session_quality: {
         Args: {
           p_cards_correct: number
@@ -4676,6 +4845,10 @@ export type Database = {
       }
       get_my_referral_code: {
         Args: { preferred_base?: string }
+        Returns: string
+      }
+      get_next_campaign_topic: {
+        Args: { p_campaign_id: string }
         Returns: string
       }
       get_or_create_referral_code: {
