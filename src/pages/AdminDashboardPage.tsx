@@ -39,6 +39,13 @@ const AdminDashboardPage = () => {
       color: 'bg-purple-600'
     },
     {
+      title: 'Blog Campaigns',
+      description: 'Automate blog generation with scheduled campaigns',
+      icon: TrendingUp,
+      href: '/admin/blog/campaigns',
+      color: 'bg-indigo-600'
+    },
+    {
       title: 'Video Management',
       description: 'Manage video URLs for all landing page sections with analytics',
       icon: Video,

@@ -26,11 +26,18 @@ interface Campaign {
   description: string;
   status: string;
   topic_strategy: string;
+  fixed_topic: string;
+  keywords: string[];
   frequency_type: string;
   frequency_value: number;
   next_run_at: string;
   last_run_at: string;
   auto_publish: boolean;
+  publish_delay_hours: number;
+  content_type: string;
+  min_word_count: number;
+  max_word_count: number;
+  seo_keywords: string[];
   is_active: boolean;
   created_at: string;
 }

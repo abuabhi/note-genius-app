@@ -24,6 +24,7 @@ import AdminVideoManagementPage from "@/pages/AdminVideoManagementPage";
 import AdminBlogPage from "@/pages/AdminBlogPage";
 import AdminBlogEditorPage from "@/pages/AdminBlogEditorPage";
 import AdminBlogAIGeneratorPage from "@/pages/AdminBlogAIGeneratorPage";
+import BlogCampaignsPage from "@/pages/BlogCampaignsPage";
 import { RouteConfig } from './publicRoutes';
 
 // Admin routes - wrapped with SidebarLayout for sidebar/header
@@ -52,4 +53,5 @@ export const adminRoutes: RouteConfig[] = [
   { path: "/admin/blog/new", element: <AdminBlogEditorPage /> },
   { path: "/admin/blog/edit/:id", element: <AdminBlogEditorPage /> },
   { path: "/admin/blog/ai-generate", element: <AdminBlogAIGeneratorPage /> },
+  { path: "/admin/blog/campaigns", element: <BlogCampaignsPage /> },
 ];
