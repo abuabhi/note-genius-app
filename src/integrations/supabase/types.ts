@@ -4934,6 +4934,10 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: boolean
       }
+      is_dean_user_verified: {
+        Args: { user_id_param: string }
+        Returns: boolean
+      }
       log_quiz_creation_debug: {
         Args: { context?: string; quiz_data: Json }
         Returns: undefined
