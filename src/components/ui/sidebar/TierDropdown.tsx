@@ -59,6 +59,7 @@ export const TierDropdown = ({ isCollapsed }: TierDropdownProps) => {
       return count || 0;
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes - reduce refetches
   });
 
   // Query for flashcard sets count
@@ -73,34 +74,18 @@ export const TierDropdown = ({ isCollapsed }: TierDropdownProps) => {
       return count || 0;
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes - reduce refetches
   });
 
   // Query for AI enrichment usage (billing cycle aware)
   const { data: aiEnrichmentCount = 0, isLoading: isLoadingAI } = useQuery({
     queryKey: ['ai-enrichment-billing-cycle', user?.id],
     queryFn: async () => {
-      if (!user?.id) {
-        console.log('No user ID available for AI enrichment query');
-        return 0;
-      }
-      
-      console.log('Fetching AI enrichment count for user:', user.id);
-      const count = await getAIEnrichmentCountForBillingCycle(user.id);
-      console.log('AI enrichment count result:', count);
-      return count;
+      if (!user?.id) return 0;
+      return await getAIEnrichmentCountForBillingCycle(user.id);
     },
     enabled: !!user?.id,
-  });
-
-  // Debug logging
-  console.log('TierDropdown Debug Info:', {
-    userTier,
-    tierLimits,
-    notesCount,
-    flashcardSetsCount,
-    aiEnrichmentCount,
-    userId: user?.id,
-    isLoading: { isLoading, isLoadingAI }
+    staleTime: 5 * 60 * 1000, // 5 minutes - reduce refetches
   });
 
   if (isLoading || isLoadingAI) {

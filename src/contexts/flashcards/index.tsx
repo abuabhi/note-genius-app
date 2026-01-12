@@ -24,12 +24,10 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     const loadInitialData = async () => {
       if (state.user && state.flashcardSets.length === 0) {
-        console.log('FlashcardProvider: Auto-loading flashcard sets...');
         try {
           await operations.fetchFlashcardSets();
-          console.log('FlashcardProvider: Successfully loaded sets:', state.flashcardSets.length);
         } catch (error) {
-          console.error('FlashcardProvider: Failed to load initial data:', error);
+          // Silent fail - sets will be empty
         }
       }
       setIsReady(true);
@@ -44,15 +42,6 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     isLoading: state.loading.flashcards || state.loading.sets || state.loading.userSubjects,
     isReady,
   };
-
-  console.log('FlashcardProvider: Rendering with context value', {
-    flashcardSetsCount: state.flashcardSets.length,
-    userSubjectsCount: state.userSubjects.length,
-    currentSetId: state.currentSet?.id,
-    userId: state.user?.id,
-    isReady,
-    loading: contextValue.isLoading
-  });
 
   return (
     <FlashcardContext.Provider value={contextValue}>

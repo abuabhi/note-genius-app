@@ -5,11 +5,9 @@ import { Note } from '@/types/note';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 
-// ✅ FIXED: More robust query key factory with debugging
+// Query key factory
 const getNotesQueryKey = (filters: { search: string; subject: string; sort: string }) => {
-  const key = ['notes', 'simple', filters.search.trim(), filters.subject.trim(), filters.sort.trim()];
-  console.log('🔑 [QUERY KEY] Generated:', key);
-  return key;
+  return ['notes', 'simple', filters.search.trim(), filters.subject.trim(), filters.sort.trim()];
 };
 
 interface FetchNotesParams {
@@ -31,8 +29,6 @@ const fetchNotesPage = async ({ search, subject, sort, pageParam = 0 }: FetchNot
   // Step 1: Get subject_id if filtering by subject name
   let subjectId: string | null = null;
   if (subject && subject !== 'all') {
-    console.log('🔍 Step 1: Looking up subject_id for:', subject);
-    
     const { data: subjectData, error: subjectError } = await supabase
       .from('user_subjects')
       .select('id')
@@ -40,18 +36,8 @@ const fetchNotesPage = async ({ search, subject, sort, pageParam = 0 }: FetchNot
       .eq('name', subject)
       .maybeSingle();
     
-    if (subjectError) {
-      console.error('❌ Subject lookup failed:', subjectError);
-      throw subjectError;
-    }
-    
-    if (subjectData) {
-      subjectId = subjectData.id;
-      console.log('✅ Found subject_id:', subjectId);
-    } else {
-      console.log('⚠️ No subject_id found for subject name:', subject);
-      // Continue with query but will return no results
-    }
+    if (subjectError) throw subjectError;
+    if (subjectData) subjectId = subjectData.id;
   }
 
   // Step 2: Query notes with subject_id filter
@@ -75,11 +61,9 @@ const fetchNotesPage = async ({ search, subject, sort, pageParam = 0 }: FetchNot
   // Apply subject filter using subject_id (two-step approach)
   if (subject && subject !== 'all') {
     if (subjectId) {
-      console.log('🔍 Step 2: Filtering notes by subject_id:', subjectId);
       query = query.eq('subject_id', subjectId);
     } else {
       // Fallback: try filtering by legacy subject field for backward compatibility
-      console.log('🔍 Step 2: Fallback to legacy subject field filter');
       query = query.eq('subject', subject);
     }
   }
@@ -105,18 +89,7 @@ const fetchNotesPage = async ({ search, subject, sort, pageParam = 0 }: FetchNot
 
   const { data, error, count } = await query;
 
-  if (error) {
-    console.error('❌ [FETCH NOTES] Query failed:', error);
-    throw error;
-  }
-
-  console.log('📊 [FETCH NOTES] Raw query results:', {
-    dataLength: data?.length || 0,
-    count,
-    from,
-    to,
-    filters: { search, subject, sort }
-  });
+  if (error) throw error;
 
   const notes: Note[] = (data || []).map(item => ({
     id: item.id,
@@ -135,14 +108,6 @@ const fetchNotesPage = async ({ search, subject, sort, pageParam = 0 }: FetchNot
   const totalCount = count || 0;
   const hasMore = (from + notes.length) < totalCount;
   const nextCursor = hasMore ? pageParam + 1 : undefined;
-
-  console.log('✅ [SIMPLE NOTES] Fetched notes page:', {
-    notesCount: notes.length,
-    totalCount,
-    hasMore,
-    nextCursor,
-    appliedFilters: { search, subject, sort }
-  });
 
   return { notes, totalCount, hasMore, nextCursor };
 };
@@ -179,18 +144,14 @@ export const useSimpleNotes = () => {
     isFetching
   } = useInfiniteQuery({
     queryKey: getNotesQueryKey(currentFilters),
-    queryFn: ({ pageParam = 0 }) => {
-      console.log('🚀 [SIMPLE NOTES] Query function called with:', { ...currentFilters, pageParam });
-      console.log('🚀 [SIMPLE NOTES] Full query key:', getNotesQueryKey(currentFilters));
-      return fetchNotesPage({ ...currentFilters, pageParam });
-    },
+    queryFn: ({ pageParam = 0 }) => fetchNotesPage({ ...currentFilters, pageParam }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    staleTime: 0, // ✅ FIX: Immediate fresh data for filters - no stale data allowed
-    gcTime: 1000 * 60 * 2, // 2 minutes cache retention  
+    staleTime: 2 * 60 * 1000, // 2 minutes - improves performance
+    gcTime: 5 * 60 * 1000, // 5 minutes cache retention  
     refetchOnWindowFocus: false,
-    refetchOnMount: 'always', // Always refetch on mount
-    refetchInterval: false, // Disable auto refetch
+    refetchOnMount: true,
+    refetchInterval: false,
   });
 
   // ✅ FIX: Remove isFetching from validation - allow filtered data to display immediately
@@ -201,34 +162,11 @@ export const useSimpleNotes = () => {
   const totalCount = (hasValidData && !isInitialLoading && data.pages[0]) ? data.pages[0].totalCount : 0;
   const hasMore = hasValidData && !isInitialLoading && (hasNextPage || false);
 
-  // Filter calculations (moved before debug logs)
+  // Filter calculations
   const hasActiveFilters = !!(searchTerm || (selectedSubject && selectedSubject !== 'all'));
   const activeFilterCount = [searchTerm, selectedSubject !== 'all'].filter(Boolean).length;
 
-  // ✅ COMPREHENSIVE DEBUG: Log the complete data flow
-  console.log('🔥 [SIMPLE NOTES HOOK] === COMPLETE DATA FLOW DEBUG ===');
-  console.log('🔥 [FILTERS] Current filters:', currentFilters);
-  console.log('🔥 [QUERY KEY] Generated query key:', getNotesQueryKey(currentFilters));
-  console.log('🔥 [QUERY STATE] Query loading states:', { isLoading, isInitialLoading, isFetchingNextPage });
-  console.log('🔥 [RAW DATA] Pages count:', data?.pages?.length || 0);
-  console.log('🔥 [RAW DATA] First page data:', data?.pages?.[0] ? {
-    notesCount: data.pages[0].notes.length,
-    totalCount: data.pages[0].totalCount,
-    hasMore: data.pages[0].hasMore
-  } : 'No data');
-  console.log('🔥 [PROCESSED] Flattened notes count:', notes.length);
-  console.log('🔥 [PROCESSED] Final total count:', totalCount);
-  console.log('🔥 [PROCESSED] Notes subjects (first 5):', notes.slice(0, 5).map(n => ({ 
-    id: n.id, 
-    title: n.title, 
-    subject: n.subject 
-  })));
-  console.log('🔥 [UI STATE] hasActiveFilters:', hasActiveFilters);
-  console.log('🔥 [UI STATE] activeFilterCount:', activeFilterCount);
-  console.log('🔥 ================================================');
-
   const clearFilters = useCallback(() => {
-    console.log('🧹 [SIMPLE NOTES] Clearing all filters');
     setSearchTerm('');
     setSelectedSubject('all');
     setSortType('newest');
@@ -237,8 +175,6 @@ export const useSimpleNotes = () => {
   // Create note mutation
   const createMutation = useMutation({
     mutationFn: async (noteData: Omit<Note, 'id'>): Promise<Note> => {
-      console.log('📝 [SIMPLE NOTES] Creating note:', noteData);
-      
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('User not authenticated');
 
@@ -261,7 +197,7 @@ export const useSimpleNotes = () => {
 
       if (error) throw error;
       
-      const newNote: Note = {
+      return {
         id: data.id,
         title: data.title,
         description: data.description || '',
@@ -274,25 +210,13 @@ export const useSimpleNotes = () => {
         subject_id: data.subject_id,
         tags: []
       };
-
-      console.log('✅ [SIMPLE NOTES] Note created:', newNote);
-      return newNote;
     },
-    onSuccess: (newNote) => {
-      console.log('🚀 [SIMPLE NOTES] Adding note to infinite query cache');
-      
-      // ✅ FIXED: Clear cache and trigger refetch instead of complex cache updates
-      console.log('🚀 [SIMPLE NOTES] Note created, clearing cache and refetching');
+    onSuccess: () => {
       queryClient.removeQueries({ queryKey: ['notes'], exact: false });
-      
-      // The query will automatically refetch due to the new query key
       refetch();
-      
-      console.log('✅ [SIMPLE NOTES] Infinite query cache updated');
       toast.success('Note created successfully');
     },
-    onError: (error) => {
-      console.error('❌ [SIMPLE NOTES] Failed to create note:', error);
+    onError: () => {
       toast.error('Failed to create note');
     }
   });
@@ -319,16 +243,12 @@ export const useSimpleNotes = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, { id, updates }) => {
-      // ✅ FIXED: Clear cache and trigger refetch for updates
-      console.log('🔄 [SIMPLE NOTES] Note updated, clearing cache and refetching');
+    onSuccess: () => {
       queryClient.removeQueries({ queryKey: ['notes'], exact: false });
       refetch();
-      
       toast.success('Note updated successfully');
     },
-    onError: (error) => {
-      console.error('Failed to update note:', error);
+    onError: () => {
       toast.error('Failed to update note');
     }
   });
@@ -336,8 +256,6 @@ export const useSimpleNotes = () => {
   // Delete note mutation with optimistic updates
   const deleteMutation = useMutation({
     mutationFn: async (noteId: string) => {
-      console.log('🗑️ [SIMPLE NOTES] Deleting note:', noteId);
-      
       const { data, error } = await supabase
         .rpc('force_delete_note_optimized', { note_id_param: noteId });
 
@@ -347,55 +265,36 @@ export const useSimpleNotes = () => {
       return noteId;
     },
     onMutate: async (noteId: string) => {
-      // Cancel outgoing refetches to avoid optimistic update conflicts
       await queryClient.cancelQueries({ queryKey: ['notes'] });
-
-      // Snapshot previous value for rollback
       const previousData = queryClient.getQueriesData({ queryKey: ['notes'] });
 
-      // Optimistically update infinite query cache - remove note immediately
       queryClient.setQueriesData(
         { queryKey: ['notes'], exact: false },
         (oldData: any) => {
           if (!oldData?.pages) return oldData;
           
-          const updatedPages = oldData.pages.map((page: any) => {
-            const filteredNotes = page.notes.filter((note: Note) => note.id !== noteId);
-            return {
-              ...page,
-              notes: filteredNotes,
-              totalCount: Math.max(0, page.totalCount - 1)
-            };
-          });
+          const updatedPages = oldData.pages.map((page: any) => ({
+            ...page,
+            notes: page.notes.filter((note: Note) => note.id !== noteId),
+            totalCount: Math.max(0, page.totalCount - 1)
+          }));
           
-          console.log('🔄 [SIMPLE NOTES] Optimistic delete from infinite query');
-          
-          return {
-            ...oldData,
-            pages: updatedPages
-          };
+          return { ...oldData, pages: updatedPages };
         }
       );
 
-      // ✅ Clear all notes queries
       queryClient.removeQueries({ queryKey: ['notes'], exact: false });
-
       return { previousData };
     },
     onSuccess: () => {
-      console.log('✅ [SIMPLE NOTES] Delete confirmed by server');
       toast.success('Note deleted successfully');
     },
     onError: (error, noteId, context) => {
-      console.error('❌ [SIMPLE NOTES] Delete failed, reverting optimistic update:', error);
-      
-      // Revert optimistic update
       if (context?.previousData) {
         context.previousData.forEach(([queryKey, data]) => {
           queryClient.setQueryData(queryKey, data);
         });
       }
-      
       toast.error('Failed to delete note');
     }
   });
@@ -404,8 +303,7 @@ export const useSimpleNotes = () => {
   const addNote = useCallback(async (noteData: Omit<Note, 'id'>) => {
     try {
       return await createMutation.mutateAsync(noteData);
-    } catch (error) {
-      console.error('Add note failed:', error);
+    } catch {
       return null;
     }
   }, [createMutation]);
@@ -429,50 +327,29 @@ export const useSimpleNotes = () => {
   // Load more functionality
   const loadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
-      console.log('📄 [SIMPLE NOTES] Loading next page...');
       fetchNextPage();
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Pagination compatibility
   const currentPage = data?.pages?.length || 1;
-  const setCurrentPage = useCallback(() => {}, []); // Deprecated for infinite scroll
+  const setCurrentPage = useCallback(() => {}, []);
 
-  // ✅ FIXED: Enhanced setters with proper cache invalidation
+  // Enhanced setters with proper cache invalidation
   const updateSelectedSubject = useCallback((subject: string) => {
-    console.log('🔄 [SIMPLE NOTES] Subject filter changing:', { from: selectedSubject, to: subject });
-    console.log('🔄 [SIMPLE NOTES] Previous query key:', getNotesQueryKey(currentFilters));
-    
     setSelectedSubject(subject);
-    
-    // ✅ Remove ALL existing notes queries from cache immediately
     queryClient.removeQueries({ queryKey: ['notes'], exact: false });
-    console.log('🗑️ [SIMPLE NOTES] Removed all notes queries from cache');
-    
-    // The new query will be triggered automatically by React Query when the queryKey changes
-  }, [selectedSubject, queryClient, currentFilters]);
+  }, [queryClient]);
 
   const updateSearchTerm = useCallback((term: string) => {
-    console.log('🔍 [SIMPLE NOTES] Search term changing:', { from: searchTerm, to: term });
-    console.log('🔍 [SIMPLE NOTES] Previous query key:', getNotesQueryKey(currentFilters));
-    
     setSearchTerm(term);
-    
-    // ✅ Remove ALL existing notes queries from cache immediately  
     queryClient.removeQueries({ queryKey: ['notes'], exact: false });
-    console.log('🗑️ [SIMPLE NOTES] Removed all notes queries from cache');
-  }, [searchTerm, queryClient, currentFilters]);
+  }, [queryClient]);
 
   const updateSortType = useCallback((sort: string) => {
-    console.log('🔀 [SIMPLE NOTES] Sort changing:', { from: sortType, to: sort });
-    console.log('🔀 [SIMPLE NOTES] Previous query key:', getNotesQueryKey(currentFilters));
-    
     setSortType(sort);
-    
-    // ✅ Remove ALL existing notes queries from cache immediately
     queryClient.removeQueries({ queryKey: ['notes'], exact: false });
-    console.log('🗑️ [SIMPLE NOTES] Removed all notes queries from cache');
-  }, [sortType, queryClient, currentFilters]);
+  }, [queryClient]);
 
   return {
     // Data - ✅ FIX: Enhanced loading states to prevent stale data display
