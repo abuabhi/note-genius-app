@@ -10,8 +10,6 @@ export const useSimpleAnalytics = () => {
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
 
-      console.log('📊 Fetching simple analytics for user:', user.id);
-
       // Get all sessions
       const { data: sessions, error: sessionsError } = await supabase
         .from('study_sessions')
@@ -136,7 +134,6 @@ export const useSimpleAnalytics = () => {
         todayString: today
       };
 
-      console.log('✅ Simple analytics result:', result);
       return result;
     },
     enabled: !!user,
