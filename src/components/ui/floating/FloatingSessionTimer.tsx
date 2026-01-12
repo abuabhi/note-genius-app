@@ -5,11 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Clock, Play, Pause, Square, GripVertical, AlertTriangle, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DEBUG_CONFIG } from '@/config/debug';
+import { constrainToViewport, isPositionInViewport } from '@/utils/textTruncation';
 
 interface Position {
   x: number;
   y: number;
 }
+
+// Timer dimensions - used for viewport calculations
+const TIMER_WIDTH = 320;
+const TIMER_HEIGHT = 180;
 
 export const FloatingSessionTimer = () => {
   const {
@@ -38,28 +43,72 @@ export const FloatingSessionTimer = () => {
     });
   }
 
+  const timerRef = useRef<HTMLDivElement>(null);
+
+  // Get actual timer dimensions from ref, with fallback to constants
+  const getTimerDimensions = useCallback(() => {
+    if (timerRef.current) {
+      const rect = timerRef.current.getBoundingClientRect();
+      return { width: rect.width || TIMER_WIDTH, height: rect.height || TIMER_HEIGHT };
+    }
+    return { width: TIMER_WIDTH, height: TIMER_HEIGHT };
+  }, []);
+
   // Get default bottom-left position
   const getDefaultPosition = useCallback((): Position => {
-    const timerHeight = 180; // Approximate timer height
     return {
       x: 20,
-      y: window.innerHeight - timerHeight - 20
+      y: Math.max(20, window.innerHeight - TIMER_HEIGHT - 20)
     };
   }, []);
 
+  // Validate and constrain position to viewport
+  const validatePosition = useCallback((pos: Position): Position => {
+    const { width, height } = getTimerDimensions();
+    return constrainToViewport(pos, width, height);
+  }, [getTimerDimensions]);
+
   const [position, setPosition] = useState<Position>(() => {
     const saved = localStorage.getItem('floating-timer-position');
-    return saved ? JSON.parse(saved) : getDefaultPosition();
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Validate saved position is within current viewport
+        if (isPositionInViewport(parsed, TIMER_WIDTH, TIMER_HEIGHT)) {
+          return parsed;
+        }
+      } catch (e) {
+        console.warn('Invalid floating timer position in localStorage');
+      }
+    }
+    return getDefaultPosition();
   });
   
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState<Position>({ x: 0, y: 0 });
-  const timerRef = useRef<HTMLDivElement>(null);
 
   // Save position to localStorage
   useEffect(() => {
     localStorage.setItem('floating-timer-position', JSON.stringify(position));
   }, [position]);
+
+  // Handle viewport resize - constrain position to new bounds
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition(prev => {
+        const { width, height } = getTimerDimensions();
+        const constrained = constrainToViewport(prev, width, height);
+        // Only update if position actually changed
+        if (constrained.x !== prev.x || constrained.y !== prev.y) {
+          return constrained;
+        }
+        return prev;
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [getTimerDimensions]);
 
   // Format time as HH:MM:SS or MM:SS
   const formatTime = (totalSeconds: number): string => {
@@ -92,6 +141,11 @@ export const FloatingSessionTimer = () => {
     trackActivity();
   }, [trackActivity]);
 
+  // Handle double-click to reset position
+  const handleDoubleClick = useCallback(() => {
+    setPosition(getDefaultPosition());
+  }, [getDefaultPosition]);
+
   // Handle mouse move during drag
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
@@ -99,15 +153,12 @@ export const FloatingSessionTimer = () => {
     const newX = e.clientX - dragOffset.x;
     const newY = e.clientY - dragOffset.y;
     
-    // Keep within viewport bounds
-    const maxX = window.innerWidth - 320; // Timer width ~320px
-    const maxY = window.innerHeight - 140; // Timer height ~140px
+    // Use actual dimensions for accurate bounds
+    const { width, height } = getTimerDimensions();
+    const constrained = constrainToViewport({ x: newX, y: newY }, width, height);
     
-    setPosition({
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY))
-    });
-  }, [isDragging, dragOffset]);
+    setPosition(constrained);
+  }, [isDragging, dragOffset, getTimerDimensions]);
 
   // Handle mouse up to stop dragging
   const handleMouseUp = useCallback(() => {
@@ -156,10 +207,12 @@ export const FloatingSessionTimer = () => {
         cursor: isDragging ? 'grabbing' : 'grab'
       }}
     >
-      {/* Drag Handle */}
+      {/* Drag Handle - double-click to reset */}
       <div 
         className="flex items-center justify-between p-3 border-b border-white/20"
         onMouseDown={handleMouseDown}
+        onDoubleClick={handleDoubleClick}
+        title="Drag to move • Double-click to reset position"
       >
         <div className="flex items-center gap-2">
           <GripVertical className="h-4 w-4 text-white/70" />
