@@ -78,7 +78,8 @@ serve(async (req) => {
       'STRIPE_SECRET_KEY', 
       'STRIPE_WEBHOOK_SECRET',
       'GOOGLE_CLIENT_SECRET',
-      'MICROSOFT_CLIENT_SECRET'
+      'MICROSOFT_CLIENT_SECRET',
+      'SENTRY_DSN'
     ];
 
     if (!allowedSecrets.includes(secretName)) {
