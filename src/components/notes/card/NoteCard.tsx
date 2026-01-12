@@ -1,4 +1,3 @@
-
 import { Note } from "@/types/note";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ViewMode } from "@/hooks/useViewPreferences";
@@ -13,6 +12,7 @@ import { useUserSubjects } from "@/hooks/useUserSubjects";
 import { Clock, Calendar, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getSubjectColorClasses } from "@/utils/subjectColors";
+import { truncateAtWord } from "@/utils/textTruncation";
 
 interface NoteCardProps {
   note: Note;
@@ -72,10 +72,10 @@ export const NoteCard = ({
   const isListView = viewMode === 'list';
   
   if (isListView) {
-    // Get description for list view with proper "..." truncation
+    // Get description for list view with word-boundary-aware truncation
     const content = note.content || note.description || '';
-    const description = content ? stripMarkdown(content).substring(0, 180) : '';
-    const truncatedDescription = description.length >= 180 ? description.substring(0, 177) + '...' : description;
+    const strippedContent = content ? stripMarkdown(content) : '';
+    const truncatedDescription = truncateAtWord(strippedContent, 180);
     const subjectName = getSubjectName();
 
     return (

@@ -70,9 +70,9 @@ export const FlashcardContent = ({
               <ProgressIndicator current={currentIndex + 1} total={totalCards} />
             </div>
             
-            <CardContent className="p-8 h-full min-h-[400px] flex items-center justify-center">
-              <div className="text-center max-w-2xl w-full">
-                <div className="text-lg md:text-xl leading-relaxed text-mint-800 mb-6">
+            <CardContent className="p-8 h-full min-h-[400px] flex items-center justify-center overflow-hidden">
+              <div className="text-center max-w-2xl w-full max-h-[320px] overflow-y-auto">
+                <div className="text-lg md:text-xl leading-relaxed text-mint-800 mb-6 break-words">
                   {isFlipped ? backContent : frontContent}
                 </div>
                 <div className="flex items-center justify-center gap-2 text-muted-foreground">

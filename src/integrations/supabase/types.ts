@@ -4655,14 +4655,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      auto_escalate_overdue_todos: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      auto_publish_scheduled_posts: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      auto_escalate_overdue_todos: { Args: never; Returns: undefined }
+      auto_publish_scheduled_posts: { Args: never; Returns: undefined }
       award_achievement: {
         Args: { p_achievement_title: string; p_user_id: string }
         Returns: boolean
@@ -4674,34 +4668,16 @@ export type Database = {
           failed_ids: string[]
         }[]
       }
-      calculate_arr: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      calculate_avg_session_length: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      calculate_churn_rate: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      calculate_dau: {
-        Args: { target_date?: string }
-        Returns: number
-      }
+      calculate_arr: { Args: never; Returns: number }
+      calculate_avg_session_length: { Args: never; Returns: number }
+      calculate_churn_rate: { Args: never; Returns: number }
+      calculate_dau: { Args: { target_date?: string }; Returns: number }
       calculate_dau_enhanced: {
         Args: { target_date?: string }
         Returns: number
       }
-      calculate_mau: {
-        Args: { target_month?: string }
-        Returns: number
-      }
-      calculate_mrr: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      calculate_mau: { Args: { target_month?: string }; Returns: number }
+      calculate_mrr: { Args: never; Returns: number }
       calculate_next_campaign_run: {
         Args: {
           p_frequency_type: string
@@ -4734,14 +4710,8 @@ export type Database = {
         Args: { conversation_uuid: string }
         Returns: boolean
       }
-      cleanup_expired_analytics_cache: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_expired_suggestions_cache: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_expired_analytics_cache: { Args: never; Returns: undefined }
+      cleanup_expired_suggestions_cache: { Args: never; Returns: undefined }
       cleanup_old_reminders: {
         Args: { retention_days?: number }
         Returns: {
@@ -4792,10 +4762,7 @@ export type Database = {
         }
         Returns: Json
       }
-      force_delete_note: {
-        Args: { note_id: string }
-        Returns: boolean
-      }
+      force_delete_note: { Args: { note_id: string }; Returns: boolean }
       force_delete_note_optimized: {
         Args: { note_id_param: string }
         Returns: boolean
@@ -4833,7 +4800,7 @@ export type Database = {
         Returns: number
       }
       get_digest_users: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           digest_time: string
           email: string
@@ -4878,12 +4845,9 @@ export type Database = {
           todo_id: string
         }[]
       }
-      get_reminder_system_health: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      get_reminder_system_health: { Args: never; Returns: Json }
       get_security_alerts: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           alert_id: string
           alert_type: string
@@ -4894,10 +4858,7 @@ export type Database = {
           user_email: string
         }[]
       }
-      get_security_status: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      get_security_status: { Args: never; Returns: Json }
       get_user_email_for_feedback: {
         Args: { feedback_user_id: string }
         Returns: string
@@ -4926,14 +4887,8 @@ export type Database = {
           user_id: string
         }[]
       }
-      is_dean_user: {
-        Args: { user_id_param: string }
-        Returns: boolean
-      }
-      is_dean_user_secure: {
-        Args: { user_id_param: string }
-        Returns: boolean
-      }
+      is_dean_user: { Args: { user_id_param: string }; Returns: boolean }
+      is_dean_user_secure: { Args: { user_id_param: string }; Returns: boolean }
       is_dean_user_verified: {
         Args: { user_id_param: string }
         Returns: boolean
@@ -4967,16 +4922,13 @@ export type Database = {
         Args: { p_email: string; p_ip_address: string; p_message: string }
         Returns: Json
       }
-      validate_coupon: {
-        Args: { coupon_code_param: string }
-        Returns: Json
-      }
+      validate_coupon: { Args: { coupon_code_param: string }; Returns: Json }
       validate_coupon_secure: {
         Args: { coupon_code_param: string }
         Returns: Json
       }
       verify_complete_lockdown: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           anon_can_insert: boolean
           anon_can_select: boolean
@@ -4987,7 +4939,7 @@ export type Database = {
         }[]
       }
       verify_table_security: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           has_anon_access: boolean
           has_public_access: boolean

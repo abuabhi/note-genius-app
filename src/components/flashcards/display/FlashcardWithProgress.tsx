@@ -67,9 +67,9 @@ export const FlashcardWithProgress = ({
               />
             </div>
             
-            <CardContent className="p-6 flex flex-col items-center justify-center">
-              <div className="min-h-[250px] w-full flex items-center justify-center text-center p-4 pr-16">
-                <div className="text-lg md:text-xl">
+            <CardContent className="p-6 flex flex-col items-center justify-center overflow-hidden">
+              <div className="min-h-[250px] max-h-[280px] w-full flex items-center justify-center text-center p-4 pr-16 overflow-y-auto">
+                <div className="text-lg md:text-xl break-words line-clamp-6">
                   {displayContent}
                 </div>
               </div>
