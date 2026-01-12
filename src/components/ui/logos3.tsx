@@ -29,12 +29,6 @@ const ImageWithFallback: React.FC<{
   const [currentSrc, setCurrentSrc] = React.useState(src);
   const tried = React.useRef<Record<string, boolean>>({});
 
-  const onLoad = () => {
-    try {
-      console.info("[Logos3] image loaded", { src: currentSrc, alt });
-    } catch {}
-  };
-
   const onError = () => {
     // Try switching extensions in order: svg -> png -> jpg
     try {
@@ -43,28 +37,26 @@ const ImageWithFallback: React.FC<{
       if (ext === "svg" && !tried.current["png"]) {
         tried.current["png"] = true;
         const next = currentSrc.replace(/\.svg(\?.*)?$/, ".png$1");
-        console.warn("[Logos3] svg failed, trying png", { from: currentSrc, to: next, alt });
         setCurrentSrc(next);
       } else if (ext === "png" && !tried.current["jpg"]) {
         tried.current["jpg"] = true;
         const next = currentSrc.replace(/\.png(\?.*)?$/, ".jpg$1");
-        console.warn("[Logos3] png failed, trying jpg", { from: currentSrc, to: next, alt });
         setCurrentSrc(next);
       } else {
-        console.error("[Logos3] all fallbacks failed, hiding image", { src: currentSrc, alt });
+        // Hide image silently by using transparent pixel
         setCurrentSrc(
           "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
         );
       }
-    } catch (e) {
-      console.error("[Logos3] error parsing URL, hiding image", { src: currentSrc, alt, error: e });
+    } catch {
+      // Hide image silently by using transparent pixel
       setCurrentSrc(
         "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
       );
     }
   };
 
-  return <img src={currentSrc} alt={alt} className={className} onLoad={onLoad} onError={onError} loading="lazy" />;
+  return <img src={currentSrc} alt={alt} className={className} onError={onError} loading="lazy" />;
 };
 
 const Logos3: React.FC<Logos3Props> = ({

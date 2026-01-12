@@ -32,10 +32,6 @@ export const QuizReviewTab = ({
 
   // Auto-detect and create subject from selected notes
   const processAutoSelectedSubject = async () => {
-    console.log("🔍 QUIZ_REVIEW: Getting auto-selected subject...");
-    console.log("📝 QUIZ_REVIEW: Selected notes:", selectedNotes.map(n => ({ id: n.id, title: n.title, subject: n.subject })));
-    console.log("👥 QUIZ_REVIEW: User subjects:", userSubjects);
-    
     setIsProcessingSubject(true);
     setSubjectProcessError('');
     
@@ -46,13 +42,11 @@ export const QuizReviewTab = ({
       }
       
       const firstNote = selectedNotes[0];
-      console.log("📋 QUIZ_REVIEW: Processing first note:", { id: firstNote.id, title: firstNote.title, subject: firstNote.subject, subject_id: firstNote.subject_id });
       
       // First try to get subjects by subject_id if it exists in user subjects
       if (firstNote.subject_id && userSubjects) {
         const matchingSubject = userSubjects.find(subject => subject.id === firstNote.subject_id);
         if (matchingSubject) {
-          console.log("✅ QUIZ_REVIEW: Found matching subject by ID:", matchingSubject);
           setAutoSelectedSubject(firstNote.subject_id);
           return;
         }
@@ -64,39 +58,30 @@ export const QuizReviewTab = ({
           subject => subject.name.toLowerCase() === firstNote.subject?.toLowerCase()
         );
         if (matchingSubject) {
-          console.log("✅ QUIZ_REVIEW: Found matching subject by name:", matchingSubject);
           setAutoSelectedSubject(matchingSubject.id);
           return;
         }
         
         // Subject exists in note but not in user subjects - auto-create it
-        console.log("🔄 QUIZ_REVIEW: Creating missing subject:", firstNote.subject);
         if (user?.id) {
           try {
             const subjectId = await ensureUserSubjectExists(firstNote.subject, user.id);
             if (subjectId) {
-              console.log("✅ QUIZ_REVIEW: Created subject with ID:", subjectId);
               setAutoSelectedSubject(subjectId);
               // Refresh user subjects to include the new one
-              const success = await addSubject(firstNote.subject);
-              if (!success) {
-                console.warn("⚠️ QUIZ_REVIEW: Failed to refresh user subjects, but subject was created");
-              }
+              await addSubject(firstNote.subject);
               return;
             } else {
               throw new Error('Subject creation returned null ID');
             }
-          } catch (error) {
-            console.error("❌ QUIZ_REVIEW: Failed to create subject:", error);
+          } catch {
             setSubjectProcessError(`Failed to create subject "${firstNote.subject}". Please select a subject manually.`);
           }
         } else {
-          console.error("❌ QUIZ_REVIEW: No user ID available for subject creation");
           setSubjectProcessError('Authentication required to create subjects');
         }
       }
       
-      console.log("❌ QUIZ_REVIEW: No auto-selected subject found");
       setAutoSelectedSubject('');
     } finally {
       setIsProcessingSubject(false);

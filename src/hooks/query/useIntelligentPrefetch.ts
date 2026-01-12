@@ -163,9 +163,9 @@ export const useIntelligentPrefetch = () => {
           });
         }, delay);
 
-        console.log(`🚀 [Prefetch] Scheduled ${queries.length} queries for ${route} (${rule.priority} priority)`);
+        // Removed verbose prefetch logging for production
       } catch (error) {
-        console.warn(`⚠️ [Prefetch] Error prefetching for route ${route}:`, error);
+        // Silently handle prefetch errors in production
       }
     }
   }, [user, queryClient]);
@@ -181,10 +181,6 @@ export const useIntelligentPrefetch = () => {
         prefetchForRoute(route);
       }, (index + 1) * 1000);
     });
-
-    if (predictedRoutes.length > 0) {
-      console.log(`🔮 [Prefetch] Predicted routes for ${currentRoute}:`, predictedRoutes);
-    }
   }, [location.pathname, predictNextRoutes, prefetchForRoute]);
 
   // Prefetch commonly accessed flashcard sets
@@ -209,11 +205,9 @@ export const useIntelligentPrefetch = () => {
             });
           }, index * 200);
         });
-
-        console.log(`📚 [Prefetch] Preloaded top ${topSets.length} flashcard sets`);
       }
-    } catch (error) {
-      console.warn('⚠️ [Prefetch] Error prefetching flashcard sets:', error);
+    } catch {
+      // Silently handle prefetch errors
     }
   }, [user, queryClient]);
 

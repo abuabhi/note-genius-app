@@ -17,8 +17,8 @@ export const useDragAndDrop = (): DragDropHandlers => {
   const dragCounter = useRef(0);
   
   const { readAsDataURL, abort } = useFileReader({
-    onError: (error) => {
-      console.error('❌ [DRAG DROP] File read error:', error);
+    onError: () => {
+      // Error handled silently - user will see that nothing happened
     }
   });
 
@@ -68,10 +68,7 @@ export const useDragAndDrop = (): DragDropHandlers => {
     const files = Array.from(e.dataTransfer.files);
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
     
-    console.log(`Dropped ${files.length} files, ${imageFiles.length} are images`);
-    
     if (imageFiles.length === 0) {
-      console.warn('No image files found in drop');
       return;
     }
 
@@ -80,18 +77,16 @@ export const useDragAndDrop = (): DragDropHandlers => {
       const file = imageFiles[0];
       readAsDataURL(file)
         .then((imageUrl) => {
-          console.log('Single image loaded for processing');
           onSingleImage(imageUrl);
         })
-        .catch((error) => {
-          console.error('❌ [DRAG DROP] Failed to read single image:', error);
+        .catch(() => {
+          // Error handled silently
         });
     } else {
       // Multiple images - batch processing
-      console.log(`Starting batch processing for ${imageFiles.length} images`);
       onMultipleImages(imageFiles);
     }
-  }, []);
+  }, [readAsDataURL]);
 
   const resetDragState = useCallback(() => {
     dragCounter.current = 0;

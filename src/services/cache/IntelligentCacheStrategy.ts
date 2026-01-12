@@ -221,10 +221,21 @@ export class IntelligentCacheManager {
     this.metrics.hitRate = `${rate}%`;
   }
 
+  private cleanupIntervalId: NodeJS.Timeout | null = null;
+
   private startCleanupInterval(): void {
-    setInterval(() => {
+    this.cleanupIntervalId = setInterval(() => {
       this.cleanup();
     }, 60000); // Cleanup every minute
+  }
+
+  // Cleanup method to stop interval and free resources
+  destroy(): void {
+    if (this.cleanupIntervalId) {
+      clearInterval(this.cleanupIntervalId);
+      this.cleanupIntervalId = null;
+    }
+    this.clear();
   }
 
   private cleanup(): void {

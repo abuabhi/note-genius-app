@@ -118,7 +118,6 @@ ${cleanExpandedContent}
   const selectionRef = useRef<Range | null>(null);
 
   const handleTextSelection = React.useCallback((event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
-    console.log("🎯 SELECTION: Text selection handler triggered");
     
     // Clear existing timeout
     if (debounceTimeoutRef.current) {
@@ -129,17 +128,14 @@ ${cleanExpandedContent}
     debounceTimeoutRef.current = setTimeout(() => {
       const selection = window.getSelection();
       if (!selection || selection.rangeCount === 0) {
-        console.log("❌ SELECTION: No selection or range");
         setIsMenuVisible(false);
         selectionRef.current = null;
         return;
       }
 
       const text = selection.toString().trim();
-      console.log("📝 SELECTION: Selected text:", `"${text}"`, "Length:", text.length);
       
       if (text.length < 5) {
-        console.log("⚠️ SELECTION: Text too short, hiding menu");
         setIsMenuVisible(false);
         selectionRef.current = null;
         return;
@@ -147,8 +143,6 @@ ${cleanExpandedContent}
 
       const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
-      
-      console.log("📍 SELECTION: Position rect:", rect);
       
       // Store the actual range to preserve selection
       selectionRef.current = range.cloneRange();
@@ -182,8 +176,6 @@ ${cleanExpandedContent}
       setSelectedText(text);
       setMenuPosition(menuPosition);
       setIsMenuVisible(true);
-      
-      console.log("✅ SELECTION: Menu positioned at:", menuPosition, "Selection preserved");
     }, 50); // 50ms debounce for faster response
   }, []);
 

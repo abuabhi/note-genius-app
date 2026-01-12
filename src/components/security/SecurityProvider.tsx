@@ -25,46 +25,60 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
     // Initialize security headers
     securityHeadersManager;
     
-    // Set up CSP violation reporting
-    if (config.features.enableErrorReporting) {
-      document.addEventListener('securitypolicyviolation', (event) => {
-        logger.warn('CSP Violation detected', {
-          violatedDirective: event.violatedDirective,
-          blockedURI: event.blockedURI,
-          documentURI: event.documentURI,
-          sourceFile: event.sourceFile,
-          lineNumber: event.lineNumber,
-          columnNumber: event.columnNumber,
-        });
+    // CSP violation handler with proper reference for cleanup
+    const handleCSPViolation = (event: SecurityPolicyViolationEvent) => {
+      logger.warn('CSP Violation detected', {
+        violatedDirective: event.violatedDirective,
+        blockedURI: event.blockedURI,
+        documentURI: event.documentURI,
+        sourceFile: event.sourceFile,
+        lineNumber: event.lineNumber,
+        columnNumber: event.columnNumber,
       });
-    }
-
-    // Monitor for suspicious activities
-    const monitorSuspiciousActivity = () => {
-      // Check for rapid consecutive requests
-      let requestCount = 0;
-      const originalFetch = window.fetch;
-      
-      window.fetch = async (...args) => {
-        requestCount++;
-        
-        if (requestCount > 10) {
-          logger.warn('Suspicious activity: Rapid API requests detected', {
-            count: requestCount,
-            userId: user?.id,
-          });
-        }
-        
-        // Reset counter after 1 minute
-        setTimeout(() => {
-          requestCount = Math.max(0, requestCount - 1);
-        }, 60000);
-        
-        return originalFetch(...args);
-      };
     };
 
-    monitorSuspiciousActivity();
+    // Set up CSP violation reporting
+    if (config.features.enableErrorReporting) {
+      document.addEventListener('securitypolicyviolation', handleCSPViolation);
+    }
+
+    // Monitor for suspicious activities with proper cleanup
+    let requestCount = 0;
+    const originalFetch = window.fetch;
+    const resetTimers: NodeJS.Timeout[] = [];
+    
+    window.fetch = async (...args) => {
+      requestCount++;
+      
+      if (requestCount > 10) {
+        logger.warn('Suspicious activity: Rapid API requests detected', {
+          count: requestCount,
+          userId: user?.id,
+        });
+      }
+      
+      // Reset counter after 1 minute
+      const timer = setTimeout(() => {
+        requestCount = Math.max(0, requestCount - 1);
+      }, 60000);
+      resetTimers.push(timer);
+      
+      return originalFetch(...args);
+    };
+
+    // Cleanup function
+    return () => {
+      // Remove CSP listener
+      if (config.features.enableErrorReporting) {
+        document.removeEventListener('securitypolicyviolation', handleCSPViolation);
+      }
+      
+      // Clear all pending timers
+      resetTimers.forEach(timer => clearTimeout(timer));
+      
+      // Restore original fetch
+      window.fetch = originalFetch;
+    };
   }, [user?.id]);
 
   const checkRateLimit = (action: string, type: string = 'default'): boolean => {

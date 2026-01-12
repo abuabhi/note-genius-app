@@ -32,10 +32,9 @@ export const FlashcardsContent = () => {
     setDeletingSet(setId);
     try {
       await deleteFlashcardSet(setId);
-      console.log('Set deleted successfully, refreshing list...');
       await fetchFlashcardSets();
-    } catch (error) {
-      console.error("Error deleting flashcard set:", error);
+    } catch {
+      // Error handled by parent context
     } finally {
       setDeletingSet(null);
     }

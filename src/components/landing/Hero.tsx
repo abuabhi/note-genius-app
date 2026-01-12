@@ -103,11 +103,8 @@ const Hero = () => {
               ];
               if (step < candidates.length) {
                 const next = candidates[step];
-                console.info('[Hero] Image fallback', { try: step + 1, src: next });
                 el.src = next;
                 el.dataset.step = String(step + 1);
-              } else {
-                console.warn('[Hero] All image fallbacks exhausted');
               }
             }}
           />

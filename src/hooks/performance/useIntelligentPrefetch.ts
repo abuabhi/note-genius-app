@@ -89,7 +89,7 @@ export const useIntelligentPrefetch = () => {
         break;
     }
 
-    console.log('📊 Behavior tracked:', action, behavior);
+    // Behavior tracked silently for production
   }, []);
 
   // Process prefetch queue
@@ -99,7 +99,6 @@ export const useIntelligentPrefetch = () => {
     }
 
     isProcessingRef.current = true;
-    console.log('🔄 Processing prefetch queue:', prefetchQueueRef.current.length, 'items');
 
     try {
       // Process high priority items first
@@ -107,10 +106,8 @@ export const useIntelligentPrefetch = () => {
       prefetchQueueRef.current = [];
 
       await Promise.allSettled(queue.map(prefetch => prefetch()));
-      
-      console.log('✅ Prefetch queue processed');
-    } catch (error) {
-      console.warn('⚠️ Error processing prefetch queue:', error);
+    } catch {
+      // Silently handle prefetch errors
     } finally {
       isProcessingRef.current = false;
     }
@@ -125,9 +122,8 @@ export const useIntelligentPrefetch = () => {
           queryFn,
           staleTime: priority === 'high' ? 2 * 60 * 1000 : 5 * 60 * 1000,
         });
-        console.log('✅ Prefetched:', queryKey);
-      } catch (error) {
-        console.warn('⚠️ Prefetch failed:', queryKey, error);
+      } catch {
+        // Silently handle prefetch errors
       }
     };
 
@@ -145,8 +141,6 @@ export const useIntelligentPrefetch = () => {
   // Trigger intelligent prefetching
   const triggerPrefetch = useCallback((trigger: string, context?: any) => {
     if (!user) return;
-
-    console.log('🎯 Triggering prefetch:', trigger, context);
 
     const pattern = prefetchPatterns.find(p => p.trigger === trigger);
     if (!pattern) return;
@@ -182,8 +176,6 @@ export const useIntelligentPrefetch = () => {
         'low'
       );
     });
-
-    console.log('🔮 Predictive prefetch completed');
   }, [user, queuePrefetch]);
 
   // Idle time prefetching
@@ -193,7 +185,6 @@ export const useIntelligentPrefetch = () => {
     const resetIdleTimer = () => {
       clearTimeout(idleTimer);
       idleTimer = setTimeout(() => {
-        console.log('😴 User idle, starting predictive prefetch');
         predictiveePrefetch();
       }, 3000); // 3 seconds of idle time
     };
