@@ -26,7 +26,7 @@ export interface UltraSimpleAnalytics {
 export const useUltraSimpleAnalytics = () => {
   const { user } = useAuth();
 
-  console.log('🎯 [ULTRA-SIMPLE] Loading analytics with essential data only');
+  
 
   // Get study sessions
   const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
@@ -140,11 +140,6 @@ export const useUltraSimpleAnalytics = () => {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    console.log('[ULTRA-SIMPLE] Calculating analytics from data:', {
-      sessionsCount: sessions.length,
-      notesCount,
-      flashcardSetsCount: flashcardData?.sets?.length || 0
-    });
 
     // Filter sessions
     const completedSessions = sessions.filter(s => !s.is_active && s.duration);
@@ -222,7 +217,7 @@ export const useUltraSimpleAnalytics = () => {
       totalCardsMastered: masteredCards
     };
 
-    console.log('[ULTRA-SIMPLE] Final analytics:', result);
+    
     return result;
   }, [sessions, notesCount, flashcardData, weeklyGoal]);
 

@@ -20,11 +20,8 @@ export const useResources = (options: UseResourcesOptions = {}) => {
     queryKey: ["resources", user?.id],
     queryFn: async () => {
       if (!user?.id) {
-        console.log("useResources: No user ID available");
         return [];
       }
-
-      console.log("useResources: Fetching resources for user:", user.id);
       
       const { data, error } = await supabase
         .from("resources")
@@ -36,14 +33,12 @@ export const useResources = (options: UseResourcesOptions = {}) => {
           )
         `)
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(100); // Limit initial fetch for performance
 
       if (error) {
-        console.error("useResources: Error fetching resources:", error);
         throw error;
       }
-
-      console.log("useResources: Successfully fetched", data?.length || 0, "resources");
       
       // Ensure proper typing for resources
       return (data || []).map(resource => ({
@@ -54,8 +49,8 @@ export const useResources = (options: UseResourcesOptions = {}) => {
       })) as Resource[];
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   // Apply client-side filtering if filters are provided

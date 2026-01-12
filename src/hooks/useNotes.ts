@@ -57,7 +57,7 @@ export const useNotes = () => {
         p_show_archived: showArchived,
         p_sort_by: sortType,
         p_page_num: 0,
-        p_page_size: 100
+        p_page_size: 20
       });
 
       if (error) throw error;

@@ -20,13 +20,13 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   
-  // Simple activity recording functions
+  // Simple activity recording functions (silent for production)
   const recordActivity = useCallback(() => {
-    console.log('📊 Activity recorded for flashcard study');
+    // Activity recorded silently
   }, []);
 
-  const updateSessionActivity = useCallback((activityData?: any) => {
-    console.log('📊 Session activity updated:', activityData);
+  const updateSessionActivity = useCallback((_activityData?: any) => {
+    // Session activity updated silently
   }, []);
   
   // Manual data fetching with useEffect
@@ -74,7 +74,6 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
 
         setFlashcards(transformedCards);
       } catch (err) {
-        console.error('Error fetching flashcards:', err);
         setError(err as Error);
       } finally {
         setIsLoading(false);
@@ -174,8 +173,8 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
         handleNext();
       }, 500);
 
-    } catch (error) {
-      console.error('Error updating flashcard:', error);
+    } catch {
+      // Silent fail for card update
     }
   }, [currentCard, recordActivity, handleNext]);
 
