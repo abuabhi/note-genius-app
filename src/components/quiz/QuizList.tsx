@@ -1,11 +1,9 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuizList } from '@/hooks/quiz';
-import { useQuizFilterOptions } from '@/hooks/quiz/useQuizFilterOptions';
 import { useFavoritesManager } from '@/hooks/quiz/useFavoritesManager';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/ui/empty-state';
 import { UniversalFilters } from '@/components/shared/UniversalFilters';
@@ -24,15 +22,17 @@ const QuizList = ({ viewMode }: QuizListProps) => {
   const [search, setSearch] = useState('');
   const [subject, setSubject] = useState('all');
   const [sort, setSort] = useState('newest');
+  const [page, setPage] = useState(1);
   
   const { favoriteQuizIds, toggleFavorite, getFavoriteCount } = useFavoritesManager();
   const { user } = useAuth();
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
 
-  const filters = {
+  const filters = useMemo(() => ({
     search: search || undefined,
-    subject: subject === 'all' ? undefined : subject
-  };
+    subject: subject === 'all' ? undefined : subject,
+    page
+  }), [search, subject, page]);
 
   const { data, isLoading, error, refetch } = useQuizList(filters);
 
@@ -46,7 +46,13 @@ const QuizList = ({ viewMode }: QuizListProps) => {
     setSearch('');
     setSubject('all');
     setSort('newest');
+    setPage(1);
   };
+
+  // Reset page when filters change
+  React.useEffect(() => {
+    setPage(1);
+  }, [search, subject]);
 
   if (error) {
     return (
@@ -62,18 +68,25 @@ const QuizList = ({ viewMode }: QuizListProps) => {
   }
 
   const quizzes = data?.quizzes || [];
-  const totalQuizzes = quizzes.length;
+  const totalCount = data?.totalCount || 0;
+  const hasMore = data?.hasMore || false;
   const favoriteCount = getFavoriteCount();
 
   // Transform the data to ensure it has all required Quiz properties with proper defaults
   const transformedQuizzes: Quiz[] = quizzes.map(quiz => ({
     ...quiz,
-    user_subject_id: quiz.user_subject_id || null, // This should now be populated from the API
+    user_subject_id: quiz.user_subject_id || null,
     section_id: quiz.section_id || null,
     source_type: (quiz.source_type as "custom" | "prebuilt" | "note") || 'custom',
     source_id: quiz.source_id || null,
-    questionCount: quiz.questionCount || 0, // Ensure questionCount is always defined
+    questionCount: quiz.questionCount || 0,
   }));
+
+  const handleLoadMore = () => {
+    if (hasMore && !isLoading) {
+      setPage(prev => prev + 1);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -95,7 +108,7 @@ const QuizList = ({ viewMode }: QuizListProps) => {
           searchPlaceholder="Search quizzes..."
           enableArchived={false}
           isLoading={isLoading || subjectsLoading}
-          totalCount={totalQuizzes}
+          totalCount={quizzes.length}
           hasActiveFilters={hasActiveFilters}
           activeFilterCount={activeFilterCount}
           onClearFilters={clearFilters}
@@ -105,8 +118,10 @@ const QuizList = ({ viewMode }: QuizListProps) => {
       {/* Stats */}
       <div className="flex items-center gap-4">
         <div className="text-sm text-gray-600">
-          {totalQuizzes > 0 && (
-            <span>{totalQuizzes} quiz{totalQuizzes === 1 ? '' : 'es'} found</span>
+          {totalCount > 0 && (
+            <span>
+              Showing {quizzes.length} of {totalCount} quiz{totalCount === 1 ? '' : 'zes'}
+            </span>
           )}
         </div>
         {favoriteCount > 0 && (
@@ -140,7 +155,7 @@ const QuizList = ({ viewMode }: QuizListProps) => {
           quizzes={transformedQuizzes}
           onToggleFavorite={toggleFavorite}
           favoriteQuizIds={favoriteQuizIds}
-          loading={isLoading}
+          loading={isLoading && page === 1}
           isSelectable={false}
           selectedQuizIds={new Set()}
           onSelectionChange={() => {}}
@@ -152,13 +167,34 @@ const QuizList = ({ viewMode }: QuizListProps) => {
           quizzes={transformedQuizzes}
           onToggleFavorite={toggleFavorite}
           favoriteQuizIds={favoriteQuizIds}
-          loading={isLoading}
+          loading={isLoading && page === 1}
           isSelectable={false}
           selectedQuizIds={new Set()}
           onSelectionChange={() => {}}
           onRefresh={refetch}
           currentUserId={user?.id}
         />
+      )}
+
+      {/* Load More */}
+      {hasMore && (
+        <div className="flex justify-center pt-4">
+          <Button
+            variant="outline"
+            onClick={handleLoadMore}
+            disabled={isLoading}
+            className="min-w-[200px]"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              `Load More (${totalCount - quizzes.length} remaining)`
+            )}
+          </Button>
+        </div>
       )}
     </div>
   );

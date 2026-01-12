@@ -1,9 +1,9 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Plus, Sparkles, ArrowRight } from "lucide-react";
 import { FlashcardSet } from "@/types/flashcard";
 import FlashcardSetCard from "./FlashcardSetCard";
+import { FixedSizeGrid as Grid } from 'react-window';
 
 interface FlashcardSetGridProps {
   sets: FlashcardSet[];
@@ -13,7 +13,6 @@ interface FlashcardSetGridProps {
   hasInitiallyLoaded: boolean;
   searchQuery: string;
   subjectFilter: string | undefined;
-  // New props for enhanced progress data
   detailedProgressData?: Record<string, {
     masteredCards: number;
     needsPracticeCards: number;
@@ -21,6 +20,10 @@ interface FlashcardSetGridProps {
     masteredPercentage: number;
   }>;
 }
+
+const VIRTUALIZATION_THRESHOLD = 20;
+const CARD_HEIGHT = 240;
+const CARD_GAP = 24;
 
 const FlashcardSetGrid = ({
   sets,
@@ -32,6 +35,8 @@ const FlashcardSetGrid = ({
   subjectFilter,
   detailedProgressData = {},
 }: FlashcardSetGridProps) => {
+  const shouldVirtualize = sets.length > VIRTUALIZATION_THRESHOLD;
+
   // Empty State when no sets exist
   if (sets.length === 0 && hasInitiallyLoaded) {
     // If user is searching/filtering and found nothing
@@ -102,7 +107,56 @@ const FlashcardSetGrid = ({
     );
   }
 
-  // Flashcards Grid
+  // Virtualized Grid for large lists
+  if (sets.length > 0 && shouldVirtualize) {
+    const columnCount = 3;
+    const rowCount = Math.ceil(sets.length / columnCount);
+
+    const Cell = ({ columnIndex, rowIndex, style }: { columnIndex: number; rowIndex: number; style: React.CSSProperties }) => {
+      const index = rowIndex * columnCount + columnIndex;
+      if (index >= sets.length) return null;
+      
+      const set = sets[index];
+      const progressPercentage = setProgressData[set.id] || 0;
+      const isDeleting = deletingSet === set.id;
+      const detailedProgress = detailedProgressData[set.id];
+
+      return (
+        <div style={{ ...style, padding: CARD_GAP / 2 }}>
+          <FlashcardSetCard
+            set={set}
+            progressPercentage={detailedProgress?.masteredPercentage || progressPercentage}
+            isDeleting={isDeleting}
+            onDelete={onDeleteSet}
+            masteredCards={detailedProgress?.masteredCards || 0}
+            needsPracticeCards={detailedProgress?.needsPracticeCards || 0}
+            totalCards={detailedProgress?.totalCards || set.card_count || 0}
+          />
+        </div>
+      );
+    };
+
+    return (
+      <div className="relative">
+        <div className="text-xs text-gray-400 mb-2">
+          Showing {sets.length} flashcard sets (virtualized for performance)
+        </div>
+        <Grid
+          columnCount={columnCount}
+          columnWidth={380}
+          height={600}
+          rowCount={rowCount}
+          rowHeight={CARD_HEIGHT + CARD_GAP}
+          width={1200}
+          className="scrollbar-thin"
+        >
+          {Cell}
+        </Grid>
+      </div>
+    );
+  }
+
+  // Standard Flashcards Grid for smaller lists
   if (sets.length > 0) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

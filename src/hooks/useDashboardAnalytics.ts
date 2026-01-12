@@ -19,18 +19,20 @@ export const useDashboardAnalytics = () => {
 
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-      // Fetch study sessions by subject
+      // Fetch study sessions by subject - limit for performance
       const { data: sessions } = await supabase
         .from('study_sessions')
         .select('subject, duration, start_time')
         .eq('user_id', user.id)
-        .gte('start_time', sevenDaysAgo.toISOString());
+        .gte('start_time', sevenDaysAgo.toISOString())
+        .limit(100);
 
-      // Fetch flashcard progress by subject via a different approach
+      // Fetch flashcard progress by subject - limit for performance
       const { data: flashcardData } = await supabase
         .from('flashcard_sets')
         .select('id, subject')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .limit(50);
 
       const { data: progressData } = await supabase
         .from('user_flashcard_progress')

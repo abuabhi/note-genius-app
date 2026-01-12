@@ -54,12 +54,12 @@ export const useStudySessions = () => {
           .from('study_sessions')
           .select('*')
           .eq('user_id', user.id)
-          .order('start_time', { ascending: false });
+          .order('start_time', { ascending: false })
+          .limit(50); // Limit to recent 50 sessions for performance
 
         if (error) throw error;
         setSessions(data || []);
       } catch (err) {
-        console.error('Error fetching study sessions:', err);
         setError(err instanceof Error ? err : new Error('Failed to fetch study sessions'));
       } finally {
         setIsLoading(false);
@@ -96,9 +96,8 @@ export const useStudySessions = () => {
       setSessions(prev => [data, ...prev]);
       toast.success('Study session started successfully!');
     },
-    onError: (error) => {
+    onError: () => {
       toast.error('Failed to start study session');
-      console.error('Error starting session:', error);
     }
   });
 
@@ -131,9 +130,8 @@ export const useStudySessions = () => {
       ));
       toast.success('Study session ended successfully!');
     },
-    onError: (error) => {
+    onError: () => {
       toast.error('Failed to end study session');
-      console.error('Error ending session:', error);
     }
   });
 

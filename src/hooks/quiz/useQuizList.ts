@@ -1,16 +1,18 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+
+const PAGE_SIZE = 20;
 
 export const useQuizList = (filters: {
   subject?: string;
   search?: string;
+  page?: number;
 } = {}) => {
-  return useQuery({
-    queryKey: ['quizzes', filters],
-    queryFn: async () => {
-      console.log('🚀 Fetching quizzes with filters:', filters);
+  const page = filters.page || 1;
 
+  return useQuery({
+    queryKey: ['quizzes', filters.subject, filters.search, page],
+    queryFn: async () => {
       // Start with a simplified query - fetch basic quiz data first
       let query = supabase
         .from('quizzes')
@@ -28,7 +30,7 @@ export const useQuizList = (filters: {
           section_id,
           source_type,
           source_id
-        `);
+        `, { count: 'exact' });
 
       // Get current user for filtering - show public quizzes and user's own quizzes
       const { data: { user } } = await supabase.auth.getUser();
@@ -37,19 +39,17 @@ export const useQuizList = (filters: {
       if (filters.subject && filters.subject !== 'all' && user) {
         try {
           // Get user_subjects first to find the subject_id by name
-          const { data: userSubjects, error: subjectError } = await supabase
+          const { data: userSubjects } = await supabase
             .from('user_subjects')
             .select('id')
             .eq('user_id', user.id)
             .eq('name', filters.subject);
           
-          if (subjectError) {
-            console.warn('Error fetching user subjects for quiz filtering:', subjectError);
-          } else if (userSubjects && userSubjects.length > 0) {
+          if (userSubjects && userSubjects.length > 0) {
             query = query.eq('user_subject_id', userSubjects[0].id);
           }
-        } catch (error) {
-          console.warn('Failed to apply subject filter to quizzes:', error);
+        } catch {
+          // Silent fail for subject filter
         }
       }
 
@@ -63,16 +63,20 @@ export const useQuizList = (filters: {
         query = query.eq('is_public', true);
       }
 
-      const { data: quizzes, error } = await query
+      // Apply pagination
+      const from = (page - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      const { data: quizzes, error, count } = await query
         .order('created_at', { ascending: false })
-        .limit(50); // Limit to improve performance
+        .range(from, to);
 
       if (error) {
-        console.error('Error fetching quizzes:', error);
         throw error;
       }
 
-      console.log(`✅ Fetched ${quizzes?.length || 0} quizzes`);
+      const totalCount = count || 0;
+      const hasMore = totalCount > page * PAGE_SIZE;
 
       // Get question counts and user subject data in parallel
       if (quizzes && quizzes.length > 0) {
@@ -117,7 +121,7 @@ export const useQuizList = (filters: {
           user_subjects: quiz.user_subject_id && quiz.user_subject_id in userSubjectsMap ? userSubjectsMap[quiz.user_subject_id] : null,
         }));
 
-        return { quizzes: enrichedQuizzes };
+        return { quizzes: enrichedQuizzes, totalCount, hasMore };
       }
 
       // Return quizzes with default values for questionCount and user_subjects
@@ -127,11 +131,11 @@ export const useQuizList = (filters: {
         user_subjects: null,
       })) || [];
 
-      return { quizzes: enrichedQuizzes };
+      return { quizzes: enrichedQuizzes, totalCount, hasMore };
     },
-    staleTime: 30 * 1000, // 30 seconds - reduced from default for better UX
-    gcTime: 5 * 1000, // 5 minutes
-    retry: 1, // Reduced retries for faster failure feedback
-    retryDelay: 1000, // Faster retry
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+    retryDelay: 1000,
   });
 };
