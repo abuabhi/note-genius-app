@@ -17,6 +17,7 @@ interface RateLimitEntry {
 
 class RateLimitingService {
   private limits: Map<string, RateLimitEntry> = new Map();
+  private cleanupInterval: NodeJS.Timeout | null = null;
   private defaultConfig: RateLimitConfig = {
     maxRequests: 100,
     windowMs: 60000, // 1 minute
@@ -32,7 +33,16 @@ class RateLimitingService {
 
   constructor() {
     // Clean up expired entries every 5 minutes
-    setInterval(() => this.cleanup(), 300000);
+    this.cleanupInterval = setInterval(() => this.cleanup(), 300000);
+  }
+
+  // Cleanup method to prevent memory leaks
+  destroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+    this.limits.clear();
   }
 
   checkRateLimit(key: string, type: string = 'default'): boolean {

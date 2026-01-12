@@ -24,11 +24,19 @@ interface SessionData {
 class UserSessionTracker {
   private session: SessionData;
   private activityTimer: NodeJS.Timeout | null = null;
+  private saveInterval: NodeJS.Timeout | null = null;
   private isEnabled: boolean;
+  private originalPushState: typeof history.pushState | null = null;
+  private originalReplaceState: typeof history.replaceState | null = null;
+  private activityEvents = ['click', 'scroll', 'keydown', 'mousemove'];
+  private boundHandleUserActivity: () => void;
+  private boundSaveSession: () => void;
 
   constructor() {
     this.isEnabled = config.features.enableAnalytics;
     this.session = this.createNewSession();
+    this.boundHandleUserActivity = this.handleUserActivity.bind(this);
+    this.boundSaveSession = () => this.saveSession();
     
     if (this.isEnabled) {
       this.initialize();
@@ -40,33 +48,32 @@ class UserSessionTracker {
     this.trackPageView(window.location.pathname);
     
     // Listen for route changes (for SPA navigation)
-    const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
+    this.originalPushState = history.pushState;
+    this.originalReplaceState = history.replaceState;
     
     history.pushState = (...args) => {
       this.trackPageView(args[2] as string || window.location.pathname);
-      return originalPushState.apply(history, args);
+      return this.originalPushState!.apply(history, args);
     };
     
     history.replaceState = (...args) => {
       this.trackPageView(args[2] as string || window.location.pathname);
-      return originalReplaceState.apply(history, args);
+      return this.originalReplaceState!.apply(history, args);
     };
 
     // Track user activity
-    const events = ['click', 'scroll', 'keydown', 'mousemove'];
-    events.forEach(event => {
-      document.addEventListener(event, this.handleUserActivity, { passive: true });
+    this.activityEvents.forEach(event => {
+      document.addEventListener(event, this.boundHandleUserActivity, { passive: true });
     });
 
     // Track when user becomes inactive
     this.resetActivityTimer();
 
     // Save session data periodically
-    setInterval(() => this.saveSession(), 60000); // Every minute
+    this.saveInterval = setInterval(() => this.saveSession(), 60000); // Every minute
 
     // Save session on page unload
-    window.addEventListener('beforeunload', () => this.saveSession());
+    window.addEventListener('beforeunload', this.boundSaveSession);
   }
 
   private createNewSession(): SessionData {
@@ -216,9 +223,33 @@ class UserSessionTracker {
   }
 
   destroy() {
+    // Clear activity timer
     if (this.activityTimer) {
       clearTimeout(this.activityTimer);
+      this.activityTimer = null;
     }
+    
+    // Clear save interval
+    if (this.saveInterval) {
+      clearInterval(this.saveInterval);
+      this.saveInterval = null;
+    }
+    
+    // Remove event listeners
+    this.activityEvents.forEach(event => {
+      document.removeEventListener(event, this.boundHandleUserActivity);
+    });
+    window.removeEventListener('beforeunload', this.boundSaveSession);
+    
+    // Restore original history methods
+    if (this.originalPushState) {
+      history.pushState = this.originalPushState;
+    }
+    if (this.originalReplaceState) {
+      history.replaceState = this.originalReplaceState;
+    }
+    
+    // Final save
     this.saveSession();
   }
 

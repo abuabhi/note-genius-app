@@ -22,10 +22,12 @@ class ProductionLogger {
   private isEnabled: boolean;
   private sessionId: string;
   private flushInterval: NodeJS.Timeout | null = null;
+  private boundFlush: () => void;
 
   constructor() {
     this.isEnabled = config.features.enableErrorReporting;
     this.sessionId = `log_session_${Date.now()}`;
+    this.boundFlush = () => this.flush();
     
     if (this.isEnabled) {
       this.initialize();
@@ -34,10 +36,10 @@ class ProductionLogger {
 
   private initialize() {
     // Flush logs periodically
-    this.flushInterval = setInterval(() => this.flush(), 30000);
+    this.flushInterval = setInterval(this.boundFlush, 30000);
     
     // Flush on page unload
-    window.addEventListener('beforeunload', () => this.flush());
+    window.addEventListener('beforeunload', this.boundFlush);
   }
 
   private createLogEntry(
@@ -172,7 +174,9 @@ class ProductionLogger {
   destroy() {
     if (this.flushInterval) {
       clearInterval(this.flushInterval);
+      this.flushInterval = null;
     }
+    window.removeEventListener('beforeunload', this.boundFlush);
     this.flush();
   }
 }

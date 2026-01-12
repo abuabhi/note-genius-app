@@ -61,23 +61,28 @@ class ProductionErrorTracker {
     }
   }
 
+  private boundErrorHandler: ((event: ErrorEvent) => void) | null = null;
+  private boundRejectionHandler: ((event: PromiseRejectionEvent) => void) | null = null;
+
   private initialize() {
-    // Global error handler
-    window.addEventListener('error', (event) => {
+    // Global error handler with bound reference for cleanup
+    this.boundErrorHandler = (event: ErrorEvent) => {
       this.trackError(event.error || new Error(event.message), {
         component: 'Global',
         action: 'unhandled_error',
         props: { filename: event.filename, lineno: event.lineno, colno: event.colno }
       });
-    });
+    };
+    window.addEventListener('error', this.boundErrorHandler);
 
-    // Unhandled promise rejection handler
-    window.addEventListener('unhandledrejection', (event) => {
+    // Unhandled promise rejection handler with bound reference for cleanup
+    this.boundRejectionHandler = (event: PromiseRejectionEvent) => {
       this.trackError(new Error(event.reason), {
         component: 'Global',
         action: 'unhandled_promise_rejection'
       });
-    });
+    };
+    window.addEventListener('unhandledrejection', this.boundRejectionHandler);
 
     // Start periodic flush
     this.flushInterval = setInterval(() => this.flush(), 30000); // Flush every 30 seconds
@@ -274,7 +279,19 @@ class ProductionErrorTracker {
   destroy() {
     if (this.flushInterval) {
       clearInterval(this.flushInterval);
+      this.flushInterval = null;
     }
+    
+    // Remove global event listeners
+    if (this.boundErrorHandler) {
+      window.removeEventListener('error', this.boundErrorHandler);
+      this.boundErrorHandler = null;
+    }
+    if (this.boundRejectionHandler) {
+      window.removeEventListener('unhandledrejection', this.boundRejectionHandler);
+      this.boundRejectionHandler = null;
+    }
+    
     this.flush(); // Final flush
   }
 }
