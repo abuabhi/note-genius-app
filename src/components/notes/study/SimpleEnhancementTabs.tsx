@@ -10,6 +10,7 @@ import { ExpandableContentRenderer } from './expansion/ExpandableContentRenderer
 import { useEnhancementManager } from '@/hooks/useEnhancementManager';
 import { UsageIndicator } from '@/components/notes/enrichment/UsageIndicator';
 import { useAiEnrichmentUsage } from '@/hooks/usage/useAiEnrichmentUsage';
+import { ReportAIContentButton } from '@/components/feedback/ReportAIContentButton';
 
 // Utility function for content statistics
 const getContentStats = (content: string) => {
@@ -195,6 +196,14 @@ export const SimpleEnhancementTabs = React.memo(({
                         </div>
                         
                         <div className="flex items-center gap-2">
+                          {tab.value !== 'original' && tab.hasContent && (
+                            <ReportAIContentButton
+                              contentType="note_enrichment"
+                              contentId={note.id}
+                              contentSample={(generatedContent[tab.column!] || tab.content || '').slice(0, 300)}
+                              label="Report"
+                            />
+                          )}
                           {tab.value === 'enriched' && (
                             <Button
                               onClick={() => setHideColoring(!hideColoring)}
