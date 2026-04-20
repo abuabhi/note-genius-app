@@ -1,7 +1,7 @@
 import { config } from '@/config/environment';
 import { productionErrorTracker } from '../errorTracking/ProductionErrorTracker';
 import { googleAnalyticsService } from './GoogleAnalyticsService';
-import '../../../types/gtag';
+import '@/types/gtag';
 
 interface SessionData {
   id: string;
