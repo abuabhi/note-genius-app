@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Star, Sparkles, Plus, BookOpen } from "lucide-react";
+import { Calendar, Star, Sparkles, Upload, BookOpen, Wand2 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -106,29 +106,48 @@ export const GetStartedHeroSection = () => {
         </CardContent>
       </Card>
 
-      {/* Get Started Prompt */}
-      <Card className="bg-white border-2 border-mint-200 shadow-lg">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-mint-100 rounded-full flex items-center justify-center">
-                <BookOpen className="h-6 w-6 text-mint-600" />
+      {/* Primary CTA: Upload → Flashcards (the "magic moment") */}
+      <Card className="bg-white border-2 border-mint-300 shadow-xl relative overflow-hidden">
+        <div className="absolute -top-12 -right-12 w-40 h-40 bg-gradient-to-br from-mint-100 to-blue-100 rounded-full blur-3xl opacity-60 pointer-events-none" />
+        <CardContent className="p-6 relative">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-mint-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
+                <Wand2 className="h-7 w-7 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-1">
-                  Ready to Get Started?
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 mb-2 rounded-full bg-mint-100 text-mint-700 text-xs font-semibold uppercase tracking-wide">
+                  <Sparkles className="h-3 w-3" /> Fastest way to start
+                </div>
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">
+                  Upload a PDF → get flashcards in 60 seconds
                 </h2>
-                <p className="text-gray-600">
-                  Create your first note to begin your learning journey
+                <p className="text-gray-600 text-sm md:text-base">
+                  Drop a lecture slide, textbook chapter or note — we'll turn it into a study set instantly.
                 </p>
               </div>
             </div>
-            <Button 
-              onClick={() => navigate('/notes')}
-              className="bg-mint-600 hover:bg-mint-700 text-white font-medium px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+            <Button
+              onClick={() => navigate('/notes?action=upload')}
+              size="lg"
+              className="bg-mint-600 hover:bg-mint-700 text-white font-semibold px-6 py-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 whitespace-nowrap"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Your First Note
+              <Upload className="h-5 w-5 mr-2" />
+              Upload PDF
+            </Button>
+          </div>
+
+          {/* Secondary action — much smaller, lower visual weight */}
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Or start from scratch</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/notes')}
+              className="text-mint-700 hover:text-mint-800 hover:bg-mint-50"
+            >
+              <BookOpen className="h-4 w-4 mr-1" />
+              Create a blank note
             </Button>
           </div>
         </CardContent>
