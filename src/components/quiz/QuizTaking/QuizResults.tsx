@@ -5,6 +5,7 @@ import { Quiz } from "@/types/quiz";
 import { CircleCheckIcon, CircleXIcon, FileTextIcon, TimerIcon, TrophyIcon, PercentIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
+import { ReportAIContentButton } from "@/components/feedback/ReportAIContentButton";
 
 interface QuizResultsProps {
   quiz: Quiz;
@@ -42,8 +43,14 @@ export const QuizResults = ({
 
   return (
     <Card className="w-full max-w-3xl mx-auto">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 flex flex-row items-start justify-between gap-2">
         <CardTitle className="text-xl">Quiz Results: {quiz.title}</CardTitle>
+        <ReportAIContentButton
+          contentType="quiz"
+          contentId={quiz.id}
+          contentSample={quiz.title}
+          label="Report quiz"
+        />
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="text-center py-4">
