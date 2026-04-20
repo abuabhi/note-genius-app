@@ -1,12 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -22,7 +21,6 @@ serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // 1) Verify caller identity using their JWT
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -36,12 +34,8 @@ serve(async (req) => {
     const userId = userData.user.id;
     console.log("[delete-account] Deleting user:", userId);
 
-    // 2) Use service role to wipe user data + delete the auth user
     const admin = createClient(supabaseUrl, serviceKey);
 
-    // Best-effort cascade: delete user-owned rows in primary tables.
-    // RLS + FK CASCADEs in the schema will handle most dependents, but we
-    // explicitly remove these to avoid orphan rows if cascades aren't set.
     const tables = [
       "feedback",
       "todos",
@@ -70,7 +64,6 @@ serve(async (req) => {
       if (error) console.warn(`[delete-account] ${t}:`, error.message);
     }
 
-    // 3) Delete the auth user (this is the source of truth)
     const { error: deleteErr } = await admin.auth.admin.deleteUser(userId);
     if (deleteErr) {
       console.error("[delete-account] auth.admin.deleteUser:", deleteErr);
