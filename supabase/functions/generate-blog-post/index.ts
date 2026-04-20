@@ -283,10 +283,10 @@ serve(async (req) => {
       console.error('Failed to update queue with error:', updateError);
     }
 
+    console.error('generate-blog-post error:', errorMessage);
     return new Response(
       JSON.stringify({ 
-        error: errorMessage,
-        details: error.stack 
+        error: 'Failed to generate blog post'
       }),
       { 
         status: 500, 

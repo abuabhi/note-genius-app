@@ -151,8 +151,7 @@ Make sure each question is clear, the correct answer index is accurate (0-3), an
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: error.message || 'Internal server error',
-        details: error.stack || 'No stack trace available'
+        error: 'Internal server error'
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -137,8 +137,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('💥 Error recording coupon usage:', error);
     return new Response(JSON.stringify({ 
-      error: 'Failed to record coupon usage',
-      details: error.message
+      error: 'Failed to record coupon usage'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
