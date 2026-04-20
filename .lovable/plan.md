@@ -1,12 +1,8 @@
 
-The user wants a detailed, step-by-step plan to address the production-readiness issues identified in the previous audit. I'll group the fixes by priority/risk and explain each one clearly so a non-technical reader understands what's broken, why it matters at scale, and how we'll fix it.
+User wants two things:
+1. Split the large chunks (NoteStudyPage 594 KB, index 1.2 MB) flagged in the last build.
+2. A step-by-step walkthrough to run the k6 load test — they've never used k6 before.
 
-Key issues to address:
-1. Mock implementations still in code (`useGemini.ts`, `useCachedAnalytics.ts`)
-2. Three competing QueryClient instances → fragmented cache
-3. Aggressive 30s polling on subscription refresh
-4. No route-level code splitting → 28s initial load
-5. Load tests hit fake `/api/` URLs instead of real Edge Functions
-6. No per-IP rate limiting on AI Edge Functions
+For #1, I need to look at the current vite chunking and the heaviest pages to plan splits. For #2, k6 is a CLI tool that can't run inside the Lovable sandbox preview — it must run on the user's own machine (or CI). I'll give a beginner-friendly walkthrough.
 
-I'll order by impact and risk: quick safe wins first, then performance, then resilience/scale.
+Let me keep the plan tight and actionable.
