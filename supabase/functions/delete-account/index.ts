@@ -1,4 +1,4 @@
-import { createClient } from "npm:@supabase/supabase-js@2.45.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,26 +37,12 @@ Deno.serve(async (req) => {
     const admin = createClient(supabaseUrl, serviceKey);
 
     const tables = [
-      "feedback",
-      "todos",
-      "goals",
-      "events",
-      "reminders",
-      "note_tags",
-      "note_chat_messages",
-      "note_content_expansions",
-      "note_enrichment_usage",
-      "notes",
-      "flashcards",
-      "flashcard_sets",
-      "learning_progress",
-      "learning_insights",
-      "learning_patterns",
-      "learning_velocity_metrics",
-      "user_subjects",
-      "user_roles",
-      "profiles",
-      "email_digest_preferences",
+      "feedback", "todos", "goals", "events", "reminders",
+      "note_tags", "note_chat_messages", "note_content_expansions",
+      "note_enrichment_usage", "notes", "flashcards", "flashcard_sets",
+      "learning_progress", "learning_insights", "learning_patterns",
+      "learning_velocity_metrics", "user_subjects", "user_roles",
+      "profiles", "email_digest_preferences",
     ];
 
     for (const t of tables) {
