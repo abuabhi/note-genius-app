@@ -16,9 +16,14 @@ function AppContent() {
   
   useEffect(() => {
     document.title = 'PrepGenie';
-    
-    // Initialize Sentry
-    sentryService.initialize().catch(console.error);
+
+    // Defer Sentry init until the browser is idle so it doesn't block first paint
+    const initSentry = () => sentryService.initialize().catch(console.error);
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(initSentry, { timeout: 4000 });
+    } else {
+      setTimeout(initSentry, 2000);
+    }
   }, []);
 
   return <AppRoutes />;

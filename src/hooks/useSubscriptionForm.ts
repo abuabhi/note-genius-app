@@ -130,7 +130,7 @@ export const useSubscriptionForm = (): SubscriptionFormData => {
   useManagedInterval(
     'subscription-refresh',
     checkSubscriptionStatus,
-    user ? (process.env.NODE_ENV === 'production' ? 600000 : 30000) : null // 10 minutes in production, 30s in dev
+    user ? (process.env.NODE_ENV === 'production' ? 600000 : 120000) : null // 10 min prod, 2 min dev (was 30s — too aggressive at scale)
   );
 
   return {
