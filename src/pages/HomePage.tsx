@@ -45,11 +45,6 @@ const HomePage = () => {
       "@type": "Organization",
       "name": "PrepGenie",
       "url": typeof window !== 'undefined' ? window.location.origin : ""
-    },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      "ratingValue": "4.8",
-      "reviewCount": "2847"
     }
   };
 
