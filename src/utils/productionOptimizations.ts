@@ -13,10 +13,10 @@ export const PRODUCTION_INTERVALS = {
   ANALYTICS_REFRESH: 300000, // 5 minutes
   PERFORMANCE_MONITORING: 120000, // 2 minutes
   
-  // Development intervals (much more frequent)
+  // Development intervals (kept conservative to mirror production scale behavior)
   DEV_HEALTH_CHECK: 300000, // 5 minutes
-  DEV_SUBSCRIPTION_CHECK: 30000, // 30 seconds
-  DEV_REMINDER_CHECK: 60000, // 1 minute
+  DEV_SUBSCRIPTION_CHECK: 120000, // 2 minutes (was 30s — too aggressive at scale)
+  DEV_REMINDER_CHECK: 120000, // 2 minutes (was 1 min)
 } as const;
 
 /**
