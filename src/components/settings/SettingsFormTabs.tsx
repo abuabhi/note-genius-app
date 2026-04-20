@@ -7,6 +7,7 @@ import { AdaptiveLearningCard } from "./cards/AdaptiveLearningCard";
 import { SubjectsSettingsCard } from "./cards/SubjectsSettingsCard";
 import { PasswordChangeCard } from "./cards/PasswordChangeCard";
 import { MergedSubscriptionCard } from "./cards/MergedSubscriptionCard";
+import { PrivacyDataCard } from "./cards/PrivacyDataCard";
 import { UseFormReturn } from "react-hook-form";
 import { User } from "@supabase/supabase-js";
 import { UserTier } from "@/hooks/useUserTier";
@@ -59,6 +60,7 @@ export const SettingsFormTabs = ({
           countries={countries}
           onCountryChange={onCountryChange}
         />
+        <PrivacyDataCard />
       </TabsContent>
       
       <TabsContent value="subjects" className="space-y-6">
