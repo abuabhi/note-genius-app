@@ -138,8 +138,7 @@ Deno.serve(async (req) => {
     console.error('💥 Error processing referral:', error);
     return new Response(JSON.stringify({ 
       success: false,
-      error: 'Failed to process referral',
-      details: error.message
+      error: 'Failed to process referral'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -163,7 +163,7 @@ serve(async (req) => {
     console.error('❌ Critical error in notification processing:', error);
     
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: 'Notification processing failed',
       timestamp: new Date().toISOString()
     }), {
       status: 500,

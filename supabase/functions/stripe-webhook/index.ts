@@ -38,25 +38,26 @@ serve(async (req) => {
       throw new Error("Missing stripe-signature header");
     }
 
-    // In production, you should set this as a secret
+    // Signature verification is MANDATORY — no fallback to unverified parsing
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-    let event;
+    if (!webhookSecret) {
+      logStep("STRIPE_WEBHOOK_SECRET is not configured");
+      return new Response("Webhook secret not configured", {
+        status: 500,
+        headers: corsHeaders,
+      });
+    }
 
-    if (webhookSecret) {
-      try {
-        event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-        logStep("Webhook signature verified");
-      } catch (err) {
-        logStep("Webhook signature verification failed", { error: err.message });
-        return new Response(`Webhook signature verification failed: ${err.message}`, { 
-          status: 400,
-          headers: corsHeaders 
-        });
-      }
-    } else {
-      // For development - parse without verification
-      event = JSON.parse(body);
-      logStep("Webhook parsed without signature verification (development mode)");
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      logStep("Webhook signature verified");
+    } catch (err) {
+      logStep("Webhook signature verification failed");
+      return new Response("Invalid signature", {
+        status: 400,
+        headers: corsHeaders,
+      });
     }
 
     logStep("Processing event", { type: event.type, id: event.id });
@@ -179,7 +180,7 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR in stripe-webhook", { message: errorMessage });
-    return new Response(`Webhook error: ${errorMessage}`, {
+    return new Response("Webhook processing error", {
       headers: corsHeaders,
       status: 500,
     });
