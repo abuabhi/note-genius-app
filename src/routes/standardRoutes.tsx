@@ -1,5 +1,6 @@
 
 import React, { lazy } from 'react';
+import { Navigate } from 'react-router-dom';
 import type { RouteConfig } from './publicRoutes';
 // import SidebarLayout from '@/components/layout/SidebarLayout'; // Not needed - using global SidebarProvider
 
@@ -31,10 +32,6 @@ const ResourcesPage = lazy(() => import('@/pages/ResourcesPage'));
 const BlogPage = lazy(() => import('@/pages/BlogPage'));
 const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'));
 
-
-// Legacy route redirects
-const ProgressPage = lazy(() => import('@/pages/AnalyticsPage'));
-const StudySessionsPage = lazy(() => import('@/pages/AnalyticsPage'));
 
 export const standardRoutes: RouteConfig[] = [
   {
@@ -105,14 +102,14 @@ export const standardRoutes: RouteConfig[] = [
     path: '/analytics',
     element: <AnalyticsPage />
   },
-  // Legacy redirects - these will render the new AnalyticsPage
+  // Legacy redirects → analytics
   {
     path: '/progress',
-    element: <ProgressPage />
+    element: <Navigate to="/analytics" replace />
   },
   {
     path: '/study-sessions',
-    element: <StudySessionsPage />
+    element: <Navigate to="/analytics" replace />
   },
   {
     path: '/goals',

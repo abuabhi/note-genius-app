@@ -17,7 +17,6 @@ import SignupPage from "@/pages/SignupPage";
 import HelpRedirectPage from "@/pages/HelpRedirectPage";
 import FAQPage from "@/pages/FAQPage";
 import SiteMapPage from "@/pages/SiteMapPage";
-import HomePageV2 from "@/pages/HomePageV2";
 import AIFlashcardsPage from "@/pages/features/AIFlashcardsPage";
 import StudyPlannerPage from "@/pages/features/StudyPlannerPage";
 import QuizGeneratorPage from "@/pages/features/QuizGeneratorPage";
@@ -31,7 +30,6 @@ export interface RouteConfig {
 // Public routes (no authentication required) - wrapped with Layout for navbar/footer
 export const publicRoutes: RouteConfig[] = [
   { path: "/", element: <HomePage /> }, // HomePage already has Layout internally
-  { path: "/v2", element: <HomePageV2 /> }, // Video-focused test homepage
   { path: "/about", element: <AboutPage /> }, // AboutPage already has Layout internally  
   { path: "/pricing", element: <PricingPage /> }, // PricingPage already has Layout internally
   { path: "/login", element: <LoginPage /> }, // LoginPage already has Layout internally
