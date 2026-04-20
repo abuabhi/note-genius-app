@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Download, ChevronDown, FileText, Target, List, Sparkles, Code, Mail, FileDown } from 'lucide-react';
 import { Note } from '@/types/note';
-import { exportService, ContentType, ExportFormat } from '../export/ExportService';
+import type { ContentType, ExportFormat } from '../export/ExportService';
 import { EmailDialog } from '../export/EmailDialog';
 import { toast } from 'sonner';
 
@@ -77,6 +77,8 @@ export const StudyViewExportDropdown = ({ note }: StudyViewExportDropdownProps) 
 
   const handleExport = async (contentType: ContentType, format: ExportFormat) => {
     try {
+      // Dynamic import keeps jsPDF/docx/html2canvas out of the initial bundle
+      const { exportService } = await import('../export/ExportService');
       await exportService.export({
         format,
         contentType,
