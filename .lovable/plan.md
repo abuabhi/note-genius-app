@@ -1,74 +1,73 @@
 
 
-## Expanded Page Load Speed Analysis
+## Performance Optimization Plan
 
-I'll extend the analysis to cover **every authenticated route**, not just the 6 in the previous plan.
+Goal: cut landing FCP from **4.1s → under 2s** and initial JS from **741KB → under 350KB**, without breaking any feature.
 
-### Full route coverage
+### 1. Remove heavy libraries from the initial bundle
 
-**Public (no login)**
-- `/` landing
-- `/auth` login
-- `/help` (newly rewritten)
-- `/faq`, `/contact`, `/blog`, `/blog/:slug`
+**`vendor-charts` (recharts, 156KB)** — currently loaded on every route via the manualChunks config.
+- Remove `recharts` from `vite.config.ts` `manualChunks`.
+- Wrap every chart-using component (Analytics dashboard, admin dashboards) in `React.lazy` so recharts only downloads when a chart actually mounts.
+- Audit: `src/pages/AnalyticsPage.tsx`, `src/components/analytics/*`, `src/components/admin/analytics/*`.
 
-**Study surface**
-- `/dashboard`
-- `/notes` · `/notes/study/:noteId`
-- `/flashcards` · `/flashcards/create` · `/flashcards/:id` · `/flashcards/study/:id`
-- `/quiz` (list) · `/quiz/create` · `/quiz/:id` · `/quiz/:id/take`
-- `/note-to-flashcard`
+**`vendor-tiptap` (rich-text editor, ~200KB)** — same treatment.
+- Already in its own chunk, but it's being imported eagerly somewhere on landing/dashboard. Find the eager import and convert to lazy.
+- Likely culprit: a notes-related component imported at module top-level in a shared layout.
 
-**Plan surface**
-- `/schedule`
-- `/goals`
+**`vendor-pdf` (pdfjs + jspdf + html2canvas + docx)** — verify it's truly only loaded on export actions, not eagerly imported anywhere.
 
-**Insight surface**
-- `/analytics`
-- `/resources`
+**`@fullcalendar/*`** — split out of `vendor-charts`, lazy-load only on `/schedule`.
 
-**Account surface**
-- `/settings`
-- `/feedback`
-- `/referrals`
-- `/influencer` (if accessible)
+### 2. Optimize landing-page images
 
-### Per-route deliverable
+Hero + 6 testimonial avatars are unoptimized PNGs (~2.5MB total).
+- Convert `public/lovable-uploads/hero.png` and the 6 avatar PNGs to WebP (keep PNG fallback via `<picture>`).
+- Add explicit `width`/`height` attributes to prevent layout shift.
+- Add `loading="lazy"` to all below-the-fold images (testimonials, logos).
+- Keep the existing `<link rel="preload">` for hero, but point it at the WebP.
 
-For each route, one row in a single master table:
+### 3. Trim provider waterfall in `App.tsx`
 
-| Route | LCP | FCP | CLS | INP | JS transferred | Long tasks | Verdict |
-|---|---|---|---|---|---|---|---|
+Currently 4 nested providers run before any route renders. Two are doing measurable work on cold start:
+- **`ProductionOptimizationProvider`** — runs perf monitoring intervals; defer with `requestIdleCallback` like Sentry already is.
+- **`SubscriptionProvider`** — should not block rendering; lazy-fetch subscription on first authenticated route, not at app boot.
 
-Verdict: ✅ ship · ⚠️ optimize · 🔴 must fix (thresholds same as previous plan: LCP <2.5s good, <4s acceptable; initial JS <300KB good, <600KB acceptable).
+### 4. Consolidate tiny vendor chunks
 
-### Method
-1. `navigate_to_sandbox` per route on the **published** build (`prepgenie.lovable.app`) — production bundle, not Vite dev.
-2. `performance_profile` + `list_network_requests` after each load.
-3. For any route flagged ⚠️ or 🔴: `start_profiling` → reload → `stop_profiling` to get the top blocking functions.
-4. Note any route that requires data fetching (quiz list, flashcard study) — measure both first-load and warm-cache.
+`vendor-auth`, `vendor-query`, `vendor-utils` are each <50KB but each costs an HTTP round-trip. Merge into a single `vendor-core` chunk in `vite.config.ts`.
 
-### Auth requirement
-Most routes require login. The browser shares your preview Supabase session, so I need you to **be logged in to the preview before I start**. If a route 401s, I'll skip it and list it for a logged-in re-run.
+### 5. Remove dead/duplicate code paths
 
-### Likely hot spots I'll specifically check
-- **`/quiz/:id/take`** — heaviest interactive surface, autosave + timer
-- **`/flashcards/study/:id`** — animation + spaced repetition state
-- **`/analytics`** — chart libraries are usually the largest non-route bundle
-- **`/notes/study/:noteId`** — rich editor + AI chat panel
-- **`/schedule`** — calendar libraries
+- `src/utils/bundleOptimization.ts` — unused estimator, delete.
+- `moment` is in `vendor-utils` but `date-fns` is also there. Pick one (date-fns) and remove `moment` from package.json + any imports.
+- `src/components/performance/ImageOptimizer.tsx` is a re-export shim — leave for now (low risk).
 
-If any of these ship a >300KB chunk, I'll flag it for code-splitting in the optimization pass.
+### 6. Verify with a re-profile
 
-### Output
-Single message containing:
-1. Master table (all routes)
-2. Top 5 prioritized optimizations (only if any route fails)
-3. Overall production-readiness verdict
+After changes ship, re-run `browser--performance_profile` on `/` and `/dashboard` against the published build. Target table:
+
+| Metric | Before | Target |
+|---|---|---|
+| Landing FCP | 4.1s | < 2.0s |
+| Landing initial JS | 741KB | < 350KB |
+| Long tasks > 200ms | yes | none |
+
+If any target is missed, drill in with `start_profiling` on the offending route.
 
 ### Out of scope
-- No code changes — analysis only.
-- Optimizations get a separate plan once we see real numbers.
-- No Lighthouse SEO/a11y audit.
-- Admin routes skipped unless you have DEAN tier.
+- No feature changes, no UI redesign, no route reshuffles.
+- Admin-only routes not optimized (low traffic).
+- Service worker / HTTP/3 / image CDN — separate infra discussion.
+
+### Risk
+- Lazy-loading recharts/tiptap means a one-time ~200ms delay the first time a user opens analytics or a note editor — acceptable trade for landing-page win.
+- Removing `moment` requires touching every file that imports it; I'll grep and convert each call site to `date-fns` equivalents in the same pass.
+
+### Order of work
+1. Image conversion (zero-risk, biggest LCP win)
+2. `vite.config.ts` chunk reshuffle + lazy charts/editor
+3. Defer `ProductionOptimizationProvider` + `SubscriptionProvider`
+4. Remove `moment`, delete dead utils
+5. Re-profile and report
 
