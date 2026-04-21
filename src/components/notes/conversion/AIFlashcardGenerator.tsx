@@ -1,10 +1,10 @@
-
-import { useState, Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { useFlashcardState } from "@/contexts/flashcards/useFlashcardState";
 import { useFlashcardOperations } from "@/contexts/flashcards/useFlashcardOperations";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { generateFlashcardsFromNotes } from "@/services/aiService";
 
 export interface AIFlashcardGeneratorProps {
   noteContent: string;
@@ -23,7 +23,7 @@ export const AIFlashcardGenerator = ({
   onFlashcardCreated,
   isGenerating,
   setIsGenerating,
-  subjectName
+  subjectName,
 }: AIFlashcardGeneratorProps) => {
   const flashcardState = useFlashcardState();
   const { addFlashcard } = useFlashcardOperations(flashcardState);
@@ -34,35 +34,40 @@ export const AIFlashcardGenerator = ({
       toast.error("Please select a flashcard set first");
       return;
     }
-    
-    if (!noteContent || noteContent.trim() === "") {
-      toast.error("Note content is empty");
+    if (!noteContent || noteContent.trim().length < 20) {
+      toast.error("Note content is too short for AI generation");
       return;
     }
-    
+
     setIsGenerating(true);
-    
     try {
-      // Here we would normally call an AI service to generate flashcards
-      // For now, we'll simulate it by creating a single flashcard
-      await new Promise(resolve => setTimeout(resolve, 1500)); // simulate API call
-      
-      await addFlashcard({
-        front_content: `<p><strong>AI Generated from: ${noteTitle}</strong></p>`,
-        back_content: noteContent.substring(0, 100) + "...",
-        set_id: flashcardSetId,
-        subject: subjectName,
-      });
-      
-      setGeneratedCount(1);
-      toast.success("AI generated 1 flashcard");
-      
-      if (onFlashcardCreated) {
-        onFlashcardCreated();
+      const cards = await generateFlashcardsFromNotes(noteContent, 5, subjectName);
+      if (!cards.length) {
+        toast.error("AI could not generate any flashcards from this note");
+        return;
       }
+
+      let inserted = 0;
+      for (const c of cards) {
+        try {
+          await addFlashcard({
+            front_content: c.front,
+            back_content: c.back,
+            set_id: flashcardSetId,
+            subject: subjectName,
+          });
+          inserted++;
+        } catch (err) {
+          console.error("Failed to insert flashcard:", err);
+        }
+      }
+
+      setGeneratedCount(inserted);
+      toast.success(`AI generated ${inserted} flashcard${inserted === 1 ? "" : "s"} from "${noteTitle}"`);
+      onFlashcardCreated?.();
     } catch (error) {
       console.error("Error generating flashcards:", error);
-      toast.error("Failed to generate flashcards");
+      // aiService already toasts the specific error
     } finally {
       setIsGenerating(false);
     }
@@ -74,7 +79,7 @@ export const AIFlashcardGenerator = ({
       <p className="text-sm text-gray-600 mb-3">
         Let AI analyze your note and create flashcards automatically.
       </p>
-      
+
       <Button
         onClick={handleGenerateFlashcards}
         disabled={isGenerating || !flashcardSetId}
@@ -86,13 +91,16 @@ export const AIFlashcardGenerator = ({
             Generating...
           </>
         ) : (
-          <>Generate Flashcards with AI</>
+          <>
+            <Sparkles className="h-4 w-4" />
+            Generate Flashcards with AI
+          </>
         )}
       </Button>
-      
+
       {generatedCount > 0 && (
         <p className="text-sm text-mint-700 mt-2">
-          Successfully generated {generatedCount} flashcards!
+          Successfully generated {generatedCount} flashcard{generatedCount === 1 ? "" : "s"}!
         </p>
       )}
     </div>
