@@ -10,9 +10,12 @@ import { Progress } from '@/components/ui/progress';
 import { useUserTier } from '@/hooks/useUserTier';
 import { Separator } from '@/components/ui/separator';
 import { useManagedInterval } from '@/utils/performance';
+import { useQuizDraft } from '@/hooks/useQuizDraft';
 
 interface QuizTakingCardProps {
   questions: (QuizQuestion & { options: QuizOption[] })[];
+  /** Optional quiz id — when provided, in-progress answers are persisted server-side. */
+  quizId?: string;
   onQuizComplete: (results: {
     score: number;
     totalQuestions: number;
@@ -26,7 +29,7 @@ interface QuizTakingCardProps {
   }) => void;
 }
 
-export const QuizTakingCard = ({ questions, onQuizComplete }: QuizTakingCardProps) => {
+export const QuizTakingCard = ({ questions, quizId, onQuizComplete }: QuizTakingCardProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [responses, setResponses] = useState<{
@@ -41,10 +44,25 @@ export const QuizTakingCard = ({ questions, onQuizComplete }: QuizTakingCardProp
   const [totalTime, setTotalTime] = useState(0);
   const { isUserPremium } = useUserTier();
   const [quizStarted, setQuizStarted] = useState(false);
-  
+  const [draftAnswers, setDraftAnswers] = useState<Record<string, string>>({});
+
+  // Server-side draft persistence (no-op if quizId omitted)
+  const { draft, loaded: draftLoaded, saveDraft, clearDraft } = useQuizDraft(quizId);
+
   const currentQuestion = questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + (showAnswer ? 1 : 0)) / questions.length) * 100;
-  
+
+  // Restore draft on first load
+  useEffect(() => {
+    if (!draftLoaded || !draft || !quizId) return;
+    if (draft.current_question > 0 || Object.keys(draft.answers || {}).length > 0) {
+      setCurrentQuestionIndex(Math.min(draft.current_question, questions.length - 1));
+      setDraftAnswers(draft.answers || {});
+      setQuizStarted(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftLoaded]);
+
   // Reset timer when moving to a new question
   useEffect(() => {
     setQuestionStartTime(Date.now());
@@ -58,50 +76,45 @@ export const QuizTakingCard = ({ questions, onQuizComplete }: QuizTakingCardProp
   useManagedInterval('quiz-timer', updateTotalTime, quizStarted ? 1000 : null);
   
   const handleOptionSelect = (optionId: string) => {
-    // Start quiz timer on first interaction
-    if (!quizStarted) {
-      setQuizStarted(true);
-    }
-    
+    if (!quizStarted) setQuizStarted(true);
     setSelectedOptionId(optionId);
   };
-  
+
   const handleCheckAnswer = () => {
     if (!selectedOptionId) return;
-    
     const selectedOption = currentQuestion.options.find(opt => opt.id === selectedOptionId);
     if (!selectedOption) return;
-    
     setShowAnswer(true);
   };
-  
+
   const handleNextQuestion = () => {
     if (!selectedOptionId) return;
-    
     const selectedOption = currentQuestion.options.find(opt => opt.id === selectedOptionId);
     if (!selectedOption) return;
-    
-    // Calculate time spent on this question
+
     const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
-    
-    // Save this response
     const newResponses = [...responses, {
       questionId: currentQuestion.id,
       selectedOptionId,
       isCorrect: selectedOption.is_correct,
       timeSpent
     }];
-    
     setResponses(newResponses);
-    
-    // Move to next question or finish quiz
+
+    // Persist draft (server-side) after each answer
+    const nextAnswers = { ...draftAnswers, [currentQuestion.id]: selectedOptionId };
+    setDraftAnswers(nextAnswers);
+
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      const nextIdx = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(nextIdx);
       setSelectedOptionId(null);
       setShowAnswer(false);
+      saveDraft({ answers: nextAnswers, current_question: nextIdx });
     } else {
-      // Quiz complete
+      // Quiz complete — clear the draft
       const score = newResponses.filter(r => r.isCorrect).length;
+      void clearDraft();
       onQuizComplete({
         score,
         totalQuestions: questions.length,

@@ -77,6 +77,7 @@ const TakeQuizPage = () => {
             <QuizTakingBreadcrumb quizTitle={quiz.title} />
           </div>
           <QuizTakingCard
+            quizId={quiz.id}
             questions={quiz.questions as any}
             onQuizComplete={handleQuizComplete}
           />
