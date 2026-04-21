@@ -3,8 +3,10 @@ import { useState } from "react";
 import { Note } from "@/types/note";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAIRequestGuard } from "@/hooks/useAIRequestGuard";
 
 export const useNoteToQuizState = () => {
+  const guardAIRequest = useAIRequestGuard();
   const [selectedNotes, setSelectedNotes] = useState<Note[]>([]);
   const [numberOfQuestions, setNumberOfQuestions] = useState<number>(5);
   const [generatedQuestions, setGeneratedQuestions] = useState<{
@@ -49,15 +51,18 @@ export const useNoteToQuizState = () => {
         topic
       });
       
-      // Call the generate-quiz edge function
-      const { data, error } = await supabase.functions.invoke('generate-quiz', {
-        body: { 
-          content: noteContents,
-          numberOfQuestions,
-          difficulty: 'medium',
-          topic
-        }
-      });
+      // Call the generate-quiz edge function (guarded against double-clicks)
+      const guardKey = `generate-quiz:${selectedNotes.map(n => n.id).join(',')}:${numberOfQuestions}`;
+      const { data, error } = await guardAIRequest(guardKey, () =>
+        supabase.functions.invoke('generate-quiz', {
+          body: {
+            content: noteContents,
+            numberOfQuestions,
+            difficulty: 'medium',
+            topic
+          }
+        })
+      );
       
       if (error) {
         console.error('Error calling generate-quiz function:', error);

@@ -4,10 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 import { ChatUIMessage, NoteChatMessage } from '../types/noteChat';
 import { toast } from 'sonner';
+import { useAIRequestGuard } from '@/hooks/useAIRequestGuard';
 
 export const useNoteChat = (note: Note) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const guardAIRequest = useAIRequestGuard();
 
   const sendMessage = useCallback(async (
     message: string, 
@@ -39,15 +41,19 @@ export const useNoteChat = (note: Note) => {
       }));
 
       // Call the enhanced AI service with note context and conversation history
-      const { data, error: aiError } = await supabase.functions.invoke('note-chat', {
-        body: {
-          message,
-          noteContext,
-          noteId: note.id,
-          conversationHistory,
-          enhancedFeatures: true
-        }
-      });
+      // Guard prevents duplicate concurrent calls when user double-clicks send.
+      const { data, error: aiError } = await guardAIRequest(
+        `note-chat:${note.id}:${message.trim().slice(0, 80)}`,
+        () => supabase.functions.invoke('note-chat', {
+          body: {
+            message,
+            noteContext,
+            noteId: note.id,
+            conversationHistory,
+            enhancedFeatures: true
+          }
+        })
+      );
 
       if (aiError) {
         throw new Error(aiError.message || 'Failed to get AI response');

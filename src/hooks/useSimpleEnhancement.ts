@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { Note } from '@/types/note';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAIRequestGuard } from '@/hooks/useAIRequestGuard';
 
 export const useSimpleEnhancement = (note: Note, onNoteUpdate?: () => void) => {
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const guardAIRequest = useAIRequestGuard();
 
   const enhanceNote = async (enhancementType: string) => {
     setIsEnhancing(true);
@@ -22,14 +24,17 @@ export const useSimpleEnhancement = (note: Note, onNoteUpdate?: () => void) => {
       });
       
       if (enhancementType === 'enrich-note') {
-        const { data, error } = await supabase.functions.invoke('enrich-note', {
-          body: {
-            noteId: note.id,
-            noteContent,
-            enhancementType,
-            noteTitle: note.title || 'Untitled Note'
-          }
-        });
+        const { data, error } = await guardAIRequest(
+          `enrich-note:${note.id}:${enhancementType}`,
+          () => supabase.functions.invoke('enrich-note', {
+            body: {
+              noteId: note.id,
+              noteContent,
+              enhancementType,
+              noteTitle: note.title || 'Untitled Note'
+            }
+          })
+        );
 
         if (error) {
           console.error('❌ enrich-note error:', error);
@@ -74,13 +79,16 @@ export const useSimpleEnhancement = (note: Note, onNoteUpdate?: () => void) => {
         
         return data.enhancedContent;
       } else {
-        // Use test-enhance for other enhancement types
-        const { data, error } = await supabase.functions.invoke('test-enhance', {
-          body: {
-            text: noteContent,
-            enhancementType
-          }
-        });
+        // Use test-enhance for other enhancement types (guarded)
+        const { data, error } = await guardAIRequest(
+          `test-enhance:${note.id}:${enhancementType}`,
+          () => supabase.functions.invoke('test-enhance', {
+            body: {
+              text: noteContent,
+              enhancementType
+            }
+          })
+        );
 
         if (error) throw error;
         if (!data.success) throw new Error(data.error);

@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Flashcard } from "@/types/flashcard";
 import { toast } from 'sonner';
+import { guardAIRequest } from '@/lib/aiRequestGuard';
 
 export interface GeneratedFlashcard {
   front: string;
@@ -14,9 +15,12 @@ export const generateFlashcardsFromNotes = async (
   subject?: string
 ): Promise<GeneratedFlashcard[]> => {
   try {
-    const { data, error } = await supabase.functions.invoke('generate-flashcards', {
-      body: { noteContent, count, subject }
-    });
+    const guardKey = `generate-flashcards:${count}:${subject || 'none'}:${(noteContent || '').slice(0, 80)}`;
+    const { data, error } = await guardAIRequest(guardKey, () =>
+      supabase.functions.invoke('generate-flashcards', {
+        body: { noteContent, count, subject }
+      })
+    );
 
     if (error) {
       console.error('Error generating flashcards:', error);
@@ -55,12 +59,15 @@ export const getExplanationForCard = async (
       throw new Error('Flashcard content is missing');
     }
 
-    const { data, error } = await supabase.functions.invoke('generate-explanation', {
-      body: {
-        front: flashcard.front_content,
-        back: flashcard.back_content
-      }
-    });
+    const guardKey = `generate-explanation:${flashcard.id || flashcard.front_content.slice(0, 80)}`;
+    const { data, error } = await guardAIRequest(guardKey, () =>
+      supabase.functions.invoke('generate-explanation', {
+        body: {
+          front: flashcard.front_content,
+          back: flashcard.back_content
+        }
+      })
+    );
 
     if (error) {
       console.error('Error generating explanation:', error);

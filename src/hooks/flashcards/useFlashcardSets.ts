@@ -19,9 +19,10 @@ export const useFlashcardSets = () => {
       
       const { data, error } = await supabase
         .from('flashcard_sets')
-        .select('*')
+        .select('id, name, description, subject, subject_id, topic, card_count, is_built_in, user_id, country_id, education_system, section_id, created_at, updated_at')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       if (error) throw error;
       return data || [];
@@ -40,10 +41,11 @@ export const useFlashcardSets = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('flashcard_sets')
-        .select('*')
+        .select('id, name, description, subject, subject_id, topic, card_count, is_built_in, user_id, country_id, education_system, section_id, created_at, updated_at')
         .is('user_id', null)
         .eq('is_built_in', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100);
 
       if (error) throw error;
       return data || [];

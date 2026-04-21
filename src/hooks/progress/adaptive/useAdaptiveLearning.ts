@@ -22,17 +22,19 @@ export const useAdaptiveLearning = (preferences?: Partial<StudyPreferences>) => 
       
       const { data: sessions } = await supabase
         .from('study_sessions')
-        .select('*')
+        .select('id, start_time, end_time, duration, cards_reviewed, cards_correct, subject, completed')
         .eq('user_id', user.id)
         .gte('start_time', `${threeMonthsAgo}T00:00:00Z`)
         .not('duration', 'is', null)
-        .order('start_time', { ascending: false });
+        .order('start_time', { ascending: false })
+        .limit(500);
 
       const { data: flashcardSets } = await supabase
         .from('flashcard_sets')
-        .select('*')
+        .select('id, name, subject, card_count, created_at')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       const { data: userProgress } = await supabase
         .from('user_flashcard_progress')

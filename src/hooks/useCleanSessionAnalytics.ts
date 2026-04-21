@@ -27,10 +27,11 @@ export const useCleanSessionAnalytics = () => {
 
       const { data, error } = await supabase
         .from('study_sessions')
-        .select('*')
+        .select('id, user_id, title, subject, start_time, end_time, duration, cards_reviewed, cards_correct, completed, auto_created, flashcard_set_id, created_at')
         .eq('user_id', user.id)
         .eq('auto_created', false) // Exclude auto-created sessions
-        .order('start_time', { ascending: false });
+        .order('start_time', { ascending: false })
+        .limit(200);
 
       if (error) throw error;
       return data || [];

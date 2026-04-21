@@ -7,9 +7,10 @@ export const fetchStudyGoals = async (userId: string): Promise<StudyGoal[]> => {
   
   const { data, error } = await supabase
     .from('study_goals')
-    .select('*')
+    .select('id, user_id, title, description, target_hours, start_date, end_date, flashcard_set_id, is_completed, progress, academic_subject, created_at, updated_at')
     .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(200);
 
   if (error) {
     console.error('Error fetching study goals:', error);

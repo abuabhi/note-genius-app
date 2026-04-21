@@ -6,6 +6,7 @@ import { updateNoteInDatabase } from '@/contexts/notes/operations';
 import { Note } from '@/types/note';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAIRequestGuard } from '@/hooks/useAIRequestGuard';
 
 interface NoteSummaryProps {
   note?: Note;
@@ -36,6 +37,7 @@ export const NoteSummary = ({
 
   // Handle the case where the component receives a note object
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const guardAIRequest = useAIRequestGuard();
 
   const handleGenerateSummary = async () => {
     if (onGenerateSummary) {
@@ -54,14 +56,17 @@ export const NoteSummary = ({
       setError(null);
 
       setIsEnhancing(true);
-      const { data, error } = await supabase.functions.invoke('enrich-note', {
-        body: { 
-          noteId: note.id,
-          noteContent: note.content || '', 
-          enhancementType: 'summarize',
-          noteTitle: note.title
-        }
-      });
+      const { data, error } = await guardAIRequest(
+        `enrich-note:${note.id}:summarize`,
+        () => supabase.functions.invoke('enrich-note', {
+          body: { 
+            noteId: note.id,
+            noteContent: note.content || '', 
+            enhancementType: 'summarize',
+            noteTitle: note.title
+          }
+        })
+      );
       
       if (error) throw error;
       
