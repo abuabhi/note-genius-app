@@ -1,73 +1,97 @@
 
 
-## Performance Optimization Plan
+## Pre-Launch Audit & Hardening Plan
 
-Goal: cut landing FCP from **4.1s → under 2s** and initial JS from **741KB → under 350KB**, without breaking any feature.
+A focused sweep across 6 dimensions to confirm production readiness. No feature work — only measure, remove, consolidate.
 
-### 1. Remove heavy libraries from the initial bundle
+### 1. Re-profile load speed (verify the wins)
 
-**`vendor-charts` (recharts, 156KB)** — currently loaded on every route via the manualChunks config.
-- Remove `recharts` from `vite.config.ts` `manualChunks`.
-- Wrap every chart-using component (Analytics dashboard, admin dashboards) in `React.lazy` so recharts only downloads when a chart actually mounts.
-- Audit: `src/pages/AnalyticsPage.tsx`, `src/components/analytics/*`, `src/components/admin/analytics/*`.
+Re-run `browser--performance_profile` on the **published** build for:
+- `/` (landing) — confirm FCP < 2s, initial JS < 350KB
+- `/dashboard` (warm) — confirm shared-bundle reduction carried over
+- `/analytics` — confirm recharts is now lazy (chunk loads only here)
+- `/notes/study/:id` — confirm tiptap is now lazy
+- `/schedule` — confirm fullcalendar is now lazy
 
-**`vendor-tiptap` (rich-text editor, ~200KB)** — same treatment.
-- Already in its own chunk, but it's being imported eagerly somewhere on landing/dashboard. Find the eager import and convert to lazy.
-- Likely culprit: a notes-related component imported at module top-level in a shared layout.
+Deliverable: before/after table.
 
-**`vendor-pdf` (pdfjs + jspdf + html2canvas + docx)** — verify it's truly only loaded on export actions, not eagerly imported anywhere.
+### 2. Dead code & unused dependency sweep
 
-**`@fullcalendar/*`** — split out of `vendor-charts`, lazy-load only on `/schedule`.
+- Run `depcheck`-style audit on `package.json` — flag unused packages (likely candidates: `moment` if not yet removed, leftover Radix primitives, unused chart libs).
+- Grep for orphaned files: components/hooks/utils with zero imports.
+- Find duplicate implementations of the same thing (e.g. multiple `useDebounce`, multiple toast helpers, multiple date formatters).
+- Check for `console.log` left in non-dev code paths (terser already strips in prod, but flag noisy ones).
+- Find commented-out blocks > 10 lines.
 
-### 2. Optimize landing-page images
+Deliverable: list of files/packages to delete with size impact.
 
-Hero + 6 testimonial avatars are unoptimized PNGs (~2.5MB total).
-- Convert `public/lovable-uploads/hero.png` and the 6 avatar PNGs to WebP (keep PNG fallback via `<picture>`).
-- Add explicit `width`/`height` attributes to prevent layout shift.
-- Add `loading="lazy"` to all below-the-fold images (testimonials, logos).
-- Keep the existing `<link rel="preload">` for hero, but point it at the WebP.
+### 3. Component standardization audit
 
-### 3. Trim provider waterfall in `App.tsx`
+Map every instance of these patterns and flag divergence:
 
-Currently 4 nested providers run before any route renders. Two are doing measurable work on cold start:
-- **`ProductionOptimizationProvider`** — runs perf monitoring intervals; defer with `requestIdleCallback` like Sentry already is.
-- **`SubscriptionProvider`** — should not block rendering; lazy-fetch subscription on first authenticated route, not at app boot.
-
-### 4. Consolidate tiny vendor chunks
-
-`vendor-auth`, `vendor-query`, `vendor-utils` are each <50KB but each costs an HTTP round-trip. Merge into a single `vendor-core` chunk in `vite.config.ts`.
-
-### 5. Remove dead/duplicate code paths
-
-- `src/utils/bundleOptimization.ts` — unused estimator, delete.
-- `moment` is in `vendor-utils` but `date-fns` is also there. Pick one (date-fns) and remove `moment` from package.json + any imports.
-- `src/components/performance/ImageOptimizer.tsx` is a re-export shim — leave for now (low risk).
-
-### 6. Verify with a re-profile
-
-After changes ship, re-run `browser--performance_profile` on `/` and `/dashboard` against the published build. Target table:
-
-| Metric | Before | Target |
+| Pattern | Canonical version | Check for divergence |
 |---|---|---|
-| Landing FCP | 4.1s | < 2.0s |
-| Landing initial JS | 741KB | < 350KB |
-| Long tasks > 200ms | yes | none |
+| Search input | `UniversalFilters` | Any page rolling its own `<input>` + debounce |
+| Filter bar | `UniversalFilters` + `useUniversalFilters` | Notes uses it ✅ — check Quiz, Flashcards, Goals, Resources |
+| Empty state | (find canonical) | Pages with custom empty markup |
+| Loading skeleton | (find canonical) | Pages with custom spinners |
+| Error boundary | `SecurityErrorBoundary` + others | Inconsistent fallbacks |
+| Date display | (date-fns formatter) | Mixed `toLocaleDateString` / `moment` / custom |
+| Confirm dialog | (find canonical) | Native `confirm()` calls |
+| Toast | `@/components/ui/toaster` | `alert()` calls, custom toasts |
 
-If any target is missed, drill in with `start_profiling` on the offending route.
+Deliverable: divergence list + recommended consolidation order.
+
+### 4. Memory leak & timer hygiene scan
+
+Memory rule says all intervals/timeouts must use `useManagedInterval`/`useManagedTimeout`. Verify:
+- Grep for raw `setInterval(` and `setTimeout(` in `src/` — flag every offender outside `utils/performance.ts`.
+- Grep for `addEventListener(` without a paired `removeEventListener` in cleanup.
+- Grep for Supabase `.channel()` subscriptions without `removeChannel` in cleanup.
+- Grep for `new AbortController()` patterns to confirm fetch cancellation on unmount.
+- Check React Query: any `staleTime: Infinity` + `refetchInterval` combos that quietly run forever.
+
+Deliverable: leak risk list ranked by severity.
+
+### 5. Stripe / payments integration check
+
+You mentioned Stripe — verify:
+- Which integration is in use (Lovable seamless `payments` vs BYOK `stripe`).
+- All Stripe API calls go through edge functions (no secret key client-side).
+- Webhook endpoint exists and is verified (signature check, not just trusting payload).
+- Test mode vs live mode keys are clearly separated by env.
+- Cancel/refund/upgrade/downgrade flows are wired.
+- `SubscriptionProvider` lazy-fetches (already in last optimization round — confirm still working).
+
+Deliverable: go-live blockers, if any.
+
+### 6. Workflow & polish improvements
+
+- React Query: confirm `refetchOnWindowFocus: false` is project-wide (per memory rule). Flag any per-query overrides.
+- RLS spot-check: run `security--run_security_scan` on the Supabase backend — confirm no high-severity findings.
+- Environment: confirm Sentry DSN is set, error boundary fallbacks render something useful.
+- SEO basics on landing: `<title>`, `<meta description>`, OG tags, favicon, robots.txt, sitemap.xml.
+- Accessibility quick-pass: alt text on hero/avatars, focus states on buttons, form labels.
+- Bundle visualizer (`dist/bundle-analysis.html` already generated by Vite plugin) — open it and flag any single chunk > 200KB.
+
+### Output
+
+A single report with 6 sections matching the above. Each finding tagged:
+- 🔴 **Block launch** — must fix before go-live
+- ⚠️ **Fix soon** — ship is OK but address within a week
+- ✅ **Healthy** — confirmed good
+
+Followed by a prioritized fix list (top 10) and a final **go / no-go** verdict.
+
+### Method
+Read-only: `code--search_files`, `code--view`, `browser--performance_profile`, `security--run_security_scan`, `browser--list_network_requests`. No code edits in this pass — fixes get a separate plan once we see the findings.
 
 ### Out of scope
-- No feature changes, no UI redesign, no route reshuffles.
-- Admin-only routes not optimized (low traffic).
-- Service worker / HTTP/3 / image CDN — separate infra discussion.
+- New features.
+- Visual redesign.
+- Backend schema changes (unless RLS scan flags critical).
+- Load testing / k6 (separate infra concern).
 
 ### Risk
-- Lazy-loading recharts/tiptap means a one-time ~200ms delay the first time a user opens analytics or a note editor — acceptable trade for landing-page win.
-- Removing `moment` requires touching every file that imports it; I'll grep and convert each call site to `date-fns` equivalents in the same pass.
-
-### Order of work
-1. Image conversion (zero-risk, biggest LCP win)
-2. `vite.config.ts` chunk reshuffle + lazy charts/editor
-3. Defer `ProductionOptimizationProvider` + `SubscriptionProvider`
-4. Remove `moment`, delete dead utils
-5. Re-profile and report
+- Audit will surface a long list. I'll prioritize ruthlessly — only the top 10 must-fixes get into the post-audit fix plan; the rest go into a backlog file.
 
