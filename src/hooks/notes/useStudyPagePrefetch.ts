@@ -16,7 +16,7 @@ export const useStudyPagePrefetch = () => {
       queryFn: async (): Promise<any[]> => {
         const { data, error } = await supabase
           .from('user_subjects')
-          .select('id, name, color, user_id')
+          .select('id, name, user_id, created_at')
           .eq('user_id', user.id)
           .limit(100);
         
