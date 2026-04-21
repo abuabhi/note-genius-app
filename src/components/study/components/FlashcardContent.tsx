@@ -70,15 +70,15 @@ export const FlashcardContent = ({
               <ProgressIndicator current={currentIndex + 1} total={totalCards} />
             </div>
             
-            <CardContent className="p-8 h-full min-h-[400px] flex items-center justify-center overflow-hidden">
+            <CardContent className="p-4 sm:p-8 h-full min-h-[400px] flex items-center justify-center overflow-hidden">
               <div className="text-center max-w-2xl w-full max-h-[320px] overflow-y-auto">
-                <div className="text-lg md:text-xl leading-relaxed text-mint-800 mb-6 break-words">
+                <div className="text-base sm:text-xl leading-relaxed text-mint-800 mb-6 break-words">
                   {isFlipped ? backContent : frontContent}
                 </div>
                 <div className="flex items-center justify-center gap-2 text-muted-foreground">
                   <div className={`w-2 h-2 rounded-full ${isFlipped ? 'bg-mint-400' : 'bg-mint-300'}`}></div>
                   <span className="text-sm font-medium">
-                    {isFlipped ? "Back" : "Front"} • Click to flip
+                    {isFlipped ? "Back" : "Front"} • Tap to flip
                   </span>
                   <RotateCcw className="h-4 w-4 opacity-60" />
                 </div>

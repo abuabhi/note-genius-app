@@ -75,7 +75,7 @@ export const NoteContentSection = ({
       <Textarea
         value={isEditing ? editableContent : content}
         onChange={handleContentChange}
-        className="min-h-[200px] font-mono border-mint-200 focus-visible:ring-mint-400"
+        className="min-h-[200px] text-base sm:text-sm font-mono border-mint-200 focus-visible:ring-mint-400"
         readOnly={!isEditing}
       />
     </div>
