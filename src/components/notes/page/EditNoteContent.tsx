@@ -88,9 +88,12 @@ const EditNoteContent = ({ note }: EditNoteContentProps) => {
       console.log('💾 Updating note with data:', updateData);
 
       await updateNote(note.id, updateData);
-      
+
       console.log('✅ Note updated successfully');
-      
+
+      // Drop the autosaved draft now that changes are persisted server-side
+      clearNoteAutosave(note.id);
+
       // Force refresh the notes list to clear any cache
       await refreshNotes();
       
@@ -123,6 +126,23 @@ const EditNoteContent = ({ note }: EditNoteContentProps) => {
         </Button>
         <h1 className="text-2xl font-bold">Edit Note</h1>
       </div>
+
+      {hasDraft && (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <div className="flex items-center gap-2">
+            <RotateCcw className="h-4 w-4" />
+            <span>Unsaved changes from your last session were found.</span>
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={dismissDraft}>
+              Discard
+            </Button>
+            <Button type="button" size="sm" onClick={restoreDraft}>
+              Restore draft
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Edit Form */}
       <Card>
