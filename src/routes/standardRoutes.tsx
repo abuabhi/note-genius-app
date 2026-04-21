@@ -20,11 +20,9 @@ const NoteToFlashcardPage = lazy(() => import('@/pages/NoteToFlashcardPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
 const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
-const RemindersPage = lazy(() => import('@/pages/RemindersPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
 const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
-const StudyPlannerPage = lazy(() => import('@/pages/StudyPlannerPage'));
 const QuizDetailsPage = lazy(() => import('@/pages/QuizDetailsPage'));
 const InfluencerDashboardPage = lazy(() => import('@/pages/InfluencerDashboardPage'));
 const ResourcesPage = lazy(() => import('@/pages/ResourcesPage'));
@@ -122,13 +120,14 @@ export const standardRoutes: RouteConfig[] = [
     path: '/schedule',
     element: <SchedulePage />
   },
+  // Merged into /schedule — keep redirects so old links/bookmarks still work
   {
     path: '/study-planner',
-    element: <StudyPlannerPage />
+    element: <Navigate to="/schedule" replace />
   },
   {
     path: '/reminders',
-    element: <RemindersPage />
+    element: <Navigate to="/schedule?tab=reminders" replace />
   },
   {
     path: '/settings',
