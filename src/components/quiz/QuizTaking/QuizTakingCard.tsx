@@ -162,16 +162,16 @@ export const QuizTakingCard = ({ questions, onQuizComplete }: QuizTakingCardProp
                   }`}
                 >
                   <RadioGroupItem value={option.id} id={option.id} />
-                  <Label htmlFor={option.id} className="flex-grow cursor-pointer text-mint-700">
+                  <span className="flex-grow text-mint-700 text-sm sm:text-base">
                     {option.content}
-                  </Label>
+                  </span>
                   {showAnswer && option.is_correct && (
                     <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                   )}
                   {showAnswer && !option.is_correct && selectedOptionId === option.id && (
                     <XCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
                   )}
-                </div>
+                </label>
               ))}
             </RadioGroup>
             
