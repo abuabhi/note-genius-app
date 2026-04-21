@@ -27,7 +27,7 @@ export const useCleanSessionAnalytics = () => {
 
       const { data, error } = await supabase
         .from('study_sessions')
-        .select('id, user_id, title, subject, start_time, end_time, duration, cards_reviewed, cards_correct, completed, auto_created, flashcard_set_id, created_at')
+        .select('id, user_id, title, subject, start_time, end_time, duration, is_active, cards_reviewed, cards_correct, quiz_score, quiz_total_questions, auto_created, flashcard_set_id, session_source, manual_entry_date, created_at')
         .eq('user_id', user.id)
         .eq('auto_created', false) // Exclude auto-created sessions
         .order('start_time', { ascending: false })

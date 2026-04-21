@@ -22,7 +22,7 @@ export const useAdaptiveLearning = (preferences?: Partial<StudyPreferences>) => 
       
       const { data: sessions } = await supabase
         .from('study_sessions')
-        .select('id, start_time, end_time, duration, cards_reviewed, cards_correct, subject, completed')
+        .select('id, start_time, end_time, duration, cards_reviewed, cards_correct, subject, is_active')
         .eq('user_id', user.id)
         .gte('start_time', `${threeMonthsAgo}T00:00:00Z`)
         .not('duration', 'is', null)
