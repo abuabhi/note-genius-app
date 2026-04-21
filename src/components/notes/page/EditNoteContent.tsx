@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,12 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, RotateCcw } from 'lucide-react';
 import { Note } from '@/types/note';
 import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { getOrCreateSubjectId } from '@/utils/subjectHelpers';
 import { toast } from 'sonner';
+import { useNoteAutosave, readNoteAutosave, clearNoteAutosave } from '@/hooks/useNoteAutosave';
 
 interface EditNoteContentProps {
   note: Note;
@@ -23,13 +24,47 @@ const EditNoteContent = ({ note }: EditNoteContentProps) => {
   const { updateNote, refreshNotes } = useOptimizedNotes();
   const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [hasDraft, setHasDraft] = useState(false);
+
   const [formData, setFormData] = useState({
     title: note.title,
     description: note.description,
     content: note.content || '',
     subject: note.subject
   });
+
+  // Detect existing autosaved draft on mount
+  useEffect(() => {
+    const draft = readNoteAutosave(note.id);
+    if (draft && (draft.title !== note.title || draft.content !== (note.content || ''))) {
+      setHasDraft(true);
+    }
+  }, [note.id, note.title, note.content]);
+
+  // Persist edits to localStorage every 5s
+  useNoteAutosave(note.id, {
+    title: formData.title,
+    content: formData.content,
+    description: formData.description,
+  });
+
+  const restoreDraft = () => {
+    const draft = readNoteAutosave(note.id);
+    if (!draft) return;
+    setFormData(prev => ({
+      ...prev,
+      title: draft.title,
+      content: draft.content,
+      description: draft.description ?? prev.description,
+    }));
+    setHasDraft(false);
+    toast.success('Draft restored.');
+  };
+
+  const dismissDraft = () => {
+    clearNoteAutosave(note.id);
+    setHasDraft(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,9 +88,12 @@ const EditNoteContent = ({ note }: EditNoteContentProps) => {
       console.log('💾 Updating note with data:', updateData);
 
       await updateNote(note.id, updateData);
-      
+
       console.log('✅ Note updated successfully');
-      
+
+      // Drop the autosaved draft now that changes are persisted server-side
+      clearNoteAutosave(note.id);
+
       // Force refresh the notes list to clear any cache
       await refreshNotes();
       
@@ -88,6 +126,23 @@ const EditNoteContent = ({ note }: EditNoteContentProps) => {
         </Button>
         <h1 className="text-2xl font-bold">Edit Note</h1>
       </div>
+
+      {hasDraft && (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <div className="flex items-center gap-2">
+            <RotateCcw className="h-4 w-4" />
+            <span>Unsaved changes from your last session were found.</span>
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={dismissDraft}>
+              Discard
+            </Button>
+            <Button type="button" size="sm" onClick={restoreDraft}>
+              Restore draft
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Edit Form */}
       <Card>

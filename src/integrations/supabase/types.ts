@@ -2507,6 +2507,36 @@ export type Database = {
           },
         ]
       }
+      quiz_attempts_draft: {
+        Row: {
+          answers: Json
+          current_question: number
+          id: string
+          quiz_id: string
+          started_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          current_question?: number
+          id?: string
+          quiz_id: string
+          started_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          current_question?: number
+          id?: string
+          quiz_id?: string
+          started_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       quiz_card_responses: {
         Row: {
           created_at: string
@@ -4726,6 +4756,15 @@ export type Database = {
       create_next_recurring_reminder: {
         Args: { original_reminder_id: string }
         Returns: string
+      }
+      dashboard_counts: {
+        Args: { _user_id: string }
+        Returns: {
+          active_goals_count: number
+          flashcard_sets_count: number
+          notes_count: number
+          quizzes_count: number
+        }[]
       }
       dismiss_announcement: {
         Args: { announcement_uuid: string }

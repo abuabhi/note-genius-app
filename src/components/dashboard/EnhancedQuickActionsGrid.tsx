@@ -8,9 +8,7 @@ import {
   GraduationCap, 
   FileText
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/auth";
+import { useDashboardCounts } from "@/hooks/useDashboardCounts";
 
 interface QuickActionCardProps {
   title: string;
@@ -61,31 +59,8 @@ const QuickActionCard = ({
 );
 
 export const EnhancedQuickActionsGrid = () => {
-  const { user } = useAuth();
-
-  // Get counts for badges
-  const { data: counts = { flashcardSets: 0, notes: 0, quizzes: 0, activeGoals: 0 } } = useQuery({
-    queryKey: ['quick-actions-counts', user?.id],
-    queryFn: async () => {
-      if (!user) return { flashcardSets: 0, notes: 0, quizzes: 0, activeGoals: 0 };
-
-      const [flashcardSets, notes, quizzes, activeGoals] = await Promise.all([
-        supabase.from('flashcard_sets').select('id').eq('user_id', user.id),
-        supabase.from('notes').select('id').eq('user_id', user.id),
-        supabase.from('quizzes').select('id').eq('user_id', user.id),
-        supabase.from('study_goals').select('id').eq('user_id', user.id).eq('is_completed', false)
-      ]);
-
-      return {
-        flashcardSets: flashcardSets.data?.length || 0,
-        notes: notes.data?.length || 0,
-        quizzes: quizzes.data?.length || 0,
-        activeGoals: activeGoals.data?.length || 0
-      };
-    },
-    enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  // Single RPC instead of 4 round-trips
+  const { data: counts = { flashcardSets: 0, notes: 0, quizzes: 0, activeGoals: 0 } } = useDashboardCounts();
 
   return (
     <div className="space-y-6">

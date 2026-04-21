@@ -100,10 +100,14 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
             {/* PLAN — scheduling, goals, tasks */}
             <NavGroup label="Plan" isCollapsed={isCollapsed} withSeparator>
               <NavLink
-                to="/study-planner"
+                to="/schedule"
                 icon={Calendar}
-                label="Study Planner"
-                isActive={pathname.startsWith("/study-planner") || pathname.startsWith("/schedule")}
+                label="Schedule"
+                isActive={
+                  pathname.startsWith("/schedule") ||
+                  pathname.startsWith("/study-planner") ||
+                  pathname.startsWith("/reminders")
+                }
                 isCollapsed={isCollapsed}
               />
               <NavLink
