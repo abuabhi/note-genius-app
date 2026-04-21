@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAIRequestGuard } from '@/hooks/useAIRequestGuard';
 
 interface NoteEnrichmentDialogProps {
   open: boolean;
@@ -32,6 +33,7 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
   const [selectedEnhancement, setSelectedEnhancement] = useState<string>('summary');
   const [enhancedContent, setEnhancedContent] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const guardAIRequest = useAIRequestGuard();
 
   const handleEnhancement = async () => {
     if (!noteContent) {
@@ -43,14 +45,17 @@ export const NoteEnrichmentDialog: React.FC<NoteEnrichmentDialogProps> = ({
     
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('enrich-note', {
-        body: { 
-          noteId,
-          noteContent, 
-          enhancementType: selectedEnhancement,
-          noteTitle: noteTitle || 'Enhanced Content'
-        }
-      });
+      const { data, error } = await guardAIRequest(
+        `enrich-note:${noteId}:${selectedEnhancement}`,
+        () => supabase.functions.invoke('enrich-note', {
+          body: { 
+            noteId,
+            noteContent, 
+            enhancementType: selectedEnhancement,
+            noteTitle: noteTitle || 'Enhanced Content'
+          }
+        })
+      );
 
       if (error) throw error;
       

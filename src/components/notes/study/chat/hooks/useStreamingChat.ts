@@ -4,11 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 import { ChatUIMessage } from '../types/noteChat';
 import { toast } from 'sonner';
+import { useAIRequestGuard } from '@/hooks/useAIRequestGuard';
 
 export const useStreamingChat = (note: Note) => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const guardAIRequest = useAIRequestGuard();
 
   const sendStreamingMessage = useCallback(async (
     message: string,
@@ -40,15 +42,18 @@ export const useStreamingChat = (note: Note) => {
         content: msg.content
       }));
 
-      const { data, error: functionError } = await supabase.functions.invoke('note-chat-streaming', {
-        body: {
-          message,
-          noteContext,
-          noteId: note.id,
-          conversationHistory,
-          streaming: true
-        }
-      });
+      const { data, error: functionError } = await guardAIRequest(
+        `note-chat-streaming:${note.id}:${message.trim().slice(0, 80)}`,
+        () => supabase.functions.invoke('note-chat-streaming', {
+          body: {
+            message,
+            noteContext,
+            noteId: note.id,
+            conversationHistory,
+            streaming: true
+          }
+        })
+      );
 
       if (functionError) {
         throw new Error(functionError.message || 'Failed to start streaming');

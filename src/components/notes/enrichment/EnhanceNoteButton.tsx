@@ -6,6 +6,7 @@ import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAiEnrichmentUsage } from "@/hooks/usage/useAiEnrichmentUsage";
+import { useAIRequestGuard } from "@/hooks/useAIRequestGuard";
 
 
 interface EnhanceNoteButtonProps {
@@ -23,6 +24,7 @@ export const EnhanceNoteButton: React.FC<EnhanceNoteButtonProps> = ({
 }) => {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const { hasReachedLimit, isNearLimit, usageCount, monthlyLimit } = useAiEnrichmentUsage();
+  const guardAIRequest = useAIRequestGuard();
 
   
   const handleEnhance = async () => {
@@ -30,14 +32,17 @@ export const EnhanceNoteButton: React.FC<EnhanceNoteButtonProps> = ({
     
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('enrich-note', {
-        body: { 
-          noteId, 
-          noteContent, 
-          enhancementType: 'generate-questions',
-          noteTitle: noteTitle || 'Study Questions'
-        }
-      });
+      const { data, error } = await guardAIRequest(
+        `enrich-note:${noteId}:generate-questions`,
+        () => supabase.functions.invoke('enrich-note', {
+          body: { 
+            noteId, 
+            noteContent, 
+            enhancementType: 'generate-questions',
+            noteTitle: noteTitle || 'Study Questions'
+          }
+        })
+      );
 
       if (error) throw error;
       

@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useAIRequestGuard } from "@/hooks/useAIRequestGuard";
 
 interface EnhanceDropdownProps {
   noteId: string;
@@ -23,20 +24,24 @@ export const EnhanceDropdown = ({
   onEnhancement,
 }: EnhanceDropdownProps) => {
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const guardAIRequest = useAIRequestGuard();
 
   const handleEnhancementSelect = async (enhancementType: string) => {
     if (!noteId || !noteContent) return;
     
     setIsProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('enrich-note', {
-        body: { 
-          noteId, 
-          noteContent, 
-          enhancementType, 
-          noteTitle: 'Enhanced Content' 
-        }
-      });
+      const { data, error } = await guardAIRequest(
+        `enrich-note:${noteId}:${enhancementType}`,
+        () => supabase.functions.invoke('enrich-note', {
+          body: { 
+            noteId, 
+            noteContent, 
+            enhancementType, 
+            noteTitle: 'Enhanced Content' 
+          }
+        })
+      );
 
       if (error) throw error;
       

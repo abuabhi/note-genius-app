@@ -16,8 +16,9 @@ export const useStudyPagePrefetch = () => {
       queryFn: async (): Promise<any[]> => {
         const { data, error } = await supabase
           .from('user_subjects')
-          .select('*')
-          .eq('user_id', user.id);
+          .select('id, name, user_id, created_at')
+          .eq('user_id', user.id)
+          .limit(100);
         
         if (error) {
           console.error('Error fetching user subjects:', error);
@@ -40,8 +41,9 @@ export const useStudyPagePrefetch = () => {
           // Fetch all tags since tags table doesn't have user_id
           const { data, error } = await supabase
             .from('tags')
-            .select('*')
-            .order('name');
+            .select('id, name, color')
+            .order('name')
+            .limit(200);
           
           if (error) {
             console.error('Error fetching tags:', error);
@@ -71,9 +73,10 @@ export const useStudyPagePrefetch = () => {
         try {
           const { data, error } = await supabase
             .from('note_enrichment_usage')
-            .select('*')
+            .select('id, created_at, prompt_tokens, completion_tokens, llm_provider')
             .eq('user_id', user.id)
-            .gte('created_at', startOfMonth.toISOString());
+            .gte('created_at', startOfMonth.toISOString())
+            .limit(500);
           
           if (error) {
             console.error('Error fetching enhancement usage:', error);
