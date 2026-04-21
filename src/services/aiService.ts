@@ -37,6 +37,12 @@ export const generateFlashcardsFromNotes = async (
       throw new Error('Invalid response from server');
     }
 
+    if (data.partial && data.dropped > 0) {
+      toast("Some cards were filtered", {
+        description: `Generated ${data.returned} of ${count} (${data.dropped} discarded as low quality).`
+      });
+    }
+
     return data.flashcards || [];
   } catch (error) {
     console.error('Error calling generate-flashcards function:', error);
