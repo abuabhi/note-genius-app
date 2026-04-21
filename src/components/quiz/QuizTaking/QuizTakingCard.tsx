@@ -124,20 +124,20 @@ export const QuizTakingCard = ({ questions, onQuizComplete }: QuizTakingCardProp
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
       <Card className="bg-white/60 backdrop-blur-sm border-mint-100">
-        <CardHeader className="relative pb-4">
-          <div className="flex justify-between items-center mb-3">
-            <CardTitle className="text-mint-800">
+        <CardHeader className="relative pb-4 px-4 sm:px-6">
+          <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
+            <CardTitle className="text-mint-800 text-base sm:text-lg">
               Question {currentQuestionIndex + 1} of {questions.length}
             </CardTitle>
-            <div className="text-sm font-medium text-mint-600 bg-mint-50 px-3 py-1 rounded-full">
-              Time: {formatTime(totalTime)}
+            <div className="text-xs sm:text-sm font-medium text-mint-600 bg-mint-50 px-3 py-1 rounded-full">
+              {formatTime(totalTime)}
             </div>
           </div>
           <Progress value={progress} className="h-2" />
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent className="pt-4 px-4 sm:px-6">
           <div className="space-y-6">
-            <div className="text-lg font-medium text-mint-800 leading-relaxed">
+            <div className="text-base sm:text-lg font-medium text-mint-800 leading-relaxed">
               {currentQuestion.question}
             </div>
             
@@ -148,9 +148,10 @@ export const QuizTakingCard = ({ questions, onQuizComplete }: QuizTakingCardProp
               disabled={showAnswer}
             >
               {currentQuestion.options.map((option) => (
-                <div
+                <label
                   key={option.id}
-                  className={`flex items-center space-x-3 border rounded-lg p-4 transition-all ${
+                  htmlFor={option.id}
+                  className={`flex items-center space-x-3 border rounded-lg p-4 min-h-[56px] cursor-pointer transition-all ${
                     showAnswer && option.is_correct
                       ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                       : showAnswer && selectedOptionId === option.id && !option.is_correct
@@ -161,16 +162,16 @@ export const QuizTakingCard = ({ questions, onQuizComplete }: QuizTakingCardProp
                   }`}
                 >
                   <RadioGroupItem value={option.id} id={option.id} />
-                  <Label htmlFor={option.id} className="flex-grow cursor-pointer text-mint-700">
+                  <span className="flex-grow text-mint-700 text-sm sm:text-base">
                     {option.content}
-                  </Label>
+                  </span>
                   {showAnswer && option.is_correct && (
                     <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                   )}
                   {showAnswer && !option.is_correct && selectedOptionId === option.id && (
                     <XCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
                   )}
-                </div>
+                </label>
               ))}
             </RadioGroup>
             
@@ -185,19 +186,19 @@ export const QuizTakingCard = ({ questions, onQuizComplete }: QuizTakingCardProp
             )}
           </div>
         </CardContent>
-        <CardFooter className="flex justify-end gap-3 pt-6">
+        <CardFooter className="flex justify-end gap-3 pt-6 px-4 sm:px-6">
           {!showAnswer ? (
             <Button 
               onClick={handleCheckAnswer}
               disabled={!selectedOptionId}
-              className="bg-mint-600 hover:bg-mint-700"
+              className="bg-mint-600 hover:bg-mint-700 w-full sm:w-auto min-h-[44px]"
             >
               Check Answer
             </Button>
           ) : (
             <Button 
               onClick={handleNextQuestion}
-              className="bg-mint-600 hover:bg-mint-700"
+              className="bg-mint-600 hover:bg-mint-700 w-full sm:w-auto min-h-[44px]"
             >
               {currentQuestionIndex < questions.length - 1 ? "Next Question" : "Finish Quiz"}
             </Button>
