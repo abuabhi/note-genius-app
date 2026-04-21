@@ -45,9 +45,15 @@ ${content}
 Please generate questions that:
 1. Test understanding of key concepts from the content
 2. Are at ${difficulty} difficulty level
-3. Have 4 answer options each
+3. Have 4 distinct, plausible answer options each
 4. Include brief explanations for the correct answers
 5. Are varied in question type (comprehension, application, analysis)
+
+LENGTH LIMITS (strict):
+- Each question ≤ 200 characters
+- Each option ≤ 80 characters
+- Each explanation ≤ 250 characters
+- Options must NOT repeat the question text and must NOT all be identical.
 
 Format your response as a JSON object with this exact structure:
 {
@@ -115,17 +121,29 @@ Make sure each question is clear, the correct answer index is accurate (0-3), an
       throw new Error('Invalid response format from AI');
     }
     
-    // Validate and clean the questions
+    // Validate, length-cap, and clean the questions
+    const Q_MAX = 200, OPT_MAX = 80, EXP_MAX = 250;
+    const seenQuestions = new Set<string>();
     const validatedQuestions = parsedQuestions.questions
-      .filter((q: any) => {
-        return q.question && 
-               Array.isArray(q.options) && 
-               q.options.length >= 2 && 
-               typeof q.correctAnswer === 'number' && 
-               q.correctAnswer >= 0 && 
-               q.correctAnswer < q.options.length;
+      .map((q: any) => {
+        if (!q || !q.question || !Array.isArray(q.options)) return null;
+        const question = String(q.question).trim().slice(0, Q_MAX);
+        const options = q.options.map((o: any) => String(o ?? '').trim().slice(0, OPT_MAX)).filter(Boolean);
+        const explanation = q.explanation ? String(q.explanation).trim().slice(0, EXP_MAX) : undefined;
+        if (!question || options.length < 2) return null;
+        if (typeof q.correctAnswer !== 'number' || q.correctAnswer < 0 || q.correctAnswer >= options.length) return null;
+        // Drop if all options identical
+        if (new Set(options.map((o: string) => o.toLowerCase())).size < 2) return null;
+        // Drop if any option is the full question
+        if (options.some((o: string) => o.toLowerCase() === question.toLowerCase())) return null;
+        // Drop duplicate questions
+        const key = question.toLowerCase();
+        if (seenQuestions.has(key)) return null;
+        seenQuestions.add(key);
+        return { question, options, correctAnswer: q.correctAnswer, explanation };
       })
-      .slice(0, numberOfQuestions); // Ensure we don't exceed requested number
+      .filter(Boolean)
+      .slice(0, numberOfQuestions);
     
     if (validatedQuestions.length === 0) {
       throw new Error('No valid questions could be generated from the content');
