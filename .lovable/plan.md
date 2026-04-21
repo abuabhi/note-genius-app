@@ -1,98 +1,128 @@
 
-## Audit: Reduce Overload + Scale to 100s of Concurrent Users
 
-A pass across entry points, workflows, data fetching, and failure modes. Grouped by impact, with concrete mitigations. Pick the slices you want and I'll implement them.
+## Audit: Flashcard & Quiz Quality + Card Layout
 
----
-
-### 1. Cognitive overload (UX)
-
-**Findings**
-- `IntermediateDashboard` stacks 6 large sections (Hero, OnboardingChecklist, StudySuggestions, LearningToolkit, Planner+Goals, QuickActions). New users land on this page after creating one note and immediately see ~8 CTAs.
-- `EnhancedQuickActionsGrid` shows 3 cards that duplicate what's already in the sidebar.
-- `NewUserDashboard` shows hero + checklist + quick start + welcome tips card with a static 4-step explainer — three onboarding surfaces competing.
-- Sidebar still has 6 grouped sections; some links (Reminders, Study Planner, Schedule, Goals) overlap conceptually.
-- Routes inventory: 70+ pages, several near-duplicates remain (`StudyPlannerPage` vs `SchedulePage`, `RemindersPage` vs `/goals`, `FlashcardLibraryPage` vs `FlashcardsPage`, `EditNotePage` vs in-place editor).
-
-**Fixes**
-- **Collapse dashboard to 3 zones**: (1) "Continue / Resume" hero, (2) "Today" (goals + reminders combined, max 5 items), (3) one `EnhancedQuickActionsGrid` row. Move analytics, learning toolkit, study suggestions behind tabs or a "More" section.
-- **Single onboarding surface**: keep `OnboardingChecklist`, delete the static "Welcome Tips" card and `WelcomeBanner` (one or the other, not both).
-- **Merge Reminders into Schedule**: `/reminders` → `/schedule?tab=reminders`. Drop `RemindersPage` from sidebar.
-- **Merge `/study-planner` into `/schedule`** (same data, different views — make views tabs).
-- **Empty-state-first dashboard cards**: every section that can be empty should render a single CTA, not a "no data" panel + a header + a footer.
+I checked the entire generation pipeline and how content renders. There are **three critical problems** today, plus several smaller ones. Most are fixable in one pass.
 
 ---
 
-### 2. Concurrency & scale (100s of users)
+### Critical findings
 
-**Findings**
-- `EnhancedQuickActionsGrid` runs 4 parallel `select('id')` queries on every dashboard mount just to compute badge counts. Per user, per render tree.
-- Codebase has **635 `select('*')` calls across 84 files** — many on tables with growing rows (study_sessions, quiz_results, user_flashcard_progress). These will become expensive at scale.
-- `useTodaysFocusData` keys on `allReminders.length` — re-runs whenever reminders mutate, fans out to other queries.
-- React Query defaults are sane (`staleTime: 5min`, no refetchOnWindowFocus). Good.
-- No client-side request batching for dashboard widgets — every widget = its own round-trip.
-- Edge functions `note-chat`, `enrich-note`, `generate-flashcards`, `generate-quiz` are AI calls with no client-side queueing or abort surfaced to users — the existing `useConcurrencyManager` is not used in those flows.
+#### 🔴 1. AI flashcard generation is a **stub** — it does nothing
+`supabase/functions/generate-flashcards/index.ts` is 25 lines. It returns `{message: "Flashcards generation endpoint"}` and never calls any AI model. The client (`aiService.generateFlashcardsFromNotes`) expects `data.flashcards` and toasts "Invalid response" when it doesn't get one.
 
-**Fixes**
-- **Counts via RPC**: replace the 4 separate count queries in `EnhancedQuickActionsGrid` with one `dashboard_counts(user_id)` Postgres function returning `{notes, flashcard_sets, quizzes, active_goals}`. 4 round-trips → 1.
-- **Replace `select('*')`** on the top 10 hottest hooks (`useUnifiedAnalytics`, `useRecentActivity`, `useProgressAnalytics`, `useEnhancedStudySuggestions`, `useSimplifiedFlashcards`) with explicit column lists and `limit()`. Most analytics queries pull entire tables today.
-- **Add `range()` / pagination defaults** to anything that lists user-scoped rows (notes, flashcards, quiz history) — Supabase caps at 1000 silently.
-- **Wire `useConcurrencyManager`** into AI-invoking actions (note-chat send, generate-flashcards, generate-quiz) so a user spamming "Enrich" doesn't open 5 parallel edge function calls.
-- **Database indexes**: confirm composite indexes on `(user_id, created_at DESC)` for `notes`, `study_sessions`, `quiz_results`, `study_goals`, `reminders`. I'll list missing ones via `supabase--linter` before migrating.
-- **Edge function cold-start mitigation**: keep `health-check` cron warm (already exists) and add `note-chat` + `generate-flashcards` to the warm list.
+#### 🔴 2. `AIFlashcardGenerator` component is **fake**
+`src/components/notes/conversion/AIFlashcardGenerator.tsx` calls `setTimeout(1500)` to fake a loading spinner, then inserts a single hardcoded card:
+```
+front: "AI Generated from: <note title>"
+back:  <first 100 chars of note> + "..."
+```
+Then toasts "AI generated 1 flashcard" — misleading the user.
+
+#### 🔴 3. `generateFlashcardsFromContent` (chat path) is also fake
+`useFlashcardIntegration.ts:175` splits the note by newlines and creates cards with:
+```
+front: "What is the key point about: <50 chars>...?"
+back:  <the same line>
+```
+Not AI. Not useful. Same question prefix on every card.
+
+#### 🟡 4. `generate-explanation` edge function — also a stub (returns the same placeholder JSON).
+
+#### 🟢 5. Quiz generation (`generate-quiz`) — **actually works**
+Real OpenAI call, returns 4-option MCQs with explanations, validates structure (filters out malformed questions, ensures `correctAnswer` index is valid, slices to requested count). This is the only honest path in the pipeline.
 
 ---
 
-### 3. Failure points & mitigations
+### Card layout / overflow findings
 
-| Failure | Today | Mitigation |
+| Surface | Today | Risk |
 |---|---|---|
-| AI edge function timeout (45s+) | Generic toast, no retry | Stream responses where possible (`note-chat-streaming` exists — use it everywhere); show partial progress; offer "retry" button |
-| User loses unsaved note edit | Local state only | Add localStorage autosave keyed on `noteId` every 5s using `useManagedInterval` |
-| Quiz submit fails mid-attempt | Attempt lost | Persist answers to `quiz_attempts_draft` after each answer, resume on reload |
-| Stripe webhook race during signup | Tier may not apply | Already handled via `check-subscription` — verify it runs on first dashboard load if `tier='free'` |
-| 1000-row Supabase cap hit silently | Missing data | Audit all `.select()` without `range()` or `limit()`; add explicit `.limit(100)` defaults |
-| Anonymous abuse of public AI endpoints | Cost spike | Document edge functions all have `verify_jwt = true` (check `config.toml`); flag any with `verify_jwt = false` |
-| RLS misconfiguration | Data leak | Run `supabase--linter` and `security--run_security_scan` as part of this pass |
+| `FlashcardDisplayCard` (study) | `min-h-[300px]`, no max-height, no scroll | Long AI back content overflows the card silently |
+| `FlashcardWithProgress` | `max-h-[280px]` + `line-clamp-6` + `overflow-y-auto` | Good — clamps and scrolls |
+| `FlashcardSetCard` (grid) | `line-clamp-2` on name + description | Good |
+| `EnhancedFlashcardSetView` (preview) | `line-clamp-2` front, `line-clamp-3` back | Good |
+| `QuizTakingCard` question | No clamp, no max-h | Long AI questions push options off-screen on mobile |
+| `QuizTakingCard` option | No clamp, no max-h | A 200-char option breaks the radio row |
+| `QuizCard` (grid) | `line-clamp-2` on title + description | Good |
+
+So the **set/grid views** are safe; the **active study/quiz views** are not.
 
 ---
 
-### 4. Trust & feedback
+### What we don't validate today
 
-- **"Report bad AI output"** on quiz generation, note enrichment, AI chat — minimal: a button that writes to a `feedback` row with `kind='ai_quality'`, the prompt, and the response. Closes the loop and gives you training signal.
-- **Surface "AI generated" badges** on flashcards/quizzes created by AI so students don't trust them blindly.
-
----
-
-### 5. Entry-point clarity
-
-**Today**: Dashboard → 8 things to do. Sidebar → 20+ links. Quick Actions → 3 cards.
-
-**Proposed primary path for new users**:
-1. Land on dashboard → see one big card: **"Upload PDF or paste notes → I'll make flashcards & a quiz"**.
-2. Result page: created note, flashcard set, quiz — all linked together with "Study now" CTAs.
-3. Everything else (Goals, Schedule, Analytics) appears in sidebar but is not pushed in onboarding.
-
-This is the single workflow that proves PrepGenie's value in <2 minutes. Currently it's buried.
+- **No length caps** on `front_content`/`back_content` before insert — DB accepts anything
+- **No content sanity checks** (empty, duplicate, "..." filler, identical front/back)
+- **No client-side preview-and-edit step** before AI cards land in the set
+- **No "report bad card"** even though we just added `ReportBadAIButton` for quiz/notes
+- **Quiz prompt** doesn't constrain question/option length, so OpenAI sometimes returns 300-char options that break layout
 
 ---
 
-### Suggested order (risk-ranked)
+## Plan
 
-1. **Dashboard counts RPC + remove duplicate sections** — pure win, no risk.
-2. **Replace top-10 `select('*')` hotspots + add `.limit()`** — invisible to users, big perf win.
-3. **Quiz attempt draft autosave** — prevents most-painful data-loss.
-4. **Note editor autosave** — same.
-5. **AI report-bad-output buttons** — small UI, big trust gain.
-6. **Merge Reminders/Study Planner into Schedule** — touches routing + sidebar + 1 redirect each.
-7. **Wire `useConcurrencyManager` into AI actions** — guards against spam.
-8. **Run security scan + linter, fix findings**.
-9. **New-user "PDF → flashcards" hero CTA** — needs design decision; do last.
+### Phase A — Fix the lies (must-do)
+
+1. **Implement `generate-flashcards` for real** (Lovable AI Gateway, `google/gemini-3-flash-preview`):
+   - Tool-calling for structured output (no JSON-in-text parsing)
+   - System prompt: "You are an expert study coach. Create concise, atomic flashcards. Each front is a single clear question (≤120 chars). Each back is a focused answer (≤300 chars). No filler. No duplicates. No 'According to the text…'."
+   - Returns `{flashcards: [{front, back}]}` validated server-side
+   - Server-side trims to limits, drops empty/duplicate/identical-front-back cards, enforces requested `count`
+   - Handles 429/402 from gateway and surfaces them to client
+
+2. **Implement `generate-explanation` for real** (same gateway, smaller prompt). Returns `{explanation}`.
+
+3. **Delete the fake paths**:
+   - `AIFlashcardGenerator.tsx` → call `aiService.generateFlashcardsFromNotes` and bulk-insert real cards
+   - `useFlashcardIntegration.generateFlashcardsFromContent` → route through `aiService` too
+
+### Phase B — Server-side quality gates (in both edge functions)
+
+In `generate-flashcards` and `generate-quiz`:
+- **Length limits**: flashcard front ≤120, back ≤300; quiz question ≤200, each option ≤80, explanation ≤250
+- **Drop bad rows**: empty, identical front/back, duplicate fronts within set, options that are substrings of the question, all-options-identical
+- **Enforce count**: if AI returns fewer valid items than requested, retry once with a stricter prompt; if still short, return what we have with a `partial: true` flag the UI can show
+
+Update `generate-quiz` prompt to add: "Keep each question under 200 chars and each option under 80 chars. Prefer 4 distinct, plausible options."
+
+### Phase C — Client-side safety net
+
+1. **Preview-and-edit modal before save** (flashcards): after AI returns N cards, show them in a list with editable front/back fields and per-card "Discard" + "Looks good". Only checked cards get inserted.
+2. **Length validation in `createFlashcard`**: hard-cap at 500/1000 chars even if it slips past server.
+3. **`ReportBadAIButton`** wired into:
+   - Each card in `FlashcardDisplayCard`
+   - Each question in `QuizTakingCard` (after answer reveal)
+
+### Phase D — Layout fixes (overflow safety)
+
+1. `FlashcardDisplayCard`: add `max-h-[60vh]`, inner `overflow-y-auto`, font auto-shrinks via `clamp(0.875rem, 2vw, 1.125rem)` for very long content.
+2. `QuizTakingCard`:
+   - Question: `max-h-[30vh] overflow-y-auto`
+   - Each option: `max-h-[8rem] overflow-y-auto break-words`
+   - Mobile: keep options in a single column (already is)
+
+### Phase E — Observability (cheap, high-value)
+
+- Log to a new `ai_generation_log` table: `{user_id, kind: 'flashcard'|'quiz'|'explanation', model, requested_count, returned_count, dropped_count, drop_reasons, latency_ms}`. One row per generation.
+- Surface `dropped_count > 0` to the user as: "Generated 4 cards (1 was discarded as low quality)".
+
+### Order of execution
+A → B → D → C → E. A+B unblock everything; D is independent and can ship in parallel; C and E follow.
 
 ### Out of scope this round
-- New AI features
-- Changing the AI provider or model
-- Backend rate limiting (no infra primitives yet)
-- Admin surface
+- Difficulty calibration (per-user)
+- Spaced-repetition tuning
+- Image flashcards
+- Multi-language prompts
 
-Reply with which slices to implement (e.g. "1, 2, 3, 5") or "all" and I'll execute in that order.
+---
+
+### Technical notes (for me, when implementing)
+- Use Lovable AI Gateway, not OpenAI directly (the existing key is `LOVABLE_API_KEY`; current `generate-quiz` uses `OPENAI_API_KEY` — leave it for now to avoid scope creep, but flag for migration).
+- Reuse the existing `guardAIRequest` so spamming "Generate" doesn't fan out.
+- Schema-validated tool-calling output (per Lovable AI gateway docs) avoids the regex-extract-JSON fallback in `generate-quiz`.
+- New table `ai_generation_log`: RLS `user_id = auth.uid()` for select; insert via service role from edge functions.
+
+**Reply "go" to execute Phase A+B+D in one pass, or pick specific phases.**
+
