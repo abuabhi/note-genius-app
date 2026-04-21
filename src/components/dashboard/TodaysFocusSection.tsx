@@ -1,8 +1,6 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Target } from "lucide-react";
 import { GoalsSection } from "./GoalsSection";
-import { TodosSection } from "./TodosSection";
 import { StudyPlannerSection } from "./StudyPlannerSection";
 
 export const TodaysFocusSection = () => {
@@ -16,10 +14,9 @@ export const TodaysFocusSection = () => {
         <p className="text-gray-600">Manage your study plans, goals, and tasks all in one place</p>
       </div>
       
-      <div className="grid gap-6 lg:grid-cols-3 md:grid-cols-2 grid-cols-1">
+      <div className="grid gap-6 md:grid-cols-2 grid-cols-1">
         <StudyPlannerSection />
         <GoalsSection />
-        <TodosSection />
       </div>
     </div>
   );
