@@ -24,8 +24,8 @@ export const ProductionOptimizationProvider: React.FC<ProductionOptimizationProv
       const id = (window as any).requestIdleCallback(enable, { timeout: 4000 });
       return () => (window as any).cancelIdleCallback?.(id);
     }
-    const t = window.setTimeout(enable, 2500);
-    return () => window.clearTimeout(t);
+    const t = setTimeout(enable, 2500);
+    return () => clearTimeout(t);
   }, []);
 
   useOptimizedPerformanceMonitor(monitoringEnabled && isDevelopment);
