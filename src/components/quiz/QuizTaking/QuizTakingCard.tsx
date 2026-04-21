@@ -186,19 +186,19 @@ export const QuizTakingCard = ({ questions, onQuizComplete }: QuizTakingCardProp
             )}
           </div>
         </CardContent>
-        <CardFooter className="flex justify-end gap-3 pt-6">
+        <CardFooter className="flex justify-end gap-3 pt-6 px-4 sm:px-6">
           {!showAnswer ? (
             <Button 
               onClick={handleCheckAnswer}
               disabled={!selectedOptionId}
-              className="bg-mint-600 hover:bg-mint-700"
+              className="bg-mint-600 hover:bg-mint-700 w-full sm:w-auto min-h-[44px]"
             >
               Check Answer
             </Button>
           ) : (
             <Button 
               onClick={handleNextQuestion}
-              className="bg-mint-600 hover:bg-mint-700"
+              className="bg-mint-600 hover:bg-mint-700 w-full sm:w-auto min-h-[44px]"
             >
               {currentQuestionIndex < questions.length - 1 ? "Next Question" : "Finish Quiz"}
             </Button>
