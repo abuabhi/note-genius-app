@@ -14,25 +14,23 @@ const generateBuildInfo = () => {
   const now = new Date();
   const buildTime = now.toISOString();
   const buildHash = now.toISOString().replace(/[^0-9]/g, '').substring(0, 12);
-  
-  // Try to get git commit hash (optional)
+
   let gitCommit;
   try {
     gitCommit = require('child_process')
       .execSync('git rev-parse HEAD', { encoding: 'utf8' })
       .trim();
   } catch (e) {
-    // Git not available or not a git repo
     gitCommit = undefined;
   }
-  
+
   return { buildTime, buildHash, gitCommit };
 };
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const buildInfo = generateBuildInfo();
-  
+
   return {
   define: {
     __VERSION__: JSON.stringify(packageJson.version),
@@ -64,10 +62,24 @@ export default defineConfig(({ mode }) => {
     rollupOptions: {
       output: {
         manualChunks: {
-          // Core React dependencies
+          // Core React — always needed
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
 
-          // Radix UI primitives (catch-all so stragglers don't fall into index)
+          // Merged core: query + auth + utils. Each was <50KB and cost an HTTP round-trip.
+          'vendor-core': [
+            '@tanstack/react-query',
+            '@tanstack/react-query-devtools',
+            '@supabase/supabase-js',
+            'date-fns',
+            'uuid',
+            'papaparse',
+            'zod',
+            'clsx',
+            'class-variance-authority',
+            'tailwind-merge',
+          ],
+
+          // Radix UI primitives
           'vendor-ui': [
             '@radix-ui/react-dialog',
             '@radix-ui/react-dropdown-menu',
@@ -93,55 +105,18 @@ export default defineConfig(({ mode }) => {
             '@radix-ui/react-context-menu',
             '@radix-ui/react-collapsible',
             '@radix-ui/react-aspect-ratio',
-            '@radix-ui/react-alert-dialog'
-          ],
-
-          // Query and state management
-          'vendor-query': ['@tanstack/react-query', '@tanstack/react-query-devtools'],
-
-          // TipTap editor — isolated so it only loads when an editor mounts
-          'vendor-tiptap': [
-            '@tiptap/react',
-            '@tiptap/starter-kit',
-            '@tiptap/extension-bullet-list',
-            '@tiptap/extension-ordered-list',
-            '@tiptap/extension-highlight',
-            '@tiptap/extension-underline',
-            '@tiptap/extension-text-align',
-            '@tiptap/extension-text-style',
-            '@tiptap/extension-color',
-            '@tiptap/extension-table',
-            '@tiptap/extension-table-row',
-            '@tiptap/extension-table-header',
-            '@tiptap/extension-table-cell',
-            '@tiptap/extension-image',
-            '@tiptap/extension-link',
-            '@tiptap/extension-font-family'
+            '@radix-ui/react-alert-dialog',
           ],
 
           // PDF generation (only loaded on export)
           'vendor-pdf': ['pdfjs-dist', 'jspdf', 'html2canvas', 'docx'],
 
-          // OCR engine (huge — only loaded when user runs OCR)
+          // OCR engine (only loaded when user runs OCR)
           'vendor-ocr': ['tesseract.js'],
 
-          // Charts and calendar
-          'vendor-charts': ['recharts', '@fullcalendar/core', '@fullcalendar/react'],
-
-          // Authentication and database
-          'vendor-auth': ['@supabase/supabase-js'],
-
-          // Utilities
-          'vendor-utils': [
-            'date-fns',
-            'moment',
-            'uuid',
-            'papaparse',
-            'zod',
-            'clsx',
-            'class-variance-authority',
-            'tailwind-merge'
-          ]
+          // NOTE: recharts, @fullcalendar/*, @tiptap/*, moment intentionally NOT chunked here.
+          // Letting Rollup auto-split puts them inside the lazy-loaded route chunks
+          // that import them, so they're not downloaded on landing/dashboard.
         }
       }
     },

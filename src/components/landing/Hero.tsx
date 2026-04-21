@@ -76,38 +76,20 @@ const Hero = () => {
         </div>
         <div className="relative mt-8 lg:mt-0">
           <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-mint-300 to-neutral-300 blur-2xl sm:blur-3xl opacity-20" />
-          <img
-            src="/lovable-uploads/hero.png?v=5"
-            alt="PrepGenie dashboard showing flashcards, quizzes, study plans, notes, and analytics tracking"
-            width={1600}
-            height={900}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 50vw"
-            loading="eager"
-            decoding="async"
-            className="relative rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl w-full object-cover max-h-[400px] sm:max-h-none sm:aspect-[16/10]"
-            onError={(e) => {
-              const el = e.currentTarget as HTMLImageElement;
-              const step = Number(el.dataset.step || '0');
-              const candidates = [
-                '/lovable-uploads/hero.png',
-                '/lovable-uploads/hero.webp',
-                '/lovable-uploads/hero.jpg',
-                '/lovable-uploads/Hero.png',
-                '/lovable-uploads/Hero.webp',
-                '/lovable-uploads/Hero.jpg',
-                '/lovable-uploads/hero-image.png',
-                '/lovable-uploads/hero-image.jpg',
-                '/lovable-uploads/hero-image.webp',
-                '/lovable-uploads/dfc64fc7-59ae-4272-b049-ebb22b83b527.png',
-                '/placeholder.svg',
-              ];
-              if (step < candidates.length) {
-                const next = candidates[step];
-                el.src = next;
-                el.dataset.step = String(step + 1);
-              }
-            }}
-          />
+          <picture>
+            <source srcSet="/lovable-uploads/hero.webp" type="image/webp" />
+            <img
+              src="/lovable-uploads/hero.png?v=5"
+              alt="PrepGenie dashboard showing flashcards, quizzes, study plans, notes, and analytics tracking"
+              width={1600}
+              height={900}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 50vw"
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              className="relative rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl w-full object-cover max-h-[400px] sm:max-h-none sm:aspect-[16/10]"
+            />
+          </picture>
           <div className="absolute -bottom-2 sm:-bottom-4 -right-2 sm:-right-4 bg-white rounded-lg shadow-lg p-2 sm:p-3 border border-mint-100">
             <p className="text-xs text-gray-600 font-medium">📊 Study Analytics</p>
           </div>

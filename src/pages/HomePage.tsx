@@ -54,7 +54,7 @@ const HomePage = () => {
         <title>AI Study App: Notes, Flashcards, Quizzes</title>
         <meta name="description" content="Turn notes into flashcards and quizzes with AI. Plans, analytics, timer, and goals to study smarter." />
         {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
-        <link rel="preload" as="image" href="/lovable-uploads/hero.png?v=5" />
+        <link rel="preload" as="image" href="/lovable-uploads/hero.webp" type="image/webp" />
         <meta property="og:title" content="AI Study App: Notes, Flashcards, Quizzes" />
         <meta property="og:description" content="Turn notes into flashcards and quizzes with AI. Plans, analytics, timer, and goals to study smarter." />
         <meta name="twitter:card" content="summary" />
