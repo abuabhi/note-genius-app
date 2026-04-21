@@ -3436,16 +3436,17 @@ export type Database = {
           archived_reason: string | null
           created_at: string | null
           description: string | null
-          end_date: string
+          end_date: string | null
           extension_count: number | null
           flashcard_set_id: string | null
           grace_period_days: number | null
           id: string
           is_completed: boolean | null
+          kind: string
           progress: number | null
           start_date: string
           status: string | null
-          target_hours: number
+          target_hours: number | null
           title: string
           updated_at: string | null
           user_id: string
@@ -3456,16 +3457,17 @@ export type Database = {
           archived_reason?: string | null
           created_at?: string | null
           description?: string | null
-          end_date: string
+          end_date?: string | null
           extension_count?: number | null
           flashcard_set_id?: string | null
           grace_period_days?: number | null
           id?: string
           is_completed?: boolean | null
+          kind?: string
           progress?: number | null
           start_date?: string
           status?: string | null
-          target_hours: number
+          target_hours?: number | null
           title: string
           updated_at?: string | null
           user_id: string
@@ -3476,16 +3478,17 @@ export type Database = {
           archived_reason?: string | null
           created_at?: string | null
           description?: string | null
-          end_date?: string
+          end_date?: string | null
           extension_count?: number | null
           flashcard_set_id?: string | null
           grace_period_days?: number | null
           id?: string
           is_completed?: boolean | null
+          kind?: string
           progress?: number | null
           start_date?: string
           status?: string | null
-          target_hours?: number
+          target_hours?: number | null
           title?: string
           updated_at?: string | null
           user_id?: string

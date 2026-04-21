@@ -117,7 +117,7 @@ export const standardRoutes: RouteConfig[] = [
   },
   {
     path: '/todos',
-    element: <TodoPage />
+    element: <Navigate to="/goals" replace />
   },
   {
     path: '/schedule',

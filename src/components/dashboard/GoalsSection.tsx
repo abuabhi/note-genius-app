@@ -90,20 +90,18 @@ export const GoalsSection = () => {
         ) : (
           <div className="space-y-3">
             {goals
-              .map((goal) => {
-                // Calculate days left
-                const endDate = new Date(goal.end_date);
+              .map((goal: any) => {
+                const isTask = goal.kind === 'task';
+                const endDate = goal.end_date ? new Date(goal.end_date) : null;
                 const today = new Date();
-                const daysLeft = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                
-                // Determine status
-                const isOverdue = daysLeft < 0 && !goal.is_completed;
-                const isAlmostDue = daysLeft <= 3 && daysLeft >= 0 && !goal.is_completed;
-                
-                return { ...goal, daysLeft, isOverdue, isAlmostDue };
+                const daysLeft = endDate
+                  ? Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+                  : null;
+                const isOverdue = daysLeft !== null && daysLeft < 0 && !goal.is_completed;
+                const isAlmostDue = daysLeft !== null && daysLeft <= 3 && daysLeft >= 0 && !goal.is_completed;
+                return { ...goal, isTask, daysLeft, isOverdue, isAlmostDue };
               })
               .sort((a, b) => {
-                // Sort overdue first, then almost due, then normal
                 if (a.isOverdue && !b.isOverdue) return -1;
                 if (!a.isOverdue && b.isOverdue) return 1;
                 if (a.isAlmostDue && !b.isAlmostDue) return -1;
@@ -123,7 +121,7 @@ export const GoalsSection = () => {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h4 className={`font-medium ${
                           goal.isOverdue
                             ? "text-red-900"
@@ -133,6 +131,9 @@ export const GoalsSection = () => {
                         }`}>
                           {goal.title}
                         </h4>
+                        <Badge variant="outline" className="text-xs">
+                          {goal.isTask ? "Task" : "Goal"}
+                        </Badge>
                         {goal.isOverdue && (
                           <Badge variant="outline" className="bg-red-100 text-red-800 text-xs">
                             Overdue
@@ -144,33 +145,34 @@ export const GoalsSection = () => {
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 text-sm text-mint-600">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {goal.target_hours}h target
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3" />
-                          {goal.progress || 0}% complete
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {goal.isOverdue ? (
-                            <>
-                              <AlertCircle className="h-3 w-3" />
-                              {Math.abs(goal.daysLeft)} days overdue
-                            </>
-                          ) : goal.isAlmostDue ? (
-                            <>
-                              <Clock className="h-3 w-3" />
-                              {goal.daysLeft} days left
-                            </>
-                          ) : (
-                            <>
-                              <Clock className="h-3 w-3" />
-                              {goal.daysLeft} days left
-                            </>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-3 text-sm text-mint-600 flex-wrap">
+                        {!goal.isTask && goal.target_hours != null && (
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {goal.target_hours}h target
+                          </div>
+                        )}
+                        {!goal.isTask && (
+                          <div className="flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            {goal.progress || 0}% complete
+                          </div>
+                        )}
+                        {goal.daysLeft !== null && (
+                          <div className="flex items-center gap-1">
+                            {goal.isOverdue ? (
+                              <>
+                                <AlertCircle className="h-3 w-3" />
+                                {Math.abs(goal.daysLeft)} days overdue
+                              </>
+                            ) : (
+                              <>
+                                <Clock className="h-3 w-3" />
+                                {goal.daysLeft} days left
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -179,7 +181,7 @@ export const GoalsSection = () => {
             <div className="pt-2">
               <Button asChild variant="outline" className="w-full">
                 <Link to="/goals">
-                  View All Goals
+                  View All Goals & Tasks
                 </Link>
               </Button>
             </div>

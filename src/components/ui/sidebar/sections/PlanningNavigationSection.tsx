@@ -42,15 +42,6 @@ export const PlanningNavigationSection = ({
           isCollapsed={isCollapsed}
         />
       )}
-      {isTodosVisible && (
-        <NavLink
-          to="/todos"
-          icon={ListTodo}
-          label="Todos"
-          isActive={pathname.includes("/todos")}
-          isCollapsed={isCollapsed}
-        />
-      )}
     </>
   );
 };
