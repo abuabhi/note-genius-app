@@ -150,7 +150,7 @@ export const QuizTakingCard = ({ questions, quizId, onQuizComplete }: QuizTaking
         </CardHeader>
         <CardContent className="pt-4 px-4 sm:px-6">
           <div className="space-y-6">
-            <div className="text-base sm:text-lg font-medium text-mint-800 leading-relaxed">
+            <div className="text-base sm:text-lg font-medium text-mint-800 leading-relaxed max-h-[30vh] overflow-y-auto break-words pr-1">
               {currentQuestion.question}
             </div>
             
@@ -164,7 +164,7 @@ export const QuizTakingCard = ({ questions, quizId, onQuizComplete }: QuizTaking
                 <label
                   key={option.id}
                   htmlFor={option.id}
-                  className={`flex items-center space-x-3 border rounded-lg p-4 min-h-[56px] cursor-pointer transition-all ${
+                  className={`flex items-start space-x-3 border rounded-lg p-4 min-h-[56px] max-h-[8rem] overflow-y-auto cursor-pointer transition-all ${
                     showAnswer && option.is_correct
                       ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                       : showAnswer && selectedOptionId === option.id && !option.is_correct
@@ -174,15 +174,15 @@ export const QuizTakingCard = ({ questions, quizId, onQuizComplete }: QuizTaking
                       : "border-mint-200 hover:border-mint-300 hover:bg-mint-25"
                   }`}
                 >
-                  <RadioGroupItem value={option.id} id={option.id} />
-                  <span className="flex-grow text-mint-700 text-sm sm:text-base">
+                  <RadioGroupItem value={option.id} id={option.id} className="mt-1 flex-shrink-0" />
+                  <span className="flex-grow text-mint-700 text-sm sm:text-base break-words">
                     {option.content}
                   </span>
                   {showAnswer && option.is_correct && (
-                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                   )}
                   {showAnswer && !option.is_correct && selectedOptionId === option.id && (
-                    <XCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                    <XCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                   )}
                 </label>
               ))}
@@ -191,9 +191,9 @@ export const QuizTakingCard = ({ questions, quizId, onQuizComplete }: QuizTaking
             {showAnswer && currentQuestion.explanation && isUserPremium && (
               <div className="mt-6">
                 <Separator className="my-4" />
-                <div className="bg-mint-50 rounded-lg p-4 border border-mint-100">
+                <div className="bg-mint-50 rounded-lg p-4 border border-mint-100 max-h-[20vh] overflow-y-auto">
                   <div className="text-sm font-medium text-mint-800 mb-2">Explanation:</div>
-                  <p className="text-sm text-mint-700 leading-relaxed">{currentQuestion.explanation}</p>
+                  <p className="text-sm text-mint-700 leading-relaxed break-words">{currentQuestion.explanation}</p>
                 </div>
               </div>
             )}

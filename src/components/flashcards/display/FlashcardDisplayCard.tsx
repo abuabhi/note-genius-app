@@ -39,33 +39,45 @@ export const FlashcardDisplayCard: React.FC<FlashcardDisplayCardProps> = ({
   const safeBack = sanitizeHTML(backContent);
 
   return (
-    <Card className={cn("p-8 min-h-[300px] cursor-pointer relative", className)} onClick={onFlip}>
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className="text-center mb-4">
+    <Card
+      className={cn(
+        "p-6 sm:p-8 min-h-[300px] max-h-[60vh] cursor-pointer relative flex flex-col",
+        className
+      )}
+      onClick={onFlip}
+    >
+      <div className="flex-1 overflow-y-auto pr-1">
+        <div className="text-center">
           {isFlipped ? (
-            <div className="prose prose-sm max-w-none">
+            <div
+              className="prose prose-sm max-w-none break-words"
+              style={{ fontSize: 'clamp(0.875rem, 2vw, 1.125rem)' }}
+            >
               <div dangerouslySetInnerHTML={{ __html: safeBack }} />
             </div>
           ) : (
-            <div className="prose prose-sm max-w-none">
+            <div
+              className="prose prose-sm max-w-none break-words"
+              style={{ fontSize: 'clamp(0.875rem, 2vw, 1.125rem)' }}
+            >
               <div dangerouslySetInnerHTML={{ __html: safeFront }} />
             </div>
           )}
         </div>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onFlip();
-          }}
-          className="absolute bottom-4 right-4"
-        >
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Flip
-        </Button>
       </div>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          onFlip();
+        }}
+        className="absolute bottom-3 right-3"
+      >
+        <RotateCcw className="h-4 w-4 mr-2" />
+        Flip
+      </Button>
     </Card>
   );
 };

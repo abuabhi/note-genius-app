@@ -179,23 +179,16 @@ export const useFlashcardIntegration = (note: Note) => {
     setIsGenerating(true);
     try {
       const flashcardSet = await findOrCreateFlashcardSet(note);
-      
-      // This would typically call an AI service to generate multiple flashcards
-      // For now, we'll create a simple implementation
-      const segments = content.split('\n').filter(line => line.trim().length > 10);
+
+      // Real AI generation via edge function (no more fake newline-splitting)
+      const { generateFlashcardsFromNotes } = await import('@/services/aiService');
+      const aiCards = await generateFlashcardsFromNotes(content, count, note?.subject);
+
       const flashcards = [];
-
-      for (let i = 0; i < Math.min(count, segments.length); i++) {
-        const segment = segments[i];
-        const question = `What is the key point about: ${segment.slice(0, 50)}...?`;
-        const answer = segment;
-
-        const flashcard = await generateFlashcardFromChat(question, answer, flashcardSet.id);
-        if (flashcard) {
-          flashcards.push(flashcard);
-        }
+      for (const c of aiCards) {
+        const flashcard = await generateFlashcardFromChat(c.front, c.back, flashcardSet.id);
+        if (flashcard) flashcards.push(flashcard);
       }
-
       return flashcards;
     } catch (error) {
       console.error('Error generating flashcards from content:', error);
