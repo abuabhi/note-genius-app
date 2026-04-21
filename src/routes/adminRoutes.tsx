@@ -1,31 +1,32 @@
 
-import React from 'react';
-// import SidebarLayout from "@/components/layout/SidebarLayout"; // Not needed - using global SidebarProvider
-import AdminDashboardPage from "@/pages/AdminDashboardPage";
-import AdminUsersPage from "@/pages/AdminUsersPage";
-import AdminFlashcardPage from "@/pages/AdminFlashcardPage";
-import AdminSectionsPage from "@/pages/AdminSectionsPage";
-import AdminSubjectsPage from "@/pages/AdminSubjectsPage";
-import AdminGradesPage from "@/pages/AdminGradesPage";
-import AdminCSVImportPage from "@/pages/AdminCSVImportPage";
-import AdminAnalyticsPage from "@/pages/AdminAnalyticsPage";
-import AdminAnnouncementsPage from "@/pages/AdminAnnouncementsPage";
-import AdminTierLimitsPage from "@/pages/AdminTierLimitsPage";
-import AdminFeedbackPage from "@/pages/AdminFeedbackPage";
-import AdminFeedbackSettingsPage from "@/pages/AdminFeedbackSettingsPage";
-import AdminSystemMonitoringPage from "@/pages/AdminSystemMonitoringPage";
-import AdminContactSubmissionsPage from "@/pages/AdminContactSubmissionsPage";
-// AdminHelpManagementPage removed - now using external GitBook
-import AdminInfluencersPage from "@/pages/AdminInfluencersPage";
-import AdminCouponsPage from "@/pages/AdminCouponsPage";
-import AdminPayoutsPage from "@/pages/AdminPayoutsPage";
-import AdminTranscriptionsPage from "@/pages/AdminTranscriptionsPage";
-import AdminVideoManagementPage from "@/pages/AdminVideoManagementPage";
-import AdminBlogPage from "@/pages/AdminBlogPage";
-import AdminBlogEditorPage from "@/pages/AdminBlogEditorPage";
-import AdminBlogAIGeneratorPage from "@/pages/AdminBlogAIGeneratorPage";
-import BlogCampaignsPage from "@/pages/BlogCampaignsPage";
+import React, { lazy } from 'react';
 import { RouteConfig } from './publicRoutes';
+
+// Lazy load every admin page so their heavy deps (recharts, tiptap, etc.)
+// only download when an admin actually visits the page.
+const AdminDashboardPage = lazy(() => import("@/pages/AdminDashboardPage"));
+const AdminUsersPage = lazy(() => import("@/pages/AdminUsersPage"));
+const AdminFlashcardPage = lazy(() => import("@/pages/AdminFlashcardPage"));
+const AdminSectionsPage = lazy(() => import("@/pages/AdminSectionsPage"));
+const AdminSubjectsPage = lazy(() => import("@/pages/AdminSubjectsPage"));
+const AdminGradesPage = lazy(() => import("@/pages/AdminGradesPage"));
+const AdminCSVImportPage = lazy(() => import("@/pages/AdminCSVImportPage"));
+const AdminAnalyticsPage = lazy(() => import("@/pages/AdminAnalyticsPage"));
+const AdminAnnouncementsPage = lazy(() => import("@/pages/AdminAnnouncementsPage"));
+const AdminTierLimitsPage = lazy(() => import("@/pages/AdminTierLimitsPage"));
+const AdminFeedbackPage = lazy(() => import("@/pages/AdminFeedbackPage"));
+const AdminFeedbackSettingsPage = lazy(() => import("@/pages/AdminFeedbackSettingsPage"));
+const AdminSystemMonitoringPage = lazy(() => import("@/pages/AdminSystemMonitoringPage"));
+const AdminContactSubmissionsPage = lazy(() => import("@/pages/AdminContactSubmissionsPage"));
+const AdminInfluencersPage = lazy(() => import("@/pages/AdminInfluencersPage"));
+const AdminCouponsPage = lazy(() => import("@/pages/AdminCouponsPage"));
+const AdminPayoutsPage = lazy(() => import("@/pages/AdminPayoutsPage"));
+const AdminTranscriptionsPage = lazy(() => import("@/pages/AdminTranscriptionsPage"));
+const AdminVideoManagementPage = lazy(() => import("@/pages/AdminVideoManagementPage"));
+const AdminBlogPage = lazy(() => import("@/pages/AdminBlogPage"));
+const AdminBlogEditorPage = lazy(() => import("@/pages/AdminBlogEditorPage"));
+const AdminBlogAIGeneratorPage = lazy(() => import("@/pages/AdminBlogAIGeneratorPage"));
+const BlogCampaignsPage = lazy(() => import("@/pages/BlogCampaignsPage"));
 
 // Admin routes - wrapped with SidebarLayout for sidebar/header
 export const adminRoutes: RouteConfig[] = [
@@ -46,7 +47,6 @@ export const adminRoutes: RouteConfig[] = [
   { path: "/admin/subjects", element: <AdminSubjectsPage /> },
   { path: "/admin/csv-import", element: <AdminCSVImportPage /> },
   { path: "/admin/tier-limits", element: <AdminTierLimitsPage /> },
-  // Help management removed - now using external GitBook
   { path: "/admin/coupons", element: <AdminCouponsPage /> },
   { path: "/admin/payouts", element: <AdminPayoutsPage /> },
   { path: "/admin/blog", element: <AdminBlogPage /> },

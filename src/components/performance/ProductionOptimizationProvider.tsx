@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTabVisibility } from '@/hooks/performance/useTabVisibility';
 import { useOptimizedPerformanceMonitor } from '@/hooks/performance/useOptimizedPerformanceMonitor';
 
@@ -7,45 +7,51 @@ interface ProductionOptimizationProviderProps {
 }
 
 /**
- * Provider component that enables production optimizations
- * Manages background processes based on tab visibility and environment
+ * Provider component that enables production optimizations.
+ * All monitoring work is deferred until the browser is idle so it never
+ * blocks first paint or hydration.
  */
-export const ProductionOptimizationProvider: React.FC<ProductionOptimizationProviderProps> = ({ 
-  children 
+export const ProductionOptimizationProvider: React.FC<ProductionOptimizationProviderProps> = ({
+  children,
 }) => {
+  const [monitoringEnabled, setMonitoringEnabled] = useState(false);
   const isTabVisible = useTabVisibility();
   const isDevelopment = process.env.NODE_ENV === 'development';
-  
-  // Enable performance monitoring only in development or when explicitly needed
-  const { isHealthy } = useOptimizedPerformanceMonitor(isDevelopment);
 
   useEffect(() => {
-    // Log tab visibility changes for debugging
-    if (isDevelopment) {
+    const enable = () => setMonitoringEnabled(true);
+    if ('requestIdleCallback' in window) {
+      const id = (window as any).requestIdleCallback(enable, { timeout: 4000 });
+      return () => (window as any).cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(enable, 2500);
+    return () => clearTimeout(t);
+  }, []);
+
+  useOptimizedPerformanceMonitor(monitoringEnabled && isDevelopment);
+
+  useEffect(() => {
+    if (isDevelopment && monitoringEnabled) {
       console.log(`🔍 Tab visibility changed: ${isTabVisible ? 'visible' : 'hidden'}`);
     }
-  }, [isTabVisible, isDevelopment]);
+  }, [isTabVisible, isDevelopment, monitoringEnabled]);
 
-  // Add performance observer for production monitoring
   useEffect(() => {
-    if (!isDevelopment && 'PerformanceObserver' in window) {
-      const observer = new PerformanceObserver((list) => {
-        // Log navigation timing for production monitoring
-        for (const entry of list.getEntries()) {
-          if (entry.entryType === 'navigation') {
-            const navEntry = entry as PerformanceNavigationTiming;
-            if (navEntry.loadEventEnd > 5000) {
-              console.warn('Slow page load detected:', navEntry.loadEventEnd);
-            }
+    if (!monitoringEnabled || isDevelopment || !('PerformanceObserver' in window)) return;
+
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (entry.entryType === 'navigation') {
+          const navEntry = entry as PerformanceNavigationTiming;
+          if (navEntry.loadEventEnd > 5000) {
+            console.warn('Slow page load detected:', navEntry.loadEventEnd);
           }
         }
-      });
-
-      observer.observe({ type: 'navigation', buffered: true });
-
-      return () => observer.disconnect();
-    }
-  }, [isDevelopment]);
+      }
+    });
+    observer.observe({ type: 'navigation', buffered: true });
+    return () => observer.disconnect();
+  }, [monitoringEnabled, isDevelopment]);
 
   return <>{children}</>;
 };
