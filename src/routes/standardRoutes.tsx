@@ -19,7 +19,6 @@ const CreateQuizPage = lazy(() => import('@/pages/CreateQuizPage'));
 const NoteToFlashcardPage = lazy(() => import('@/pages/NoteToFlashcardPage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
-const TodoPage = lazy(() => import('@/pages/TodoPage'));
 const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
 const RemindersPage = lazy(() => import('@/pages/RemindersPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
