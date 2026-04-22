@@ -27,6 +27,7 @@ const AdminBlogPage = lazy(() => import("@/pages/AdminBlogPage"));
 const AdminBlogEditorPage = lazy(() => import("@/pages/AdminBlogEditorPage"));
 const AdminBlogAIGeneratorPage = lazy(() => import("@/pages/AdminBlogAIGeneratorPage"));
 const BlogCampaignsPage = lazy(() => import("@/pages/BlogCampaignsPage"));
+const AdminStripeWebhookChecklistPage = lazy(() => import("@/pages/AdminStripeWebhookChecklistPage"));
 
 // Admin routes - wrapped with SidebarLayout for sidebar/header
 export const adminRoutes: RouteConfig[] = [
@@ -54,4 +55,5 @@ export const adminRoutes: RouteConfig[] = [
   { path: "/admin/blog/edit/:id", element: <AdminBlogEditorPage /> },
   { path: "/admin/blog/ai-generate", element: <AdminBlogAIGeneratorPage /> },
   { path: "/admin/blog/campaigns", element: <BlogCampaignsPage /> },
+  { path: "/admin/stripe-webhook-checklist", element: <AdminStripeWebhookChecklistPage /> },
 ];
