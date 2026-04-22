@@ -3,6 +3,7 @@ import { Clock, Play, Pause, X, BookOpen, Brain, FileText, Calendar, Loader } fr
 import { Button } from '@/components/ui/button';
 import { useUnifiedSessionTracker } from '@/hooks/useUnifiedSessionTracker';
 import { cn } from '@/lib/utils';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 interface SessionTimerProps {
   isCollapsed: boolean;
   hideIcon?: boolean;
@@ -88,8 +89,12 @@ export const SessionTimer = ({
   };
   const theme = getSessionTheme();
   const titleToShow = currentTitle ? stripStudyPlanPrefix ? currentTitle.replace(/^Study Plan:\s*/i, '') : currentTitle : 'Study Session';
-  const handleEndSession = () => {
-    const confirmEnd = window.confirm('Are you sure you want to end this study session?');
+  const handleEndSession = async () => {
+    const confirmEnd = await confirmDialog({
+      title: 'End study session?',
+      description: 'Are you sure you want to end this study session?',
+      confirmText: 'End Session',
+    });
     if (confirmEnd) {
       endSession('Manual session end via sidebar timer');
     }
