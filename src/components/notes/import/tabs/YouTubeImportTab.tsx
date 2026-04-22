@@ -192,7 +192,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
 
   const handleSaveNote = async () => {
     if (!noteTitle.trim() || !noteContent.trim()) {
-      alert('Please provide both title and content for the note');
+      toast.error('Please provide both title and content for the note');
       return;
     }
 

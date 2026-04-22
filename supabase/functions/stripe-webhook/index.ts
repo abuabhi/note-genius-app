@@ -62,6 +62,65 @@ serve(async (req) => {
 
     logStep("Processing event", { type: event.type, id: event.id });
 
+    // ===== Subscription lifecycle handlers =====
+    if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.created") {
+      const subscription = event.data.object as Stripe.Subscription;
+      logStep("Subscription upserted", { id: subscription.id, status: subscription.status });
+
+      const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
+      const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+      const email = customer.email;
+
+      if (email) {
+        const priceId = subscription.items.data[0]?.price.id;
+        const amount = subscription.items.data[0]?.price.unit_amount || 0;
+
+        const { error } = await supabaseClient
+          .from("mock_subscriptions")
+          .upsert({
+            user_id: null,
+            plan_name: priceId || "unknown",
+            mrr_amount: amount / 100,
+            status: subscription.status,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "user_id" });
+
+        if (error) logStep("Failed to upsert subscription", { error });
+        else logStep("Subscription synced", { email, status: subscription.status });
+      }
+
+      return new Response("Subscription updated", { status: 200, headers: corsHeaders });
+    }
+
+    if (event.type === "customer.subscription.deleted") {
+      const subscription = event.data.object as Stripe.Subscription;
+      logStep("Subscription cancelled", { id: subscription.id });
+
+      const { error } = await supabaseClient
+        .from("mock_subscriptions")
+        .update({
+          status: "cancelled",
+          cancelled_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("plan_name", subscription.items.data[0]?.price.id || "");
+
+      if (error) logStep("Failed to mark subscription cancelled", { error });
+      return new Response("Subscription cancelled", { status: 200, headers: corsHeaders });
+    }
+
+    if (event.type === "invoice.payment_failed") {
+      const invoice = event.data.object as Stripe.Invoice;
+      logStep("Payment failed", {
+        id: invoice.id,
+        customer: invoice.customer,
+        amount_due: invoice.amount_due,
+        attempt_count: invoice.attempt_count,
+      });
+      // Optional: notify user via email or flag account here
+      return new Response("Payment failure logged", { status: 200, headers: corsHeaders });
+    }
+
     // Handle checkout.session.completed event
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;

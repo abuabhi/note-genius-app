@@ -47,7 +47,8 @@ export const initiateOneNoteAuth = async (forceAccountSelection = false) => {
   const fetchedClientId = await getMicrosoftClientId();
   
   if (!fetchedClientId) {
-    alert("Microsoft Graph client ID is not configured. Please contact your administrator.");
+    const { toast } = await import("sonner");
+    toast.error("Microsoft Graph client ID is not configured. Please contact your administrator.");
     return;
   }
 
