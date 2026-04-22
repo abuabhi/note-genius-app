@@ -1,6 +1,7 @@
 import React from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { confirmDialog } from "@/components/ui/confirm-dialog";
 
 interface UnifiedDeleteActionProps {
   noteId: string;
@@ -24,9 +25,12 @@ export const UnifiedDeleteAction = ({
     console.log("🗑️ [UNIFIED DELETE] Starting delete for note:", noteId, noteTitle);
     
     // Show confirmation dialog
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${noteTitle}"?\n\nThis action cannot be undone.`
-    );
+    const confirmed = await confirmDialog({
+      title: `Delete "${noteTitle}"?`,
+      description: "This action cannot be undone.",
+      confirmText: "Delete",
+      destructive: true,
+    });
     
     if (!confirmed) {
       console.log("🚫 [UNIFIED DELETE] User cancelled deletion");
