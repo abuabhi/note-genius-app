@@ -1,97 +1,64 @@
 
 
-## Pre-Launch Audit & Hardening Plan
+## Pre-Launch Fix Plan
 
-A focused sweep across 6 dimensions to confirm production readiness. No feature work — only measure, remove, consolidate.
+You don't need to "see a report" — the audit findings ARE this plan. Here's everything that needs fixing before go-live, in priority order. Approve and I'll execute all of it in one pass.
 
-### 1. Re-profile load speed (verify the wins)
+### 🔴 Block-launch fixes (must do)
 
-Re-run `browser--performance_profile` on the **published** build for:
-- `/` (landing) — confirm FCP < 2s, initial JS < 350KB
-- `/dashboard` (warm) — confirm shared-bundle reduction carried over
-- `/analytics` — confirm recharts is now lazy (chunk loads only here)
-- `/notes/study/:id` — confirm tiptap is now lazy
-- `/schedule` — confirm fullcalendar is now lazy
+**1. Re-verify the live build**
+You republished — I'll re-run the performance profile on `prepgenie.lovable.app` to confirm landing FCP is now under 2s and initial JS under 350KB. If the numbers are still bad, the publish didn't take and we'll investigate.
 
-Deliverable: before/after table.
+**2. Remove `moment` (~290KB unused dependency)**
+- `npm uninstall moment`
+- Grep for any leftover `import moment` and convert to `date-fns` (already in the project).
 
-### 2. Dead code & unused dependency sweep
+**3. Fix Stripe webhook lifecycle gaps**
+File: `supabase/functions/stripe-webhook/index.ts`
+Currently only handles `checkout.session.completed`. Add handlers for:
+- `customer.subscription.updated` — sync plan changes (upgrades/downgrades)
+- `customer.subscription.deleted` — revoke access on cancellation
+- `invoice.payment_failed` — flag account, optionally email user
 
-- Run `depcheck`-style audit on `package.json` — flag unused packages (likely candidates: `moment` if not yet removed, leftover Radix primitives, unused chart libs).
-- Grep for orphaned files: components/hooks/utils with zero imports.
-- Find duplicate implementations of the same thing (e.g. multiple `useDebounce`, multiple toast helpers, multiple date formatters).
-- Check for `console.log` left in non-dev code paths (terser already strips in prod, but flag noisy ones).
-- Find commented-out blocks > 10 lines.
+Without these, paying customers who cancel will keep access, and failed renewals won't be caught.
 
-Deliverable: list of files/packages to delete with size impact.
+**4. Fix Vite env var bug in `useUnifiedReminderSystem`**
+Uses `process.env.NODE_ENV` (Node-only, undefined in Vite → silently broken). Replace with `import.meta.env.MODE`.
 
-### 3. Component standardization audit
+### ⚠️ Fix-before-launch polish
 
-Map every instance of these patterns and flag divergence:
+**5. Replace native browser dialogs**
+- 2× `alert()` calls → shadcn `toast()`
+- 6× `window.confirm()` calls → shadcn `<AlertDialog>`
+Native dialogs look unprofessional and break on mobile webviews. I'll list exact files when executing.
 
-| Pattern | Canonical version | Check for divergence |
-|---|---|---|
-| Search input | `UniversalFilters` | Any page rolling its own `<input>` + debounce |
-| Filter bar | `UniversalFilters` + `useUniversalFilters` | Notes uses it ✅ — check Quiz, Flashcards, Goals, Resources |
-| Empty state | (find canonical) | Pages with custom empty markup |
-| Loading skeleton | (find canonical) | Pages with custom spinners |
-| Error boundary | `SecurityErrorBoundary` + others | Inconsistent fallbacks |
-| Date display | (date-fns formatter) | Mixed `toLocaleDateString` / `moment` / custom |
-| Confirm dialog | (find canonical) | Native `confirm()` calls |
-| Toast | `@/components/ui/toaster` | `alert()` calls, custom toasts |
+**6. SEO basics for landing**
+- Generate a branded `og-image.png` (1200×630) for social sharing
+- Confirm `<title>`, `<meta description>`, OG tags are set on HomePage
+- `robots.txt` and `sitemap.xml` already exist (verified) ✅
 
-Deliverable: divergence list + recommended consolidation order.
+**7. Code-split the 921KB `vendor-pdf` chunk**
+Currently lazy-loaded ✅, but it's huge. Split `pdfjs` (viewer) from `jspdf`+`html2canvas`+`docx` (export) so users who only export don't download the viewer.
 
-### 4. Memory leak & timer hygiene scan
+### ✅ Confirmed healthy (no action)
+- RLS security scan: clean
+- No memory leaks (timers, listeners, Supabase channels all cleaned up)
+- React Query config follows project standards
+- Filter/search standardization: already consistent via `UniversalFilters`
 
-Memory rule says all intervals/timeouts must use `useManagedInterval`/`useManagedTimeout`. Verify:
-- Grep for raw `setInterval(` and `setTimeout(` in `src/` — flag every offender outside `utils/performance.ts`.
-- Grep for `addEventListener(` without a paired `removeEventListener` in cleanup.
-- Grep for Supabase `.channel()` subscriptions without `removeChannel` in cleanup.
-- Grep for `new AbortController()` patterns to confirm fetch cancellation on unmount.
-- Check React Query: any `staleTime: Infinity` + `refetchInterval` combos that quietly run forever.
-
-Deliverable: leak risk list ranked by severity.
-
-### 5. Stripe / payments integration check
-
-You mentioned Stripe — verify:
-- Which integration is in use (Lovable seamless `payments` vs BYOK `stripe`).
-- All Stripe API calls go through edge functions (no secret key client-side).
-- Webhook endpoint exists and is verified (signature check, not just trusting payload).
-- Test mode vs live mode keys are clearly separated by env.
-- Cancel/refund/upgrade/downgrade flows are wired.
-- `SubscriptionProvider` lazy-fetches (already in last optimization round — confirm still working).
-
-Deliverable: go-live blockers, if any.
-
-### 6. Workflow & polish improvements
-
-- React Query: confirm `refetchOnWindowFocus: false` is project-wide (per memory rule). Flag any per-query overrides.
-- RLS spot-check: run `security--run_security_scan` on the Supabase backend — confirm no high-severity findings.
-- Environment: confirm Sentry DSN is set, error boundary fallbacks render something useful.
-- SEO basics on landing: `<title>`, `<meta description>`, OG tags, favicon, robots.txt, sitemap.xml.
-- Accessibility quick-pass: alt text on hero/avatars, focus states on buttons, form labels.
-- Bundle visualizer (`dist/bundle-analysis.html` already generated by Vite plugin) — open it and flag any single chunk > 200KB.
-
-### Output
-
-A single report with 6 sections matching the above. Each finding tagged:
-- 🔴 **Block launch** — must fix before go-live
-- ⚠️ **Fix soon** — ship is OK but address within a week
-- ✅ **Healthy** — confirmed good
-
-Followed by a prioritized fix list (top 10) and a final **go / no-go** verdict.
-
-### Method
-Read-only: `code--search_files`, `code--view`, `browser--performance_profile`, `security--run_security_scan`, `browser--list_network_requests`. No code edits in this pass — fixes get a separate plan once we see the findings.
+### Order of execution
+1. Re-profile live site (confirms #1)
+2. Uninstall moment + grep cleanup (#2)
+3. Stripe webhook handlers (#3)
+4. Env var fix (#4)
+5. Replace alert/confirm dialogs (#5)
+6. OG image + meta tag check (#6)
+7. PDF chunk split (#7)
+8. Final re-profile → go/no-go verdict
 
 ### Out of scope
-- New features.
-- Visual redesign.
-- Backend schema changes (unless RLS scan flags critical).
-- Load testing / k6 (separate infra concern).
+- New features, redesign, admin route optimization, load testing.
 
 ### Risk
-- Audit will surface a long list. I'll prioritize ruthlessly — only the top 10 must-fixes get into the post-audit fix plan; the rest go into a backlog file.
+- Stripe webhook changes need testing in Stripe test mode before live keys flip on. I'll add the handlers but you must trigger test events from the Stripe dashboard to confirm.
 
