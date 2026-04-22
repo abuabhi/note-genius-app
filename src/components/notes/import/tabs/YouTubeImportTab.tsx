@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 import { YouTubeVideoPlayer } from '../../display/YouTubeVideoPlayer';
 import { SubjectSelector } from '../components/SubjectSelector';
+import { toast } from 'sonner';
 
 interface YouTubeImportTabProps {
   onImport: (noteData: Omit<Note, 'id'>) => Promise<boolean>;
