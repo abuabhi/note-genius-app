@@ -108,8 +108,11 @@ export default defineConfig(({ mode }) => {
             '@radix-ui/react-alert-dialog',
           ],
 
-          // PDF generation (only loaded on export)
-          'vendor-pdf': ['pdfjs-dist', 'jspdf', 'html2canvas', 'docx'],
+          // PDF viewer (loaded only when displaying PDFs)
+          'vendor-pdf-viewer': ['pdfjs-dist'],
+
+          // PDF/Doc export (loaded only when exporting)
+          'vendor-pdf-export': ['jspdf', 'html2canvas', 'docx'],
 
           // OCR engine (only loaded when user runs OCR)
           'vendor-ocr': ['tesseract.js'],

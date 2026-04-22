@@ -6,6 +6,7 @@ import { Clock, Play, Pause, Square, GripVertical, AlertTriangle, Home } from 'l
 import { cn } from '@/lib/utils';
 import { DEBUG_CONFIG } from '@/config/debug';
 import { constrainToViewport, isPositionInViewport } from '@/utils/textTruncation';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 interface Position {
   x: number;
@@ -177,8 +178,12 @@ export const FloatingSessionTimer = () => {
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  const handleEndSession = () => {
-    const confirmed = window.confirm('Are you sure you want to end this session?');
+  const handleEndSession = async () => {
+    const confirmed = await confirmDialog({
+      title: 'End session?',
+      description: 'Are you sure you want to end this session?',
+      confirmText: 'End Session',
+    });
     if (confirmed) {
       endSession('Manual session end from floating timer');
     }

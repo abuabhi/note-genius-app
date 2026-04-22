@@ -7,6 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { INITIAL_EVENTS, createEventId } from './event-utils';
 import CreateEventDialog from './CreateEventDialog';
 import { useAuth } from '@/contexts/auth';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 interface ScheduleCalendarProps {
   selectedDate?: Date;
@@ -33,8 +34,14 @@ export function ScheduleCalendar({ selectedDate, onDateChange }: ScheduleCalenda
     }
   }, [onDateChange]);
 
-  const handleEventClick = useCallback((clickInfo: any) => {
-    if (window.confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
+  const handleEventClick = useCallback(async (clickInfo: any) => {
+    const ok = await confirmDialog({
+      title: 'Delete event?',
+      description: `Are you sure you want to delete the event '${clickInfo.event.title}'?`,
+      confirmText: 'Delete',
+      destructive: true,
+    });
+    if (ok) {
       clickInfo.event.remove();
     }
   }, []);

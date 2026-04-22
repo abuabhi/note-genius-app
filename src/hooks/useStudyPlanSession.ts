@@ -3,6 +3,7 @@ import { useUnifiedSessionTracker } from '@/hooks/useUnifiedSessionTracker';
 import { useActiveStudyPlans } from '@/hooks/useActiveStudyPlans';
 import { StudyPlan } from '@/types/studyPlanner';
 import { toast } from 'sonner';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 export const useStudyPlanSession = () => {
   const { 
@@ -24,9 +25,11 @@ export const useStudyPlanSession = () => {
       
       // Check if there's already an active session
       if (isActive) {
-        const confirmEnd = window.confirm(
-          'You have an active session running. Do you want to end it and start a new study session?'
-        );
+        const confirmEnd = await confirmDialog({
+          title: 'End current session?',
+          description: 'You have an active session running. Do you want to end it and start a new study session?',
+          confirmText: 'End & Start New',
+        });
         
         if (!confirmEnd) {
           return false;

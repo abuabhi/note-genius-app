@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 import { YouTubeVideoPlayer } from '../../display/YouTubeVideoPlayer';
 import { SubjectSelector } from '../components/SubjectSelector';
+import { toast } from 'sonner';
 
 interface YouTubeImportTabProps {
   onImport: (noteData: Omit<Note, 'id'>) => Promise<boolean>;
@@ -192,7 +193,7 @@ export const YouTubeImportTab = ({ onImport }: YouTubeImportTabProps) => {
 
   const handleSaveNote = async () => {
     if (!noteTitle.trim() || !noteContent.trim()) {
-      alert('Please provide both title and content for the note');
+      toast.error('Please provide both title and content for the note');
       return;
     }
 
