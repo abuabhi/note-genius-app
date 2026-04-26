@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import Layout from "@/components/layout/Layout";
 import { FlashcardProvider } from "@/contexts/FlashcardContext";
 import { useRequireAuth, UserTier } from "@/hooks/useRequireAuth";
 import { LibraryCatalog } from "@/components/library/LibraryCatalog";
@@ -24,33 +23,31 @@ const FlashcardLibraryPage = () => {
   ];
 
   return (
-    <Layout>
-      <FlashcardProvider>
-        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-          <StandardPageHeader
-            title="Flashcard Library"
-            description="Browse and access our comprehensive collection of study materials"
-            icon={<Library className="h-6 w-6 text-white" />}
-            breadcrumbs={breadcrumbs}
-          />
-          
-          <div className="container mx-auto px-6 py-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="md:col-span-1">
-                <LibraryFilters filters={filters} setFilters={setFilters} />
-              </div>
-              
-              <div className="md:col-span-3">
-                <LibraryCatalog
-                  filters={filters}
-                  userTier={currentUserTier}
-                />
-              </div>
+    <FlashcardProvider>
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <StandardPageHeader
+          title="Flashcard Library"
+          description="Browse and access our comprehensive collection of study materials"
+          icon={<Library className="h-6 w-6 text-white" />}
+          breadcrumbs={breadcrumbs}
+        />
+        
+        <div className="container mx-auto px-6 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="md:col-span-1">
+              <LibraryFilters filters={filters} setFilters={setFilters} />
+            </div>
+            
+            <div className="md:col-span-3">
+              <LibraryCatalog
+                filters={filters}
+                userTier={currentUserTier}
+              />
             </div>
           </div>
         </div>
-      </FlashcardProvider>
-    </Layout>
+      </div>
+    </FlashcardProvider>
   );
 };
 

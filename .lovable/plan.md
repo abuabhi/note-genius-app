@@ -1,56 +1,49 @@
-## Admin ToDo Tracker
+## Problem
 
-A private task tracker for DEAN-tier admins to manage internal build/ops work — fully separate from the user-facing study todos (which live in `study_goals`).
+`/onboarding` shows two headers and two footers because `OnboardingPage` is wrapped twice:
 
-### Database
+1. `AppRoutes` puts `miscRoutes` inside `ProtectedRoute` → `SidebarLayout`, which renders its own header (PrepGenie + bell + user) and `Footer`.
+2. `OnboardingPage` then also wraps its content in `<Layout>`, which renders `NavBar` + `Footer`.
 
-New table `admin_todos`:
-- `title` (text, required)
-- `description` (text, optional — supports multi-line notes)
-- `status`: `todo` | `in_progress` | `done` (default `todo`)
-- `priority`: `low` | `medium` | `high` (default `medium`)
-- `due_date` (timestamptz, optional)
-- `created_by` (uuid → auth.users)
-- `completed_at` (timestamptz, set when status flips to `done`)
+Result: SidebarLayout header + NavBar header (two headers), and two footers stacked at the bottom (visible in screenshot 2).
 
-**RLS:** Only DEAN-tier users can select/insert/update/delete (uses the existing `is_dean_user(uid)` function already used by other admin features). No per-user ownership — it's a shared admin board.
+## Audit of all pages
 
-Trigger to auto-set `completed_at` when status changes to `done`.
+I traced every page that imports `<Layout>` against how its route is wired in `AppRoutes`:
 
-### Backend
+| Page | Routed under | Uses `<Layout>` | Status |
+|---|---|---|---|
+| Public pages (Home, About, Pricing, Contact, FAQ, Features, Terms, Privacy, Login, Signup, TierSelection, Payment, SiteMap, HelpRedirect, AIFlashcards, StudyPlanner, QuizGenerator, StudyAnalytics) | publicRoutes (no wrapper) | Yes | Correct |
+| NotFoundPage | miscRoutes `*` (special-cased: NOT wrapped in ProtectedRoute) | Yes | Correct |
+| **OnboardingPage** | miscRoutes (wrapped in ProtectedRoute → SidebarLayout) | **Yes** | **DOUBLE — bug** |
+| EditNotePage, FlashcardLibraryPage, QuizHistoryPage | Not imported by any route (dead files) | Yes | No user impact, but inconsistent |
+| FeedbackPage | standardRoutes (SidebarLayout) | No | Correct |
 
-No edge functions needed — direct Supabase client calls from the admin page, gated by RLS.
+So the only live double-render bug is `/onboarding`. The three dead-file pages still import `Layout` but are unreachable.
 
-### Frontend
+## Fix
 
-**New page:** `src/pages/AdminTodosPage.tsx` at route `/admin/todos`
-- Wrapped in `AdminLayout` with the standard DEAN guard already used by `AdminUsersPage`
-- Uses `StandardPageHeader` for consistency
+### 1. Stop OnboardingPage from rendering its own Layout
 
-**Components** (in `src/components/admin/todos/`):
-- `AdminTodoList.tsx` — grouped by status (To Do / In Progress / Done) with collapsible Done section
-- `AdminTodoItem.tsx` — checkbox to toggle done, status dropdown, priority badge, due date, edit/delete actions
-- `AdminTodoFormDialog.tsx` — create/edit dialog with title, description, priority, due date
-- `useAdminTodos.ts` hook — react-query CRUD against `admin_todos`
+`src/pages/OnboardingPage.tsx`: remove the `<Layout>` wrapper from both the loading branch and the main return. SidebarLayout (from `ProtectedRoute`) already provides the header and footer.
 
-**Wiring:**
-- Register route in `src/routes/adminRoutes.tsx`
-- Add a "Admin Tasks" card to `AdminDashboardPage` linking to `/admin/todos`
-- Add nav entry in the admin sidebar section
+### 2. Clean up dead pages (optional but recommended)
 
-### Seed task
+Remove the `<Layout>` import and wrapper from `EditNotePage.tsx`, `FlashcardLibraryPage.tsx`, `QuizHistoryPage.tsx` so they're consistent with the SidebarLayout pattern in case they get re-wired later. Pure cleanup — no current routes touch them.
 
-After the table is created, insert one starter row:
+### 3. Verify after the change
 
-> **Title:** Build end-to-end email marketing sequence
-> **Priority:** high
-> **Description:** Set up a re-engagement / lifecycle email sequence for users who signed up but haven't used core features (e.g. no notes created). Use a dedicated marketing platform (Loops, Customer.io, Resend Broadcasts, or Mailchimp) on a separate subdomain from the Lovable auth/transactional email subdomain to protect sender reputation. Scope: dormant-user export from Supabase, welcome → nudge → re-engagement cadence, "create your first note" deep link (`/notes/new?source=email`), unsubscribe handling, performance tracking.
+Manually walk through `/onboarding` (auth required) — should show only one header (the SidebarLayout one with sidebar trigger + bell + user) and one footer.
 
-### What's NOT in scope
+## Why this won't regress other routes
 
-- No assignment to specific admins (single shared board for now)
-- No comments/activity log
-- No labels/tags (priority covers urgency)
-- No email/notification reminders for due dates
+- Public pages stay untouched — they correctly use `<Layout>` because their routes have no SidebarLayout wrapper.
+- `NotFoundPage` stays untouched — the `*` route is explicitly special-cased in `AppRoutes` to skip `ProtectedRoute`, so it needs its own `<Layout>`.
+- All standard/admin routes already render bare content inside `SidebarLayout` — no change needed.
 
-These can be added later if the board gets heavy use.
+## Files changed
+
+- `src/pages/OnboardingPage.tsx` — remove `<Layout>` wrapper (the actual fix)
+- `src/pages/EditNotePage.tsx` — remove unused `<Layout>` wrapper (cleanup)
+- `src/pages/FlashcardLibraryPage.tsx` — remove unused `<Layout>` wrapper (cleanup)
+- `src/pages/QuizHistoryPage.tsx` — remove unused `<Layout>` wrapper (cleanup)
