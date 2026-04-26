@@ -220,7 +220,7 @@ class ExportService {
       }
 
       // Headings
-      const hdr = line.match(/^PDF_HDR_(\d):\s*(.*)$/);
+      const hdr = line.match(/^PDFHEADING(\d)::(.*)$/);
       if (hdr) {
         const level = parseInt(hdr[1], 10);
         const text = hdr[2].trim();
