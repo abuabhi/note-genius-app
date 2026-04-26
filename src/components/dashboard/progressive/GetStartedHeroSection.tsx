@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Star, Sparkles, Upload, BookOpen, Wand2 } from "lucide-react";
+import { Calendar, Star, Sparkles, FileText, BookOpen, Wand2 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -117,37 +117,23 @@ export const GetStartedHeroSection = () => {
               </div>
               <div>
                 <div className="inline-flex items-center gap-1 px-2 py-0.5 mb-2 rounded-full bg-mint-100 text-mint-700 text-xs font-semibold uppercase tracking-wide">
-                  <Sparkles className="h-3 w-3" /> Fastest way to start
+                  <Sparkles className="h-3 w-3" /> Get started in seconds
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-1">
-                  Upload a PDF → get flashcards in 60 seconds
+                  Create your first note
                 </h2>
                 <p className="text-gray-600 text-sm md:text-base">
-                  Drop a lecture slide, textbook chapter or note — we'll turn it into a study set instantly.
+                  Capture a lecture, idea, or summary — then turn it into flashcards and quizzes.
                 </p>
               </div>
             </div>
             <Button
-              onClick={() => navigate('/notes?action=upload')}
+              onClick={() => navigate('/notes')}
               size="lg"
               className="bg-mint-600 hover:bg-mint-700 text-white font-semibold px-6 py-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 whitespace-nowrap"
             >
-              <Upload className="h-5 w-5 mr-2" />
-              Upload PDF
-            </Button>
-          </div>
-
-          {/* Secondary action — much smaller, lower visual weight */}
-          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Or start from scratch</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/notes')}
-              className="text-mint-700 hover:text-mint-800 hover:bg-mint-50"
-            >
-              <BookOpen className="h-4 w-4 mr-1" />
-              Create a blank note
+              <FileText className="h-5 w-5 mr-2" />
+              Create your first note
             </Button>
           </div>
         </CardContent>
