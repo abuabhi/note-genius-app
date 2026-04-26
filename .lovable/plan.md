@@ -1,32 +1,42 @@
-I found the actual cause: the database table now has `ON DELETE SET NULL`, but the app still has deletion paths using `force_delete_note_optimized`, and that database function explicitly deletes rows from `note_enrichment_usage` for the note being deleted. That makes the monthly counter drop when notes are deleted, which is exactly the bug you’re seeing.
+## Diagnosis
 
-Plan:
+Your Top 10 Questions **were generated successfully**. I confirmed it directly in the database:
 
-1. Stop deleting usage rows during note deletion
-   - Update `public.force_delete_note_optimized` so it deletes note-related child records, but does not delete `note_enrichment_usage`.
-   - Instead, set `note_enrichment_usage.note_id = NULL` for the deleted note before deleting the note.
-   - Update `public.force_delete_note` as well, because the `delete-note` edge function can still fall back to it.
+- Note `Physics 101` (`19e9f8de-…`) has `questions_status = 'completed'` and **3,828 characters** of valid markdown stored in `questions_content` (Q1–Q10 with answers, all intact).
+- The tab header in your screenshot reflects this: it says "552 words • 3 min read", which means the content reaches the renderer.
+- The body below the divider is blank, so the **markdown → HTML pipeline is silently dropping the rendered output** for this content — same failure family as the "Original tab is blank" bug we fixed yesterday.
 
-2. Keep the database relationship user/month based
-   - Keep `note_enrichment_usage.note_id` nullable.
-   - Keep/ensure the foreign key is `ON DELETE SET NULL`, so usage history survives even if a note is deleted directly.
-   - Leave counting logic as `WHERE user_id = current user AND month_year = current month`, not per note.
+The current path for the Questions tab is:
 
-3. Fix all app-side delete paths to use the safe behavior
-   - Existing React hooks call `force_delete_note_optimized`; after the DB function is fixed, those paths will preserve usage.
-   - The `delete-note` edge function already has a comment saying usage should be preserved, but its fallback calls the unsafe `force_delete_note`; fixing that DB function closes the fallback hole too.
+```text
+questions_content (markdown)
+   → ExpandableContentRenderer
+   → processContentForDisplay (markdownToHtml)
+   → SimpleContentRenderer
+   → processContentForDisplay (called AGAIN)
+   → RichTextDisplay
+   → DOMPurify.sanitize (strict mode, KEEP_CONTENT: false)
+   → dangerouslySetInnerHTML
+```
 
-4. Repair current month data if possible
-   - Check current `note_enrichment_usage` rows for the user/month.
-   - Since deleted rows cannot always be reconstructed perfectly, preserve all remaining rows and verify the current count no longer drops after future note deletion.
-   - If there are edge/audit logs showing prior successful enrichments, use them to restore missing usage rows; otherwise the permanent fix prevents future resets.
+That's two passes through the markdown converter plus a strict sanitizer. When something in the chain returns an empty string, the user sees a blank card with correct word count (because the count is calculated from the raw `displayContent`, not the rendered HTML).
 
-5. Make the UI harder to misread
-   - Ensure the Enriched Note usage indicator is sourced only from `useAiEnrichmentUsage`, which counts by user/month.
-   - Invalidate/refetch the `ai-enrichment-usage` query after generating enrichment and after deleting notes, so the displayed count stays accurate and does not show stale zero.
+## Fix
 
-Technical files to change:
-- Add a new Supabase migration to redefine `force_delete_note_optimized` and `force_delete_note` safely.
-- Possibly update `supabase/functions/delete-note/index.ts` fallback if needed.
-- Update note deletion hooks to invalidate `['ai-enrichment-usage']` after deletion.
-- No per-note usage counter will be used for the monthly enrichment limit.
+Treat the Questions tab the same way we treated the Original tab — render it through a robust path that cannot collapse to empty:
+
+1. **Route the Questions tab through `PlainTextNoteRenderer`** in `SimpleEnhancementTabs.tsx`, alongside `original`. The Questions content from the AI is plain markdown (headers + bold), which `PlainTextNoteRenderer` handles correctly via paragraph splitting and `white-space: pre-wrap`. This guarantees something always renders.
+
+2. **Add a lightweight markdown-aware path inside `PlainTextNoteRenderer`** so the Questions tab still gets visible `# / ##` headings and `**bold**` styling instead of looking like a wall of text. Keep the existing plain-text fallback for the Original tab unchanged.
+
+3. **Harden `processContentForDisplay`** so the double-invocation (in `ExpandableContentRenderer` then again inside `SimpleContentRenderer`) cannot return empty: if the function ever produces an empty string from non-empty input, return the original content wrapped in `<pre>` as a safety net. This protects every other tab (Summary, Key Points, Markdown, Enriched) from the same silent-blank failure.
+
+4. **Add a one-line console warning** when the renderer receives non-empty content but produces empty HTML, so we can see exactly which input pattern is breaking in the future without you having to report it.
+
+## Files to change
+
+- `src/components/notes/study/SimpleEnhancementTabs.tsx` — add `'questions'` to the safe-renderer branch.
+- `src/components/notes/study/viewer/PlainTextNoteRenderer.tsx` — handle `# / ## / **bold**` so Q&A formatting is readable.
+- `src/utils/markdownConverter.ts` — empty-output safety net inside `processContentForDisplay`.
+
+No database changes. Your existing 3,828-character `questions_content` is intact and will display the moment the front-end fix ships.
