@@ -1,36 +1,24 @@
-## Plan: Properly format note emails (render markdown → HTML)
+I checked the database first: your original note is not gone. The note `Test 101` still has `3,811` characters of content stored, starting with `bio 3/4 foundation first class notes...`. So this is a display/rendering bug, not data loss.
 
-### Problem
-The email currently shows raw markdown syntax (`#`, `**bold**`, `-`, `_italic_`) because `send-note-email` only converts newlines to `<br>`. Headings, bold, italic, lists, and code blocks aren't rendered.
+Plan to fix it:
 
-### Fix
-Convert the note content from markdown to HTML inside the edge function before sending, and apply clean email-safe styling.
+1. Make the Original tab use a safe, direct renderer
+   - Original content should not go through the expansion/markdown pipeline that can accidentally sanitize or hide plain text.
+   - Render stored `note.content` directly as readable paragraphs with preserved line breaks.
 
-**Steps:**
+2. Add a visible fallback if rendering ever produces empty output
+   - If the tab thinks content exists but the rendered body is empty, show the raw plain text instead of a blank white area.
+   - This prevents the scary “word count exists but body is blank” state from happening again.
 
-1. **Render markdown to HTML in `supabase/functions/send-note-email/index.ts`**
-   - Import `marked` (Deno-compatible: `https://esm.sh/marked@12`) — small, battle-tested, no DOM needed.
-   - Sanitize the result with a lightweight allowlist (strip `<script>`, `on*` handlers, `javascript:` URLs) since content originates from user notes / AI output.
-   - Replace the current `content.replace(/\n/g, '<br>')` with the rendered HTML.
+3. Fix misleading metadata wording
+   - The header currently says `565 words`, while the screenshot says “characters”. I’ll make the count accurate and consistent so it’s clear what exists.
 
-2. **Improve the email template styling** (inline CSS, email-client safe)
-   - Proper styles for `h1/h2/h3`, `p`, `ul/ol/li`, `strong`, `em`, `code`, `pre`, `blockquote`, `a`, `hr`.
-   - Constrain width (~640px), comfortable line-height (1.6), readable font sizes.
-   - Keep the existing PrepGenie mint accent for headings and the personal-message callout.
-   - Remove the `white-space: pre-wrap` from `.content` (no longer needed once HTML is rendered) so paragraphs/lists collapse correctly.
+4. Protect the generated tabs separately
+   - Keep Markdown/Original++/Summary/Key Points/Enriched/Questions using the richer renderer.
+   - Only bypass the fragile path for Original, because Original is the source-of-truth content and must always be visible.
 
-3. **Plain-text fallback**
-   - Generate a plain-text version (strip markdown symbols) and pass it as `text` alongside `html` to Resend. Improves deliverability and supports text-only clients.
+Technical details:
 
-4. **Subject line cleanup**
-   - Current default `Note: <title> - <contentType>` — keep, but ensure no markdown leaks into the subject (strip any `#`/`*` from title).
-
-### Files touched
-- `supabase/functions/send-note-email/index.ts` — markdown rendering, sanitization, restyled HTML template, plain-text fallback.
-
-### Out of scope (can do later if you want)
-- Embedding images from notes (would need uploading to storage and rewriting `<img src>`).
-- A full React Email template — overkill for this single function; inline-styled HTML is enough and easier to iterate on.
-
-### Verification
-After deploy, send a test email from the same note. Headings should render as styled headings, `**bold**` as bold, lists as bullet lists, and the personal message stays in its mint callout box.
+- Main file to update: `src/components/notes/study/SimpleEnhancementTabs.tsx`
+- Likely supporting change: `src/components/notes/study/expansion/ExpandableContentRenderer.tsx` or a small new direct plain-text renderer inside the existing component structure.
+- No database change is needed because the original content is present in `public.notes.content`.
