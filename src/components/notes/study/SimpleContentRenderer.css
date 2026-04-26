@@ -52,20 +52,24 @@
 .simple-ol {
   margin-bottom: 0.8rem !important;
   margin-top: 0 !important;
-  padding-left: 1.2rem !important;
+  padding-left: 1.5rem !important;
   list-style-type: disc !important;
   list-style-position: outside !important;
 }
 
-/* List items - Maximum specificity to override Tailwind */
+.simple-content ol,
+.simple-ol {
+  list-style-type: decimal !important;
+}
+
+/* List items - clean indentation, wrapped lines align under text */
 .simple-content ul li,
 .simple-content ol li,
 .simple-li {
   margin-bottom: 0.4rem !important;
   margin-top: 0 !important;
-  line-height: 1.4 !important;
-  padding-left: 1rem !important;
-  text-indent: -1rem !important;
+  line-height: 1.5 !important;
+  padding-left: 0.25rem !important;
   display: list-item !important;
 }
 
