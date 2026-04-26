@@ -27,6 +27,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   const [isAddingSubject, setIsAddingSubject] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState('');
   const [isSavingSubject, setIsSavingSubject] = useState(false);
+  const [subjectTouched, setSubjectTouched] = useState(false);
   const { subjects: userSubjects, isLoading: subjectsLoading, addSubject } = useUserSubjects();
   const { sanitizeNoteContent, sanitizeNoteText, validateNote } = useSecureNotes();
 
@@ -101,6 +102,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     
     if (!selectedSubject || selectedSubject.trim() === '') {
       console.log('❌ [CREATE FORM] Validation failed: No subject selected');
+      setSubjectTouched(true);
       toast.error('Please select a subject');
       return;
     }
@@ -188,7 +190,10 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
           }}
           required
         >
-          <SelectTrigger className={!selectedSubject ? 'border-red-200' : ''}>
+          <SelectTrigger
+            onBlur={() => setSubjectTouched(true)}
+            className={subjectTouched && !selectedSubject ? 'border-red-200' : ''}
+          >
             <SelectValue placeholder="Select a subject (required)" />
           </SelectTrigger>
           <SelectContent>
@@ -261,7 +266,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
           </div>
         )}
 
-        {!selectedSubject && !isAddingSubject && (
+        {subjectTouched && !selectedSubject && !isAddingSubject && (
           <p className="text-sm text-red-500 mt-1">Please select a subject</p>
         )}
 
