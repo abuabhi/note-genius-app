@@ -74,17 +74,18 @@ export const useNotes = () => {
     },
     enabled: !!user?.id && !authLoading,
     gcTime: 30000, // Keep in cache for 30 seconds for back navigation
+    throwOnError: false,
   });
 
   // Extract data from query result
   const notes = useMemo(() => {
-    if (!queryResult || typeof queryResult !== 'object' || !('data' in queryResult)) return [];
+    if (!Array.isArray((queryResult as { data?: unknown } | undefined)?.data)) return [];
     return (queryResult as any).data || [];
   }, [queryResult]);
   
   const totalCount = useMemo(() => {
-    if (!queryResult || typeof queryResult !== 'object' || !('total_count' in queryResult)) return 0;
-    return (queryResult as any).total_count || 0;
+    const count = (queryResult as { total_count?: unknown } | undefined)?.total_count;
+    return typeof count === 'number' ? count : 0;
   }, [queryResult]);
 
   // Create note mutation  
