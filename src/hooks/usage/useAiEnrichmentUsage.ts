@@ -5,9 +5,9 @@ import { fetchNoteEnrichmentUsage } from '@/contexts/notes/operations/usageStats
 // UI-only mirror of server tier limits for AI enrichment
 // Keep in sync with edge function TIER_LIMITS
 const TIER_LIMITS: Record<string, number | null> = {
-  SCHOLAR: 10,
-  GRADUATE: 50,
-  MASTER: 200,
+  SCHOLAR: 20,
+  GRADUATE: 100,
+  MASTER: 500,
   DEAN: null, // Unlimited
 };
 

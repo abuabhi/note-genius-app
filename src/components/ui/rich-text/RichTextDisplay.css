@@ -396,3 +396,49 @@
     background-color: #f5f5f5;
   }
 }
+/* AI Enhanced Content styling - mirrors SimpleContentRenderer */
+.rich-text-display .ai-enhanced-simple {
+  border-left: 3px solid #236248;
+  background-color: hsl(152, 55%, 98%);
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-style: italic;
+  border-radius: 4px;
+}
+
+.rich-text-display .ai-enhanced-simple p {
+  margin: 8px 0;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.rich-text-display .ai-enhanced-simple h1,
+.rich-text-display .ai-enhanced-simple h2,
+.rich-text-display .ai-enhanced-simple h3,
+.rich-text-display .ai-enhanced-simple h4,
+.rich-text-display .ai-enhanced-simple h5,
+.rich-text-display .ai-enhanced-simple h6 {
+  color: #236248 !important;
+  font-style: normal;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rich-text-display .ai-enhanced-simple ul,
+.rich-text-display .ai-enhanced-simple ol {
+  padding-left: 1.5rem;
+  list-style-position: outside;
+  margin: 0.5rem 0;
+}
+
+.rich-text-display .ai-enhanced-simple li {
+  margin-bottom: 0.25rem;
+  font-style: italic;
+}
+
+.rich-text-display.hide-coloring .ai-enhanced-simple {
+  border-left: none;
+  background-color: transparent;
+  padding: 12px 0;
+}

@@ -9,6 +9,7 @@ import { useSimpleEnhancement } from "@/hooks/useSimpleEnhancement";
 import { UserSubject } from "@/types/subject";
 import { EnhancementDebugger } from "@/components/debug/EnhancementDebugger";
 import { useYouTubeContentMigration } from "@/hooks/useYouTubeContentMigration";
+import { useAiEnrichmentUsage } from "@/hooks/usage/useAiEnrichmentUsage";
 
 interface NoteStudyViewProps {
   note: Note;
@@ -55,13 +56,21 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
     onNoteUpdate
   } = useNoteStudyEditor(note, forceRefresh);
 
-  // Simple usage tracking (no complex features)
-  const currentUsage = 0;
-  const monthlyLimit = 100;
-  const hasReachedLimit = () => false;
+  // Real AI enrichment usage tracking
+  const {
+    usageCount: currentUsage,
+    monthlyLimit,
+    isLoading: usageLoading,
+    hasReachedLimit: usageReachedLimit,
+    refetch: refetchUsage,
+  } = useAiEnrichmentUsage();
+  const hasReachedLimit = () => usageReachedLimit;
 
-  // Simple enhancement functionality
-  const { enhanceNote, isEnhancing } = useSimpleEnhancement(note, forceRefresh);
+  // Simple enhancement functionality - refresh both note data AND usage on completion
+  const { enhanceNote, isEnhancing } = useSimpleEnhancement(note, () => {
+    forceRefresh();
+    refetchUsage();
+  });
 
   // Auto-migrate YouTube content if needed
   useYouTubeContentMigration(note);
@@ -84,9 +93,9 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
         setActiveContentType('questions');
       } else if (enhancementType === 'convert-to-markdown') {
         setActiveContentType('markdown');
-      } else if (enhancementType === 'enrich-note') {
-        setActiveContentType('original');
       }
+      // Note: do NOT switch tabs for 'enrich-note' — user stays on the
+      // currently active tab (typically the Enriched/AI tab they triggered).
       
       await enhanceNote(enhancementType);
     } catch (error) {
@@ -138,7 +147,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           availableTags={availableTags}
           availableSubjects={availableSubjects || [] as UserSubject[]}
           isSaving={isSaving}
-          statsLoading={false}
+          statsLoading={usageLoading}
           currentUsage={currentUsage}
           monthlyLimit={monthlyLimit}
           handleContentChange={handleContentChange}
