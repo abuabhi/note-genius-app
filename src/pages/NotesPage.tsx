@@ -222,20 +222,28 @@ const NotesPageContent = () => {
             <DialogTitle className="text-xl font-semibold text-mint-800">Create New Note</DialogTitle>
           </DialogHeader>
           <div className="py-2">
-            <CreateNoteForm onSave={handleSaveNote} />
+            {isManualDialogOpen && (
+              <Suspense fallback={<div className="py-8 text-center text-gray-500">Loading…</div>}>
+                <CreateNoteForm onSave={handleSaveNote} />
+              </Suspense>
+            )}
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Enhanced Import Dialog */}
-      <EnhancedImportDialog 
-        onSaveNote={handleImportNote}
-        isVisible={isImportDialogOpen}
-        onClose={() => {
-          if (!isCreating) setIsImportDialogOpen(false);
-        }}
-        isPremiumUser={true}
-      />
+      {/* Enhanced Import Dialog - only mount once opened to keep /notes fast */}
+      {isImportDialogOpen && (
+        <Suspense fallback={null}>
+          <EnhancedImportDialog
+            onSaveNote={handleImportNote}
+            isVisible={isImportDialogOpen}
+            onClose={() => {
+              if (!isCreating) setIsImportDialogOpen(false);
+            }}
+            isPremiumUser={true}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };
