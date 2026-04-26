@@ -4,7 +4,8 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useViewPreferences } from '@/hooks/useViewPreferences';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Note } from '@/types/note';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CreateNoteForm } from '@/components/notes/page/CreateNoteForm';
@@ -75,6 +76,18 @@ const NotesPageContent = () => {
   // Dialog state
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+
+  // Auto-open import dialog when arriving via dashboard CTA (?action=upload|import)
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'upload' || action === 'import') {
+      setIsImportDialogOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete('action');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Convert ViewMode to the expected type for the header and content
   const convertedViewMode: 'grid' | 'list' = viewMode === 'compact' ? 'grid' : viewMode as 'grid' | 'list';
