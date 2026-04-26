@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import Layout from "@/components/layout/Layout";
 import { useNavigate } from "react-router-dom";
 import { QuizHistoryHeader } from "@/components/quiz/history/QuizHistoryHeader";
 import { QuizHistoryFilters } from "@/components/quiz/history/QuizHistoryFilters";
@@ -33,68 +32,62 @@ const QuizHistoryPage = () => {
 
   if (hasError) {
     return (
-      <Layout>
-        <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
-          <div className="container mx-auto p-6">
-            <div className="mb-6">
-              <QuizHistoryBreadcrumb />
-            </div>
-            <QuizHistoryError 
-              error={quizResultsError?.message || quizSessionsError?.message || 'Failed to load quiz history'} 
-            />
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <Layout>
-        <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
-          <div className="container mx-auto p-6">
-            <div className="mb-6">
-              <QuizHistoryBreadcrumb />
-            </div>
-            <QuizHistoryLoading />
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  return (
-    <Layout>
       <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
         <div className="container mx-auto p-6">
           <div className="mb-6">
             <QuizHistoryBreadcrumb />
           </div>
-
-          <div className="mb-6">
-            <QuizHistoryHeader />
-          </div>
-
-          <div className="bg-white/60 backdrop-blur-sm border border-mint-100 rounded-lg p-6 mb-6">
-            <QuizHistoryFilters
-              selectedType={selectedType}
-              onTypeChange={setSelectedType}
-              quizResultsCount={quizResults?.length || 0}
-              quizSessionsCount={quizSessions?.length || 0}
-            />
-          </div>
-
-          {hasAnyHistory ? (
-            <QuizHistoryList
-              quizResults={filteredQuizResults}
-              quizSessions={filteredQuizSessions}
-            />
-          ) : (
-            <EmptyQuizHistory onNavigateToQuiz={() => navigate('/quizzes')} />
-          )}
+          <QuizHistoryError 
+            error={quizResultsError?.message || quizSessionsError?.message || 'Failed to load quiz history'} 
+          />
         </div>
       </div>
-    </Layout>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
+        <div className="container mx-auto p-6">
+          <div className="mb-6">
+            <QuizHistoryBreadcrumb />
+          </div>
+          <QuizHistoryLoading />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-white via-mint-50/30 to-mint-50/10">
+      <div className="container mx-auto p-6">
+        <div className="mb-6">
+          <QuizHistoryBreadcrumb />
+        </div>
+
+        <div className="mb-6">
+          <QuizHistoryHeader />
+        </div>
+
+        <div className="bg-white/60 backdrop-blur-sm border border-mint-100 rounded-lg p-6 mb-6">
+          <QuizHistoryFilters
+            selectedType={selectedType}
+            onTypeChange={setSelectedType}
+            quizResultsCount={quizResults?.length || 0}
+            quizSessionsCount={quizSessions?.length || 0}
+          />
+        </div>
+
+        {hasAnyHistory ? (
+          <QuizHistoryList
+            quizResults={filteredQuizResults}
+            quizSessions={filteredQuizSessions}
+          />
+        ) : (
+          <EmptyQuizHistory onNavigateToQuiz={() => navigate('/quizzes')} />
+        )}
+      </div>
+    </div>
   );
 };
 

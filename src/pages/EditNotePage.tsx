@@ -1,6 +1,5 @@
 
 import { useParams } from "react-router-dom";
-import Layout from "@/components/layout/Layout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useOptimizedNoteStudy } from "@/hooks/notes/useOptimizedNoteStudy";
 import { LoadingState } from "@/components/notes/page/LoadingState";
@@ -22,23 +21,15 @@ const EditNotePage = () => {
   const { usageCount, monthlyLimit } = useAiEnrichmentUsage();
 
   if (isLoading) {
-    return (
-      <Layout>
-        <LoadingState message="Loading note..." />
-      </Layout>
-    );
+    return <LoadingState message="Loading note..." />;
   }
 
   if (error || !note) {
-    return (
-      <Layout>
-        <ErrorState />
-      </Layout>
-    );
+    return <ErrorState />;
   }
 
   return (
-    <Layout>
+    <>
       {monthlyLimit !== null && userTier && (
         <UsageLimitBanner
           currentTier={userTier}
@@ -49,7 +40,7 @@ const EditNotePage = () => {
         />
       )}
       <EditNoteContent note={note} />
-    </Layout>
+    </>
   );
 };
 

@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { LoadingState } from "@/components/notes/page/LoadingState";
-import Layout from "@/components/layout/Layout";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 
 const OnboardingPage = () => {
@@ -26,18 +25,10 @@ const OnboardingPage = () => {
 
   if (onboardingLoading) {
     console.log('📋 [ONBOARDING PAGE] Showing loading state');
-    return (
-      <Layout>
-        <LoadingState message="Setting up your account..." />
-      </Layout>
-    );
+    return <LoadingState message="Setting up your account..." />;
   }
 
-  return (
-    <Layout>
-      <OnboardingWizard />
-    </Layout>
-  );
+  return <OnboardingWizard />;
 };
 
 export default OnboardingPage;
