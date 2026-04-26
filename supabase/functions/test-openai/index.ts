@@ -72,7 +72,7 @@ serve(async (req) => {
     console.error('💥 Test OpenAI function error:', error);
     return new Response(JSON.stringify({ 
       success: false, 
-      error: error.message,
+      error: (error as Error)?.message ?? String(error),
       timestamp: new Date().toISOString()
     }), {
       status: 500,
