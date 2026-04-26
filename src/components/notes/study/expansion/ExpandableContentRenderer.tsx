@@ -6,6 +6,7 @@ import { TextAlignType } from '../hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { SimpleContentRenderer } from '../SimpleContentRenderer';
+import { EnrichedContentRenderer } from '../EnrichedContentRenderer';
 import { processContentForDisplay } from '@/utils/markdownConverter';
 
 interface ExpandableContentRendererProps {
