@@ -22,6 +22,7 @@ import {
   Heart,
   Calendar,
   HelpCircle,
+  GraduationCap,
 } from "lucide-react";
 
 interface NavigationProps {
@@ -115,6 +116,13 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 icon={Target}
                 label="Goals & Tasks"
                 isActive={pathname.startsWith("/goals") || pathname.startsWith("/todos")}
+                isCollapsed={isCollapsed}
+              />
+              <NavLink
+                to="/exam-prep"
+                icon={GraduationCap}
+                label="Exam Prep"
+                isActive={pathname.startsWith("/exam-prep")}
                 isCollapsed={isCollapsed}
               />
             </NavGroup>
