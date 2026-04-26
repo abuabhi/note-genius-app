@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Mail, Send, Loader2 } from 'lucide-react';
-import { exportService, ContentType, EmailOptions } from './ExportService';
+import type { ContentType, EmailOptions } from './ExportService';
 import { Note } from '@/types/note';
 import { toast } from 'sonner';
 
@@ -58,6 +58,8 @@ export const EmailDialog = ({ isOpen, onClose, note, contentType }: EmailDialogP
         message: message.trim()
       };
 
+      // Dynamic import keeps jsPDF/docx out of the page chunk; only load on Send
+      const { exportService } = await import('./ExportService');
       await exportService.sendEmail(emailOptions);
       toast.success('Email sent successfully!');
       onClose();
