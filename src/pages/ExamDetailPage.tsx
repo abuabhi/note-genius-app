@@ -13,7 +13,7 @@ import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { ReadinessRing } from '@/components/exam-prep/ReadinessRing';
 import { TopicRow } from '@/components/exam-prep/TopicRow';
 import { calculateReadiness, daysUntil } from '@/types/exam';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { confirmDialog } from '@/components/ui/confirm-dialog';
 
 const ExamDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +23,18 @@ const ExamDetailPage: React.FC = () => {
   const { topics, addTopic } = useExamTopics(id);
   const { subjects } = useUserSubjects();
   const [newTopic, setNewTopic] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const handleDelete = async () => {
+    const ok = await confirmDialog({
+      title: 'Delete this exam?',
+      description: 'This removes the exam, its topics, and the matching calendar event. Linked notes, flashcards, quizzes and goals are not deleted.',
+      confirmText: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
+    await deleteExam(exam!);
+    navigate('/exam-prep');
+  };
 
   const subjectName = useMemo(
     () => exam?.subject_id ? subjects.find(s => s.id === exam.subject_id)?.name : undefined,
@@ -90,7 +101,7 @@ const ExamDetailPage: React.FC = () => {
                 </div>
               </div>
               <div>
-                <Button variant="outline" onClick={() => setConfirmDelete(true)}>
+                <Button variant="outline" onClick={handleDelete}>
                   <Trash2 className="h-4 w-4 mr-2" /> Delete
                 </Button>
               </div>
@@ -132,18 +143,6 @@ const ExamDetailPage: React.FC = () => {
         </Card>
       </div>
 
-      <ConfirmDialog
-        open={confirmDelete}
-        onOpenChange={setConfirmDelete}
-        title="Delete this exam?"
-        description="This removes the exam, its topics, and the matching calendar event. Linked notes, flashcards, quizzes and goals are not deleted."
-        confirmLabel="Delete"
-        variant="destructive"
-        onConfirm={async () => {
-          await deleteExam(exam);
-          navigate('/exam-prep');
-        }}
-      />
     </div>
   );
 };
