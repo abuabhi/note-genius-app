@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, Header, Footer, Table, TableRow, TableCell, AlignmentType } from 'docx';
 import { Note } from '@/types/note';
+import { supabase } from '@/integrations/supabase/client';
 
 export type ExportFormat = 'pdf' | 'docx' | 'txt';
 export type ContentType = 'original' | 'summary' | 'keyPoints' | 'enriched' | 'markdown' | 'questions';
@@ -72,13 +73,13 @@ class ExportService {
       .replace(/\*\*QUESTION\*\*/g, '')
       .replace(/\*\*ENDQUESTION\*\*/g, '')
       // Headings (HTML and Markdown) -> tokens
-      .replace(/<h([1-6])[^>]*>([\s\S]*?)<\/h[1-6]>/gi, (m, lvl, t) => `\n\nPDF_HDR_${lvl}: ${t.trim()}\n\n`)
-      .replace(/^\s*######\s+(.+)$/gm, 'PDF_HDR_6: $1')
-      .replace(/^\s*#####\s+(.+)$/gm, 'PDF_HDR_5: $1')
-      .replace(/^\s*####\s+(.+)$/gm, 'PDF_HDR_4: $1')
-      .replace(/^\s*###\s+(.+)$/gm, 'PDF_HDR_3: $1')
-      .replace(/^\s*##\s+(.+)$/gm, 'PDF_HDR_2: $1')
-      .replace(/^\s*#\s+(.+)$/gm, 'PDF_HDR_1: $1')
+      .replace(/<h([1-6])[^>]*>([\s\S]*?)<\/h[1-6]>/gi, (m, lvl, t) => `\n\nPDFHEADING${lvl}::${t.trim()}\n\n`)
+      .replace(/^\s*######\s+(.+)$/gm, 'PDFHEADING6::$1')
+      .replace(/^\s*#####\s+(.+)$/gm, 'PDFHEADING5::$1')
+      .replace(/^\s*####\s+(.+)$/gm, 'PDFHEADING4::$1')
+      .replace(/^\s*###\s+(.+)$/gm, 'PDFHEADING3::$1')
+      .replace(/^\s*##\s+(.+)$/gm, 'PDFHEADING2::$1')
+      .replace(/^\s*#\s+(.+)$/gm, 'PDFHEADING1::$1')
       // Lists
       .replace(/<ul[^>]*>/gi, '\n')
       .replace(/<\/ul>/gi, '\n')
@@ -220,7 +221,7 @@ class ExportService {
       }
 
       // Headings
-      const hdr = line.match(/^PDF_HDR_(\d):\s*(.*)$/);
+      const hdr = line.match(/^PDFHEADING(\d)::(.*)$/);
       if (hdr) {
         const level = parseInt(hdr[1], 10);
         const text = hdr[2].trim();
@@ -622,29 +623,25 @@ class ExportService {
     }
 
     try {
-      const response = await fetch('/functions/v1/send-note-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1aGNtd3VqemZkZG1hZm96dWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MjUxOTQsImV4cCI6MjA2MjEwMTE5NH0.oz_MnWdGGh76eOjQ2k69OhQhqBh4KXG0Wq_cN-VJwzw'}`
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('send-note-email', {
+        body: {
           to: recipientEmail,
           subject: subject || `${note.title || 'Note'} - ${contentTitle}`,
           message: message || '',
           noteTitle: note.title || 'Untitled Note',
           contentType: contentTitle,
           content: this.preserveFormattingForTXT(content),
-        }),
+        },
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to send email');
+      if (error) {
+        throw new Error(error.message || 'Failed to send email');
+      }
+      if (data && (data as any).error) {
+        throw new Error((data as any).error);
       }
 
-      const result = await response.json();
-      console.log('Email sent successfully:', result);
+      console.log('Email sent successfully:', data);
     } catch (error) {
       console.error('Error sending email:', error);
       throw new Error(error instanceof Error ? error.message : 'Failed to send email. Please try again.');
