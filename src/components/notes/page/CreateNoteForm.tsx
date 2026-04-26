@@ -9,6 +9,9 @@ import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSecureNotes } from '@/hooks/security/useSecureNotes';
 import { toast } from 'sonner';
+import { Plus, X, Loader2, ExternalLink } from 'lucide-react';
+
+const ADD_NEW_SENTINEL = '__add_new__';
 
 interface CreateNoteFormProps {
   onSave: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -21,7 +24,10 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   const [content, setContent] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
+  const [isAddingSubject, setIsAddingSubject] = useState(false);
+  const [newSubjectName, setNewSubjectName] = useState('');
+  const [isSavingSubject, setIsSavingSubject] = useState(false);
+  const { subjects: userSubjects, isLoading: subjectsLoading, addSubject } = useUserSubjects();
   const { sanitizeNoteContent, sanitizeNoteText, validateNote } = useSecureNotes();
 
   // Initialize form with existing data when editing
@@ -33,6 +39,38 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
       setSelectedSubject(initialData.subject || '');
     }
   }, [initialData]);
+
+  const handleAddSubject = async () => {
+    const trimmed = newSubjectName.trim();
+    if (!trimmed) {
+      toast.error('Please enter a subject name');
+      return;
+    }
+    if (trimmed.length > 60) {
+      toast.error('Subject name must be 60 characters or fewer');
+      return;
+    }
+    const exists = userSubjects.some(s => s.name.trim().toLowerCase() === trimmed.toLowerCase());
+    if (exists) {
+      toast.error('A subject with that name already exists');
+      return;
+    }
+
+    setIsSavingSubject(true);
+    try {
+      const ok = await addSubject(trimmed);
+      if (ok) {
+        toast.success(`Subject "${trimmed}" added`);
+        setSelectedSubject(trimmed);
+        setIsAddingSubject(false);
+        setNewSubjectName('');
+      } else {
+        toast.error('Could not add subject. Please try again.');
+      }
+    } finally {
+      setIsSavingSubject(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,9 +174,15 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
       
       <div>
         <Label htmlFor="subject">Subject <span className="text-red-500">*</span></Label>
-        <Select 
-          value={selectedSubject} 
+        <Select
+          value={selectedSubject}
           onValueChange={(value) => {
+            if (value === ADD_NEW_SENTINEL) {
+              // Open inline-add UI; don't change the selected subject.
+              setIsAddingSubject(true);
+              setNewSubjectName('');
+              return;
+            }
             console.log('📝 [CREATE FORM] Subject changed to:', value);
             setSelectedSubject(value);
           }}
@@ -150,20 +194,89 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
           <SelectContent>
             {subjectsLoading ? (
               <SelectItem value="_loading" disabled>Loading subjects...</SelectItem>
-            ) : userSubjects.length > 0 ? (
-              userSubjects.map(subject => (
-                <SelectItem key={subject.id} value={subject.name}>
-                  {subject.name}
-                </SelectItem>
-              ))
             ) : (
-              <SelectItem value="_none" disabled>No subjects found</SelectItem>
+              <>
+                {userSubjects.length > 0 ? (
+                  userSubjects.map(subject => (
+                    <SelectItem key={subject.id} value={subject.name}>
+                      {subject.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="_none" disabled>No subjects yet — add one below</SelectItem>
+                )}
+                <SelectItem value={ADD_NEW_SENTINEL} className="text-mint-700 font-medium">
+                  + Add new subject…
+                </SelectItem>
+              </>
             )}
           </SelectContent>
         </Select>
-        {!selectedSubject && (
+
+        {isAddingSubject && (
+          <div className="mt-2 flex items-start gap-2">
+            <div className="flex-1">
+              <Input
+                autoFocus
+                value={newSubjectName}
+                onChange={(e) => setNewSubjectName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddSubject();
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    setIsAddingSubject(false);
+                    setNewSubjectName('');
+                  }
+                }}
+                placeholder="New subject name"
+                maxLength={60}
+                disabled={isSavingSubject}
+              />
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleAddSubject}
+              disabled={isSavingSubject || !newSubjectName.trim()}
+              className="bg-mint-600 hover:bg-mint-700"
+            >
+              {isSavingSubject ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              <span className="ml-1">Add</span>
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setIsAddingSubject(false);
+                setNewSubjectName('');
+              }}
+              disabled={isSavingSubject}
+              aria-label="Cancel adding subject"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        {!selectedSubject && !isAddingSubject && (
           <p className="text-sm text-red-500 mt-1">Please select a subject</p>
         )}
+
+        <p className="text-xs text-muted-foreground mt-1">
+          Manage all your subjects in{' '}
+          <a
+            href="/settings?tab=subjects"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-mint-600 underline inline-flex items-center gap-0.5"
+          >
+            Settings → Subjects
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </p>
       </div>
 
       <div>
