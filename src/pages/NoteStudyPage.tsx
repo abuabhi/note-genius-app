@@ -11,6 +11,9 @@ import { useOptimizedNoteStudy } from "@/hooks/notes/useOptimizedNoteStudy";
 import { OptimizedNotesProvider } from "@/contexts/OptimizedNotesContext";
 import { FlashcardProvider } from "@/contexts/FlashcardContext";
 
+// Defer FlashcardProvider — only needed when the AI chat sidebar (which can generate flashcards) is opened.
+// This avoids ~6 fetchFlashcardSets calls firing on initial study-page load.
+
 const NoteStudyPageContent = () => {
   const { noteId } = useParams();
   const navigate = useNavigate();
@@ -93,20 +96,23 @@ const NoteStudyPageContent = () => {
         <StudyBreadcrumb note={note} />
       </div>
       <NoteStudyView note={note} />
-      
+
       {/* AI Chat Toggle Button */}
-      <NoteChatToggle 
+      <NoteChatToggle
         isOpen={isChatOpen}
         onToggle={toggleChat}
       />
-      
-      {/* AI Chat Sidebar */}
+
+      {/* AI Chat Sidebar — FlashcardProvider is mounted lazily here so the
+          flashcard list isn't fetched until the user actually opens chat. */}
       {isChatOpen && (
-        <NoteChatSidebar 
-          note={note}
-          isOpen={isChatOpen}
-          onClose={() => setIsChatOpen(false)}
-        />
+        <FlashcardProvider>
+          <NoteChatSidebar
+            note={note}
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
+          />
+        </FlashcardProvider>
       )}
     </div>
   );
@@ -114,11 +120,9 @@ const NoteStudyPageContent = () => {
 
 const NoteStudyPage = () => {
   return (
-    <FlashcardProvider>
-      <OptimizedNotesProvider>
-        <NoteStudyPageContent />
-      </OptimizedNotesProvider>
-    </FlashcardProvider>
+    <OptimizedNotesProvider>
+      <NoteStudyPageContent />
+    </OptimizedNotesProvider>
   );
 };
 
