@@ -12,6 +12,7 @@ import { useExam, useExams, useExamTopics } from '@/hooks/exams';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { ReadinessRing } from '@/components/exam-prep/ReadinessRing';
 import { TopicRow } from '@/components/exam-prep/TopicRow';
+import { ExamRemindersPanel } from '@/components/exam-prep/ExamRemindersPanel';
 import { calculateReadiness, daysUntil } from '@/types/exam';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
 
