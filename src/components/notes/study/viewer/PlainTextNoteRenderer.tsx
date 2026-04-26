@@ -47,11 +47,10 @@ export const PlainTextNoteRenderer: React.FC<PlainTextNoteRendererProps> = ({
   };
 
   // ---- HTML branch -------------------------------------------------------
-  // Some tabs (notably Summary) store real HTML. Sanitize and render it
-  // directly so we never strip tags or hide content.
-  const looksLikeHtml = /<\/?(p|h[1-6]|ul|ol|li|table|img|a |strong|em|blockquote|div|span|br)/i.test(
-    safeContent
-  );
+  // Detect ANY html-ish tag, not just a hand-picked allow-list. This covers
+  // future content that may use <dl>, <dt>, <dd>, <section>, <article>,
+  // <figure>, etc. without falling back to "raw text" rendering.
+  const looksLikeHtml = /<\/?[a-zA-Z][a-zA-Z0-9]*(\s[^<>]*)?>/.test(safeContent);
   if (looksLikeHtml) {
     const sanitized = sanitizeHTML(safeContent);
     const finalHtml =
