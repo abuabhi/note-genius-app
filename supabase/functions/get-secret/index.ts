@@ -69,8 +69,10 @@ serve(async (req) => {
         success: true,
         error_message: `Accessed secret: ${secretName}`
       })
-      .then(() => console.log(`Secret access logged for user ${user.id}: ${secretName}`))
-      .catch(err => console.error('Failed to log secret access:', err));
+      .then(
+        () => console.log(`Secret access logged for user ${user.id}: ${secretName}`),
+        (err: unknown) => console.error('Failed to log secret access:', err)
+      );
 
     // SECURITY: Whitelist allowed secret names
     const allowedSecrets = [

@@ -105,7 +105,7 @@ serve(async (req) => {
     // Churn approximation: canceled in window / (active + canceled in window)
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const canceledSubs = await stripe.subscriptions.list({ status: "canceled", limit: 100 });
-    const canceledInWindow = canceledSubs.data.filter((s) => (s.canceled_at ?? 0) * 1000 >= thirtyDaysAgo.getTime());
+    const canceledInWindow = canceledSubs.data.filter((s: any) => (s.canceled_at ?? 0) * 1000 >= thirtyDaysAgo.getTime());
     const churnDenominator = activeSubs.data.length + canceledInWindow.length;
     const churnRate = churnDenominator > 0 ? (canceledInWindow.length / churnDenominator) * 100 : 0;
 

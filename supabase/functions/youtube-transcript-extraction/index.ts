@@ -188,7 +188,7 @@ serve(async (req) => {
     if (!rawTranscript && result.segments && Array.isArray(result.segments)) {
       console.log('Found transcript segments, combining...');
       rawTranscript = result.segments
-        .map(segment => segment.text || segment.content || segment.transcript)
+        .map((segment: any) => segment.text || segment.content || segment.transcript)
         .filter(Boolean)
         .join(' ');
     }
@@ -197,7 +197,7 @@ serve(async (req) => {
     if (!rawTranscript && result.transcriptSegments && Array.isArray(result.transcriptSegments)) {
       console.log('Found transcript segments with timestamps, combining...');
       rawTranscript = result.transcriptSegments
-        .map(segment => segment.text || segment.content)
+        .map((segment: any) => segment.text || segment.content)
         .filter(Boolean)
         .join(' ');
     }
@@ -276,7 +276,7 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message,
+      error: (error as Error)?.message ?? String(error),
       timestamp: new Date().toISOString(),
     }), {
       status: 500,

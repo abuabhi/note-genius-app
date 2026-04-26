@@ -46,7 +46,7 @@ export const processLargeContent = async (
       console.log(`✅ Chunk ${i + 1} processed successfully`);
     } catch (error) {
       console.error(`❌ Error processing chunk ${i + 1}:`, error);
-      throw new Error(`Failed to process content chunk ${i + 1}: ${error.message}`);
+      throw new Error(`Failed to process content chunk ${i + 1}: ${(error as Error)?.message ?? String(error)}`);
     }
   }
   

@@ -39,7 +39,7 @@ async function getUserFromRequest(req: Request) {
   return { user: data.user, error: null };
 }
 
-async function getUserTier(admin: ReturnType<typeof createClient>, userId: string): Promise<Tier> {
+async function getUserTier(admin: any, userId: string): Promise<Tier> {
   const { data, error } = await admin
     .from("profiles")
     .select("user_tier")
@@ -50,11 +50,11 @@ async function getUserTier(admin: ReturnType<typeof createClient>, userId: strin
     console.log("Failed to load user tier, defaulting to SCHOLAR:", error.message);
     return "SCHOLAR";
   }
-  const tier = (data?.user_tier as Tier) ?? "SCHOLAR";
+  const tier = ((data as any)?.user_tier as Tier) ?? "SCHOLAR";
   return tier;
 }
 
-async function getMonthlyUsageCount(admin: ReturnType<typeof createClient>, userId: string, monthYear: string) {
+async function getMonthlyUsageCount(admin: any, userId: string, monthYear: string) {
   const { error, count } = await admin
     .from("note_enrichment_usage")
     .select("id", { count: "exact", head: true })
@@ -68,7 +68,7 @@ async function getMonthlyUsageCount(admin: ReturnType<typeof createClient>, user
   return count ?? 0;
 }
 
-async function recordUsage(admin: ReturnType<typeof createClient>, userId: string, noteId: string | null, monthYear: string) {
+async function recordUsage(admin: any, userId: string, noteId: string | null, monthYear: string) {
   const { error } = await admin
     .from("note_enrichment_usage")
     .insert({
