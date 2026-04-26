@@ -163,9 +163,9 @@ export const PlainTextNoteRenderer: React.FC<PlainTextNoteRendererProps> = ({
                   <h1
                     key={i}
                     style={{
-                      fontSize: '1.65rem',
+                      fontSize: '1.5rem',
                       fontWeight: 700,
-                      color: 'hsl(var(--primary))',
+                      color: 'hsl(var(--study-heading))',
                       marginTop: i === 0 ? 0 : '1.25rem',
                       marginBottom: '0.75rem',
                       borderBottom: '2px solid hsl(var(--border))',
@@ -181,9 +181,9 @@ export const PlainTextNoteRenderer: React.FC<PlainTextNoteRendererProps> = ({
                   <h2
                     key={i}
                     style={{
-                      fontSize: '1.35rem',
-                      fontWeight: 600,
-                      color: 'hsl(var(--primary))',
+                      fontSize: '1.25rem',
+                      fontWeight: 700,
+                      color: 'hsl(var(--study-heading))',
                       marginTop: i === 0 ? 0 : '1.1rem',
                       marginBottom: '0.6rem',
                     }}
@@ -197,9 +197,9 @@ export const PlainTextNoteRenderer: React.FC<PlainTextNoteRendererProps> = ({
                   <h3
                     key={i}
                     style={{
-                      fontSize: '1.15rem',
+                      fontSize: '1.1rem',
                       fontWeight: 600,
-                      color: 'hsl(var(--primary))',
+                      color: 'hsl(var(--study-heading))',
                       marginTop: '0.9rem',
                       marginBottom: '0.5rem',
                     }}
@@ -213,9 +213,9 @@ export const PlainTextNoteRenderer: React.FC<PlainTextNoteRendererProps> = ({
                   <h4
                     key={i}
                     style={{
-                      fontSize: '1.05rem',
+                      fontSize: '1rem',
                       fontWeight: 600,
-                      color: 'hsl(var(--primary))',
+                      color: 'hsl(var(--study-heading))',
                       marginTop: '0.75rem',
                       marginBottom: '0.4rem',
                     }}

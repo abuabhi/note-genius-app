@@ -37,19 +37,39 @@
 }
 
 .enriched-content .ai-enriched-body strong {
-  color: #1f5a3d;
+  color: hsl(var(--study-heading));
   font-weight: 700;
 }
 
-.enriched-content .ai-enriched-body h1,
-.enriched-content .ai-enriched-body h2,
-.enriched-content .ai-enriched-body h3,
+.enriched-content .ai-enriched-body h1 {
+  color: hsl(var(--study-heading)) !important;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+  line-height: 1.3;
+}
+.enriched-content .ai-enriched-body h2 {
+  color: hsl(var(--study-heading)) !important;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+  line-height: 1.3;
+}
+.enriched-content .ai-enriched-body h3 {
+  color: hsl(var(--study-heading)) !important;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.4rem 0;
+  line-height: 1.3;
+}
 .enriched-content .ai-enriched-body h4,
 .enriched-content .ai-enriched-body h5,
 .enriched-content .ai-enriched-body h6 {
-  color: #1f5a3d !important;
-  margin: 0.4rem 0 0.4rem 0;
-  font-weight: 700;
+  color: hsl(var(--study-heading)) !important;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.4rem 0;
+  line-height: 1.3;
 }
 
 .enriched-content .ai-enriched-body ul,
