@@ -9,6 +9,9 @@ import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSecureNotes } from '@/hooks/security/useSecureNotes';
 import { toast } from 'sonner';
+import { Plus, X, Loader2, ExternalLink } from 'lucide-react';
+
+const ADD_NEW_SENTINEL = '__add_new__';
 
 interface CreateNoteFormProps {
   onSave: (note: Omit<Note, 'id'>) => Promise<Note | null>;
@@ -21,7 +24,10 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   const [content, setContent] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { subjects: userSubjects, isLoading: subjectsLoading } = useUserSubjects();
+  const [isAddingSubject, setIsAddingSubject] = useState(false);
+  const [newSubjectName, setNewSubjectName] = useState('');
+  const [isSavingSubject, setIsSavingSubject] = useState(false);
+  const { subjects: userSubjects, isLoading: subjectsLoading, addSubject } = useUserSubjects();
   const { sanitizeNoteContent, sanitizeNoteText, validateNote } = useSecureNotes();
 
   // Initialize form with existing data when editing
