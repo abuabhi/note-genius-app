@@ -138,7 +138,13 @@ export const markdownToHtml = (markdown: string): string => {
   const blocks = html.split(/\n\s*\n/);
   const processedBlocks = blocks.map(block => {
     if (!block.trim()) return '';
-    
+
+    // Restore AI-enhanced placeholder blocks as fully-rendered HTML
+    const tokenMatch = block.trim().match(/^\u0000AIENH(\d+)\u0000$/);
+    if (tokenMatch) {
+      return placeholders[Number(tokenMatch[1])] ?? '';
+    }
+
     // Don't wrap blocks that are already HTML elements
     if (block.match(/^<(h[1-6]|div|blockquote|ul|ol|pre|hr|li)/)) {
     // Special handling for lists - don't add br tags between list items
@@ -148,26 +154,26 @@ export const markdownToHtml = (markdown: string): string => {
     // For other HTML elements, don't add line breaks that could affect spacing
     return block;
     }
-    
+
     // Don't wrap single list items in paragraphs if they're already processed
     if (block.match(/^<li>.*<\/li>$/)) {
       return block;
     }
-    
+
     // Don't wrap question/answer blocks in extra paragraphs
     if (block.match(/^<div class="(question-text|answer-text)">/)) {
       return block.replace(/\n/g, '<br>');
     }
-    
+
     // For plain text blocks, only wrap in paragraphs if they don't contain list items
     if (block.includes('<li>') || block.includes('<ul>') || block.includes('<ol>')) {
       return block.replace(/\n/g, '<br>');
     }
-    
+
     // Wrap plain text in paragraph tags
     return `<p>${block.replace(/\n/g, '<br>')}</p>`;
   }).filter(block => block.length > 0);
-  
+
   return processedBlocks.join('\n');
 };
 
