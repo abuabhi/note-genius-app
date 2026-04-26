@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { useExams } from '@/hooks/exams';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth';
 
 interface ExamFormDialogProps {
   open: boolean;
@@ -18,10 +20,11 @@ interface ExamFormDialogProps {
 export const ExamFormDialog: React.FC<ExamFormDialogProps> = ({ open, onOpenChange, onCreated }) => {
   const { subjects } = useUserSubjects();
   const { createExam } = useExams();
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [subjectId, setSubjectId] = useState<string>('');
   const [examDate, setExamDate] = useState('');
-  const [location, setLocation] = useState('');
+  const [topic, setTopic] = useState('');
   const [notes, setNotes] = useState('');
   const [target, setTarget] = useState(80);
   const [remind7, setRemind7] = useState(true);
@@ -31,7 +34,7 @@ export const ExamFormDialog: React.FC<ExamFormDialogProps> = ({ open, onOpenChan
 
   const reset = () => {
     setTitle(''); setSubjectId(''); setExamDate('');
-    setLocation(''); setNotes(''); setTarget(80);
+    setTopic(''); setNotes(''); setTarget(80);
     setRemind7(true); setRemind3(true); setRemind1(true);
   };
 
@@ -45,16 +48,29 @@ export const ExamFormDialog: React.FC<ExamFormDialogProps> = ({ open, onOpenChan
         remind1 ? 1 : null,
       ].filter((d): d is number => d !== null);
 
+      // examDate is yyyy-mm-dd (date-only); store at start of day in local time
       const exam = await createExam({
         title: title.trim(),
         subject_id: subjectId || null,
-        exam_date: new Date(examDate).toISOString(),
-        location: location.trim() || null,
+        exam_date: new Date(`${examDate}T00:00:00`).toISOString(),
+        location: null,
         notes: notes.trim() || null,
         target_readiness: target,
         createCalendarEvent: true,
         reminderDaysBefore,
       });
+
+      // Optional initial topic
+      if (topic.trim() && user?.id) {
+        await supabase.from('exam_topics').insert({
+          exam_id: exam.id,
+          user_id: user.id,
+          name: topic.trim(),
+          weight: 1,
+          position: 0,
+        });
+      }
+
       reset();
       onOpenChange(false);
       onCreated?.(exam.id);
@@ -74,28 +90,22 @@ export const ExamFormDialog: React.FC<ExamFormDialogProps> = ({ open, onOpenChan
             <Label htmlFor="exam-title">Title</Label>
             <Input id="exam-title" value={title} onChange={e => setTitle(e.target.value)} placeholder="Maths Mid-Term" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label>Subject</Label>
-              <Select value={subjectId} onValueChange={setSubjectId}>
-                <SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger>
-                <SelectContent>
-                  {subjects.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-muted-foreground">Manage subjects in Settings.</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="exam-date">Exam date</Label>
-              <Input id="exam-date" type="datetime-local" value={examDate} onChange={e => setExamDate(e.target.value)} />
-            </div>
+          <div className="space-y-2">
+            <Label>Subject</Label>
+            <Select value={subjectId} onValueChange={setSubjectId}>
+              <SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger>
+              <SelectContent>
+                {subjects.map(s => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">Manage subjects in Settings.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="exam-loc">Location</Label>
-              <Input id="exam-loc" value={location} onChange={e => setLocation(e.target.value)} placeholder="Room 204" />
+              <Label htmlFor="exam-date">Exam date</Label>
+              <Input id="exam-date" type="date" value={examDate} onChange={e => setExamDate(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="exam-target">Target readiness (%)</Label>
@@ -103,7 +113,16 @@ export const ExamFormDialog: React.FC<ExamFormDialogProps> = ({ open, onOpenChan
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="exam-notes">Notes</Label>
+            <Label htmlFor="exam-topic">
+              Topic <span className="text-xs text-muted-foreground font-normal">(optional)</span>
+            </Label>
+            <Input id="exam-topic" value={topic} onChange={e => setTopic(e.target.value)} placeholder="e.g. Calculus — limits" />
+            <p className="text-[11px] text-muted-foreground">You can add more topics after creating the exam.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="exam-notes">
+              Notes <span className="text-xs text-muted-foreground font-normal">(optional)</span>
+            </Label>
             <Textarea id="exam-notes" rows={3} value={notes} onChange={e => setNotes(e.target.value)} />
           </div>
           <div className="space-y-2">
