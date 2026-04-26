@@ -325,6 +325,14 @@ export const SimpleEnhancementTabs = React.memo(({
                               textAlign={textAlign}
                               className="w-full"
                             />
+                          ) : tab.value === 'questions' ? (
+                            <PlainTextNoteRenderer
+                              content={displayContent}
+                              fontSize={fontSize}
+                              textAlign={textAlign}
+                              enableMarkdown
+                              className="w-full"
+                            />
                           ) : (
                             <ExpandableContentRenderer
                               content={displayContent}
