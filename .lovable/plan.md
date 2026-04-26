@@ -1,50 +1,97 @@
-I checked the current note record and the content is still present in the database:
+## Goal
 
-- Original++: 4,300 characters, completed
-- Summary: 2,261 characters, completed
-- Key Points: 1,660 characters, completed
-- Enriched Note: 9,739 characters, completed
-- Top 10 Questions: 3,828 characters, completed
+Make headings across **all five study tabs** (Original++, Summary, Key Points, Top 10 Questions, **and Enriched Note**) look identical:
+- Same dark forest green (`#1f5a3d` — already used in Enriched headings, matches the green in your screenshot).
+- Same size hierarchy regardless of whether content is markdown (`#`, `##`) or HTML (`<h2>`).
+- Enriched green block/card styling (mint background, badge, border-left) **stays exactly as today** — only the heading color/size inside it is normalized.
 
-So this is not a generation/data-loss problem. It is a rendering problem: several tabs still use the older markdown/HTML renderer, which is leaving list bullets visible while the actual text is not reliably visible. The Top 10 Questions tab was moved to the safer renderer, which is why that one now shows content.
+## What's wrong today
 
-Plan:
+| Tab | Heading source | Color today |
+|---|---|---|
+| Original++ | markdown `#`, `##` | bright mint `--primary` |
+| Summary | HTML `<h2>` | unstyled / inherits |
+| Key Points | bullets only | n/a |
+| Top 10 Questions | markdown `#`, `##` | bright mint `--primary` |
+| Enriched Note | HTML inside green card | dark forest `#1f5a3d` ← target |
 
-1. Route all study enhancement tabs through the safe renderer
-   - Use `PlainTextNoteRenderer` for Original++, Summary, Key Points, and Top 10 Questions.
-   - Keep the special Enriched Note renderer only for Enriched Note because it has expansion/enriched-card behavior.
-   - This removes the fragile renderer path that is currently producing blank bullets/text.
+Two real problems: color mismatch (bright mint vs dark forest) and inconsistent heading scale.
 
-2. Make the safe renderer support the formats these tabs actually store
-   - Handle existing HTML content such as Summary (`<h2>`, `<p>`, lists) without making text invisible.
-   - Handle markdown content such as Original++ and Top 10 Questions.
-   - Handle bullet-only/key-point content cleanly.
-   - Add a final fallback so if processed output is empty, raw text is shown instead of a blank page.
+## Plan
 
-3. Remove bold styling from Top 10 Questions answers/questions
-   - Stop converting `**bold**` into bold text inside the safe renderer.
-   - Strip markdown bold markers from the visible text instead.
-   - Keep Q headings readable, but not heavy/bold in the answer body.
+### 1. Add one shared heading token
 
-4. Unify the green color across the whole study enhancement UI
-   - Replace hardcoded dark green `#236248`, Tailwind mint classes, and `hsl(var(--primary))` mismatches in this area with one consistent primary green token.
-   - Apply the same green to active tab backgrounds, content headers, question headings, bullets, status dots, report/regenerate accents, and enriched cards.
-   - The goal is that Summary, Key Points, Enriched Note, and Top 10 Questions no longer look like different greens.
+In `src/index.css` (both `:root` and `.dark`):
+```
+--study-heading: 151 49% 24%;   /* ≈ #1f5a3d, matches Enriched */
+```
+Does **not** touch `--primary` (that drives buttons, tabs, etc.).
 
-5. Clean up CSS conflicts
-   - Remove or override the old `.simple-content` rules that force hardcoded greens and bold question styles.
-   - Keep list bullets and text using the same readable color system.
+### 2. Standardize one heading scale used everywhere
 
-Technical files to update:
+| Level | Size | Weight |
+|---|---|---|
+| h1 | 1.5rem | 700, bottom border |
+| h2 | 1.25rem | 700 |
+| h3 | 1.1rem | 600 |
+| h4 | 1.0rem | 600 |
 
-- `src/components/notes/study/SimpleEnhancementTabs.tsx`
-- `src/components/notes/study/viewer/PlainTextNoteRenderer.tsx`
-- `src/components/notes/study/SimpleContentRenderer.css`
-- Possibly `src/components/notes/study/EnrichedContentRenderer.css` if its green differs from the unified token
+All in color `hsl(var(--study-heading))`.
 
-Expected result:
+### 3. `PlainTextNoteRenderer.tsx` (Original++, Summary fallback, Key Points, Questions)
 
-- Original++, Summary, Key Points, Enriched Note, and Top 10 Questions all show their existing saved content.
-- No tab shows just bullets with missing text.
-- Top 10 Questions no longer bolds random words in Q/A content.
-- All green accents in these tabs are visually consistent.
+- Replace inline `color: 'hsl(var(--primary))'` on h1–h4 with `hsl(var(--study-heading))`.
+- Apply the size/weight scale above.
+- Bullet dots stay `--primary` (small accent only).
+
+### 4. `SimpleContentRenderer.css`
+
+Add rules so the Summary HTML branch (`<h2>`) gets the same styling:
+```
+.study-safe-content h1 { font-size:1.5rem;  font-weight:700; color:hsl(var(--study-heading)); ... }
+.study-safe-content h2 { font-size:1.25rem; font-weight:700; color:hsl(var(--study-heading)); ... }
+.study-safe-content h3 { font-size:1.1rem;  font-weight:600; color:hsl(var(--study-heading)); ... }
+.study-safe-content h4 { font-size:1.0rem;  font-weight:600; color:hsl(var(--study-heading)); ... }
+```
+
+### 5. `EnrichedContentRenderer.css` — minimal, surgical update
+
+Only the heading rule changes. Card background, badge, border-left, padding, shadow — **all untouched**.
+
+Change:
+```
+.enriched-content .ai-enriched-body h1..h6 {
+  color: #1f5a3d !important;   /* hardcoded today */
+  margin: 0.4rem 0;
+  font-weight: 700;
+}
+```
+to use the shared token + the new scale:
+```
+.enriched-content .ai-enriched-body h1 { color: hsl(var(--study-heading)) !important; font-size:1.5rem;  font-weight:700; margin:0.5rem 0; }
+.enriched-content .ai-enriched-body h2 { color: hsl(var(--study-heading)) !important; font-size:1.25rem; font-weight:700; margin:0.5rem 0; }
+.enriched-content .ai-enriched-body h3 { color: hsl(var(--study-heading)) !important; font-size:1.1rem;  font-weight:600; margin:0.4rem 0; }
+.enriched-content .ai-enriched-body h4,
+.enriched-content .ai-enriched-body h5,
+.enriched-content .ai-enriched-body h6 { color: hsl(var(--study-heading)) !important; font-size:1.0rem; font-weight:600; margin:0.4rem 0; }
+```
+Also normalize the matching `.ai-enriched-body strong` color (`#1f5a3d`) to `hsl(var(--study-heading))` so inline emphasis stays consistent. Same color, just tokenized.
+
+That's it for Enriched. No touch to `.ai-enriched-card`, `.ai-enriched-badge`, `.ai-enriched-body p/ul/ol/li`, hide-coloring rules, or `ExpandableContentRenderer.tsx`.
+
+## Files to edit
+
+1. `src/index.css` — add `--study-heading` token.
+2. `src/components/notes/study/viewer/PlainTextNoteRenderer.tsx` — swap heading color + apply scale.
+3. `src/components/notes/study/SimpleContentRenderer.css` — add `.study-safe-content` heading rules for Summary HTML.
+4. `src/components/notes/study/EnrichedContentRenderer.css` — heading color + scale only (card/badge/layout untouched).
+
+## Files NOT touched
+
+- `ExpandableContentRenderer.tsx` and the rest of the expansion pipeline
+- Any AI generation / edge function
+- `--primary` token, tabs, buttons
+
+## Result
+
+All five tabs use the same dark forest green at the same heading sizes. Enriched cards still look like Enriched cards — green background, badge, border — just with normalized heading typography that now matches every other tab.
