@@ -8,7 +8,7 @@
   line-height: 1.6;
 }
 
-/* Unified primary green for headers (matches design system primary token) */
+/* Unified study heading color and scale across all study tabs */
 .simple-content h1,
 .simple-content h2,
 .simple-content h3,
@@ -21,12 +21,17 @@
 .simple-h4,
 .simple-h5,
 .simple-h6 {
-  color: hsl(var(--primary)) !important;
-  font-weight: 600;
+  color: hsl(var(--study-heading)) !important;
   margin-bottom: 1rem;
   margin-top: 1.5rem;
-  line-height: 1.25;
+  line-height: 1.3;
 }
+.simple-content h1, .simple-h1 { font-size: 1.5rem;  font-weight: 700; }
+.simple-content h2, .simple-h2 { font-size: 1.25rem; font-weight: 700; }
+.simple-content h3, .simple-h3 { font-size: 1.1rem;  font-weight: 600; }
+.simple-content h4, .simple-h4,
+.simple-content h5, .simple-h5,
+.simple-content h6, .simple-h6 { font-size: 1rem; font-weight: 600; }
 
 /* Normalize any AI-generated inline greens to the primary token */
 .simple-content div[style*="#3EB489"],
