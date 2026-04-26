@@ -27,6 +27,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
   const [isAddingSubject, setIsAddingSubject] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState('');
   const [isSavingSubject, setIsSavingSubject] = useState(false);
+  const [subjectTouched, setSubjectTouched] = useState(false);
   const { subjects: userSubjects, isLoading: subjectsLoading, addSubject } = useUserSubjects();
   const { sanitizeNoteContent, sanitizeNoteText, validateNote } = useSecureNotes();
 
@@ -101,6 +102,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     
     if (!selectedSubject || selectedSubject.trim() === '') {
       console.log('❌ [CREATE FORM] Validation failed: No subject selected');
+      setSubjectTouched(true);
       toast.error('Please select a subject');
       return;
     }
