@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Note } from '@/types/note';
 import { TextAlignType } from './hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
