@@ -176,9 +176,9 @@ export const SimpleEnhancementTabs = React.memo(({
           {/* Content area - fixed width and height */}
           <div className="flex-1 min-w-0">
             {tabs.map((tab) => (
-              <TabsContent key={tab.value} value={tab.value} className="h-full min-h-[600px] m-0 data-[state=active]:block data-[state=inactive]:hidden">
-                <Card className="h-full w-full">
-                  <CardContent className="p-0 h-full flex flex-col">
+              <TabsContent key={tab.value} value={tab.value} className="min-h-[600px] m-0 data-[state=active]:block data-[state=inactive]:hidden">
+                <Card className="min-h-[600px] w-full">
+                  <CardContent className="p-0 min-h-[600px] flex flex-col">
                     {/* Header with metadata */}
                     <div className="border-b border-border py-4 px-6 bg-gradient-to-r from-primary/5 to-transparent">
                       <div className="flex items-center justify-between">
@@ -310,7 +310,7 @@ export const SimpleEnhancementTabs = React.memo(({
                       </div>
                     )}
                     {/* Content area */}
-                    <div className="flex-1 overflow-auto p-6">
+                    <div className="flex-1 min-h-[420px] overflow-visible p-6">
                       {(() => {
                         const displayContent = tab.value === 'original'
                           ? originalContent
