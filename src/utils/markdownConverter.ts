@@ -180,57 +180,69 @@ export const markdownToHtml = (markdown: string): string => {
 // Enhanced content processor that handles both rich HTML and markdown
 export const processContentForDisplay = (content: string): string => {
   if (!content) return '';
-  
+
+  const escapeHtml = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // Safety net: if anything below produces empty HTML from non-empty input,
+  // fall back to the raw text wrapped in <pre> so the user always sees their
+  // content. Prevents silent-blank failures (Questions tab regression, etc.).
+  const safeReturn = (out: string): string => {
+    if (out && out.trim().length > 0) return out;
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn(
+        '[processContentForDisplay] Renderer produced empty output; falling back to raw text. Input length:',
+        content.length
+      );
+    }
+    return `<pre style="white-space:pre-wrap;font-family:inherit;margin:0;">${escapeHtml(content)}</pre>`;
+  };
+
   // Check if content has expansion blocks - if so, preserve them
   if (content.includes('ai-expansion-content')) {
-    // Content has expansion blocks and is already processed HTML, return as-is
-    return content;
+    return safeReturn(content);
   }
-  
+
   // Check if content already has ai-enhanced-simple divs - preserve them
   if (content.includes('ai-enhanced-simple')) {
-    // Content already has AI enhancement styling applied, preserve it
-    return content;
+    return safeReturn(content);
   }
-  
+
   // Check if content is rich HTML from Tiptap (has advanced formatting)
-  const isRichHTML = content.includes('<p>') || 
-                     content.includes('<strong>') || 
-                     content.includes('<em>') || 
-                     content.includes('<h1>') || 
-                     content.includes('<h2>') || 
-                     content.includes('<h3>') || 
+  const isRichHTML = content.includes('<p>') ||
+                     content.includes('<strong>') ||
+                     content.includes('<em>') ||
+                     content.includes('<h1>') ||
+                     content.includes('<h2>') ||
+                     content.includes('<h3>') ||
                      content.includes('<table>') ||
                      content.includes('<img>') ||
                      content.includes('<a ') ||
                      content.includes('font-size:') ||
                      content.includes('color:') ||
-                     content.includes('<ul>') || 
-                     content.includes('<ol>') || 
+                     content.includes('<ul>') ||
+                     content.includes('<ol>') ||
                      content.includes('<li>') ||
                      content.includes('<blockquote>');
-  
+
   if (isRichHTML) {
-    // Content is rich HTML from editor, return as-is to preserve formatting
-    return content;
+    return safeReturn(content);
   }
-  
+
   // Check if content is basic structured HTML
-  const hasBasicHtmlStructure = content.includes('<br>') || 
-                               content.includes('<div>');
-  
+  const hasBasicHtmlStructure = content.includes('<br>') ||
+                                content.includes('<div>');
+
   if (hasBasicHtmlStructure) {
-    // Content is basic HTML, return as-is to avoid corruption
-    return content;
+    return safeReturn(content);
   }
-  
-  // If content has basic HTML tags but no structure, it might need conversion
+
+  // If content has basic HTML tags but no structure, convert safely
   if (content.includes('<') && content.includes('>')) {
-    // Check if it's just inline tags or malformed - convert safely
     const cleanMarkdown = htmlToMarkdown(content);
-    return markdownToHtml(cleanMarkdown);
+    return safeReturn(markdownToHtml(cleanMarkdown));
   }
-  
+
   // If pure markdown or plain text, process it
-  return markdownToHtml(content);
+  return safeReturn(markdownToHtml(content));
 };
