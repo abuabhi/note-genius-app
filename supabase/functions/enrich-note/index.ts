@@ -2,6 +2,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createPrompt, getModel, getTokenLimit } from "./prompts.ts";
+import type { EnhancementFunction } from "./types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -84,20 +86,27 @@ async function recordUsage(admin: any, userId: string, noteId: string | null, mo
 }
 
 async function generateEnhancedContent(noteContent: string, enhancementType: string, noteTitle?: string) {
+  const title = noteTitle ?? "Untitled";
+  const typedEnhancement = enhancementType as EnhancementFunction;
+
   if (!OPENAI_API_KEY) {
-    // Fallback simple transformation if no API key is configured
-    const header = `[ENRICHED] ${noteTitle ?? "Note"} - ${enhancementType}`;
-    return `${header}\n\n${noteContent}\n\nKey Improvements:\n- Clarified structure\n- Highlighted key points\n- Suggested study takeaways`;
+    // Type-aware fallback so missing keys don't silently produce wrong content
+    if (typedEnhancement === "generate-questions") {
+      return `# Top 10 Study Questions\n\n_(AI provider is not configured — placeholder content)_\n\n` +
+        Array.from({ length: 10 }, (_, i) =>
+          `## Q${i + 1}: Placeholder question ${i + 1}\n\n**A${i + 1}:** Placeholder answer.`
+        ).join("\n\n");
+    }
+    if (typedEnhancement === "enrich-note") {
+      return `${noteContent}\n\n[AI_ENHANCED]\n_AI provider is not configured. Configure OPENAI_API_KEY to see real enrichments._\n[/AI_ENHANCED]`;
+    }
+    const header = `[${typedEnhancement.toUpperCase()}] ${title}`;
+    return `${header}\n\n${noteContent}`;
   }
 
-  const system = `You are an assistant that enhances student notes.
-Enhancement type: ${enhancementType}.
-Improve clarity, add key points and study takeaways without changing meaning.
-Return enriched content only.`;
-
-  const user = `Title: ${noteTitle ?? "Untitled"}
-Content:
-${noteContent}`;
+  const userPrompt = createPrompt(typedEnhancement, title, noteContent);
+  const model = getModel(typedEnhancement);
+  const maxTokens = getTokenLimit(typedEnhancement);
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -106,12 +115,17 @@ ${noteContent}`;
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model,
       messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
+        {
+          role: "system",
+          content:
+            "You are an expert study-note assistant. Follow the user's formatting instructions exactly. Return only the formatted output with no preamble, explanation, or trailing commentary.",
+        },
+        { role: "user", content: userPrompt },
       ],
-      temperature: 0.7,
+      temperature: 0.5,
+      max_tokens: maxTokens,
     }),
   });
 

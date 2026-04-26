@@ -25,15 +25,27 @@ interface SimpleEnhancementTabsProps {
   fontSize: number;
   textAlign: TextAlignType;
   onNoteUpdate?: () => void;
+  activeContentType?: EnhancementType;
+  onActiveContentTypeChange?: (value: EnhancementType) => void;
 }
 
 export const SimpleEnhancementTabs = React.memo(({
   note,
   fontSize,
   textAlign,
-  onNoteUpdate
+  onNoteUpdate,
+  activeContentType,
+  onActiveContentTypeChange
 }: SimpleEnhancementTabsProps) => {
-  const [activeTab, setActiveTab] = useState<EnhancementType>('original');
+  const [internalActiveTab, setInternalActiveTab] = useState<EnhancementType>(activeContentType ?? 'original');
+  const activeTab = activeContentType ?? internalActiveTab;
+  const setActiveTab = (value: EnhancementType) => {
+    if (onActiveContentTypeChange) {
+      onActiveContentTypeChange(value);
+    } else {
+      setInternalActiveTab(value);
+    }
+  };
   const [hideColoring, setHideColoring] = useState(false);
   const { generatedContent, generateEnhancement, regenerateAll, isLoading, isAnyLoading } = useEnhancementManager(note, onNoteUpdate);
   const { usageCount, monthlyLimit, isLoading: statsLoading, refetch: refetchUsage } = useAiEnrichmentUsage();

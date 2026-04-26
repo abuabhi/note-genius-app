@@ -93,6 +93,8 @@ export const NoteStudyViewContent: React.FC<NoteStudyViewContentProps> = ({
           fontSize={fontSize}
           textAlign={textAlign}
           onNoteUpdate={() => onNoteUpdate({})}
+          activeContentType={activeContentType}
+          onActiveContentTypeChange={onActiveContentTypeChange}
         />
       )}
     </div>
