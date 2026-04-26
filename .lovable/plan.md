@@ -1,15 +1,17 @@
-## Diagnosis
+I’ll stop trying to route the dashboard CTA into the import modal and change it to the fallback you asked for: creating a first note.
 
-The previous fix in `NotesPage.tsx` reads `?action=upload` and calls `setIsImportDialogOpen(true)`, but in your screenshot the dialog never appeared. The most likely cause: the auto-open effect runs once during page mount, but a React 18 StrictMode double-render or a state reset triggered by the `useNotes` hook completing its initial fetch swallows the open. We also strip the URL param immediately, so any later remount has nothing to react to.
+Plan:
+1. Update `src/components/dashboard/progressive/GetStartedHeroSection.tsx`
+   - Change the primary CTA copy from `Upload PDF` to `Create your first note`.
+   - Change the hero headline/body so it no longer promises PDF upload/import.
+   - Change the click handler from `navigate('/notes?action=upload')` to `navigate('/notes')`.
+   - Use the existing notes route only, avoiding the broken dialog auto-open behavior.
 
-## Fix
+2. Update related new-user quick actions in `src/components/dashboard/progressive/QuickStartActions.tsx`
+   - Keep `Create First Note` as the first action.
+   - Change `Import Documents` so it no longer claims it will open the import dialog unless we are actually wiring that separately.
+   - If needed, point it to `/notes` with neutral wording or remove the misleading import wording.
 
-Harden the auto-open in `src/pages/NotesPage.tsx`:
-
-1. Use a `useRef` flag to ensure the auto-open effect only fires **once per page visit**, regardless of re-renders.
-2. Defer `setIsImportDialogOpen(true)` to the next tick (`setTimeout(..., 0)`) so the dialog is opened after the initial page render settles — avoids being clobbered by other mount-phase state changes.
-3. Keep stripping `?action` from the URL (so refresh/close doesn't re-trigger), but only after the ref is flipped.
-
-## Files changed
-
-- `src/pages/NotesPage.tsx`
+3. Leave the Notes page import button intact
+   - Users can still open Import from the Notes page manually.
+   - No more dashboard CTA promising an upload dialog that fails to open.

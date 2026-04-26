@@ -24,17 +24,17 @@ export const QuickStartActions = () => {
     },
     {
       title: "Import Documents",
-      description: "Upload PDFs, Word docs, and more",
+      description: "Open Notes and use the Import button",
       icon: Upload,
       color: "mint",
-      action: () => navigate('/notes') // Will open import dialog
+      action: () => navigate('/notes')
     },
     {
       title: "Scan Notes",
-      description: "Capture handwritten notes with your camera",
+      description: "Open Notes and use the Scan option",
       icon: Camera,
       color: "purple",
-      action: () => navigate('/notes') // Will open scan dialog
+      action: () => navigate('/notes')
     },
     {
       title: "Build Flashcards",
