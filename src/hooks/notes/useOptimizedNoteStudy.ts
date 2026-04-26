@@ -121,9 +121,12 @@ export const useOptimizedNoteStudy = (noteId: string): OptimizedNoteStudyResult 
       }
     },
     enabled: !!user && !!noteId,
-    // Use default cache config instead of specific 'note' config
-    staleTime: 60 * 1000, // 1 minute - good for study sessions
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    // Show seeded data from the notes-list cache instantly while we revalidate
+    placeholderData: seededNote,
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     retry: 2,
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000)
   });
