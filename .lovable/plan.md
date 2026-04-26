@@ -1,42 +1,50 @@
-## Diagnosis
+I checked the current note record and the content is still present in the database:
 
-Your Top 10 Questions **were generated successfully**. I confirmed it directly in the database:
+- Original++: 4,300 characters, completed
+- Summary: 2,261 characters, completed
+- Key Points: 1,660 characters, completed
+- Enriched Note: 9,739 characters, completed
+- Top 10 Questions: 3,828 characters, completed
 
-- Note `Physics 101` (`19e9f8de-…`) has `questions_status = 'completed'` and **3,828 characters** of valid markdown stored in `questions_content` (Q1–Q10 with answers, all intact).
-- The tab header in your screenshot reflects this: it says "552 words • 3 min read", which means the content reaches the renderer.
-- The body below the divider is blank, so the **markdown → HTML pipeline is silently dropping the rendered output** for this content — same failure family as the "Original tab is blank" bug we fixed yesterday.
+So this is not a generation/data-loss problem. It is a rendering problem: several tabs still use the older markdown/HTML renderer, which is leaving list bullets visible while the actual text is not reliably visible. The Top 10 Questions tab was moved to the safer renderer, which is why that one now shows content.
 
-The current path for the Questions tab is:
+Plan:
 
-```text
-questions_content (markdown)
-   → ExpandableContentRenderer
-   → processContentForDisplay (markdownToHtml)
-   → SimpleContentRenderer
-   → processContentForDisplay (called AGAIN)
-   → RichTextDisplay
-   → DOMPurify.sanitize (strict mode, KEEP_CONTENT: false)
-   → dangerouslySetInnerHTML
-```
+1. Route all study enhancement tabs through the safe renderer
+   - Use `PlainTextNoteRenderer` for Original++, Summary, Key Points, and Top 10 Questions.
+   - Keep the special Enriched Note renderer only for Enriched Note because it has expansion/enriched-card behavior.
+   - This removes the fragile renderer path that is currently producing blank bullets/text.
 
-That's two passes through the markdown converter plus a strict sanitizer. When something in the chain returns an empty string, the user sees a blank card with correct word count (because the count is calculated from the raw `displayContent`, not the rendered HTML).
+2. Make the safe renderer support the formats these tabs actually store
+   - Handle existing HTML content such as Summary (`<h2>`, `<p>`, lists) without making text invisible.
+   - Handle markdown content such as Original++ and Top 10 Questions.
+   - Handle bullet-only/key-point content cleanly.
+   - Add a final fallback so if processed output is empty, raw text is shown instead of a blank page.
 
-## Fix
+3. Remove bold styling from Top 10 Questions answers/questions
+   - Stop converting `**bold**` into bold text inside the safe renderer.
+   - Strip markdown bold markers from the visible text instead.
+   - Keep Q headings readable, but not heavy/bold in the answer body.
 
-Treat the Questions tab the same way we treated the Original tab — render it through a robust path that cannot collapse to empty:
+4. Unify the green color across the whole study enhancement UI
+   - Replace hardcoded dark green `#236248`, Tailwind mint classes, and `hsl(var(--primary))` mismatches in this area with one consistent primary green token.
+   - Apply the same green to active tab backgrounds, content headers, question headings, bullets, status dots, report/regenerate accents, and enriched cards.
+   - The goal is that Summary, Key Points, Enriched Note, and Top 10 Questions no longer look like different greens.
 
-1. **Route the Questions tab through `PlainTextNoteRenderer`** in `SimpleEnhancementTabs.tsx`, alongside `original`. The Questions content from the AI is plain markdown (headers + bold), which `PlainTextNoteRenderer` handles correctly via paragraph splitting and `white-space: pre-wrap`. This guarantees something always renders.
+5. Clean up CSS conflicts
+   - Remove or override the old `.simple-content` rules that force hardcoded greens and bold question styles.
+   - Keep list bullets and text using the same readable color system.
 
-2. **Add a lightweight markdown-aware path inside `PlainTextNoteRenderer`** so the Questions tab still gets visible `# / ##` headings and `**bold**` styling instead of looking like a wall of text. Keep the existing plain-text fallback for the Original tab unchanged.
+Technical files to update:
 
-3. **Harden `processContentForDisplay`** so the double-invocation (in `ExpandableContentRenderer` then again inside `SimpleContentRenderer`) cannot return empty: if the function ever produces an empty string from non-empty input, return the original content wrapped in `<pre>` as a safety net. This protects every other tab (Summary, Key Points, Markdown, Enriched) from the same silent-blank failure.
+- `src/components/notes/study/SimpleEnhancementTabs.tsx`
+- `src/components/notes/study/viewer/PlainTextNoteRenderer.tsx`
+- `src/components/notes/study/SimpleContentRenderer.css`
+- Possibly `src/components/notes/study/EnrichedContentRenderer.css` if its green differs from the unified token
 
-4. **Add a one-line console warning** when the renderer receives non-empty content but produces empty HTML, so we can see exactly which input pattern is breaking in the future without you having to report it.
+Expected result:
 
-## Files to change
-
-- `src/components/notes/study/SimpleEnhancementTabs.tsx` — add `'questions'` to the safe-renderer branch.
-- `src/components/notes/study/viewer/PlainTextNoteRenderer.tsx` — handle `# / ## / **bold**` so Q&A formatting is readable.
-- `src/utils/markdownConverter.ts` — empty-output safety net inside `processContentForDisplay`.
-
-No database changes. Your existing 3,828-character `questions_content` is intact and will display the moment the front-end fix ships.
+- Original++, Summary, Key Points, Enriched Note, and Top 10 Questions all show their existing saved content.
+- No tab shows just bullets with missing text.
+- Top 10 Questions no longer bolds random words in Q/A content.
+- All green accents in these tabs are visually consistent.

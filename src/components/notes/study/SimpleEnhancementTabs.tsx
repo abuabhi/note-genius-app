@@ -318,22 +318,7 @@ export const SimpleEnhancementTabs = React.memo(({
                           : generatedContent[tab.column!] || tab.content;
                         
                         return displayContent ? (
-                          tab.value === 'original' ? (
-                            <PlainTextNoteRenderer
-                              content={displayContent}
-                              fontSize={fontSize}
-                              textAlign={textAlign}
-                              className="w-full"
-                            />
-                          ) : tab.value === 'questions' ? (
-                            <PlainTextNoteRenderer
-                              content={displayContent}
-                              fontSize={fontSize}
-                              textAlign={textAlign}
-                              enableMarkdown
-                              className="w-full"
-                            />
-                          ) : (
+                          tab.value === 'enriched' ? (
                             <ExpandableContentRenderer
                               content={displayContent}
                               fontSize={fontSize}
@@ -342,6 +327,14 @@ export const SimpleEnhancementTabs = React.memo(({
                               noteTitle={note.title}
                               noteId={note.id}
                               hideColoring={hideColoring}
+                            />
+                          ) : (
+                            <PlainTextNoteRenderer
+                              content={displayContent}
+                              fontSize={fontSize}
+                              textAlign={textAlign}
+                              enableMarkdown={tab.value !== 'original'}
+                              className="w-full"
                             />
                           )
                         ) : (
