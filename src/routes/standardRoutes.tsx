@@ -28,6 +28,8 @@ const InfluencerDashboardPage = lazy(() => import('@/pages/InfluencerDashboardPa
 const ResourcesPage = lazy(() => import('@/pages/ResourcesPage'));
 const BlogPage = lazy(() => import('@/pages/BlogPage'));
 const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'));
+const ExamPrepPage = lazy(() => import('@/pages/ExamPrepPage'));
+const ExamDetailPage = lazy(() => import('@/pages/ExamDetailPage'));
 
 
 export const standardRoutes: RouteConfig[] = [
@@ -156,5 +158,13 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/blog/:slug',
     element: <BlogPostPage />
+  },
+  {
+    path: '/exam-prep',
+    element: <ExamPrepPage />
+  },
+  {
+    path: '/exam-prep/:id',
+    element: <ExamDetailPage />
   },
 ];

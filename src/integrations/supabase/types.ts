@@ -1154,6 +1154,155 @@ export type Database = {
           },
         ]
       }
+      exam_topic_links: {
+        Row: {
+          created_at: string
+          id: string
+          resource_id: string
+          resource_type: string
+          topic_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          resource_id: string
+          resource_type: string
+          topic_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          resource_id?: string
+          resource_type?: string
+          topic_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_topic_links_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "exam_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_topics: {
+        Row: {
+          created_at: string
+          exam_id: string
+          id: string
+          name: string
+          position: number
+          status: string
+          updated_at: string
+          user_id: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          exam_id: string
+          id?: string
+          name: string
+          position?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          exam_id?: string
+          id?: string
+          name?: string
+          position?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_topics_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exams: {
+        Row: {
+          created_at: string
+          event_id: string | null
+          exam_date: string
+          id: string
+          location: string | null
+          notes: string | null
+          status: string
+          study_plan_id: string | null
+          subject_id: string | null
+          target_readiness: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string | null
+          exam_date: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          status?: string
+          study_plan_id?: string | null
+          subject_id?: string | null
+          target_readiness?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string | null
+          exam_date?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          status?: string
+          study_plan_id?: string | null
+          subject_id?: string | null
+          target_readiness?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exams_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exams_study_plan_id_fkey"
+            columns: ["study_plan_id"]
+            isOneToOne: false
+            referencedRelation: "study_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exams_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "user_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback: {
         Row: {
           admin_response: string | null
