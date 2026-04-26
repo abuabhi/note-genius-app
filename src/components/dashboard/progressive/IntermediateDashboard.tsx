@@ -8,6 +8,7 @@ import { GoalsSection } from '../GoalsSection';
 import { EnhancedQuickActionsGrid } from '../EnhancedQuickActionsGrid';
 import { useDashboardAnalytics } from '@/hooks/useDashboardAnalytics';
 import { OnboardingChecklist } from './OnboardingChecklist';
+import { UpcomingExamsWidget } from '@/components/exam-prep/UpcomingExamsWidget';
 
 interface IntermediateDashboardProps {
   progressState: UserProgressState;
@@ -42,6 +43,8 @@ export const IntermediateDashboard = ({ progressState }: IntermediateDashboardPr
             <StudyPlannerSection />
             <GoalsSection />
           </div>
+
+          <UpcomingExamsWidget />
         </div>
         
         {/* Quick Actions Grid */}
