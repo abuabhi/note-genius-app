@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Note } from '@/types/note';
 import { TextAlignType } from './hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
@@ -39,12 +39,19 @@ export const SimpleEnhancementTabs = React.memo(({
   onActiveContentTypeChange
 }: SimpleEnhancementTabsProps) => {
   const [internalActiveTab, setInternalActiveTab] = useState<EnhancementType>(activeContentType ?? 'original');
+  // Keep internal state in sync whenever a defined activeContentType arrives,
+  // so a momentarily-undefined prop during a parent re-render never snaps the
+  // tab back to "original".
+  useEffect(() => {
+    if (activeContentType && activeContentType !== internalActiveTab) {
+      setInternalActiveTab(activeContentType);
+    }
+  }, [activeContentType, internalActiveTab]);
   const activeTab = activeContentType ?? internalActiveTab;
   const setActiveTab = (value: EnhancementType) => {
+    setInternalActiveTab(value);
     if (onActiveContentTypeChange) {
       onActiveContentTypeChange(value);
-    } else {
-      setInternalActiveTab(value);
     }
   };
   const [hideColoring, setHideColoring] = useState(false);
