@@ -1,15 +1,15 @@
-## Add Exam dialog cleanup
+## Diagnosis
 
-Update `src/components/exam-prep/ExamFormDialog.tsx`:
+The previous fix in `NotesPage.tsx` reads `?action=upload` and calls `setIsImportDialogOpen(true)`, but in your screenshot the dialog never appeared. The most likely cause: the auto-open effect runs once during page mount, but a React 18 StrictMode double-render or a state reset triggered by the `useNotes` hook completing its initial fetch swallows the open. We also strip the URL param immediately, so any later remount has nothing to react to.
 
-1. **Remove Location field** entirely (UI + state + payload sends `location: null`).
-2. **Add Topic field (optional)** — single-line text. On submit, if filled, insert into `exam_topics` (the existing topics table) so it shows up on the exam detail page. Hint text: "You can add more topics after creating the exam."
-3. **Exam date — date only**: change input from `type="datetime-local"` to `type="date"`. Store as start-of-day ISO (`new Date(\`${examDate}T00:00:00\`).toISOString()`).
-4. **Notes labeled optional** — append small "(optional)" hint next to label. (Field is already not required in validation.)
-5. **Layout**: with Location gone, place Exam date and Target readiness side-by-side; Topic and Notes each get their own full-width row.
+## Fix
 
-Required fields remain: Title, Exam date. Submit button stays disabled until both are filled.
+Harden the auto-open in `src/pages/NotesPage.tsx`:
+
+1. Use a `useRef` flag to ensure the auto-open effect only fires **once per page visit**, regardless of re-renders.
+2. Defer `setIsImportDialogOpen(true)` to the next tick (`setTimeout(..., 0)`) so the dialog is opened after the initial page render settles — avoids being clobbered by other mount-phase state changes.
+3. Keep stripping `?action` from the URL (so refresh/close doesn't re-trigger), but only after the ref is flipped.
 
 ## Files changed
 
-- `src/components/exam-prep/ExamFormDialog.tsx`
+- `src/pages/NotesPage.tsx`

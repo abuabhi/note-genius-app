@@ -4,7 +4,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useViewPreferences } from '@/hooks/useViewPreferences';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Note } from '@/types/note';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -79,13 +79,18 @@ const NotesPageContent = () => {
 
   // Auto-open import dialog when arriving via dashboard CTA (?action=upload|import)
   const [searchParams, setSearchParams] = useSearchParams();
+  const autoOpenedRef = useRef(false);
   useEffect(() => {
+    if (autoOpenedRef.current) return;
     const action = searchParams.get('action');
     if (action === 'upload' || action === 'import') {
-      setIsImportDialogOpen(true);
+      autoOpenedRef.current = true;
+      // Defer to next tick so the dialog mounts after initial page render settles
+      const t = setTimeout(() => setIsImportDialogOpen(true), 0);
       const next = new URLSearchParams(searchParams);
       next.delete('action');
       setSearchParams(next, { replace: true });
+      return () => clearTimeout(t);
     }
   }, [searchParams, setSearchParams]);
 
