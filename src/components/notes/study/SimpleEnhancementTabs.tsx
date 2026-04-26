@@ -229,7 +229,11 @@ export const SimpleEnhancementTabs = React.memo(({
                               disabled={isLoading(tab.enhancementType!)}
                               variant="outline"
                               size="sm"
-                              className="border-mint-200 bg-white hover:bg-mint-50 text-mint-700 hover:text-mint-800"
+                              className={`bg-white hover:bg-mint-50 text-mint-700 hover:text-mint-800 ${
+                                !tab.hasContent && !isLoading(tab.enhancementType!)
+                                  ? 'gen-animated-border'
+                                  : 'border-mint-200'
+                              }`}
                             >
                               {isLoading(tab.enhancementType!) ? (
                                 <>
