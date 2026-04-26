@@ -1,27 +1,36 @@
-## Plan: Add RESEND_API_KEY and verify email delivery
+## Plan: Properly format note emails (render markdown → HTML)
 
-### What I'll do
+### Problem
+The email currently shows raw markdown syntax (`#`, `**bold**`, `-`, `_italic_`) because `send-note-email` only converts newlines to `<br>`. Headings, bold, italic, lists, and code blocks aren't rendered.
 
-1. **Prompt for the secret** — Trigger the secret-add flow for `RESEND_API_KEY` so you can paste your key from https://resend.com/api-keys. It's stored encrypted and only accessible to edge functions.
+### Fix
+Convert the note content from markdown to HTML inside the edge function before sending, and apply clean email-safe styling.
 
-2. **Redeploy `send-note-email`** — Force a redeploy so the function picks up the new secret immediately.
+**Steps:**
 
-3. **Test the email flow** — Tail the edge function logs while you send a test email from the export dialog so we can confirm:
-   - The function is invoked
-   - Resend accepts the request
-   - Any delivery error (e.g. unverified domain) is surfaced clearly
+1. **Render markdown to HTML in `supabase/functions/send-note-email/index.ts`**
+   - Import `marked` (Deno-compatible: `https://esm.sh/marked@12`) — small, battle-tested, no DOM needed.
+   - Sanitize the result with a lightweight allowlist (strip `<script>`, `on*` handlers, `javascript:` URLs) since content originates from user notes / AI output.
+   - Replace the current `content.replace(/\n/g, '<br>')` with the rendered HTML.
 
-### Important — Domain verification
+2. **Improve the email template styling** (inline CSS, email-client safe)
+   - Proper styles for `h1/h2/h3`, `p`, `ul/ol/li`, `strong`, `em`, `code`, `pre`, `blockquote`, `a`, `hr`.
+   - Constrain width (~640px), comfortable line-height (1.6), readable font sizes.
+   - Keep the existing PrepGenie mint accent for headings and the personal-message callout.
+   - Remove the `white-space: pre-wrap` from `.content` (no longer needed once HTML is rendered) so paragraphs/lists collapse correctly.
 
-The current `from` address is `noreply@prepgenie.io`. For Resend to actually deliver (not just accept) the email, `prepgenie.io` must be verified as a sending domain in your Resend dashboard (SPF + DKIM DNS records added).
+3. **Plain-text fallback**
+   - Generate a plain-text version (strip markdown symbols) and pass it as `text` alongside `html` to Resend. Improves deliverability and supports text-only clients.
 
-If `prepgenie.io` is **not yet verified**, I'll temporarily switch the `from` address to `onboarding@resend.dev` (Resend's shared testing sender) so you can confirm end-to-end delivery while you complete domain verification separately. Once verified, we flip it back to `noreply@prepgenie.io`.
+4. **Subject line cleanup**
+   - Current default `Note: <title> - <contentType>` — keep, but ensure no markdown leaks into the subject (strip any `#`/`*` from title).
 
 ### Files touched
+- `supabase/functions/send-note-email/index.ts` — markdown rendering, sanitization, restyled HTML template, plain-text fallback.
 
-- `supabase/functions/send-note-email/index.ts` (only if we need to swap the `from` address for testing)
+### Out of scope (can do later if you want)
+- Embedding images from notes (would need uploading to storage and rewriting `<img src>`).
+- A full React Email template — overkill for this single function; inline-styled HTML is enough and easier to iterate on.
 
-### What I need from you
-
-- Approve this plan, then paste the Resend API key when the secret prompt appears.
-- Tell me whether `prepgenie.io` is already verified in Resend, or if I should use the testing sender for the first send.
+### Verification
+After deploy, send a test email from the same note. Headings should render as styled headings, `**bold**` as bold, lists as bullet lists, and the personal message stays in its mint callout box.
