@@ -43,7 +43,7 @@ export const useAiEnrichmentUsage = () => {
         userTier: tier,
       };
     },
-    staleTime: 60 * 1000,
+    staleTime: 0,
   });
 
   const usageCount = data?.usageCount ?? 0;

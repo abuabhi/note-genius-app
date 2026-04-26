@@ -77,6 +77,9 @@ async function recordUsage(admin: any, userId: string, noteId: string | null, mo
       user_id: userId,
       note_id: noteId,
       month_year: monthYear,
+      llm_provider: "openai",
+      prompt_tokens: 0,
+      completion_tokens: 0,
       // created_at defaults to now()
     } as any);
 

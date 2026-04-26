@@ -32,15 +32,25 @@ export const htmlToMarkdown = (html: string): string => {
 // Enhanced Markdown to HTML converter that handles pure markdown and hybrid content
 export const markdownToHtml = (markdown: string): string => {
   if (!markdown) return '';
-  
+
   let html = markdown;
-  
+
   // Clean up malformed/truncated AI enhancement tags before processing
   html = html.replace(/\[(?:AI_)?(?:ENHANCED|ENRICHED)\](?![\s\S]*?\[\/(?:AI_)?(?:ENHANCED|ENRICHED)\])/gi, '');
-  
-  // Process AI enhancement tags first with simple styling
+
+  // Extract AI-enhanced blocks first so their multi-paragraph content is rendered
+  // independently and then re-inserted as a single HTML block. This ensures every
+  // [AI_ENHANCED]…[/AI_ENHANCED] section becomes a green-bordered card with proper
+  // paragraphs, headings, bold and lists inside.
   const enrichedRegex = /\[(?:AI_)?(?:ENHANCED|ENRICHED)\]([\s\S]*?)\[\/(?:AI_)?(?:ENHANCED|ENRICHED)\]/gi;
-  html = html.replace(enrichedRegex, '<div class="ai-enhanced-simple">$1</div>');
+  const placeholders: string[] = [];
+  html = html.replace(enrichedRegex, (_match, inner: string) => {
+    const innerHtml = markdownToHtml(inner.trim());
+    const wrapped = `<div class="ai-enhanced-simple">${innerHtml}</div>`;
+    const token = `\u0000AIENH${placeholders.length}\u0000`;
+    placeholders.push(wrapped);
+    return `\n\n${token}\n\n`;
+  });
   
   // Process fenced code blocks first (to avoid conflicts)
   html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
@@ -128,7 +138,13 @@ export const markdownToHtml = (markdown: string): string => {
   const blocks = html.split(/\n\s*\n/);
   const processedBlocks = blocks.map(block => {
     if (!block.trim()) return '';
-    
+
+    // Restore AI-enhanced placeholder blocks as fully-rendered HTML
+    const tokenMatch = block.trim().match(/^\u0000AIENH(\d+)\u0000$/);
+    if (tokenMatch) {
+      return placeholders[Number(tokenMatch[1])] ?? '';
+    }
+
     // Don't wrap blocks that are already HTML elements
     if (block.match(/^<(h[1-6]|div|blockquote|ul|ol|pre|hr|li)/)) {
     // Special handling for lists - don't add br tags between list items
@@ -138,26 +154,26 @@ export const markdownToHtml = (markdown: string): string => {
     // For other HTML elements, don't add line breaks that could affect spacing
     return block;
     }
-    
+
     // Don't wrap single list items in paragraphs if they're already processed
     if (block.match(/^<li>.*<\/li>$/)) {
       return block;
     }
-    
+
     // Don't wrap question/answer blocks in extra paragraphs
     if (block.match(/^<div class="(question-text|answer-text)">/)) {
       return block.replace(/\n/g, '<br>');
     }
-    
+
     // For plain text blocks, only wrap in paragraphs if they don't contain list items
     if (block.includes('<li>') || block.includes('<ul>') || block.includes('<ol>')) {
       return block.replace(/\n/g, '<br>');
     }
-    
+
     // Wrap plain text in paragraph tags
     return `<p>${block.replace(/\n/g, '<br>')}</p>`;
   }).filter(block => block.length > 0);
-  
+
   return processedBlocks.join('\n');
 };
 

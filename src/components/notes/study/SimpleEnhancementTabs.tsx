@@ -237,7 +237,12 @@ export const SimpleEnhancementTabs = React.memo(({
                           )}
                           {tab.canGenerate && (
                             <Button
-                              onClick={() => generateEnhancement(tab.enhancementType!, tab.column!, tab.statusColumn)}
+                              onClick={async () => {
+                                await generateEnhancement(tab.enhancementType!, tab.column!, tab.statusColumn);
+                                if (tab.enhancementType === 'enrich-note') {
+                                  refetchUsage();
+                                }
+                              }}
                               disabled={isLoading(tab.enhancementType!)}
                               variant="outline"
                               size="sm"
