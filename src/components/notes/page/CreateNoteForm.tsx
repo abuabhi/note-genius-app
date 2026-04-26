@@ -190,7 +190,10 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
           }}
           required
         >
-          <SelectTrigger className={!selectedSubject ? 'border-red-200' : ''}>
+          <SelectTrigger
+            onBlur={() => setSubjectTouched(true)}
+            className={subjectTouched && !selectedSubject ? 'border-red-200' : ''}
+          >
             <SelectValue placeholder="Select a subject (required)" />
           </SelectTrigger>
           <SelectContent>
@@ -263,7 +266,7 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
           </div>
         )}
 
-        {!selectedSubject && !isAddingSubject && (
+        {subjectTouched && !selectedSubject && !isAddingSubject && (
           <p className="text-sm text-red-500 mt-1">Please select a subject</p>
         )}
 
