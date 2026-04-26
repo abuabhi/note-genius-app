@@ -1,37 +1,87 @@
-## Goal
+## Problems found
 
-Add a continuously rotating gradient border to the **Generate** button in the Note Study enhancement panel — but only while the user has not yet generated content for that tab. Once content exists (so the button reads "ReGenerate"), the border returns to its plain static style.
+After investigating the code, edge function logs, and screenshots, four distinct bugs are at play:
 
-## What changes for the user
+### 1. Top 10 Questions returns enriched-note content (root cause of "wrong content" + "Enriched and Questions look the same")
+The `enrich-note` edge function (`supabase/functions/enrich-note/index.ts`) is called for **both** the Enriched Note tab (`enhancementType: 'enrich-note'`) and the Top 10 Questions tab (`enhancementType: 'generate-questions'`). But the function's `generateEnhancedContent()` uses **one generic system prompt** ("You are an assistant that enhances student notes…") regardless of `enhancementType`. So Questions just gets enriched-note output. That's why image 13 (Questions) shows "Class Overview / Units Breakdown" instead of Q1/A1, Q2/A2, etc.
 
-- On any enhancement tab (Summary, Key Points, Enriched Note, Top 10 Questions) where nothing has been generated yet, the **Generate** button shows a smooth conic-gradient border that rotates continuously, drawing the user's attention.
-- While generating (loading) the animation pauses and the standard spinner shows.
-- After successful generation the button switches to **ReGenerate** with the normal static mint border — no animation.
-- Honors `prefers-reduced-motion` (animation disabled for users who request reduced motion).
+The proper, type-specific prompts already exist in `supabase/functions/enrich-note/prompts.ts` (including a polished `generate-questions` prompt that produces `## Q1: …` / `**A1:** …` through Q10/A10) — they are simply not wired into `index.ts`.
+
+### 2. Enriched Note formatting looks broken
+Image 14 shows the enriched note rendering as plain markdown text without the highlighted left-border AI-enhanced blocks. Two contributing factors:
+- The current generic prompt does not emit `[AI_ENHANCED]…[/AI_ENHANCED]` wrappers, so `markdownConverter` never wraps anything in the `.ai-enhanced-simple` styled div.
+- Once we switch to the real `enrich-note` prompt from `prompts.ts`, the AI_ENHANCED tags will be emitted and the existing CSS styling (left border + light background) will apply automatically.
+
+### 3. Key Points / Enriched bullet indentation
+In `src/components/notes/study/SimpleContentRenderer.css`, list items use:
+```
+padding-left: 1rem !important;
+text-indent: -1rem !important;
+```
+This hanging-indent trick makes wrapped lines align with the bullet instead of the text after the bullet. Combined with `padding-left: 1.2rem` on the `<ul>`, the visual result is the misaligned wrap shown in the screenshots. Replacing this with standard `padding-left` on the `<ul>` and removing the `text-indent` hack on `<li>` gives clean indentation where wrapped lines align under the first character of the bullet text.
+
+### 4. After generation, focus jumps back to "Original" tab
+`SimpleEnhancementTabs.tsx` keeps `activeTab` in **local** `useState('original')`. After a generation completes, `useEnhancementManager` calls `onNoteUpdate?.()` → React Query refetches the note → the parent re-renders with a new `note` object. Because `SimpleEnhancementTabs` is wrapped in `React.memo`, normally state would persist, but the parent chain (`NoteStudyView` → `NoteStudyDisplay`) re-creates intermediate elements that cause the tabs subtree to remount in some cases, so the local state resets to `'original'`.
+
+The parent already maintains an `activeContentType` in `useStudyViewState`, but it is **not passed down** to `SimpleEnhancementTabs`. Lifting the active tab into the parent (or persisting it via the existing `activeContentType` prop) makes it survive any remount.
+
+## Plan
+
+### A. Backend — fix the Top 10 Questions and Enriched Note content
+
+`supabase/functions/enrich-note/index.ts`
+- Import `createPrompt`, `getTokenLimit`, `getModel` from the existing `./prompts.ts`.
+- In `generateEnhancedContent()`, build the request using:
+  - `model = getModel(enhancementType)` (falls back gracefully)
+  - `system` = a short instruction ("Return only the formatted output as instructed; no preamble.")
+  - `user` = `createPrompt(enhancementType, noteTitle, noteContent)`
+  - `max_tokens = getTokenLimit(enhancementType)`
+- Keep the OpenAI fallback path but make it type-aware (e.g. for `generate-questions`, return a clearly-labelled placeholder rather than the generic enriched stub) so it is obvious if the API key is missing.
+- No schema/DB changes.
+
+This single change fixes:
+- Top 10 Questions now returns a real Q1/A1 … Q10/A10 list.
+- Enriched Note now emits `[AI_ENHANCED]` blocks, which the existing renderer styles with the left border + tinted background.
+
+### B. Frontend — fix list indentation
+
+`src/components/notes/study/SimpleContentRenderer.css`
+- Update `.simple-content ul` / `ol` rules:
+  - `padding-left: 1.5rem` (slightly more breathing room, standard hanging indent)
+  - `list-style-position: outside`
+- Update `.simple-content li` rule:
+  - Remove `padding-left: 1rem` and `text-indent: -1rem`
+  - Keep `margin-bottom: 0.4rem`, `line-height: 1.5`
+- Result: bullets sit in the gutter; wrapped lines align under the first character of the bullet text (matches the look users expect from the screenshots).
+
+### C. Frontend — keep the active tab after generation
+
+`src/components/notes/study/SimpleEnhancementTabs.tsx`
+- Accept optional `activeContentType` and `onActiveContentTypeChange` props.
+- Use them as the controlled value when provided, falling back to local state otherwise.
+
+`src/components/notes/study/viewer/NoteStudyDisplay.tsx`
+- Forward `activeContentType` and `onActiveContentTypeChange` from its parent down to `SimpleEnhancementTabs`.
+
+`src/components/notes/study/viewer/NoteStudyViewContent.tsx`
+- Pass the existing `activeContentType` / `onActiveContentTypeChange` into `NoteStudyDisplay` (they are already in the parent's state).
+
+This way the selected tab is owned by `useStudyViewState` and survives any remount triggered by `onNoteUpdate`.
+
+### D. Verification (after implementation)
+
+1. Deploy the updated `enrich-note` function and tail its logs.
+2. From the running preview, click **Generate** on the Top 10 Questions tab — confirm the response begins with `# Top 10 Study Questions` and contains Q1…Q10.
+3. Click **Generate** on the Enriched Note tab — confirm the response contains `[AI_ENHANCED]` blocks and that the rendered output shows the green left-border highlight on the new sections.
+4. Confirm the active tab does **not** jump back to "Original" after either generation completes.
+5. Visually confirm Key Points and Enriched bullets wrap correctly (wrapped lines indented under the text, not under the bullet).
 
 ## Files to change
 
-1. `src/index.css` — add a small block defining:
-   - `@property --gen-a` (registered angle custom property for smooth conic animation)
-   - `@keyframes gen-border-spin`
-   - `.gen-animated-border` utility class using a `linear-gradient(white,white) padding-box, conic-gradient(...) border-box` trick + `animation: gen-border-spin 2.5s linear infinite`
-   - `:hover` variant that swaps the inner fill to mint-50 to match the existing hover state
-   - `@media (prefers-reduced-motion: reduce)` to disable the animation
-   - Colors use the existing `hsl(var(--primary))` token so it follows the theme.
+- `supabase/functions/enrich-note/index.ts` — wire in `prompts.ts`, model + token limits per type
+- `src/components/notes/study/SimpleContentRenderer.css` — fix list indentation
+- `src/components/notes/study/SimpleEnhancementTabs.tsx` — accept controlled active tab props
+- `src/components/notes/study/viewer/NoteStudyDisplay.tsx` — forward active-tab props
+- `src/components/notes/study/viewer/NoteStudyViewContent.tsx` — pass active-tab props through
 
-2. `src/components/notes/study/SimpleEnhancementTabs.tsx` — change the Generate button's `className` to be conditional:
-   - `gen-animated-border` when `!tab.hasContent && !isLoading(...)` (first-time CTA)
-   - `border-mint-200` otherwise (current behavior, used for ReGenerate and while loading)
-   - All other classes (`bg-white hover:bg-mint-50 text-mint-700 hover:text-mint-800`) stay the same.
-
-## Technical notes
-
-- The `@property --gen-a` registration is what makes the conic-gradient angle interpolate smoothly; without it browsers can't animate the angle.
-- The `linear-gradient(white,white) padding-box, conic-gradient(...) border-box` pattern is the standard way to render an animated gradient *border* without affecting the button's text color or fill. Border width is `2px` (close to the existing 1px so the layout doesn't shift visibly).
-- Animation duration: 2.5s — slow enough to feel premium, fast enough to read as "active".
-- No changes to button behavior, click handler, disabled state, or generation logic.
-
-## Out of scope
-
-- Applying the same animated border to other Generate-style buttons elsewhere in the app (can be a follow-up — the utility class is reusable).
-- Changing copy, icons, or layout of the enhancement tabs.
+No DB migrations, no new dependencies, no breaking API changes.
