@@ -40,6 +40,38 @@ export const CreateNoteForm = ({ onSave, initialData }: CreateNoteFormProps) => 
     }
   }, [initialData]);
 
+  const handleAddSubject = async () => {
+    const trimmed = newSubjectName.trim();
+    if (!trimmed) {
+      toast.error('Please enter a subject name');
+      return;
+    }
+    if (trimmed.length > 60) {
+      toast.error('Subject name must be 60 characters or fewer');
+      return;
+    }
+    const exists = userSubjects.some(s => s.name.trim().toLowerCase() === trimmed.toLowerCase());
+    if (exists) {
+      toast.error('A subject with that name already exists');
+      return;
+    }
+
+    setIsSavingSubject(true);
+    try {
+      const ok = await addSubject(trimmed);
+      if (ok) {
+        toast.success(`Subject "${trimmed}" added`);
+        setSelectedSubject(trimmed);
+        setIsAddingSubject(false);
+        setNewSubjectName('');
+      } else {
+        toast.error('Could not add subject. Please try again.');
+      }
+    } finally {
+      setIsSavingSubject(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
