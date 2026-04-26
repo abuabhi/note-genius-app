@@ -6,6 +6,7 @@ import { TextAlignType } from '../hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { SimpleContentRenderer } from '../SimpleContentRenderer';
+import { EnrichedContentRenderer } from '../EnrichedContentRenderer';
 import { processContentForDisplay } from '@/utils/markdownConverter';
 
 interface ExpandableContentRendererProps {
@@ -236,13 +237,25 @@ ${cleanExpandedContent}
         onMouseUp={handleTextSelection}
         onTouchEnd={handleTextSelection as any}
       >
-        {/* Use SimpleContentRenderer with dynamic font size */}
-        <SimpleContentRenderer
-          content={processedContent}
-          fontSize={fontSize} // Use dynamic font size from props
-          textAlign={textAlign}
-          className={`w-full ${hideColoring ? 'hide-coloring' : ''}`}
-        />
+        {/* Use dedicated enriched renderer for the Enriched Note tab so the
+            [AI_ENHANCED] / [AI_ENRICHED] blocks always render as visible
+            green cards with an "Enriched" badge. */}
+        {contentType === 'enriched' && expansions.length === 0 ? (
+          <EnrichedContentRenderer
+            content={content}
+            fontSize={fontSize}
+            textAlign={textAlign}
+            className={`w-full ${hideColoring ? 'hide-coloring' : ''}`}
+            hideColoring={hideColoring}
+          />
+        ) : (
+          <SimpleContentRenderer
+            content={processedContent}
+            fontSize={fontSize}
+            textAlign={textAlign}
+            className={`w-full ${hideColoring ? 'hide-coloring' : ''}`}
+          />
+        )}
       </div>
 
       <ContentExpansionContextMenu
