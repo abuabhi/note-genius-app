@@ -2,7 +2,8 @@ import DOMPurify from 'dompurify';
 
 const ALLOWED_TAGS = [
   'b','i','em','strong','u','s','br','p','span','div','ul','ol','li','h1','h2','h3','h4','h5','h6',
-  'blockquote','code','pre','hr','a','table','thead','tbody','tr','th','td','img','mark','del','section'
+  'blockquote','code','pre','hr','a','table','thead','tbody','tr','th','td','img','mark','del','section',
+  'article','figure','figcaption','dl','dt','dd','sup','sub','small','abbr','kbd','caption','tfoot','col','colgroup'
 ];
 const ALLOWED_ATTR = ['href','title','target','rel','class','style','src','alt','width','height','colspan','rowspan','aria-label'];
 const FORBID_TAGS = ['script','iframe','object','embed','form','input','button','svg'];
