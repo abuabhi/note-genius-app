@@ -22,7 +22,8 @@ const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
 const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
-const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
+// Eagerly import ReferralsPage — it's lightweight and was taking ~10s as a lazy chunk
+import ReferralsPage from '@/pages/ReferralsPage';
 const QuizDetailsPage = lazy(() => import('@/pages/QuizDetailsPage'));
 const InfluencerDashboardPage = lazy(() => import('@/pages/InfluencerDashboardPage'));
 const ResourcesPage = lazy(() => import('@/pages/ResourcesPage'));

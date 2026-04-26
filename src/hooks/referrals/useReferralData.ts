@@ -1,21 +1,22 @@
-
 import { useReferralStats } from './useReferralStats';
 import { useContests, useContestEntries } from './useContests';
 import { useContestActions } from './useContestActions';
 import { useSharingUtils } from './useSharingUtils';
 
+/**
+ * NOTE: Contests/entries queries are intentionally NOT invoked here because the
+ * current SimplifiedReferralForm UI does not display them. Including them
+ * caused extra Supabase round-trips on every Referrals page load and
+ * contributed to slow open times. If a future component needs contests, call
+ * `useContests` / `useContestEntries` directly from that component.
+ */
 export const useReferralData = () => {
   const { data: referralStats, isLoading: statsLoading, error: statsError, refetch: refetchReferralStats } = useReferralStats();
-  const { data: contests = [], isLoading: contestsLoading } = useContests();
-  const { data: contestEntries = [], isLoading: entriesLoading } = useContestEntries();
-  const { joinContest, isJoiningContest } = useContestActions();
   const { generateReferralLink, copyReferralLink, shareViaLinkedIn, shareViaTwitter, generateRecommendedMessage, shareViaWhatsApp, shareViaEmail } = useSharingUtils();
 
-  // Handle error states gracefully
-  const isLoading = statsLoading || contestsLoading || entriesLoading;
+  const isLoading = statsLoading;
   const hasError = !!statsError;
 
-  // Always return consistent data structure, never return null/undefined for arrays
   const safeReferralStats = isLoading
   ? {
     totalReferrals: 0,
@@ -31,18 +32,15 @@ export const useReferralData = () => {
     totalPointsEarned: referralStats?.totalPointsEarned ?? 0,
     referralCode: ''
   };
-  
-  const safeContests = contests || [];
-  const safeContestEntries = contestEntries || [];
 
   return {
     referralStats: safeReferralStats,
-    contests: safeContests,
-    contestEntries: safeContestEntries,
+    contests: [] as never[],
+    contestEntries: [] as never[],
     isLoading,
     hasError,
-    joinContest,
-    isJoiningContest,
+    joinContest: undefined,
+    isJoiningContest: false,
     generateReferralLink,
     copyReferralLink,
     shareViaLinkedIn,
@@ -50,6 +48,6 @@ export const useReferralData = () => {
     generateRecommendedMessage,
     shareViaWhatsApp,
     shareViaEmail,
-    refetchReferralStats
+    refetchReferralStats,
   };
 };
