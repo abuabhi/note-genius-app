@@ -8,6 +8,7 @@ import { Loader2, Sparkles, FileText, List, HelpCircle, Code, RefreshCw, Clock, 
 import { Link } from 'react-router-dom';
 import { EnhancementType } from '@/types/enhancement';
 import { ExpandableContentRenderer } from './expansion/ExpandableContentRenderer';
+import { PlainTextNoteRenderer } from './viewer/PlainTextNoteRenderer';
 import { useEnhancementManager } from '@/hooks/useEnhancementManager';
 import { UsageIndicator } from '@/components/notes/enrichment/UsageIndicator';
 import { useAiEnrichmentUsage } from '@/hooks/usage/useAiEnrichmentUsage';
@@ -317,15 +318,24 @@ export const SimpleEnhancementTabs = React.memo(({
                           : generatedContent[tab.column!] || tab.content;
                         
                         return displayContent ? (
-                          <ExpandableContentRenderer
-                            content={displayContent}
-                            fontSize={fontSize}
-                            textAlign={textAlign}
-                            contentType={tab.value}
-                            noteTitle={note.title}
-                            noteId={note.id}
-                            hideColoring={hideColoring}
-                          />
+                          tab.value === 'original' ? (
+                            <PlainTextNoteRenderer
+                              content={displayContent}
+                              fontSize={fontSize}
+                              textAlign={textAlign}
+                              className="w-full"
+                            />
+                          ) : (
+                            <ExpandableContentRenderer
+                              content={displayContent}
+                              fontSize={fontSize}
+                              textAlign={textAlign}
+                              contentType={tab.value}
+                              noteTitle={note.title}
+                              noteId={note.id}
+                              hideColoring={hideColoring}
+                            />
+                          )
                         ) : (
                           <div className="flex items-center justify-center h-full text-muted-foreground">
                             {tab.canGenerate ? (
