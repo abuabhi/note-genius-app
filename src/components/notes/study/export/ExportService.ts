@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, TextRun, Header, Footer, Table, TableRow, TableCell, AlignmentType } from 'docx';
 import { Note } from '@/types/note';
+import { supabase } from '@/integrations/supabase/client';
 
 export type ExportFormat = 'pdf' | 'docx' | 'txt';
 export type ContentType = 'original' | 'summary' | 'keyPoints' | 'enriched' | 'markdown' | 'questions';
