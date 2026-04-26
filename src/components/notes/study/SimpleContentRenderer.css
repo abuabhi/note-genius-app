@@ -210,8 +210,35 @@
 .study-safe-content h1,
 .study-safe-content h2,
 .study-safe-content h3,
-.study-safe-content h4 {
-  color: hsl(var(--primary));
+.study-safe-content h4,
+.study-safe-content h5,
+.study-safe-content h6 {
+  color: hsl(var(--study-heading));
+  line-height: 1.3;
+}
+.study-safe-content h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 1.25rem 0 0.75rem 0;
+  border-bottom: 2px solid hsl(var(--border));
+  padding-bottom: 0.4rem;
+}
+.study-safe-content h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 1.1rem 0 0.6rem 0;
+}
+.study-safe-content h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.9rem 0 0.5rem 0;
+}
+.study-safe-content h4,
+.study-safe-content h5,
+.study-safe-content h6 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.4rem 0;
 }
 .study-safe-content ul,
 .study-safe-content ol {
