@@ -6,6 +6,44 @@ import { toast } from 'sonner';
 import { notesQueryKeys } from './useNotesQueries';
 import { extractErrorMessage } from '@/utils/errorUtils';
 
+const buildDefinedNoteUpdatePayload = (updates: Partial<Note>) => {
+  const payload: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  const assign = (dbColumn: string, value: unknown) => {
+    if (value !== undefined) payload[dbColumn] = value;
+  };
+
+  assign('title', updates.title);
+  assign('description', updates.description);
+  assign('content', updates.content);
+  assign('subject', updates.subject);
+  assign('subject_id', updates.subject_id);
+  assign('archived', updates.archived);
+  assign('pinned', updates.pinned);
+  assign('summary', updates.summary);
+  assign('summary_status', updates.summary_status);
+  assign('summary_generated_at', updates.summary_generated_at);
+  assign('key_points', updates.key_points);
+  assign('key_points_status', updates.key_points_status);
+  assign('key_points_generated_at', updates.key_points_generated_at);
+  assign('markdown_content', updates.markdown_content);
+  assign('markdown_content_status', updates.markdown_content_status);
+  assign('markdown_content_generated_at', updates.markdown_content_generated_at);
+  assign('questions_content', updates.questions_content);
+  assign('questions_status', updates.questions_status);
+  assign('questions_generated_at', updates.questions_generated_at);
+  assign('enriched_content', updates.enriched_content);
+  assign('enriched_status', updates.enriched_status);
+  assign('enriched_content_generated_at', updates.enriched_content_generated_at);
+  assign('source_type', updates.sourceType);
+  assign('video_url', updates.video_url);
+  assign('video_metadata', updates.video_metadata);
+
+  return payload;
+};
+
 // Create note mutation
 export const useCreateNoteMutation = () => {
   const queryClient = useQueryClient();
@@ -115,16 +153,7 @@ export const useUpdateNoteMutation = () => {
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Note> }) => {
       const { data, error } = await supabase
         .from('notes')
-        .update({
-          title: updates.title,
-          description: updates.description,
-          content: updates.content,
-          subject: updates.subject,
-          subject_id: updates.subject_id,
-          archived: updates.archived,
-          pinned: updates.pinned,
-          updated_at: new Date().toISOString(),
-        })
+        .update(buildDefinedNoteUpdatePayload(updates))
         .eq('id', id)
         .select()
         .single();
@@ -157,6 +186,8 @@ export const useUpdateNoteMutation = () => {
       );
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['optimized-note-study'], exact: false });
+      queryClient.invalidateQueries({ queryKey: notesQueryKeys.lists(), exact: false });
       toast.success('Note updated successfully');
     },
     onError: (error, { id }) => {
