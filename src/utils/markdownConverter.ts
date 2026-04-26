@@ -32,15 +32,25 @@ export const htmlToMarkdown = (html: string): string => {
 // Enhanced Markdown to HTML converter that handles pure markdown and hybrid content
 export const markdownToHtml = (markdown: string): string => {
   if (!markdown) return '';
-  
+
   let html = markdown;
-  
+
   // Clean up malformed/truncated AI enhancement tags before processing
   html = html.replace(/\[(?:AI_)?(?:ENHANCED|ENRICHED)\](?![\s\S]*?\[\/(?:AI_)?(?:ENHANCED|ENRICHED)\])/gi, '');
-  
-  // Process AI enhancement tags first with simple styling
+
+  // Extract AI-enhanced blocks first so their multi-paragraph content is rendered
+  // independently and then re-inserted as a single HTML block. This ensures every
+  // [AI_ENHANCED]…[/AI_ENHANCED] section becomes a green-bordered card with proper
+  // paragraphs, headings, bold and lists inside.
   const enrichedRegex = /\[(?:AI_)?(?:ENHANCED|ENRICHED)\]([\s\S]*?)\[\/(?:AI_)?(?:ENHANCED|ENRICHED)\]/gi;
-  html = html.replace(enrichedRegex, '<div class="ai-enhanced-simple">$1</div>');
+  const placeholders: string[] = [];
+  html = html.replace(enrichedRegex, (_match, inner: string) => {
+    const innerHtml = markdownToHtml(inner.trim());
+    const wrapped = `<div class="ai-enhanced-simple">${innerHtml}</div>`;
+    const token = `\u0000AIENH${placeholders.length}\u0000`;
+    placeholders.push(wrapped);
+    return `\n\n${token}\n\n`;
+  });
   
   // Process fenced code blocks first (to avoid conflicts)
   html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
