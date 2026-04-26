@@ -38,6 +38,7 @@ export const SimpleEnhancementTabs = React.memo(({
   activeContentType,
   onActiveContentTypeChange
 }: SimpleEnhancementTabsProps) => {
+  const originalContent = note.content || note.description || '';
   const [internalActiveTab, setInternalActiveTab] = useState<EnhancementType>(activeContentType ?? 'original');
   // Keep internal state in sync whenever a defined activeContentType arrives,
   // so a momentarily-undefined prop during a parent re-render never snaps the
@@ -70,9 +71,9 @@ export const SimpleEnhancementTabs = React.memo(({
       label: 'Original',
       subtitle: 'Your original note content',
       icon: FileText,
-      content: note.content || note.description || '',
+      content: originalContent,
       canGenerate: false,
-      hasContent: hasContent(note.content || note.description || '')
+      hasContent: hasContent(originalContent)
     },
     {
       value: 'markdown',
@@ -134,7 +135,7 @@ export const SimpleEnhancementTabs = React.memo(({
       statusColumn: 'questions_status',
       hasContent: hasContent(generatedContent['questions_content'] || note.questions_content || '')
     }
-  ], [note, generatedContent]);
+  ], [note, generatedContent, originalContent, hasContent]);
   return (
     <div className="h-full flex flex-col">
       
@@ -311,7 +312,9 @@ export const SimpleEnhancementTabs = React.memo(({
                     {/* Content area */}
                     <div className="flex-1 overflow-auto p-6">
                       {(() => {
-                        const displayContent = generatedContent[tab.column!] || tab.content;
+                        const displayContent = tab.value === 'original'
+                          ? originalContent
+                          : generatedContent[tab.column!] || tab.content;
                         
                         return displayContent ? (
                           <ExpandableContentRenderer
