@@ -1,101 +1,58 @@
-# Why pages take ~10 seconds (root causes found)
+## Problem
 
-I checked the actual built bundles in `dist/assets/` and the routing setup. The "lazy loading" is configured but is being defeated by several real problems. The biggest offenders:
+Two bugs in the Enriched Note tab on the note study page:
 
-| Asset | Size | Loaded when | Problem |
-|---|---|---|---|
-| `index-...js` (main entry) | **1.17 MB** | Every page, blocking | Way too big — many "lazy" pages and libs are being pulled in via static imports |
-| `vendor-pdf-export` (jspdf + html2canvas + docx) | **942 KB** | Preloaded on every page via `<link rel="modulepreload">` in `index.html` | Only needed when user exports a PDF/DOCX — should be on-demand |
-| `BarChart` (recharts) | **375 KB** | Pulled into chunks that don't need charts | Recharts is statically imported somewhere top-level |
-| `NotesPage` chunk | 153 KB | /notes | Bloated by eager provider/context barrel imports |
-| `SchedulePage` chunk | 274 KB | /schedule | FullCalendar + heavy providers all eager-loaded |
-| `react-query-devtools` | bundled into `vendor-core` | Every page in production | Devtools shipped to prod users |
+1. **Tab focus jumps to "Original"** after enriched content finishes generating, even though the user was on the Enriched tab.
+2. **Clicking "Enriched Note" again shows empty green ENRICHED cards** (badge + bullet markers visible, but text is gone). The screenshot confirms the card shells render correctly but bodies are blank.
 
-On top of that:
-- The router does `<Suspense><LazyLoadWrapper><Suspense>...` — double Suspense plus a skeleton swap on every navigation, making every transition flash a loading state.
-- Each heavy page mounts its own provider (`FlashcardProvider`, `NotesProvider`, etc.) that fires multiple Supabase queries on mount, serially.
-- `AuthProvider` blocks the entire app behind a 10s session-check timeout; if Supabase is slow, every route waits.
+## Root Causes
 
-So the user sees: long initial download (1.17 MB main + 942 KB preloaded export libs ≈ 2 MB before render), then on each navigation a Suspense skeleton, then a second wave of queries before the page is usable.
+### Bug 1 — Tab focus reset
+In `NoteStudyView.tsx` the `note` prop is replaced with a fresh object after `onNoteUpdate` fires (React Query refetch). Although `activeContentType` lives in `useStudyViewState` and is preserved, the parent `NoteStudyPageContent` re-renders with a new `note` reference, and somewhere down the tree `SimpleEnhancementTabs` falls back to its `internalActiveTab` (initialized to `'original'`) because the `activeContentType` prop briefly becomes undefined during the transition.
 
----
+Specifically in `SimpleEnhancementTabs.tsx`:
+```ts
+const [internalActiveTab, setInternalActiveTab] = useState(activeContentType ?? 'original');
+const activeTab = activeContentType ?? internalActiveTab;
+```
+If `activeContentType` is ever momentarily undefined, the tab snaps back to whatever `internalActiveTab` was — and `internalActiveTab` is never synced when the prop changes.
 
-# The plan
+### Bug 2 — Empty enriched cards on second visit
+In `EnrichedContentRenderer.tsx` the renderer calls `markdownToHtml(seg.text)` then `sanitizeHTML(...)`. Two issues:
 
-## 1. Stop preloading the export bundle on every page
+- `sanitizeHTML` is configured with `KEEP_CONTENT: false`. When markdownToHtml emits a stray placeholder token (`\u0000AIENH0\u0000`) that survives because the inner content itself contains a nested `[AI_ENHANCED]` opener, DOMPurify treats those NUL-character text nodes as suspicious and the surrounding `<p>` ends up blank.
+- The split logic in `splitEnrichedSegments` strips the outer `[AI_ENHANCED]` wrappers but the markdown inside often starts with `**Heading:**\n- bullet`. When `markdownToHtml` then runs its own `[AI_ENHANCED]` extraction pass and finds nothing, it still rewrites the string in ways that can produce empty `<li>` items if the bullet line's inner text matches the bold regex greedily across multiple lines.
 
-`vendor-pdf-export` (jspdf, html2canvas, docx) is 942 KB and currently `modulepreload`ed on every page via the `manualChunks` config. Remove it (and `vendor-pdf-viewer`, `vendor-ocr`) from the named `manualChunks` block. Rollup will then only emit them when the lazy code that imports them is loaded. Replace any static `import jsPDF from 'jspdf'` with dynamic `await import('jspdf')` inside the export handler.
+This explains why the first render (using `generatedContent['enriched_content']` straight from the API) looks fine, but the second render (using `note.enriched_content` after a refetch round-trip, possibly with slightly different whitespace) produces empty cards.
 
-Expected saving: **~1 MB off every initial page load.**
+## Fix Plan
 
-## 2. Drop react-query-devtools from production
+### 1. Make `SimpleEnhancementTabs` tab state sticky
+- Remove the `internalActiveTab` fallback path. Treat `activeContentType` as the single source of truth and default to `'original'` only on the very first mount when it is undefined.
+- Add a `useEffect` that syncs `internalActiveTab` whenever a defined `activeContentType` arrives, so the tab never silently resets.
 
-`@tanstack/react-query-devtools` is listed in `vendor-core`, which is always loaded. Remove it from `manualChunks`, and only import it in development (`if (import.meta.env.DEV) import(...)`).
+### 2. Stop `NoteStudyView` from forcing tab back to Original after enrichment
+- Ensure the `handleEnhancement` early-return path for `'enrich-note'` does not call `setActiveContentType` anywhere upstream. Audit `useSimpleEnhancement` and `StudyViewHeader` to confirm they don't reset `activeContentType` when enrichment completes.
 
-## 3. Find what's bloating the 1.17 MB main entry
+### 3. Harden `EnrichedContentRenderer`
+- Strip any leftover NUL placeholder tokens from the rendered HTML before sanitizing.
+- Trim and normalize each segment's text (collapse `\r\n`, drop leading/trailing blank lines) before passing to `markdownToHtml`, so the second-render content matches the first.
+- Loosen `sanitizeHTML` for this renderer only: pass content through DOMPurify with `KEEP_CONTENT: true` so stray inline text inside an unknown wrapper is preserved instead of dropped.
+- Add a defensive fallback: if the post-sanitize HTML has zero visible text, render the raw segment text as a `<pre>` block so the user always sees their content instead of a blank green card.
 
-The `index-*.js` chunk should be ~150–250 KB. At 1.17 MB it means lazy routes are being pulled into the main bundle through a static import chain. The likely culprits:
-- `src/components/app/AppRoutes.tsx` imports `LoginPage` directly (eager) — fine, but it must not import other pages.
-- `src/routes/standardRoutes.tsx` eagerly imports `NoteStudyPage` and `ReferralsPage` (commented as "fix for slow load"). That's the wrong fix — it forces them into the main bundle. Revert to `lazy()` and fix the real cause instead.
-- Any module imported by `App.tsx` / providers that transitively imports `recharts`, `jspdf`, `tesseract.js`, `pdfjs-dist`, `@fullcalendar/*`, or `@tiptap/*` will pull those into the main entry.
+### 4. Add lightweight diagnostics
+- Console-log segment count, segment lengths, and final HTML length inside `EnrichedContentRenderer` (gated behind `import.meta.env.DEV`) so the next time the user reports an empty card we can pinpoint whether splitting, conversion, or sanitization is to blame.
 
-Action: run a quick `rg` audit of static imports from providers, hooks, and shared components to find and convert these to dynamic imports. Use `dist/bundle-analysis.html` (already generated by `rollup-plugin-visualizer`) to confirm.
+## Files to edit
+- `src/components/notes/study/SimpleEnhancementTabs.tsx`
+- `src/components/notes/study/NoteStudyView.tsx`
+- `src/components/notes/study/EnrichedContentRenderer.tsx`
+- `src/utils/sanitize.ts` (add a second exported variant `sanitizeEnrichedHTML` that uses `KEEP_CONTENT: true`, leave the strict default untouched for other call sites)
 
-Expected saving: target main entry **<300 KB**.
+## Out of scope
+- No changes to the database schema, Supabase functions, or the AI enrichment pipeline.
+- No changes to the visual style of the enriched cards (the green borders and ENRICHED badge stay exactly as they appear in the screenshot).
 
-## 4. Simplify the router and kill the double-Suspense skeleton flash
-
-In `src/components/app/AppRoutes.tsx`:
-- Remove `LazyLoadWrapper` (which wraps in its own Suspense + skeleton) and use a single top-level `<Suspense>` per route.
-- Replace the heavy skeleton fallback with a near-invisible inline fallback (a thin top progress bar or `null`) so route transitions feel instant when chunks are cached.
-- Add `<link rel="prefetch">` for the next likely route's chunk on hover/focus of sidebar links (route prefetching pattern).
-
-## 5. Stop per-route provider waterfalls
-
-`FlashcardsPage` mounts `<FlashcardProvider>` which fires a chain of queries on mount. `NotesPage` uses `useNotes` which behaves the same. Two fixes:
-- Hoist these providers up to the authenticated layout so cached data survives navigation between sibling pages and tabs.
-- Make their internal queries run in **parallel** (they currently `await` one before starting the next in several `operations/*` files). React Query already supports this — just don't `await` sequential calls in the hook bodies.
-
-## 6. Remove blocking work in AuthProvider
-
-`AuthProvider` has a 10-second timeout on `getSession()`. If the Supabase call is slow, every route waits up to 10s before rendering anything. Change to:
-- Render the app immediately with `loading=false` once `onAuthStateChange` fires (Supabase fires it synchronously from the cached session in `localStorage`).
-- Keep the network `getSession()` call in the background only as a verification step.
-
-## 7. Drop console logging in production routing
-
-`AppRoutes.tsx` calls `console.log('🚦 [APP ROUTES] Auth state', ...)` on every render. The console logs in `UserProgressState`, `WelcomeModal`, `UniversalFilters`, etc. (visible in your console) are firing 6–8 times per page load. Wrap these in `if (import.meta.env.DEV)` or remove. They aren't the dominant cost but contribute to perceived jank.
-
----
-
-# Technical execution checklist
-
-1. Edit `vite.config.ts`:
-   - Remove `vendor-pdf-export`, `vendor-pdf-viewer`, `vendor-ocr` from `manualChunks`.
-   - Remove `@tanstack/react-query-devtools` from `vendor-core`.
-2. Edit `src/routes/standardRoutes.tsx`:
-   - Convert `NoteStudyPage` and `ReferralsPage` back to `lazy()`.
-3. Edit `src/components/app/AppRoutes.tsx`:
-   - Remove `LazyLoadWrapper` wrappers; use one `<Suspense fallback={null}>` per protected route.
-   - Remove the per-render `console.log`.
-4. Audit and convert to dynamic `await import(...)` in their handlers:
-   - `jspdf`, `html2canvas`, `docx` (export buttons)
-   - `tesseract.js` (OCR trigger)
-   - `pdfjs-dist` (PDF viewer mount only)
-   - `@fullcalendar/*` (only Schedule page — already lazy via SchedulePage chunk, but verify it isn't pulled into main)
-   - `recharts` / `BarChart` (only chart components that need it)
-5. Edit `src/contexts/auth/AuthProvider.tsx`:
-   - Set `loading=false` once `onAuthStateChange` returns, regardless of `getSession()`.
-6. Hoist `FlashcardProvider` and the notes context into `SidebarLayout` so navigating between flashcards/notes/dashboard reuses cache.
-7. Parallelize startup queries inside `useFlashcardsPageState`, `useNotes`, etc. (no sequential `await`s for independent fetches).
-8. Sidebar route prefetch: in `AuthSidebar`, on `onMouseEnter` of each `<Link>`, call the route's lazy import to warm the chunk before click.
-
----
-
-# Expected outcome
-
-- Initial download: from ~2 MB → **~400–500 KB** (60–75% reduction).
-- /notes, /flashcards, /quiz, /schedule, /goals, /exam, /analytics, /resources, /referrals, /feedback first-load: from ~10s → **<2s on a normal connection**.
-- Subsequent navigations: near-instant (no skeleton flash, cached chunks, hoisted providers).
-
-After implementing, I'll rebuild and re-check `dist/assets/` sizes and `dist/bundle-analysis.html` to confirm the main entry is under 300 KB and `vendor-pdf-export` is no longer preloaded.
+## Expected outcome
+- Generating, then navigating away from and back to, the Enriched Note tab keeps focus on Enriched and shows the full enriched paragraphs and bullet content inside each green card.
+- If a future content payload is malformed, the user sees the raw text instead of an empty card.
