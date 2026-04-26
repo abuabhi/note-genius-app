@@ -5,6 +5,26 @@ import { Note } from '@/types/note';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 
+const buildDefinedNoteUpdatePayload = (updates: Partial<Note>) => {
+  const payload: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  const assign = (dbColumn: string, value: unknown) => {
+    if (value !== undefined) payload[dbColumn] = value;
+  };
+
+  assign('title', updates.title);
+  assign('description', updates.description);
+  assign('content', updates.content);
+  assign('subject', updates.subject);
+  assign('subject_id', updates.subject_id);
+  assign('archived', updates.archived);
+  assign('pinned', updates.pinned);
+
+  return payload;
+};
+
 // Query key factory
 const getNotesQueryKey = (filters: { search: string; subject: string; sort: string }) => {
   return ['notes', 'simple', filters.search.trim(), filters.subject.trim(), filters.sort.trim()];
@@ -226,16 +246,7 @@ export const useSimpleNotes = () => {
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Note> }) => {
       const { data, error } = await supabase
         .from('notes')
-        .update({
-          title: updates.title,
-          description: updates.description,
-          content: updates.content,
-          subject: updates.subject,
-          subject_id: updates.subject_id,
-          archived: updates.archived,
-          pinned: updates.pinned,
-          updated_at: new Date().toISOString(),
-        })
+        .update(buildDefinedNoteUpdatePayload(updates))
         .eq('id', id)
         .select()
         .single();
