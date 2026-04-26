@@ -19,11 +19,19 @@ import {
   Video,
   PenTool,
   Bot,
-  TrendingUp
+  TrendingUp,
+  ListTodo
 } from 'lucide-react';
 
 const AdminDashboardPage = () => {
   const adminSections = [
+    {
+      title: 'Admin Tasks',
+      description: 'Internal task tracker for build, ops, and product work',
+      icon: ListTodo,
+      href: '/admin/todos',
+      color: 'bg-rose-500'
+    },
     {
       title: 'Blog Management',
       description: 'Create, edit, and manage blog posts with SEO optimization',
