@@ -49,21 +49,10 @@ serve(async (req) => {
     
     console.log("Edge function delete-note - Starting deletion process with service role");
     
-    // Delete in the correct order to avoid foreign key constraint violations
-    console.log("Edge function delete-note - Step 1: Deleting note enrichment usage entries");
-    const { error: enrichmentError } = await supabase
-      .from("note_enrichment_usage")
-      .delete()
-      .eq("note_id", noteId);
-    
-    if (enrichmentError) {
-      console.error("Edge function delete-note - Error deleting enrichment usage:", enrichmentError);
-      // Continue with deletion even if this fails
-    } else {
-      console.log("Edge function delete-note - Successfully deleted enrichment usage entries");
-    }
-    
-    console.log("Edge function delete-note - Step 2: Deleting note tags");
+    // NOTE: We intentionally do NOT delete from note_enrichment_usage here.
+    // Usage history must be preserved so the user's monthly counter is not reset
+    // when a note is deleted. The FK is ON DELETE SET NULL.
+    console.log("Edge function delete-note - Step 1: Deleting note tags");
     const { error: tagError } = await supabase
       .from("note_tags")
       .delete()

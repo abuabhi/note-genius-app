@@ -2303,7 +2303,7 @@ export type Database = {
           id: string
           llm_provider: string
           month_year: string
-          note_id: string
+          note_id: string | null
           prompt_tokens: number
           user_id: string
         }
@@ -2313,7 +2313,7 @@ export type Database = {
           id?: string
           llm_provider: string
           month_year: string
-          note_id: string
+          note_id?: string | null
           prompt_tokens?: number
           user_id: string
         }
@@ -2323,7 +2323,7 @@ export type Database = {
           id?: string
           llm_provider?: string
           month_year?: string
-          note_id?: string
+          note_id?: string | null
           prompt_tokens?: number
           user_id?: string
         }
