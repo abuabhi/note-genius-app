@@ -1,43 +1,27 @@
-## Problem
+## Plan: Add RESEND_API_KEY and verify email delivery
 
-On the **Enriched** tab, selecting text → "Expand this topic" → "Confirm & Add to Note" causes:
-1. The original enriched content disappears (empty green cards).
-2. The newly added AI expansion is not visible either.
+### What I'll do
 
-## Root cause
+1. **Prompt for the secret** — Trigger the secret-add flow for `RESEND_API_KEY` so you can paste your key from https://resend.com/api-keys. It's stored encrypted and only accessible to edge functions.
 
-In `src/components/notes/study/expansion/ExpandableContentRenderer.tsx` the renderer is chosen like this:
+2. **Redeploy `send-note-email`** — Force a redeploy so the function picks up the new secret immediately.
 
-```tsx
-{contentType === 'enriched' && expansions.length === 0 ? (
-  <EnrichedContentRenderer content={content} ... />
-) : (
-  <SimpleContentRenderer content={processedContent} ... />
-)}
-```
+3. **Test the email flow** — Tail the edge function logs while you send a test email from the export dialog so we can confirm:
+   - The function is invoked
+   - Resend accepts the request
+   - Any delivery error (e.g. unverified domain) is surfaced clearly
 
-- While there are zero expansions, the dedicated `EnrichedContentRenderer` parses the `[AI_ENHANCED]` / `[AI_ENRICHED]` tag blocks and renders them as the green "Enriched" cards.
-- The moment an expansion is confirmed, `expansions.length` becomes 1, so the component swaps to `SimpleContentRenderer`, which does not know how to render those AI tag blocks the same way.
-- On top of that, the expansion-injection logic uses a plain `indexOf` on the HTML and pastes a `<div class="ai-expansion-content">…</div>` block in the middle of an enriched wrapper, breaking that wrapper and getting partly stripped by the sanitizer. End result: empty cards plus an invisible expansion.
+### Important — Domain verification
 
-The expansion itself IS saved correctly to `note_content_expansions` (DB write succeeds); it is purely a render bug.
+The current `from` address is `noreply@prepgenie.io`. For Resend to actually deliver (not just accept) the email, `prepgenie.io` must be verified as a sending domain in your Resend dashboard (SPF + DKIM DNS records added).
 
-## Fix
+If `prepgenie.io` is **not yet verified**, I'll temporarily switch the `from` address to `onboarding@resend.dev` (Resend's shared testing sender) so you can confirm end-to-end delivery while you complete domain verification separately. Once verified, we flip it back to `noreply@prepgenie.io`.
 
-1. **Always use `EnrichedContentRenderer` on the Enriched tab**, expansions or not. Pass the expansions list down and render them inline as separate cards beneath the matching enriched block, instead of splicing HTML strings.
-2. **Add an `expansions` prop to `EnrichedContentRenderer`** (`src/components/notes/study/EnrichedContentRenderer.tsx`):
-   - For each parsed enriched segment, after rendering it, render any expansions whose `originalText` is contained in that segment.
-   - Render each expansion as its own styled card (reusing `.ai-expansion-content` / `.ai-expansion-content-neutral` styles already defined) with the existing remove (×) button.
-3. **In `ExpandableContentRenderer.tsx`**:
-   - Drop the `&& expansions.length === 0` condition — Enriched tab always renders via `EnrichedContentRenderer`.
-   - Forward `expansions`, `hideColoring`, and `removeExpansion` to it.
-   - Keep `SimpleContentRenderer` + the existing HTML splicing path for non-enriched tabs (Original, Summary, etc.) where it already works.
-4. **Defensive fallback**: if an expansion's `originalText` cannot be matched to any enriched segment (edge case), append it at the end of the rendered enriched content so it is never silently lost.
-5. **Verification**: after the change, expand a paragraph on the Enriched tab → confirm → the original enriched cards stay intact AND a new italic card containing the AI expansion appears below the matching paragraph, with a working × remove button.
+### Files touched
 
-## Files to edit
+- `supabase/functions/send-note-email/index.ts` (only if we need to swap the `from` address for testing)
 
-- `src/components/notes/study/expansion/ExpandableContentRenderer.tsx` — remove the renderer-swap, pass expansions/handlers to `EnrichedContentRenderer`.
-- `src/components/notes/study/EnrichedContentRenderer.tsx` — accept and render `expansions` inline per matching segment, with remove buttons.
+### What I need from you
 
-No DB or edge function changes needed — the expansion is already persisted correctly.
+- Approve this plan, then paste the Resend API key when the secret prompt appears.
+- Tell me whether `prepgenie.io` is already verified in Resend, or if I should use the testing sender for the first send.
