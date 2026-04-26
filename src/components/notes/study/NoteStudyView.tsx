@@ -2,6 +2,7 @@ import React from "react";
 import { Note } from "@/types/note";
 import { StudyViewHeader } from "./header/StudyViewHeader";
 import { NoteStudyViewContent } from "./viewer/NoteStudyViewContent";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useStudyViewState } from "./hooks/useStudyViewState";
 import { useNoteStudyEditor } from "./hooks/useNoteStudyEditor";
@@ -16,6 +17,7 @@ interface NoteStudyViewProps {
 }
 
 export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
+  const queryClient = useQueryClient();
   const [headerProcessingEnhancement, setHeaderProcessingEnhancement] = React.useState<string | null>(null);
   
   const {
@@ -34,8 +36,8 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
 
   // Create a simple refresh function using React Query invalidation
   const forceRefresh = () => {
-    // Instead of reloading the page, we'll refresh the note data
-    console.log("🔄 Refreshing note data without page reload");
+    queryClient.invalidateQueries({ queryKey: ['optimized-note-study', note.id], exact: false });
+    queryClient.invalidateQueries({ queryKey: ['notes'], exact: false });
   };
 
   const {
