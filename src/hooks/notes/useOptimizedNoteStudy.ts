@@ -1,6 +1,7 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Note } from '@/types/note';
 
@@ -13,6 +14,20 @@ interface OptimizedNoteStudyResult {
 
 export const useOptimizedNoteStudy = (noteId: string): OptimizedNoteStudyResult => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Seed initial data from the notes-list cache so the page renders instantly
+  // when the user clicks through from /notes (no loading spinner round-trip).
+  const seededNote = useMemo<Note | undefined>(() => {
+    if (!user || !noteId) return undefined;
+    const caches = queryClient.getQueriesData<{ notes?: Note[] }>({ queryKey: ['notes'] });
+    for (const [, data] of caches) {
+      const list = (data as any)?.notes as Note[] | undefined;
+      const hit = list?.find(n => n.id === noteId);
+      if (hit) return hit;
+    }
+    return undefined;
+  }, [noteId, user, queryClient]);
 
   const { data: note, isLoading, error, refetch } = useQuery({
     queryKey: ['optimized-note-study', noteId, user?.id],
