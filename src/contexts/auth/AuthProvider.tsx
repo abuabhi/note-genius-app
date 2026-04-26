@@ -83,8 +83,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   
   useEffect(() => {
     let mounted = true;
-    
-    // Set up the session listener
+
+    // Set up the session listener. Supabase fires this synchronously with the
+    // cached session from localStorage on subscribe, so we can drop `loading`
+    // immediately without waiting for a network round-trip to getSession().
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted) return;
@@ -93,12 +95,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         setSession(session);
         setUser(session?.user ?? null);
-        
-        // Check onboarding status when user signs in
+        setLoading(false); // Unblock the app as soon as we know the auth state
+
         if (event === 'SIGNED_IN' && session?.user) {
-          setTimeout(() => {
-            checkOnboardingStatus(session.user.id);
-          }, 0);
+          setTimeout(() => checkOnboardingStatus(session.user.id), 0);
         } else if (event === 'SIGNED_OUT') {
           setOnboardingCompleted(null);
           setOnboardingLoading(false);
@@ -106,50 +106,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     );
 
-    // Get initial session with timeout and error handling
-    const getInitialSession = async () => {
-      try {
-        // Add timeout to prevent infinite hanging
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Session check timeout')), 10000);
-        });
-        
-        const sessionPromise = supabase.auth.getSession();
-        
-        const { data: { session }, error } = await Promise.race([
-          sessionPromise,
-          timeoutPromise
-        ]) as any;
-        
-        if (error) {
-          console.error('Error getting session:', error);
+    // Verify session in the background — does NOT block initial render.
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (!mounted) return;
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+        if (session?.user) {
+          checkOnboardingStatus(session.user.id);
         }
-        
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-          
-          // Check onboarding status if user exists
-          if (session?.user) {
-            checkOnboardingStatus(session.user.id);
-          }
-        }
-      } catch (error) {
+      })
+      .catch((error) => {
         console.error('Failed to get initial session:', error);
-        if (mounted) {
-          // On error, assume no session and continue
-          setSession(null);
-          setUser(null);
-          setLoading(false);
-        }
-      }
-    };
+        if (mounted) setLoading(false);
+      });
 
-    getInitialSession();
+    // Hard safety net: never block the UI for more than 1.5s on auth.
+    const failsafe = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 1500);
 
     return () => {
       mounted = false;
+      clearTimeout(failsafe);
       subscription.unsubscribe();
     };
   }, []);

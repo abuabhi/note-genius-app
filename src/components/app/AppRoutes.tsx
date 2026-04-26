@@ -6,86 +6,69 @@ import { standardRoutes } from '@/routes/standardRoutes';
 import { adminRoutes } from '@/routes/adminRoutes';
 import { authCallbackRoutes } from '@/routes/authCallbackRoutes';
 import { miscRoutes } from '@/routes/miscRoutes';
-import { LazyLoadWrapper } from '@/components/performance/LazyLoadWrapper';
 import { Suspense } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import SidebarLayout from '@/components/layout/SidebarLayout';
 import { useRequireAuth, UserTier } from '@/hooks/useRequireAuth';
 
+// Minimal, non-flashing fallback. A full skeleton on every navigation made
+// transitions feel like a 1-2s reload even when chunks are cached.
+const RouteFallback = () => (
+  <div className="min-h-[40vh] flex items-center justify-center">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mint-600" />
+  </div>
+);
+
+const FullPageLoader = () => (
+  <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30 flex items-center justify-center">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint-600" />
+  </div>
+);
+
 const AppRoutes = () => {
   const { user, loading } = useAuth();
-  
-  console.log('🚦 [APP ROUTES] Auth state:', { userId: user?.id, loading });
 
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    if (loading) {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint-600"></div>
-        </div>
-      );
-    }
+    if (loading) return <FullPageLoader />;
     return user ? (
       <SidebarProvider>
-        <SidebarLayout>
-          {children}
-        </SidebarLayout>
+        <SidebarLayout>{children}</SidebarLayout>
       </SidebarProvider>
     ) : <Navigate to="/login" />;
   };
 
-  const LoadingSkeleton = () => (
-    <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30 flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mint-600"></div>
-    </div>
-  );
-
   const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { userProfile, loading } = useRequireAuth();
-    if (loading) return <LoadingSkeleton />;
+    if (loading) return <FullPageLoader />;
     return userProfile?.user_tier === UserTier.DEAN ? <>{children}</> : <Navigate to="/dashboard" />;
   };
 
-
-  if (loading) {
-    return <LoadingSkeleton />;
-  }
+  if (loading) return <FullPageLoader />;
 
   return (
     <Routes>
-      {/* Public routes - accessible without authentication */}
+      {/* Public routes */}
       {publicRoutes.map((route) => (
         <Route
           key={route.path}
           path={route.path}
-          element={
-            <LazyLoadWrapper>
-              {route.element}
-            </LazyLoadWrapper>
-          }
+          element={<Suspense fallback={<RouteFallback />}>{route.element}</Suspense>}
         />
       ))}
-      
-      {/* Login route - redirect to dashboard if already authenticated */}
-      <Route 
-        path="/login" 
-        element={!user ? <LoginPage /> : <Navigate to="/dashboard" />} 
-      />
-      
-      {/* Auth callback routes */}
+
+      {/* Login */}
+      <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/dashboard" />} />
+
+      {/* Auth callbacks */}
       {authCallbackRoutes.map((route) => (
         <Route
           key={route.path}
           path={route.path}
-          element={
-            <LazyLoadWrapper>
-              {route.element}
-            </LazyLoadWrapper>
-          }
+          element={<Suspense fallback={<RouteFallback />}>{route.element}</Suspense>}
         />
       ))}
-      
+
       {/* Protected standard routes */}
       {standardRoutes.map((route) => (
         <Route
@@ -93,48 +76,36 @@ const AppRoutes = () => {
           path={route.path}
           element={
             <ProtectedRoute>
-              <Suspense fallback={<LoadingSkeleton />}>
-                <LazyLoadWrapper>
-                  {route.element}
-                </LazyLoadWrapper>
-              </Suspense>
+              <Suspense fallback={<RouteFallback />}>{route.element}</Suspense>
             </ProtectedRoute>
           }
         />
       ))}
-      
+
       {/* Protected admin routes */}
       {adminRoutes.map((route) => (
-          <Route
-            key={route.path}
-            path={route.path}
-            element={
-              <ProtectedRoute>
-                <AdminProtectedRoute>
-                  <Suspense fallback={<LoadingSkeleton />}>
-                    <LazyLoadWrapper>
-                      {route.element}
-                    </LazyLoadWrapper>
-                  </Suspense>
-                </AdminProtectedRoute>
-              </ProtectedRoute>
-            }
-          />
-        ))}
+        <Route
+          key={route.path}
+          path={route.path}
+          element={
+            <ProtectedRoute>
+              <AdminProtectedRoute>
+                <Suspense fallback={<RouteFallback />}>{route.element}</Suspense>
+              </AdminProtectedRoute>
+            </ProtectedRoute>
+          }
+        />
+      ))}
 
-      {/* Misc routes */}
+      {/* Misc */}
       {miscRoutes.map((route) => (
         <Route
           key={route.path}
           path={route.path}
           element={
-            route.path === "*" ? route.element : (
+            route.path === '*' ? route.element : (
               <ProtectedRoute>
-                <Suspense fallback={<LoadingSkeleton />}>
-                  <LazyLoadWrapper>
-                    {route.element}
-                  </LazyLoadWrapper>
-                </Suspense>
+                <Suspense fallback={<RouteFallback />}>{route.element}</Suspense>
               </ProtectedRoute>
             )
           }

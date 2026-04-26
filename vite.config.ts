@@ -66,9 +66,9 @@ export default defineConfig(({ mode }) => {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
 
           // Merged core: query + auth + utils. Each was <50KB and cost an HTTP round-trip.
+          // NOTE: react-query-devtools removed — it was always loaded in production. Dev-only via dynamic import.
           'vendor-core': [
             '@tanstack/react-query',
-            '@tanstack/react-query-devtools',
             '@supabase/supabase-js',
             'date-fns',
             'uuid',
@@ -108,18 +108,10 @@ export default defineConfig(({ mode }) => {
             '@radix-ui/react-alert-dialog',
           ],
 
-          // PDF viewer (loaded only when displaying PDFs)
-          'vendor-pdf-viewer': ['pdfjs-dist'],
-
-          // PDF/Doc export (loaded only when exporting)
-          'vendor-pdf-export': ['jspdf', 'html2canvas', 'docx'],
-
-          // OCR engine (only loaded when user runs OCR)
-          'vendor-ocr': ['tesseract.js'],
-
-          // NOTE: recharts, @fullcalendar/*, @tiptap/*, moment intentionally NOT chunked here.
-          // Letting Rollup auto-split puts them inside the lazy-loaded route chunks
-          // that import them, so they're not downloaded on landing/dashboard.
+          // NOTE: pdfjs-dist, jspdf, docx, tesseract.js, recharts, @fullcalendar/*, @tiptap/*, moment
+          // intentionally NOT chunked here. Listing them in manualChunks creates a named chunk
+          // that gets <link rel="modulepreload">-ed on EVERY page. Letting Rollup auto-split puts
+          // them inside the lazy-loaded route chunks that actually import them, so they only load on demand.
         }
       }
     },

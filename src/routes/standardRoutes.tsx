@@ -12,8 +12,7 @@ const CreateFlashcardSetPage = lazy(() => import('@/pages/CreateFlashcardSetPage
 const CreateFlashcardPage = lazy(() => import('@/pages/CreateFlashcardPage'));
 const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
-// Eagerly imported — lazy chunk caused ~10s open time
-import NoteStudyPage from '@/pages/NoteStudyPage';
+const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
 const TakeQuizPage = lazy(() => import('@/pages/TakeQuizPage'));
 const CreateQuizPage = lazy(() => import('@/pages/CreateQuizPage'));
@@ -23,8 +22,7 @@ const GoalsPage = lazy(() => import('@/pages/GoalsPage'));
 const SchedulePage = lazy(() => import('@/pages/SchedulePage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const FeedbackPage = lazy(() => import('@/pages/FeedbackPage'));
-// Eagerly import ReferralsPage — it's lightweight and was taking ~10s as a lazy chunk
-import ReferralsPage from '@/pages/ReferralsPage';
+const ReferralsPage = lazy(() => import('@/pages/ReferralsPage'));
 const QuizDetailsPage = lazy(() => import('@/pages/QuizDetailsPage'));
 const InfluencerDashboardPage = lazy(() => import('@/pages/InfluencerDashboardPage'));
 const ResourcesPage = lazy(() => import('@/pages/ResourcesPage'));
