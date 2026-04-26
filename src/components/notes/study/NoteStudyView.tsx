@@ -147,7 +147,7 @@ export const NoteStudyView = ({ note }: NoteStudyViewProps) => {
           availableTags={availableTags}
           availableSubjects={availableSubjects || [] as UserSubject[]}
           isSaving={isSaving}
-          statsLoading={false}
+          statsLoading={usageLoading}
           currentUsage={currentUsage}
           monthlyLimit={monthlyLimit}
           handleContentChange={handleContentChange}
