@@ -4,6 +4,7 @@ export type EnhancementFunction =
   | 'extract-key-points' 
   | 'generate-questions' 
   | 'convert-to-markdown'
+  | 'improve-clarity'
   | 'enrich-note';
 
 export type TokenUsage = {

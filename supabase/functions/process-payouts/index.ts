@@ -26,7 +26,7 @@ serve(async (req) => {
     logStep("Starting payout processing");
 
     // Get all influencers with pending commissions
-    const { data: pendingPayouts, error: payoutError } = await supabaseClient
+    const { data: pendingPayouts, error: payoutError } = await (supabaseClient as any)
       .from('influencer_orders')
       .select(`
         influencer_id,
