@@ -223,12 +223,11 @@ export const useNotes = () => {
   // Delete note mutation
   const deleteNoteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('notes')
-        .delete()
-        .eq('id', id);
+      const { data, error } = await supabase
+        .rpc('force_delete_note_optimized', { note_id_param: id });
 
       if (error) throw error;
+      if (data !== true) throw new Error('Delete failed');
     },
     onSuccess: () => {
       // More targeted invalidation for better performance
@@ -270,6 +269,7 @@ export const useNotes = () => {
       await deleteNoteMutation.mutateAsync(id);
     } catch (error) {
       console.error('Delete note error:', error);
+      throw error;
     }
   }, [deleteNoteMutation]);
 
