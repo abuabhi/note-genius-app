@@ -4,7 +4,8 @@ import { TextAlignType } from './hooks/useStudyViewState';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Sparkles, FileText, List, HelpCircle, Code, RefreshCw, Clock, Palette, PaletteIcon } from 'lucide-react';
+import { Loader2, Sparkles, FileText, List, HelpCircle, Code, RefreshCw, Clock, Palette, PaletteIcon, Lock, ArrowUpRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { EnhancementType } from '@/types/enhancement';
 import { ExpandableContentRenderer } from './expansion/ExpandableContentRenderer';
 import { useEnhancementManager } from '@/hooks/useEnhancementManager';
@@ -48,7 +49,11 @@ export const SimpleEnhancementTabs = React.memo(({
   };
   const [hideColoring, setHideColoring] = useState(false);
   const { generatedContent, generateEnhancement, regenerateAll, isLoading, isAnyLoading } = useEnhancementManager(note, onNoteUpdate);
-  const { usageCount, monthlyLimit, isLoading: statsLoading, refetch: refetchUsage } = useAiEnrichmentUsage();
+  const { usageCount, monthlyLimit, userTier, isLoading: statsLoading, hasReachedLimit, refetch: refetchUsage } = useAiEnrichmentUsage();
+
+  const NEXT_TIER: Record<string, string> = { SCHOLAR: 'GRADUATE', GRADUATE: 'MASTER', MASTER: 'DEAN' };
+  const nextTier = userTier ? NEXT_TIER[userTier] : null;
+  const upgradeHref = `/pricing${nextTier ? `?from=${userTier}&to=${nextTier}#${nextTier.toLowerCase()}` : ''}`;
 
   const hasContent = useCallback((content: string) => content && content.trim().length > 0, []);
 
@@ -235,36 +240,57 @@ export const SimpleEnhancementTabs = React.memo(({
                               )}
                             </Button>
                           )}
-                          {tab.canGenerate && (
-                            <Button
-                              onClick={async () => {
-                                await generateEnhancement(tab.enhancementType!, tab.column!, tab.statusColumn);
-                                if (tab.enhancementType === 'enrich-note') {
-                                  refetchUsage();
-                                }
-                              }}
-                              disabled={isLoading(tab.enhancementType!)}
-                              variant="outline"
-                              size="sm"
-                              className={`bg-white hover:bg-mint-50 text-mint-700 hover:text-mint-800 ${
-                                !tab.hasContent && !isLoading(tab.enhancementType!)
-                                  ? 'gen-animated-border'
-                                  : 'border-mint-200'
-                              }`}
-                            >
-                              {isLoading(tab.enhancementType!) ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                  Generating...
-                                </>
-                              ) : (
-                                <>
-                                  <RefreshCw className="h-4 w-4 mr-2" />
-                                  {tab.hasContent ? 'ReGenerate' : 'Generate'}
-                                </>
-                              )}
-                            </Button>
-                          )}
+                          {tab.canGenerate && (() => {
+                            const isEnrich = tab.enhancementType === 'enrich-note';
+                            const blocked = isEnrich && hasReachedLimit;
+                            const loading = isLoading(tab.enhancementType!);
+                            if (blocked) {
+                              return (
+                                <Link to={upgradeHref}>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
+                                    title="Monthly enrichment limit reached"
+                                  >
+                                    <Lock className="h-4 w-4 mr-2" />
+                                    Limit reached — Upgrade
+                                    <ArrowUpRight className="h-3 w-3 ml-1" />
+                                  </Button>
+                                </Link>
+                              );
+                            }
+                            return (
+                              <Button
+                                onClick={async () => {
+                                  await generateEnhancement(tab.enhancementType!, tab.column!, tab.statusColumn);
+                                  if (isEnrich) {
+                                    refetchUsage();
+                                  }
+                                }}
+                                disabled={loading}
+                                variant="outline"
+                                size="sm"
+                                className={`bg-white hover:bg-mint-50 text-mint-700 hover:text-mint-800 ${
+                                  !tab.hasContent && !loading
+                                    ? 'gen-animated-border'
+                                    : 'border-mint-200'
+                                }`}
+                              >
+                                {loading ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    Generating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <RefreshCw className="h-4 w-4 mr-2" />
+                                    {tab.hasContent ? 'ReGenerate' : 'Generate'}
+                                  </>
+                                )}
+                              </Button>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -272,7 +298,7 @@ export const SimpleEnhancementTabs = React.memo(({
                     {/* Usage indicator for Enriched tab */}
                     {tab.value === 'enriched' && (
                       <div className="px-6 pt-4">
-                        <UsageIndicator currentUsage={usageCount} monthlyLimit={monthlyLimit} isLoading={statsLoading} />
+                        <UsageIndicator currentUsage={usageCount} monthlyLimit={monthlyLimit} isLoading={statsLoading} userTier={userTier} />
                       </div>
                     )}
                     {/* Content area */}
