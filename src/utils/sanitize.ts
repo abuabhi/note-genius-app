@@ -9,7 +9,9 @@ const ALLOWED_ATTR = ['href','title','target','rel','class','style','src','alt',
 const FORBID_TAGS = ['script','iframe','object','embed','form','input','button','svg'];
 const FORBID_ATTR = ['onerror','onload','srcset'];
 
-// Centralized HTML sanitizer (strict — drops content of disallowed tags)
+// Centralized HTML sanitizer. KEEP_CONTENT is intentionally true so any
+// unknown wrapper tag still leaves its text visible to the user — preferring
+// "show the words" over "show a blank card".
 export const sanitizeHTML = (html: string): string => {
   if (!html) return '';
   return DOMPurify.sanitize(html, {
@@ -18,7 +20,7 @@ export const sanitizeHTML = (html: string): string => {
     ALLOW_DATA_ATTR: false,
     FORBID_TAGS,
     FORBID_ATTR,
-    KEEP_CONTENT: false
+    KEEP_CONTENT: true
   });
 };
 
