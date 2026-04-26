@@ -1,23 +1,15 @@
-## Problem
+## Add Exam dialog cleanup
 
-Clicking the dashboard "Upload PDF" CTA navigates to `/notes?action=upload`, but `NotesPage` never reads the `action` query parameter. The user lands on the Notes list and has to click "Import" manually. The ~10 second delay you observed is the lazy-loaded NotesPage + notes data fetching; the dialog should open as soon as the page is ready.
+Update `src/components/exam-prep/ExamFormDialog.tsx`:
 
-## Fix
+1. **Remove Location field** entirely (UI + state + payload sends `location: null`).
+2. **Add Topic field (optional)** — single-line text. On submit, if filled, insert into `exam_topics` (the existing topics table) so it shows up on the exam detail page. Hint text: "You can add more topics after creating the exam."
+3. **Exam date — date only**: change input from `type="datetime-local"` to `type="date"`. Store as start-of-day ISO (`new Date(\`${examDate}T00:00:00\`).toISOString()`).
+4. **Notes labeled optional** — append small "(optional)" hint next to label. (Field is already not required in validation.)
+5. **Layout**: with Location gone, place Exam date and Target readiness side-by-side; Topic and Notes each get their own full-width row.
 
-In `src/pages/NotesPage.tsx`:
-
-1. Read the `action` query param using `useSearchParams` from `react-router-dom`.
-2. When `action=upload` (or `action=import`), set `isImportDialogOpen` to `true` on mount.
-3. Clean the param from the URL after opening so refreshing/closing doesn't re-trigger it.
-
-The `EnhancedImportDialog` already defaults to the **File** tab (PDF/document upload), so opening the dialog drops the user directly in the right place — no extra tab routing needed.
-
-## Optional follow-up (perf)
-
-The 10s delay before the page becomes interactive is mostly: lazy chunk load + `useNotes` initial fetch. Out of scope for this fix, but if you want, we can:
-- Preload the NotesPage chunk on hover of the dashboard CTA, and
-- Show the import dialog above a skeleton so users can start uploading before notes finish loading.
+Required fields remain: Title, Exam date. Submit button stays disabled until both are filled.
 
 ## Files changed
 
-- `src/pages/NotesPage.tsx` — read `?action=upload`, auto-open import dialog, strip the param.
+- `src/components/exam-prep/ExamFormDialog.tsx`
