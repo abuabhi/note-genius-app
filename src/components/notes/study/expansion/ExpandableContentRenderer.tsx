@@ -256,6 +256,7 @@ ${cleanExpandedContent}
             className={`w-full ${hideColoring ? 'hide-coloring' : ''}`}
           />
         )}
+      </div>
 
       <ContentExpansionContextMenu
         selectedText={selectedText}
