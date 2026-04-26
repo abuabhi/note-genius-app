@@ -12,7 +12,8 @@ const CreateFlashcardSetPage = lazy(() => import('@/pages/CreateFlashcardSetPage
 const CreateFlashcardPage = lazy(() => import('@/pages/CreateFlashcardPage'));
 const FlashcardStudyPage = lazy(() => import('@/pages/FlashcardStudyPage'));
 const NotesPage = lazy(() => import('@/pages/NotesPage'));
-const NoteStudyPage = lazy(() => import('@/pages/NoteStudyPage'));
+// Eagerly imported — lazy chunk caused ~10s open time
+import NoteStudyPage from '@/pages/NoteStudyPage';
 const QuizPage = lazy(() => import('@/pages/QuizPage'));
 const TakeQuizPage = lazy(() => import('@/pages/TakeQuizPage'));
 const CreateQuizPage = lazy(() => import('@/pages/CreateQuizPage'));
