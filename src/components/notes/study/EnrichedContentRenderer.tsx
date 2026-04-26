@@ -5,12 +5,20 @@ import { sanitizeEnrichedHTML } from '@/utils/sanitize';
 import './SimpleContentRenderer.css';
 import './EnrichedContentRenderer.css';
 
+export interface InlineExpansion {
+  id: string;
+  originalText: string;
+  expandedContent: string;
+}
+
 interface EnrichedContentRendererProps {
   content: string;
   fontSize?: number;
   textAlign?: TextAlignType;
   className?: string;
   hideColoring?: boolean;
+  expansions?: InlineExpansion[];
+  onRemoveExpansion?: (id: string) => void;
 }
 
 type Segment = { kind: 'original' | 'enriched'; text: string };
