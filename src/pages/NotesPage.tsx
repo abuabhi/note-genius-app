@@ -4,13 +4,19 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useViewPreferences } from '@/hooks/useViewPreferences';
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Note } from '@/types/note';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CreateNoteForm } from '@/components/notes/page/CreateNoteForm';
-import { EnhancedImportDialog } from '@/components/notes/import/EnhancedImportDialog';
 import { NotesFilters } from '@/components/notes/NotesFilters';
+
+// Lazy-load heavy dialogs so they do not block initial /notes render
+const CreateNoteForm = lazy(() =>
+  import('@/components/notes/page/CreateNoteForm').then(m => ({ default: m.CreateNoteForm }))
+);
+const EnhancedImportDialog = lazy(() =>
+  import('@/components/notes/import/EnhancedImportDialog').then(m => ({ default: m.EnhancedImportDialog }))
+);
 import { NotesGrid } from '@/components/notes/NotesGrid';
 import { useNotes } from '@/hooks/useNotes';
 import { toast } from 'sonner';
@@ -216,20 +222,28 @@ const NotesPageContent = () => {
             <DialogTitle className="text-xl font-semibold text-mint-800">Create New Note</DialogTitle>
           </DialogHeader>
           <div className="py-2">
-            <CreateNoteForm onSave={handleSaveNote} />
+            {isManualDialogOpen && (
+              <Suspense fallback={<div className="py-8 text-center text-gray-500">Loading…</div>}>
+                <CreateNoteForm onSave={handleSaveNote} />
+              </Suspense>
+            )}
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Enhanced Import Dialog */}
-      <EnhancedImportDialog 
-        onSaveNote={handleImportNote}
-        isVisible={isImportDialogOpen}
-        onClose={() => {
-          if (!isCreating) setIsImportDialogOpen(false);
-        }}
-        isPremiumUser={true}
-      />
+      {/* Enhanced Import Dialog - only mount once opened to keep /notes fast */}
+      {isImportDialogOpen && (
+        <Suspense fallback={null}>
+          <EnhancedImportDialog
+            onSaveNote={handleImportNote}
+            isVisible={isImportDialogOpen}
+            onClose={() => {
+              if (!isCreating) setIsImportDialogOpen(false);
+            }}
+            isPremiumUser={true}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

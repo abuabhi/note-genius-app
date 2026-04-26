@@ -73,7 +73,10 @@ export const useNotes = () => {
       return response;
     },
     enabled: !!user?.id && !authLoading,
-    gcTime: 30000, // Keep in cache for 30 seconds for back navigation
+    staleTime: 60_000, // Treat data as fresh for 1 min — avoids refetch on every nav back
+    gcTime: 5 * 60_000, // Keep in cache for 5 min
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     throwOnError: false,
   });
 
