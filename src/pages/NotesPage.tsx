@@ -235,7 +235,17 @@ const NotesPageContent = () => {
 };
 
 const NotesPage = () => {
-  return <NotesPageContent />;
+  return (
+    <ErrorBoundary
+      FallbackComponent={ErrorFallback}
+      onReset={() => window.location.reload()}
+      onError={(error, errorInfo) => {
+        console.error('Notes route error caught by boundary:', error, errorInfo);
+      }}
+    >
+      <NotesPageContent />
+    </ErrorBoundary>
+  );
 };
 
 export default NotesPage;
