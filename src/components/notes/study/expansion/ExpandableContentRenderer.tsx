@@ -239,14 +239,20 @@ ${cleanExpandedContent}
       >
         {/* Use dedicated enriched renderer for the Enriched Note tab so the
             [AI_ENHANCED] / [AI_ENRICHED] blocks always render as visible
-            green cards with an "Enriched" badge. */}
-        {contentType === 'enriched' && expansions.length === 0 ? (
+            green cards with an "Enriched" badge — even when expansions exist. */}
+        {contentType === 'enriched' ? (
           <EnrichedContentRenderer
             content={content}
             fontSize={fontSize}
             textAlign={textAlign}
             className={`w-full ${hideColoring ? 'hide-coloring' : ''}`}
             hideColoring={hideColoring}
+            expansions={expansions.map(e => ({
+              id: e.id,
+              originalText: e.originalText,
+              expandedContent: e.expandedContent,
+            }))}
+            onRemoveExpansion={removeExpansion}
           />
         ) : (
           <SimpleContentRenderer
