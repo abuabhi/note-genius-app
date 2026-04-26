@@ -260,3 +260,39 @@
   padding-top: 1rem;
   border-top: 1px solid hsl(var(--border));
 }
+
+/* Animated conic-gradient border for "Generate" CTA when no content yet */
+@property --gen-a {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes gen-border-spin {
+  to { --gen-a: 1turn; }
+}
+.gen-animated-border {
+  position: relative;
+  border: 2px solid transparent !important;
+  background:
+    linear-gradient(white, white) padding-box,
+    conic-gradient(from var(--gen-a, 0deg),
+      hsl(var(--primary)) 0deg,
+      hsl(var(--primary) / 0.15) 90deg,
+      hsl(var(--primary)) 180deg,
+      hsl(var(--primary) / 0.15) 270deg,
+      hsl(var(--primary)) 360deg) border-box;
+  animation: gen-border-spin 2.5s linear infinite;
+}
+.gen-animated-border:hover {
+  background:
+    linear-gradient(hsl(152 76% 96%), hsl(152 76% 96%)) padding-box,
+    conic-gradient(from var(--gen-a, 0deg),
+      hsl(var(--primary)) 0deg,
+      hsl(var(--primary) / 0.15) 90deg,
+      hsl(var(--primary)) 180deg,
+      hsl(var(--primary) / 0.15) 270deg,
+      hsl(var(--primary)) 360deg) border-box;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gen-animated-border { animation: none; }
+}
