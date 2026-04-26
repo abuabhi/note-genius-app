@@ -42,7 +42,12 @@ export const useSimpleEnhancement = (note: Note, onNoteUpdate?: () => void) => {
           let parsed: any = null;
           try { parsed = JSON.parse(error.message); } catch (_) {}
           if (parsed?.error === 'usage_limit_reached') {
-            toast.error(parsed.message || "You've reached your monthly AI enrichment limit.");
+            toast.error(parsed.message || "You've reached your monthly AI enrichment limit.", {
+              action: {
+                label: 'Upgrade',
+                onClick: () => { window.location.href = '/pricing'; },
+              },
+            });
           } else {
             toast.error('Failed to enrich note');
           }
