@@ -142,6 +142,8 @@ const ExamDetailPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        <ExamRemindersPanel exam={exam} />
       </div>
 
     </div>
