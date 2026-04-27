@@ -174,6 +174,8 @@ export const useSubjectDeletion = () => {
       result.success = result.errors.length === 0;
 
       if (result.success) {
+        await queryClient.invalidateQueries({ queryKey: ['userSubjects', user?.id] });
+        await queryClient.invalidateQueries({ queryKey: ['userSubjects'] });
         toast.success('Subject and all related data deleted successfully');
       } else {
         toast.error('Some errors occurred during deletion');
