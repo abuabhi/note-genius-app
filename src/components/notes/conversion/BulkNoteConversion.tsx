@@ -99,6 +99,7 @@ export const BulkNoteConversion = ({
       console.error("Error creating flashcards:", error);
       toast.error("Failed to convert notes to flashcards. Please try again.");
     } finally {
+      inFlightRef.current = false;
       setIsConverting(false);
     }
   };
