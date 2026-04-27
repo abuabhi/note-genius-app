@@ -1,29 +1,28 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth"; // Updated import path
-import { startOfMonth, endOfMonth, addMonths } from "date-fns";
+import { startOfMonth, endOfMonth, addMonths, startOfWeek, endOfWeek } from "date-fns";
 import { DateRange, UseEventsReturn } from "./types";
 import { formatEventDate } from "./eventUtils";
 import { useEventQuery, useUpcomingEventsQuery, useDueFlashcardsQuery } from "./useEventQueries";
 import { useCreateEvent, useDeleteEvent } from "./useEventMutations";
 import { PostgrestError } from "@supabase/supabase-js";
 
+const getVisibleCalendarRange = (date: Date): DateRange => ({
+  start: startOfWeek(startOfMonth(date)),
+  end: endOfWeek(endOfMonth(date)),
+});
+
 /**
  * Main hook for events management
  */
 export const useEvents = (currentDate: Date = new Date()): UseEventsReturn => {
   const { user } = useAuth();
-  const [dateRange, setDateRange] = useState<DateRange>({
-    start: startOfMonth(currentDate),
-    end: endOfMonth(currentDate)
-  });
+  const [dateRange, setDateRange] = useState<DateRange>(() => getVisibleCalendarRange(currentDate));
 
   // Update date range when current date changes
   useEffect(() => {
-    setDateRange({
-      start: startOfMonth(currentDate),
-      end: endOfMonth(currentDate)
-    });
+    setDateRange(getVisibleCalendarRange(currentDate));
   }, [currentDate]);
 
   // Use the query hooks
@@ -52,10 +51,7 @@ export const useEvents = (currentDate: Date = new Date()): UseEventsReturn => {
       addMonths(currentDate, 1) : 
       addMonths(currentDate, -1);
     
-    setDateRange({
-      start: startOfMonth(newDate),
-      end: endOfMonth(newDate)
-    });
+    setDateRange(getVisibleCalendarRange(newDate));
   };
 
   return {
