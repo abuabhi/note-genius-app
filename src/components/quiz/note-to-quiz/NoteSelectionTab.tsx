@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Search, FileText, Clock, Info } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Search, FileText, Clock, Info, Sparkles } from 'lucide-react';
 import { Note } from '@/types/note';
 import { analyzeSelectedNotesSubjects } from '@/utils/subjectAnalyzer';
 
@@ -17,16 +18,20 @@ interface NoteSelectionTabProps {
   isGenerating?: boolean;
   numberOfQuestions?: number;
   onNumberOfQuestionsChange?: (count: number) => void;
+  recommendedQuestions?: number;
+  onUseRecommended?: () => void;
 }
 
-export const NoteSelectionTab = ({ 
-  selectedNotes, 
-  onNotesChange, 
+export const NoteSelectionTab = ({
+  selectedNotes,
+  onNotesChange,
   onNoteToggle,
   onGenerateQuiz,
   isGenerating,
   numberOfQuestions,
-  onNumberOfQuestionsChange
+  onNumberOfQuestionsChange,
+  recommendedQuestions,
+  onUseRecommended,
 }: NoteSelectionTabProps) => {
   const { notes } = useOptimizedNotes();
   const [searchTerm, setSearchTerm] = useState('');
@@ -93,7 +98,7 @@ export const NoteSelectionTab = ({
       {/* Quiz Generation Controls */}
       {(onGenerateQuiz && numberOfQuestions !== undefined && onNumberOfQuestionsChange) && (
         <div className="bg-mint-50 p-4 rounded-lg space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <label className="text-sm font-medium">Number of Questions:</label>
             <Input
               type="number"
@@ -104,6 +109,20 @@ export const NoteSelectionTab = ({
               className="w-20"
             />
           </div>
+          {recommendedQuestions !== undefined && selectedNotes.length > 0 && (
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Recommended: {recommendedQuestions} (based on note length)</span>
+              {numberOfQuestions !== recommendedQuestions && onUseRecommended && (
+                <button
+                  type="button"
+                  onClick={onUseRecommended}
+                  className="text-mint-700 hover:text-mint-800 underline underline-offset-2"
+                >
+                  Use recommended
+                </button>
+              )}
+            </div>
+          )}
           <Button
             onClick={onGenerateQuiz}
             disabled={selectedNotes.length === 0 || isGenerating}
