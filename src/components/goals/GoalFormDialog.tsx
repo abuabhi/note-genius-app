@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +12,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Target, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Target, ChevronDown, ChevronUp, Settings as SettingsIcon } from 'lucide-react';
+import { useUserSubjects } from '@/hooks/useUserSubjects';
 
 interface GoalFormData {
   title: string;
