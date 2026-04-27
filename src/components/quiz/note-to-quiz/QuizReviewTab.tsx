@@ -2,7 +2,7 @@
 import { NoteToQuizForm } from "../NoteToQuizForm";
 import { analyzeSelectedNotesSubjects } from '@/utils/subjectAnalyzer';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, AlertTriangle, Loader2 } from 'lucide-react';
+import { Info, AlertTriangle, Loader2, Sparkles } from 'lucide-react';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { useEffect, useState } from 'react';
 import { ensureUserSubjectExists } from '@/utils/subjectHelpers';
@@ -15,12 +15,14 @@ interface QuizReviewTabProps {
     options: { content: string; isCorrect: boolean }[];
   }[];
   selectedNotes: any[];
+  usedSource?: { enriched: number; original: number } | null;
   onSuccess: () => void;
 }
 
 export const QuizReviewTab = ({
   generatedQuestions,
   selectedNotes,
+  usedSource,
   onSuccess,
 }: QuizReviewTabProps) => {
   const subjectAnalysis = analyzeSelectedNotesSubjects(selectedNotes);

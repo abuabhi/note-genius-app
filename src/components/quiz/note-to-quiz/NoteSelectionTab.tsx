@@ -143,7 +143,8 @@ export const NoteSelectionTab = ({
       <div className="grid gap-3 max-h-96 overflow-y-auto">
         {filteredNotes.map((note) => {
           const isSelected = selectedNotes.some(n => n.id === note.id);
-          
+          const enriched = !!(note as any)?.enriched_content?.trim();
+
           return (
             <Card
               key={note.id}
@@ -155,7 +156,18 @@ export const NoteSelectionTab = ({
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="font-medium text-sm mb-1">{note.title}</h3>
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <h3 className="font-medium text-sm">{note.title}</h3>
+                      {enriched ? (
+                        <Badge variant="secondary" className="bg-mint-100 text-mint-700 hover:bg-mint-100 gap-1 text-[10px] py-0 h-4">
+                          <Sparkles className="h-2.5 w-2.5" /> Enriched
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] py-0 h-4 text-gray-600">
+                          Original
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-600 mb-2 line-clamp-2">
                       {note.description || note.content}
                     </p>
