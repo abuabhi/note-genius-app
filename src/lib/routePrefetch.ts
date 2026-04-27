@@ -14,6 +14,7 @@ const importers: Record<string, Importer> = {
   '/quizzes': () => import('@/pages/QuizPage'),
   '/quiz': () => import('@/pages/QuizPage'),
   '/quiz/create': () => import('@/pages/CreateQuizPage'),
+  '/quiz/take': () => import('@/pages/TakeQuizPage'),
   '/schedule': () => import('@/pages/SchedulePage'),
   '/goals': () => import('@/pages/GoalsPage'),
   '/exam-prep': () => import('@/pages/ExamPrepPage'),
