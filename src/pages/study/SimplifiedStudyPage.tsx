@@ -8,6 +8,30 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+
+const StudyBreadcrumb = ({ current }: { current: string }) => (
+  <Breadcrumb className="mb-4">
+    <BreadcrumbList>
+      <BreadcrumbItem>
+        <BreadcrumbLink asChild>
+          <Link to="/flashcards">Flashcards</Link>
+        </BreadcrumbLink>
+      </BreadcrumbItem>
+      <BreadcrumbSeparator />
+      <BreadcrumbItem>
+        <BreadcrumbPage>{current}</BreadcrumbPage>
+      </BreadcrumbItem>
+    </BreadcrumbList>
+  </Breadcrumb>
+);
 
 export const SimplifiedStudyPage = () => {
   const { id } = useParams<{ id: string }>();
