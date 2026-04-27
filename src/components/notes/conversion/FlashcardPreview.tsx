@@ -44,9 +44,10 @@ export const FlashcardPreview = ({ cards, onCreateCards, isCreating = false }: F
         <div className="flex justify-end pt-4 border-t border-blue-200">
           <Button
             onClick={onCreateCards}
+            disabled={isCreating || cards.length === 0}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
-            Create {cards.length} Flashcards
+            {isCreating ? "Creating..." : `Create ${cards.length} Flashcards`}
           </Button>
         </div>
       </CardContent>
