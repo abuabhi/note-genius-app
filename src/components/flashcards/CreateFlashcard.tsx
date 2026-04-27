@@ -7,15 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FileUploader } from "@/components/admin/csv/FileUploader";
 import { ImportResults } from "@/components/admin/csv/ImportResults";
-import { Loader2, Info, Download } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { FlashcardDifficulty } from "@/types/flashcard";
 import { useFlashcardsImport } from "@/hooks/csv/useFlashcardsImport";
 import { getTemplateCSV } from "@/utils/csvUtils";
 import { useSecureFlashcards } from "@/hooks/security/useSecureFlashcards";
+import { CreateFlashcardFromNote } from "./CreateFlashcardFromNote";
 
 interface CreateFlashcardProps {
   setId?: string;
@@ -120,26 +120,22 @@ const CreateFlashcard = ({ setId, onSuccess }: CreateFlashcardProps) => {
 
   return (
     <div className="space-y-6">
-      {/* User Tip */}
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertTitle>Pro Tip</AlertTitle>
-        <AlertDescription>
-          For the best learning experience, create flashcards from your existing notes. This helps reinforce what you've already studied and creates a more comprehensive learning workflow.
-        </AlertDescription>
-      </Alert>
-
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Add Flashcards</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="manual" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="manual">Manual Creation</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="manual">Manual</TabsTrigger>
+              <TabsTrigger value="from-note">From Note</TabsTrigger>
               <TabsTrigger value="csv">CSV Import</TabsTrigger>
             </TabsList>
-            
+
+            <TabsContent value="from-note" className="mt-6">
+              <CreateFlashcardFromNote setId={setId} onSuccess={onSuccess} />
+            </TabsContent>
+
             <TabsContent value="manual" className="mt-6">
               <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
