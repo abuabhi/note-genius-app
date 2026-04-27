@@ -69,7 +69,15 @@ const SchedulePage = () => {
         <ScheduleHeader selectedDate={date} onDateChange={setDate} />
         
         <div className="mt-6">
-          <ScheduleCalendar selectedDate={date} onDateChange={setDate} />
+          <Suspense
+            fallback={
+              <div className="h-[600px] rounded-lg border border-border bg-muted/20 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mint-500" />
+              </div>
+            }
+          >
+            <ScheduleCalendar selectedDate={date} onDateChange={setDate} />
+          </Suspense>
         </div>
         
         <div className="mt-8">
