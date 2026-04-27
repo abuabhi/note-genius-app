@@ -4,10 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Bell, BellOff, Calendar as CalIcon, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Bell, BellOff, Calendar as CalIcon, Sparkles } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import type { Exam } from '@/types/exam';
+import { examsKey } from '@/hooks/exams';
 
 interface ExamRemindersPanelProps {
   exam: Exam;
