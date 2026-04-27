@@ -19,6 +19,8 @@ export interface DeletionResult {
 export const useSubjectDeletion = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const checkDependencies = async (subjectName: string) => {
     setIsChecking(true);
