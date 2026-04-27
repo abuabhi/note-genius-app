@@ -76,6 +76,7 @@ export const SimplifiedStudyPage = () => {
   if (error) {
     return (
       <div className="container mx-auto p-6">
+        <StudyBreadcrumb current="Study Session" />
         <Alert variant="destructive" className="max-w-2xl mx-auto">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex flex-col gap-4">
