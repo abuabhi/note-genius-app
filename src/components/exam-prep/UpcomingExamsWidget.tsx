@@ -75,24 +75,43 @@ export const UpcomingExamsWidget: React.FC = () => {
         ) : (
           upcoming.map(exam => {
             const days = daysUntil(exam.exam_date);
+            const urgency = getExamUrgency(days);
             const readiness = calculateReadiness(topicsByExam[exam.id] ?? []);
             const subjectName = exam.subject_id ? subjectMap.get(exam.subject_id) : undefined;
             return (
               <Link
                 key={exam.id}
                 to={`/exam-prep/${exam.id}`}
-                className="flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-muted/50 transition"
+                className={cn(
+                  'flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-muted/50 transition',
+                  urgency.borderClass,
+                )}
               >
                 <ReadinessRing value={readiness} size={48} stroke={5} />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{exam.title}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-medium truncate">{exam.title}</div>
+                    {urgency.emphasise && (
+                      <Badge className={cn('shrink-0 text-[10px] px-1.5 py-0', urgency.badgeClass)}>
+                        {urgency.label}
+                      </Badge>
+                    )}
+                  </div>
                   <div className="text-xs text-muted-foreground truncate">
                     {subjectName ? `${subjectName} • ` : ''}
                     {format(new Date(exam.exam_date), 'PPP')}
                   </div>
                 </div>
-                <div className={`text-sm font-semibold ${days < 0 ? 'text-destructive' : 'text-foreground'}`}>
-                  {days < 0 ? `${Math.abs(days)}d ago` : `${days}d`}
+                <div
+                  className={cn(
+                    'text-sm font-semibold',
+                    urgency.tone === 'overdue' && 'text-destructive',
+                    urgency.tone === 'critical' && 'text-red-600',
+                    urgency.tone === 'soon' && 'text-orange-600',
+                    urgency.tone === 'upcoming' && 'text-amber-700',
+                  )}
+                >
+                  {urgency.tone === 'overdue' ? `${Math.abs(days)}d ago` : `${days}d`}
                 </div>
               </Link>
             );
