@@ -1,4 +1,4 @@
-
+import { useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccountSettingsCard } from "./cards/AccountSettingsCard";
 import { StudyPreferencesCard } from "./cards/StudyPreferencesCard";
@@ -24,6 +24,19 @@ interface SettingsFormTabsProps {
   onCountryChange: (countryId: string) => Promise<void>;
 }
 
+/**
+ * Tracks which tabs the user has opened. Once visited, a tab stays mounted so
+ * its state (form values, queries) survives switching away. Tabs that have
+ * never been opened don't mount their (sometimes expensive) content trees.
+ */
+const useVisitedTabs = (activeTab: string) => {
+  const visitedRef = useRef<Set<string>>(new Set([activeTab]));
+  useEffect(() => {
+    visitedRef.current.add(activeTab);
+  }, [activeTab]);
+  return (tab: string) => visitedRef.current.has(tab) || tab === activeTab;
+};
+
 export const SettingsFormTabs = ({
   activeTab,
   setActiveTab,
@@ -31,7 +44,7 @@ export const SettingsFormTabs = ({
   user,
   userTier,
   countries,
-  onCountryChange
+  onCountryChange,
 }: SettingsFormTabsProps) => {
   const tabs = [
     { id: 'account', label: 'Account', icon: UserIcon },
@@ -43,6 +56,8 @@ export const SettingsFormTabs = ({
     { id: 'password', label: 'Password', icon: Lock },
   ];
 
+  const isMounted = useVisitedTabs(activeTab);
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="flex w-full overflow-x-auto gap-2 md:grid md:grid-cols-7">
@@ -52,39 +67,43 @@ export const SettingsFormTabs = ({
           </TabsTrigger>
         ))}
       </TabsList>
-      
+
       <TabsContent value="account" className="space-y-6">
-        <AccountSettingsCard 
-          user={user}
-          form={form}
-          countries={countries}
-          onCountryChange={onCountryChange}
-        />
-        <PrivacyDataCard />
+        {isMounted('account') && (
+          <>
+            <AccountSettingsCard
+              user={user}
+              form={form}
+              countries={countries}
+              onCountryChange={onCountryChange}
+            />
+            <PrivacyDataCard />
+          </>
+        )}
       </TabsContent>
-      
+
       <TabsContent value="subjects" className="space-y-6">
-        <SubjectsSettingsCard />
+        {isMounted('subjects') && <SubjectsSettingsCard />}
       </TabsContent>
-      
+
       <TabsContent value="subscription" className="space-y-6">
-        <MergedSubscriptionCard />
+        {isMounted('subscription') && <MergedSubscriptionCard />}
       </TabsContent>
-      
+
       <TabsContent value="notifications" className="space-y-6">
-        <NotificationPreferencesCard form={form} />
+        {isMounted('notifications') && <NotificationPreferencesCard form={form} />}
       </TabsContent>
-      
+
       <TabsContent value="study" className="space-y-6">
-        <StudyPreferencesCard form={form} />
+        {isMounted('study') && <StudyPreferencesCard form={form} />}
       </TabsContent>
-      
+
       <TabsContent value="adaptive" className="space-y-6">
-        <AdaptiveLearningCard form={form} />
+        {isMounted('adaptive') && <AdaptiveLearningCard form={form} />}
       </TabsContent>
-      
+
       <TabsContent value="password" className="space-y-6">
-        <PasswordChangeCard />
+        {isMounted('password') && <PasswordChangeCard />}
       </TabsContent>
     </Tabs>
   );

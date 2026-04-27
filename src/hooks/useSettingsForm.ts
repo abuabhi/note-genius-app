@@ -1,4 +1,4 @@
-import { useEffect, useState, startTransition } from "react";
+import { useEffect, useRef, useState, startTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -70,27 +70,39 @@ export const useSettingsForm = () => {
   const { reset, formState: { isDirty, isSubmitSuccessful } } = form;
 
   // Handle tab parameter from URL and load user data
+  // Apply ?tab= URL param exactly when it changes — independent of profile load.
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['account', 'subjects', 'adaptive', 'notifications', 'subscription', 'study', 'password'].includes(tabParam)) {
+    if (
+      tabParam &&
+      ['account', 'subjects', 'adaptive', 'notifications', 'subscription', 'study', 'password'].includes(
+        tabParam
+      )
+    ) {
       startTransition(() => {
         setActiveTab(tabParam);
       });
     }
+  }, [searchParams]);
 
-    // Load user preferences data
+  // Load user preferences data exactly once per user. Without the ref guard
+  // this effect re-fired every time `form` changed reference or `userCountry`
+  // arrived async, causing duplicate profile fetches and noticeable lag.
+  const loadedForUserRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!user || loadedForUserRef.current === user.id) return;
+    loadedForUserRef.current = user.id;
+
     const fetchUserPreferences = async () => {
-      if (!user) return;
-      
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single();
-        
+
         if (error) throw error;
-        
+
         if (data) {
           // Load basic account information
           form.setValue("username", data.username || "");
@@ -100,16 +112,16 @@ export const useSettingsForm = () => {
           form.setValue("avatar_url", data.avatar_url || user.user_metadata?.avatar_url || "");
           form.setValue("country_id", data.country_id || "");
           form.setValue("timezone", data.timezone || "UTC");
-          
+
           // Load study goal
           form.setValue("weeklyStudyGoalHours", data.weekly_study_goal_hours || 5);
-          
+
           // Load notification preferences if they exist
           if (data.notification_preferences) {
-            const notifPrefs = typeof data.notification_preferences === 'string' 
-              ? JSON.parse(data.notification_preferences) 
+            const notifPrefs = typeof data.notification_preferences === 'string'
+              ? JSON.parse(data.notification_preferences)
               : data.notification_preferences;
-            
+
             form.setValue("emailNotifications", notifPrefs.email ?? true);
             form.setValue("inAppNotifications", notifPrefs.in_app ?? true);
             form.setValue("adaptiveNotifications", notifPrefs.adaptive ?? true);
@@ -145,19 +157,24 @@ export const useSettingsForm = () => {
           form.setValue("enableDailyQuoteCard", engage.enableDailyQuoteCard ?? engage.dailyQuoteCard ?? true);
           form.setValue("enableSoundEffects", engage.enableSoundEffects ?? engage.soundEffects ?? true);
           form.setValue("enableEmojiBurst", engage.enableEmojiBurst ?? engage.emojiBurst ?? true);
-
-          // Set user country if available
-          if (userCountry) {
-            form.setValue("country_id", userCountry.id);
-          }
         }
       } catch (error) {
         console.error("Error fetching user preferences:", error);
+        // Reset guard so a manual reload / next user can retry
+        loadedForUserRef.current = null;
       }
     };
-    
+
     fetchUserPreferences();
-  }, [searchParams, setActiveTab, user, form, userCountry]);
+  }, [user, form]);
+
+  // Sync country independently when it resolves async — does not retrigger the
+  // full profile fetch above.
+  useEffect(() => {
+    if (userCountry?.id) {
+      form.setValue("country_id", userCountry.id);
+    }
+  }, [userCountry, form]);
 
   // Settings mutation following the announcement pattern
   const settingsMutation = useMutation({
