@@ -1,0 +1,1 @@
+DELETE FROM public.flashcard_sets WHERE id = '5daea6e7-e2ca-4e0d-b1aa-a5fe32b0702f';

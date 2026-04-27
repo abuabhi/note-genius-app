@@ -12,6 +12,7 @@ interface SmartContentProcessorProps {
   noteContent: string;
   noteTitle: string;
   desiredCardCount: number;
+  isCreating?: boolean;
   onCreateFlashcards: (flashcards: Array<{
     front: string;
     back: string;
@@ -23,6 +24,7 @@ export const SmartContentProcessor = ({
   noteContent,
   noteTitle,
   desiredCardCount,
+  isCreating = false,
   onCreateFlashcards
 }: SmartContentProcessorProps) => {
   const [selectedType, setSelectedType] = useState<FlashcardType>('question-answer');
@@ -49,6 +51,7 @@ export const SmartContentProcessor = ({
   };
 
   const handleCreateCards = async () => {
+    if (isCreating) return;
     if (previewCards.length > 0) {
       await onCreateFlashcards(previewCards);
     }
@@ -83,6 +86,7 @@ export const SmartContentProcessor = ({
         <FlashcardPreview
           cards={previewCards}
           onCreateCards={handleCreateCards}
+          isCreating={isCreating}
         />
       )}
     </div>

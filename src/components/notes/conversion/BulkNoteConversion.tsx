@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ export const BulkNoteConversion = ({
   const [setDescription, setSetDescription] = useState("");
   const [desiredCardCount, setDesiredCardCount] = useState(10);
   const [isConverting, setIsConverting] = useState(false);
+  const inFlightRef = useRef(false);
   const { createFlashcardSet, createFlashcard, fetchFlashcardSets } = useFlashcards();
   const { subjects } = useUserSubjects();
 
@@ -42,7 +43,12 @@ export const BulkNoteConversion = ({
     back: string;
     type: FlashcardType;
   }>) => {
+    if (inFlightRef.current || isConverting) {
+      console.warn("Flashcard creation already in progress — ignoring duplicate submit");
+      return;
+    }
     try {
+      inFlightRef.current = true;
       setIsConverting(true);
       console.log("Starting flashcard creation process...");
       
@@ -93,6 +99,7 @@ export const BulkNoteConversion = ({
       console.error("Error creating flashcards:", error);
       toast.error("Failed to convert notes to flashcards. Please try again.");
     } finally {
+      inFlightRef.current = false;
       setIsConverting(false);
     }
   };
@@ -162,6 +169,7 @@ export const BulkNoteConversion = ({
         noteContent={primaryNote.content || primaryNote.description}
         noteTitle={primaryNote.title}
         desiredCardCount={desiredCardCount}
+        isCreating={isConverting}
         onCreateFlashcards={handleCreateFlashcards}
       />
 
