@@ -1,53 +1,45 @@
-# Add "From Note" option to the New Flashcard page
+# Cap study session counters per card (one rating per card, with overrides)
 
-## Why
-On `/flashcards/:setId/create`, the user currently sees only **Manual Creation** and **CSV Import** tabs. There's a passive "Pro Tip" mentioning notes, but no actionable path. If the user already has notes, they should be able to turn them into flashcards directly from this page — that's a much better experience than copy-pasting manually.
+## The bug
+On the study page, each click on Hard / Needs Practice / Medium / Easy / Mastered increments `studiedToday` (and sometimes `masteredCount`) — with no per-card de-duplication. So a 10-card set can show "23 today" and "10/10" progress with mismatched mastered count, just by clicking buttons multiple times.
 
-## What changes
+Root cause: `src/hooks/useOptimizedFlashcardStudy.ts` only does `setStudiedToday(prev => prev + 1)` and `setMasteredCount(prev => prev + 1)` — no record of which cards have already been rated this session, and no upper bound.
 
-Add a third tab **"From Note"** (alongside Manual / CSV) inside `CreateFlashcard.tsx`. It will:
+## Fix — track rating per card, allow changes
 
-1. Show a searchable list of the user's existing notes (title + subject + short preview).
-2. Let the user pick one note.
-3. Send them into the existing conversion flow we already built, pre-targeted at the current `setId`, so generated cards land in **this** set (no new set is created).
-4. Use the existing AI generator under the hood — which already prefers `enriched_content`, uses word-aware truncation, and the refined prompts from the previous round.
+Track a per-session map: `cardRatings: Record<cardId, choice>`. Derive all counters from this map instead of incrementing freely.
 
-If the user has **zero notes**, the tab shows an empty state with a CTA to create a note.
+Behavior:
+- **First rating for a card** → adds it to the map, advances to next card.
+- **Re-rating the same card (e.g. Needs Practice → Mastered)** → updates the map entry; counters recompute. Does NOT double-count, does NOT advance again.
+- All counters are derived: `studiedToday = Object.keys(map).length`, `masteredCount = count where choice === 'mastered'`, `needsPracticeCount = count where choice === 'needs_practice'`, etc.
+- Hard caps as a safety net: every counter is `Math.min(value, totalCards)`.
 
-## UX
+This naturally enforces:
+- `studied ≤ totalCards`
+- `mastered ≤ totalCards`
+- "23 today" bug becomes impossible — if 10 cards exist, max is 10.
+- User can still freely change a rating (Needs Practice → Mastered → Easy etc.) and the right counters update.
 
-```text
-[ Manual Creation ] [ CSV Import ] [ From Note ]
-                                    ─────────────
-Search notes…  [____________________]
+## UX detail — re-rating mid-session
 
-○ Biology — Cell Structure        2 days ago
-○ Physics 101 — Newton's Laws     5 days ago
-○ History — French Revolution     1 wk ago
+Currently every click auto-advances to the next card after 500ms. With the new logic:
+- If the card has **not** been rated yet this session → rate + advance (current behavior).
+- If the card **has** already been rated → just update the rating, show a small toast like "Updated to Mastered", don't auto-advance (user is clearly correcting themselves).
 
-[ Generate flashcards from selected note ]
-```
-
-Clicking the button runs the AI generator inline (same component used today on the dedicated `/note-to-flashcard` page) and inserts the resulting cards into the current set. A success toast and "X cards added" summary appear; user stays on the page and can keep adding more.
+The Previous button already lets users go back to a card to re-rate it.
 
 ## Technical details
 
-Files to modify:
-- `src/components/flashcards/CreateFlashcard.tsx` — add a third `<TabsTrigger value="from-note">` and `<TabsContent>`. Switch the grid from `grid-cols-2` to `grid-cols-3`.
+File: `src/hooks/useOptimizedFlashcardStudy.ts`
+- Replace `studiedToday` / `masteredCount` `useState` numbers with a `Record<string, Choice>` ratings map.
+- Compute `studiedToday`, `masteredCount`, `needsPracticeCount`, `easyCount`, `mediumCount`, `hardCount` via `useMemo` from the map, each clamped to `totalCards`.
+- In `handleCardChoice`: check `ratings[currentCard.id]`; if present, just update map (no advance, optional toast); if absent, set map then advance.
+- Keep DB update (difficulty / `last_reviewed_at`) on every click — that's the user's latest rating.
+- Return the same shape (`studiedToday`, `masteredCount`, `progressStats`) so consumers don't change.
 
-New file:
-- `src/components/flashcards/CreateFlashcardFromNote.tsx` — small component that:
-  - Loads the user's notes via the existing `useOptimizedNotes` (or a lightweight fetch hook already in the codebase).
-  - Renders a search input + radio list.
-  - On submit, calls the existing `AIFlashcardGenerator` inline with the selected note's content/enriched content, `flashcardSetId={setId}`, and the note's subject.
-  - Triggers `onSuccess` so the parent page can navigate or refresh.
-
-No backend, no DB, no new edge functions. Reuses:
-- `AIFlashcardGenerator` (already prioritizes enriched content, calls `generateFlashcardsFromNotes`).
-- The premium gate `usePremiumFeatures().aiFlashcardGenerationEnabled` — if disabled, show the upgrade nudge instead of the generator (same pattern as `NoteToFlashcard.tsx`).
-
-Remove or shorten the standalone "Pro Tip" Alert at the top, since the action is now first-class in the tabs.
+No DB migration. No other components need changes — `StudySessionManager.tsx` and the progress UI just consume the derived numbers.
 
 ## Out of scope
-- The `/flashcards/create` (new-set) page is not changed; users should pick/create a set first, then this option appears in the per-set create page.
-- Bulk multi-note selection is already covered by `/note-to-flashcard`; we keep this single-note for simplicity here, with a "Convert multiple notes" link to `/note-to-flashcard` for power users.
+- Cross-session "today" counter (would need a DB-backed query of `last_reviewed_at >= today`). Current scope is the in-session counter shown in the progress card.
+- Disabling buttons after rating — explicitly NOT doing this; user should be able to change their mind, that's the second half of the request.

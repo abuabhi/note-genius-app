@@ -1,8 +1,11 @@
 
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { StudyMode } from '@/pages/study/types';
+
+type CardChoice = 'easy' | 'medium' | 'hard' | 'mastered' | 'needs_practice';
 
 interface OptimizedFlashcardStudyProps {
   setId: string;
@@ -12,8 +15,8 @@ interface OptimizedFlashcardStudyProps {
 export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardStudyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [studiedToday, setStudiedToday] = useState(0);
-  const [masteredCount, setMasteredCount] = useState(0);
+  // Per-session map: cardId -> latest rating. Single source of truth for counters.
+  const [cardRatings, setCardRatings] = useState<Record<string, CardChoice>>({});
   
   // Manual data fetching states
   const [flashcards, setFlashcards] = useState<any[]>([]);
@@ -115,44 +118,39 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     setIsFlipped(prev => !prev);
   }, [recordActivity]);
 
-  const handleCardChoice = useCallback(async (choice: 'easy' | 'medium' | 'hard' | 'mastered' | 'needs_practice') => {
+  const handleCardChoice = useCallback(async (choice: CardChoice) => {
     if (!currentCard) return;
-    
+
     recordActivity();
-    
+
+    const previousChoice = cardRatings[currentCard.id];
+    const isReRating = previousChoice !== undefined;
+
     try {
       // Update flashcard difficulty based on choice
       let newDifficulty = currentCard.difficulty;
-      let incrementStudied = false;
-      let incrementMastered = false;
 
       switch (choice) {
         case 'easy':
           newDifficulty = Math.max(1, currentCard.difficulty - 1);
-          incrementStudied = true;
           break;
         case 'medium':
-          incrementStudied = true;
           break;
         case 'hard':
           newDifficulty = Math.min(5, currentCard.difficulty + 1);
-          incrementStudied = true;
           break;
         case 'mastered':
           newDifficulty = 1;
-          incrementStudied = true;
-          incrementMastered = true;
           break;
         case 'needs_practice':
           newDifficulty = Math.min(5, currentCard.difficulty + 2);
-          incrementStudied = true;
           break;
       }
 
-      // Update the flashcard in the database - use explicit any typing
+      // Persist the latest rating for this card (always — user's most recent intent)
       const updateResult: any = await (supabase as any)
         .from('flashcards')
-        .update({ 
+        .update({
           difficulty: newDifficulty,
           last_reviewed_at: new Date().toISOString()
         })
@@ -160,23 +158,41 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
 
       if (updateResult.error) throw updateResult.error;
 
-      // Update local state
-      if (incrementStudied) {
-        setStudiedToday(prev => prev + 1);
-      }
-      if (incrementMastered) {
-        setMasteredCount(prev => prev + 1);
-      }
+      // Update the per-session rating map (single source of truth for counters)
+      setCardRatings(prev => ({ ...prev, [currentCard.id]: choice }));
 
-      // Move to next card
-      setTimeout(() => {
-        handleNext();
-      }, 500);
-
+      if (isReRating) {
+        // User is correcting a previous rating — don't double-count, don't auto-advance
+        if (previousChoice !== choice) {
+          const label = choice.replace('_', ' ');
+          toast.success(`Updated to ${label.charAt(0).toUpperCase() + label.slice(1)}`);
+        }
+      } else {
+        // First rating for this card — advance to next
+        setTimeout(() => {
+          handleNext();
+        }, 500);
+      }
     } catch {
       // Silent fail for card update
     }
-  }, [currentCard, recordActivity, handleNext]);
+  }, [currentCard, cardRatings, recordActivity, handleNext]);
+
+  // Derive counters from the rating map. Clamp to totalCards as a safety net.
+  const counters = useMemo(() => {
+    const ratings = Object.values(cardRatings);
+    const clamp = (n: number) => Math.min(n, totalCards);
+    return {
+      studiedToday: clamp(ratings.length),
+      masteredCount: clamp(ratings.filter(r => r === 'mastered').length),
+      needsPracticeCount: clamp(ratings.filter(r => r === 'needs_practice').length),
+      easyCount: clamp(ratings.filter(r => r === 'easy').length),
+      mediumCount: clamp(ratings.filter(r => r === 'medium').length),
+      hardCount: clamp(ratings.filter(r => r === 'hard').length),
+    };
+  }, [cardRatings, totalCards]);
+
+  const { studiedToday, masteredCount } = counters;
 
   // Calculate progress stats
   const progressStats = {
@@ -198,6 +214,7 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     totalCards,
     studiedToday,
     masteredCount,
+    cardRatings,
     progressStats,
     handleNext,
     handlePrevious,
@@ -206,4 +223,5 @@ export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardSt
     setIsFlipped
   };
 };
+
 
