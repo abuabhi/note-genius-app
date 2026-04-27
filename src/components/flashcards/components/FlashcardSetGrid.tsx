@@ -13,6 +13,7 @@ interface FlashcardSetGridProps {
   hasInitiallyLoaded: boolean;
   searchQuery: string;
   subjectFilter: string | undefined;
+  viewMode?: 'card' | 'list';
   detailedProgressData?: Record<string, {
     masteredCards: number;
     needsPracticeCards: number;
@@ -33,9 +34,10 @@ const FlashcardSetGrid = ({
   hasInitiallyLoaded,
   searchQuery,
   subjectFilter,
+  viewMode = 'card',
   detailedProgressData = {},
 }: FlashcardSetGridProps) => {
-  const shouldVirtualize = sets.length > VIRTUALIZATION_THRESHOLD;
+  const shouldVirtualize = sets.length > VIRTUALIZATION_THRESHOLD && viewMode === 'card';
 
   // Empty State when no sets exist
   if (sets.length === 0 && hasInitiallyLoaded) {
@@ -156,26 +158,32 @@ const FlashcardSetGrid = ({
     );
   }
 
-  // Standard Flashcards Grid for smaller lists
+  // Standard Flashcards Grid / List for smaller lists
   if (sets.length > 0) {
+    const containerClass =
+      viewMode === 'list'
+        ? 'flex flex-col gap-4'
+        : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className={containerClass}>
         {sets.map((set) => {
           const progressPercentage = setProgressData[set.id] || 0;
           const isDeleting = deletingSet === set.id;
           const detailedProgress = detailedProgressData[set.id];
 
           return (
-            <FlashcardSetCard
-              key={set.id}
-              set={set}
-              progressPercentage={detailedProgress?.masteredPercentage || progressPercentage}
-              isDeleting={isDeleting}
-              onDelete={onDeleteSet}
-              masteredCards={detailedProgress?.masteredCards || 0}
-              needsPracticeCards={detailedProgress?.needsPracticeCards || 0}
-              totalCards={detailedProgress?.totalCards || set.card_count || 0}
-            />
+            <div key={set.id} className={viewMode === 'list' ? 'max-w-3xl w-full' : ''}>
+              <FlashcardSetCard
+                set={set}
+                progressPercentage={detailedProgress?.masteredPercentage || progressPercentage}
+                isDeleting={isDeleting}
+                onDelete={onDeleteSet}
+                masteredCards={detailedProgress?.masteredCards || 0}
+                needsPracticeCards={detailedProgress?.needsPracticeCards || 0}
+                totalCards={detailedProgress?.totalCards || set.card_count || 0}
+              />
+            </div>
           );
         })}
       </div>
