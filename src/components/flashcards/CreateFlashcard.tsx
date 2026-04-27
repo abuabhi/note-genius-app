@@ -16,6 +16,7 @@ import { FlashcardDifficulty } from "@/types/flashcard";
 import { useFlashcardsImport } from "@/hooks/csv/useFlashcardsImport";
 import { getTemplateCSV } from "@/utils/csvUtils";
 import { useSecureFlashcards } from "@/hooks/security/useSecureFlashcards";
+import { CreateFlashcardFromNote } from "./CreateFlashcardFromNote";
 
 interface CreateFlashcardProps {
   setId?: string;
