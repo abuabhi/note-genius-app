@@ -59,11 +59,7 @@ const CreateQuizPageContent = () => {
 };
 
 const CreateQuizPage = () => {
-  return (
-    <OptimizedNotesProvider>
-      <CreateQuizPageContent />
-    </OptimizedNotesProvider>
-  );
+  return <CreateQuizPageContent />;
 };
 
 export default CreateQuizPage;
