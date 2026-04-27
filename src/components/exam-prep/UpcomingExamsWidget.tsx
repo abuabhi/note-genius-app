@@ -11,6 +11,9 @@ import { useAuth } from '@/contexts/auth';
 import { calculateReadiness, daysUntil, type ExamTopic } from '@/types/exam';
 import { ReadinessRing } from './ReadinessRing';
 import { format } from 'date-fns';
+import { getExamUrgency } from '@/utils/examUrgency';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export const UpcomingExamsWidget: React.FC = () => {
   const { user } = useAuth();
