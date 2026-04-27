@@ -43,6 +43,18 @@ export const generateFlashcardsFromNotes = async (
       });
     }
 
+    if (data.partial_coverage && data.coverage) {
+      toast("Note is long — coverage is partial", {
+        description: `Covered ${data.coverage.sectionsCovered} of ${data.coverage.sections} sections. Increase the card count to cover the full note.`
+      });
+    }
+
+    if (data.truncated) {
+      toast("Note was truncated for AI processing", {
+        description: "Very long note — some content was shortened before generation."
+      });
+    }
+
     return data.flashcards || [];
   } catch (error) {
     console.error('Error calling generate-flashcards function:', error);
