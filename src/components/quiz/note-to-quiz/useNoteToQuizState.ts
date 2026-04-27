@@ -38,10 +38,20 @@ export const useNoteToQuizState = () => {
     setIsGenerating(true);
     
     try {
-      // Combine note content for AI processing
+      // Combine note content for AI processing.
+      // Prefer the AI-enriched version of each note when available — it produces
+      // more precise, professional quiz questions than the raw user-entered content.
       const noteContents = selectedNotes.map(note => {
-        return `${note.title}\n${note.content || note.description}`;
+        const enriched = (note as any)?.enriched_content?.trim();
+        const body = enriched && enriched.length > 0
+          ? enriched
+          : (note.content || note.description || '');
+        return `${note.title}\n${body}`;
       }).join('\n\n');
+      const anyEnriched = selectedNotes.some(n => {
+        const e = (n as any)?.enriched_content;
+        return typeof e === 'string' && e.trim().length > 0;
+      });
       
       const topic = selectedNotes.length === 1 ? selectedNotes[0].title : 'Multiple Topics';
       

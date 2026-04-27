@@ -165,13 +165,23 @@ export const BulkNoteConversion = ({
         </CardContent>
       </Card>
 
-      <SmartContentProcessor
-        noteContent={primaryNote.content || primaryNote.description}
-        noteTitle={primaryNote.title}
-        desiredCardCount={desiredCardCount}
-        isCreating={isConverting}
-        onCreateFlashcards={handleCreateFlashcards}
-      />
+      {(() => {
+        const enriched = (primaryNote as any).enriched_content?.trim();
+        const original = primaryNote.content || primaryNote.description || '';
+        const sourceContent = enriched && enriched.length > 0 ? enriched : original;
+        const usingEnriched = !!(enriched && enriched.length > 0);
+        return (
+          <SmartContentProcessor
+            noteContent={sourceContent}
+            noteTitle={primaryNote.title}
+            desiredCardCount={desiredCardCount}
+            isCreating={isConverting}
+            usingEnrichedContent={usingEnriched}
+            subjectName={noteSubject}
+            onCreateFlashcards={handleCreateFlashcards}
+          />
+        );
+      })()}
 
       <div className="flex justify-between pt-4">
         <Button variant="outline" onClick={onCancel}>

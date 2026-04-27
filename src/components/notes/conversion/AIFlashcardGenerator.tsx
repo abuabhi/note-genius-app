@@ -8,6 +8,8 @@ import { generateFlashcardsFromNotes } from "@/services/aiService";
 
 export interface AIFlashcardGeneratorProps {
   noteContent: string;
+  /** Optional AI-enriched version of the note. Preferred over `noteContent` when present. */
+  enrichedContent?: string | null;
   noteTitle: string;
   flashcardSetId: string | null;
   onFlashcardCreated?: () => void;
@@ -18,6 +20,7 @@ export interface AIFlashcardGeneratorProps {
 
 export const AIFlashcardGenerator = ({
   noteContent,
+  enrichedContent,
   noteTitle,
   flashcardSetId,
   onFlashcardCreated,
@@ -25,6 +28,9 @@ export const AIFlashcardGenerator = ({
   setIsGenerating,
   subjectName,
 }: AIFlashcardGeneratorProps) => {
+  const sourceContent =
+    enrichedContent && enrichedContent.trim().length > 0 ? enrichedContent : noteContent;
+  const usingEnriched = !!(enrichedContent && enrichedContent.trim().length > 0);
   const flashcardState = useFlashcardState();
   const { addFlashcard } = useFlashcardOperations(flashcardState);
   const [generatedCount, setGeneratedCount] = useState(0);
@@ -34,14 +40,14 @@ export const AIFlashcardGenerator = ({
       toast.error("Please select a flashcard set first");
       return;
     }
-    if (!noteContent || noteContent.trim().length < 20) {
+    if (!sourceContent || sourceContent.trim().length < 20) {
       toast.error("Note content is too short for AI generation");
       return;
     }
 
     setIsGenerating(true);
     try {
-      const cards = await generateFlashcardsFromNotes(noteContent, 5, subjectName);
+      const cards = await generateFlashcardsFromNotes(sourceContent, 5, subjectName);
       if (!cards.length) {
         toast.error("AI could not generate any flashcards from this note");
         return;
@@ -76,8 +82,11 @@ export const AIFlashcardGenerator = ({
   return (
     <div className="border border-mint-100 bg-mint-50 rounded-md p-4">
       <h3 className="text-md font-medium text-mint-800 mb-2">AI Flashcard Generation</h3>
-      <p className="text-sm text-gray-600 mb-3">
+      <p className="text-sm text-gray-600 mb-1">
         Let AI analyze your note and create flashcards automatically.
+      </p>
+      <p className="text-xs text-mint-700 mb-3">
+        Source: {usingEnriched ? 'Enriched note (higher quality)' : 'Original note'}
       </p>
 
       <Button

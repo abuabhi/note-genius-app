@@ -180,9 +180,13 @@ export const useFlashcardIntegration = (note: Note) => {
     try {
       const flashcardSet = await findOrCreateFlashcardSet(note);
 
-      // Real AI generation via edge function (no more fake newline-splitting)
+      // Real AI generation via edge function (no more fake newline-splitting).
+      // Prefer the AI-enriched version of the note when available — it produces
+      // more precise, professional cards than the raw user-entered content.
+      const enriched = (note as any)?.enriched_content?.trim();
+      const sourceContent = enriched && enriched.length > 0 ? enriched : content;
       const { generateFlashcardsFromNotes } = await import('@/services/aiService');
-      const aiCards = await generateFlashcardsFromNotes(content, count, note?.subject);
+      const aiCards = await generateFlashcardsFromNotes(sourceContent, count, note?.subject);
 
       const flashcards = [];
       for (const c of aiCards) {
