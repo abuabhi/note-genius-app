@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/auth';
 
 export interface DeletionResult {
   success: boolean;
@@ -17,6 +19,8 @@ export interface DeletionResult {
 export const useSubjectDeletion = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const checkDependencies = async (subjectName: string) => {
     setIsChecking(true);
@@ -71,9 +75,13 @@ export const useSubjectDeletion = () => {
 
       if (error) {
         console.error('Error deleting subject:', error);
-        toast.error('Failed to delete subject');
+        toast.error(`Failed to delete subject: ${error.message}`);
         return false;
       }
+
+      // Invalidate caches so UI reflects the deletion
+      await queryClient.invalidateQueries({ queryKey: ['userSubjects', user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['userSubjects'] });
 
       toast.success('Subject deleted successfully');
       return true;
@@ -166,6 +174,8 @@ export const useSubjectDeletion = () => {
       result.success = result.errors.length === 0;
 
       if (result.success) {
+        await queryClient.invalidateQueries({ queryKey: ['userSubjects', user?.id] });
+        await queryClient.invalidateQueries({ queryKey: ['userSubjects'] });
         toast.success('Subject and all related data deleted successfully');
       } else {
         toast.error('Some errors occurred during deletion');
