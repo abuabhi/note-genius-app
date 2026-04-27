@@ -1,73 +1,41 @@
-## Goal
+# Fix: Quiz answers always land at position A
 
-Make quiz-from-notes generation more transparent and reliable:
-1. Show users which content source was used (enriched vs original) per note.
-2. Guarantee the **entire note** is covered when generating questions (no silent truncation), without showing coverage UI.
-3. Recommend a sensible question count based on note length, while letting users override.
+## What's happening
 
----
+This is a **bug**, not coincidence. The `generate-quiz` edge function asks the AI to return options + a `correctAnswer` index, and the prompt's example uses `"correctAnswer": 0`. With temperature 0.3, the model consistently anchors to that pattern and returns `0` for most/all questions. Options are then stored in the database in the exact order the AI returned them, so the correct answer always shows up as the first choice (A).
 
-## 1. Source badge (UI only)
+There is no shuffling anywhere in the pipeline — not in the edge function, not in `useNoteToQuizState`, not in `useCreateQuiz`.
 
-In `src/components/quiz/note-to-quiz/NoteSelectionTab.tsx`, on each note card show a small badge:
-- "Enriched" (mint) when `note.enriched_content` is non-empty.
-- "Original" (gray) otherwise.
+## Fix
 
-After generation, in `src/components/quiz/note-to-quiz/QuizReviewTab.tsx` show a single summary line:
-- "Generated from N notes — X enriched, Y original".
+**Shuffle option order server-side** in `supabase/functions/generate-quiz/index.ts`, right after validation, before returning the response:
 
-Data already exists on `Note`; no schema change needed.
+- For each validated question, take the correct option (using `correctAnswer` index), shuffle the 4 options with `Math.random()`, then recompute `correctAnswer` to point at the new index of the originally correct option.
+- This guarantees a roughly uniform distribution across A/B/C/D regardless of what the model returns.
 
----
+**Also tighten the prompt** to reduce model bias:
+- Remove the "correctAnswer": 0 example (use `2` or vary it) and add an explicit instruction: "Vary the position of the correct answer across questions — do not bias toward index 0."
 
-## 2. Full-note coverage (no UI)
+## Technical details
 
-Today the entire concatenated content is sent in one prompt. With long notes this risks the model focusing on early sections and ignoring the rest. Fix by **chunking + per-chunk question allocation**, all server-side and invisible to the user.
+In `supabase/functions/generate-quiz/index.ts`, inside the `.map((q: any) => {...})` validation block (around line 245), before returning the question object:
 
-**Edge function `supabase/functions/generate-quiz/index.ts`:**
+```ts
+// Shuffle options so correct answer isn't always at index 0
+const correctOption = options[q.correctAnswer];
+const shuffled = [...options];
+for (let i = shuffled.length - 1; i > 0; i--) {
+  const j = Math.floor(Math.random() * (i + 1));
+  [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+}
+const newCorrectIndex = shuffled.indexOf(correctOption);
+return { question, options: shuffled, correctAnswer: newCorrectIndex, explanation };
+```
 
-- After resolving content (enriched preferred), measure size in characters.
-- If `content.length <= ~6000` chars → single call (current behavior).
-- If larger → split into sequential chunks of ~5000 chars on paragraph boundaries (`\n\n`, then sentence fallback).
-- Distribute `numberOfQuestions` proportionally across chunks by chunk length (minimum 1 per chunk; if chunks > requested questions, requested count is auto-bumped to `chunks` so every section gets at least one question — coverage guarantee).
-- Run chunk calls **in parallel** (`Promise.all`) with the existing prompt, each told "generate K questions from this section".
-- Merge, de-dupe by question text (existing logic), and return.
-- Add a small system note in each chunk prompt: "This is section X of Y of a larger note — focus only on this section's content."
+Plus update the prompt example in `buildPrompt` to use a non-zero `correctAnswer` and add the variation instruction.
 
-This guarantees every section contributes questions without exposing coverage warnings to the user.
+## Scope
 
-**Client (`useNoteToQuizState.ts`):** no logic change beyond passing through the (possibly auto-bumped) returned question count for the success toast.
-
----
-
-## 3. Recommended question count
-
-Heuristic: **1 question per ~150 words**, clamped to `[3, 20]`.
-
-- Compute total word count from the resolved (enriched-preferred) content of all selected notes in `useNoteToQuizState.ts` and expose `recommendedQuestions`.
-- When the user changes selection, if they haven't manually overridden the count, auto-set `numberOfQuestions = recommendedQuestions`.
-- Track a `userOverrode` flag set to `true` the first time the user changes the input; after that we stop auto-updating.
-- In `NoteSelectionTab.tsx` (and `QuizGenerationControls.tsx`), show helper text under the input: `Recommended: N (based on note length)`. Add a small "Use recommended" link button shown only when current value ≠ recommended.
-- Expand the dropdown in `QuizGenerationControls.tsx` to support up to 20, or replace with the existing numeric input for consistency.
-
----
-
-## Technical Details
-
-**Files to edit**
-- `supabase/functions/generate-quiz/index.ts` — add chunking, parallel calls, auto-bump count, return `usedSource` summary `{ enriched: n, original: m }`.
-- `src/components/quiz/note-to-quiz/useNoteToQuizState.ts` — compute `recommendedQuestions`, track `userOverrode`, pass per-note source map to edge function, store `usedSource` from response.
-- `src/components/quiz/note-to-quiz/NoteSelectionTab.tsx` — per-note Enriched/Original badge, recommended-count helper + "Use recommended" button.
-- `src/components/quiz/note-to-quiz/QuizGenerationControls.tsx` — same recommendation helper; allow values up to 20.
-- `src/components/quiz/note-to-quiz/QuizReviewTab.tsx` — summary line showing source breakdown.
-
-**Edge-function payload change**
-Add `notes: Array<{ title, body, isEnriched }>` so the server can build per-note context and report `usedSource`. Keep backward-compatible with existing `content` string.
-
-**No DB migration. No new dependencies.**
-
----
-
-## Out of Scope
-- Coverage warning UI (explicitly rejected).
-- Changing difficulty controls or quiz review/save flow.
+- 1 file: `supabase/functions/generate-quiz/index.ts`
+- No DB changes, no frontend changes
+- Existing quizzes already in the DB are unaffected (they keep their current ordering); only newly generated quizzes get the fix.

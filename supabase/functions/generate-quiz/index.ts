@@ -80,13 +80,15 @@ LENGTH LIMITS (strict):
 - Each explanation ≤ 250 characters
 - Options must NOT repeat the question text and must NOT all be identical.
 
+IMPORTANT: Vary the position of the correct answer across questions. Distribute correct answers roughly evenly across indices 0, 1, 2, and 3 — do NOT default to index 0.
+
 Format your response as a JSON object with this exact structure:
 {
   "questions": [
     {
       "question": "Question text here?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswer": 0,
+      "options": ["First option", "Second option", "Third option", "Fourth option"],
+      "correctAnswer": 2,
       "explanation": "Brief explanation of why this is correct"
     }
   ]
@@ -242,7 +244,15 @@ serve(async (req) => {
         const key = question.toLowerCase();
         if (seen.has(key)) return null;
         seen.add(key);
-        return { question, options, correctAnswer: q.correctAnswer, explanation };
+        // Shuffle options so the correct answer isn't always at the same index (model bias toward 0)
+        const correctOption = options[q.correctAnswer];
+        const shuffled = [...options];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        const newCorrectIndex = shuffled.indexOf(correctOption);
+        return { question, options: shuffled, correctAnswer: newCorrectIndex, explanation };
       })
       .filter(Boolean)
       .slice(0, effectiveCount);
