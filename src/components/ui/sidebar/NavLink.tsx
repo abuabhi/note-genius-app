@@ -4,6 +4,7 @@ import { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { itemVariants } from "./motion";
+import { prefetchRoute } from "@/lib/routePrefetch";
 
 interface NavLinkProps {
   to: string;
@@ -33,6 +34,9 @@ export const NavLink = ({
     >
       <Link
         to={to}
+        onMouseEnter={() => prefetchRoute(to)}
+        onFocus={() => prefetchRoute(to)}
+        onTouchStart={() => prefetchRoute(to)}
         className={cn(
           "flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 group relative backdrop-blur-sm",
           "hover:bg-gradient-to-r hover:from-mint-50 hover:to-mint-100/50 hover:text-mint-700 hover:shadow-md hover:shadow-mint-200/30",
