@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Target } from 'lucide-react';
+import { Target, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface GoalFormData {
   title: string;
@@ -45,6 +45,11 @@ export const GoalFormDialog: React.FC<GoalFormDialogProps> = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Show advanced fields only if editing an existing goal that has them set,
+  // otherwise keep the form minimal for new students.
+  const [showDetails, setShowDetails] = useState<boolean>(
+    Boolean(initialData.description || initialData.subject || initialData.target_hours)
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
