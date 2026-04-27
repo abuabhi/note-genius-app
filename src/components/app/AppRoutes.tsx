@@ -11,6 +11,8 @@ import { useAuth } from '@/contexts/auth';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import SidebarLayout from '@/components/layout/SidebarLayout';
 import { useRequireAuth, UserTier } from '@/hooks/useRequireAuth';
+import { FlashcardProvider } from '@/contexts/flashcards/index.tsx';
+import { OptimizedNotesProvider } from '@/contexts/OptimizedNotesContext';
 
 // Minimal, non-flashing fallback. A full skeleton on every navigation made
 // transitions feel like a 1-2s reload even when chunks are cached.
@@ -33,7 +35,13 @@ const AppRoutes = () => {
     if (loading) return <FullPageLoader />;
     return user ? (
       <SidebarProvider>
-        <SidebarLayout>{children}</SidebarLayout>
+        {/* Hoisted providers: keep their cache alive across page navigations
+            so revisiting /flashcards or /notes is instant instead of refetching. */}
+        <FlashcardProvider>
+          <OptimizedNotesProvider>
+            <SidebarLayout>{children}</SidebarLayout>
+          </OptimizedNotesProvider>
+        </FlashcardProvider>
       </SidebarProvider>
     ) : <Navigate to="/login" />;
   };
