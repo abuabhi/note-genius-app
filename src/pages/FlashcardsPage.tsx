@@ -6,7 +6,7 @@ import { FlashcardsContent } from "@/components/flashcards/page/FlashcardsConten
 
 import { useFlashcardsPageState } from "@/components/flashcards/page/useFlashcardsPageState";
 import { ErrorBoundaryWithRouter } from "@/components/flashcards/components/ErrorBoundaryWithRouter";
-import { FlashcardProvider } from "@/contexts/flashcards/index.tsx";
+// FlashcardProvider is hoisted to ProtectedRoute so its cache survives navigation.
 import { Helmet } from "react-helmet";
 
 // Use a separate type for flashcard view modes
@@ -30,20 +30,18 @@ const FlashcardsPage = () => {
       <Helmet>
         <meta name="robots" content="noindex,nofollow" />
       </Helmet>
-      <FlashcardProvider>
-        <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
-          <div className="container mx-auto p-6 space-y-6">
-            <FlashcardsPageHeader 
-              loading={false}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-            />
-            
-            
-            <FlashcardsContent viewMode={viewMode} />
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
+        <div className="container mx-auto p-6 space-y-6">
+          <FlashcardsPageHeader 
+            loading={false}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
+          
+          
+          <FlashcardsContent viewMode={viewMode} />
         </div>
-      </FlashcardProvider>
+      </div>
     </ErrorBoundaryWithRouter>
   );
 };
