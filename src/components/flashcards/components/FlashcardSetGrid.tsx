@@ -34,9 +34,10 @@ const FlashcardSetGrid = ({
   hasInitiallyLoaded,
   searchQuery,
   subjectFilter,
+  viewMode = 'card',
   detailedProgressData = {},
 }: FlashcardSetGridProps) => {
-  const shouldVirtualize = sets.length > VIRTUALIZATION_THRESHOLD;
+  const shouldVirtualize = sets.length > VIRTUALIZATION_THRESHOLD && viewMode === 'card';
 
   // Empty State when no sets exist
   if (sets.length === 0 && hasInitiallyLoaded) {
