@@ -12,9 +12,10 @@ interface FlashcardPreviewProps {
     type: FlashcardType;
   }>;
   onCreateCards: () => void;
+  isCreating?: boolean;
 }
 
-export const FlashcardPreview = ({ cards, onCreateCards }: FlashcardPreviewProps) => {
+export const FlashcardPreview = ({ cards, onCreateCards, isCreating = false }: FlashcardPreviewProps) => {
   if (cards.length === 0) return null;
 
   return (
