@@ -1,21 +1,62 @@
 
-import { useState } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Note } from "@/types/note";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAIRequestGuard } from "@/hooks/useAIRequestGuard";
 
+const WORDS_PER_QUESTION = 150;
+const MIN_Q = 3;
+const MAX_Q = 20;
+
+function resolveBody(note: Note): { body: string; isEnriched: boolean } {
+  const enriched = (note as any)?.enriched_content?.trim();
+  if (enriched && enriched.length > 0) return { body: enriched, isEnriched: true };
+  return { body: note.content || note.description || '', isEnriched: false };
+}
+
+function countWords(s: string): number {
+  return s.trim().split(/\s+/).filter(Boolean).length;
+}
+
 export const useNoteToQuizState = () => {
   const guardAIRequest = useAIRequestGuard();
   const [selectedNotes, setSelectedNotes] = useState<Note[]>([]);
-  const [numberOfQuestions, setNumberOfQuestions] = useState<number>(5);
+  const [numberOfQuestions, setNumberOfQuestionsState] = useState<number>(5);
+  const userOverrodeRef = useRef(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<{
     question: string;
     explanation?: string;
     options: { content: string; isCorrect: boolean }[];
   }[]>([]);
+  const [usedSource, setUsedSource] = useState<{ enriched: number; original: number } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState("select");
+
+  // Recommend question count based on selected note word counts
+  const recommendedQuestions = useMemo(() => {
+    if (selectedNotes.length === 0) return 5;
+    const totalWords = selectedNotes.reduce((sum, n) => sum + countWords(resolveBody(n).body), 0);
+    const rec = Math.round(totalWords / WORDS_PER_QUESTION);
+    return Math.max(MIN_Q, Math.min(MAX_Q, rec || MIN_Q));
+  }, [selectedNotes]);
+
+  // Auto-update count when user hasn't overridden
+  useEffect(() => {
+    if (!userOverrodeRef.current) {
+      setNumberOfQuestionsState(recommendedQuestions);
+    }
+  }, [recommendedQuestions]);
+
+  const setNumberOfQuestions = (n: number) => {
+    userOverrodeRef.current = true;
+    setNumberOfQuestionsState(n);
+  };
+
+  const useRecommended = () => {
+    userOverrodeRef.current = false;
+    setNumberOfQuestionsState(recommendedQuestions);
+  };
 
   const toggleNoteSelection = (note: Note) => {
     if (selectedNotes.some((n) => n.id === note.id)) {
@@ -36,58 +77,36 @@ export const useNoteToQuizState = () => {
     }
 
     setIsGenerating(true);
-    
+
     try {
-      // Combine note content for AI processing.
-      // Prefer the AI-enriched version of each note when available — it produces
-      // more precise, professional quiz questions than the raw user-entered content.
-      const noteContents = selectedNotes.map(note => {
-        const enriched = (note as any)?.enriched_content?.trim();
-        const body = enriched && enriched.length > 0
-          ? enriched
-          : (note.content || note.description || '');
-        return `${note.title}\n${body}`;
-      }).join('\n\n');
-      const anyEnriched = selectedNotes.some(n => {
-        const e = (n as any)?.enriched_content;
-        return typeof e === 'string' && e.trim().length > 0;
+      const notesPayload = selectedNotes.map(n => {
+        const { body, isEnriched } = resolveBody(n);
+        return { title: n.title, body, isEnriched };
       });
-      
+
       const topic = selectedNotes.length === 1 ? selectedNotes[0].title : 'Multiple Topics';
-      
-      console.log('Sending to generate-quiz function:', {
-        content: noteContents.substring(0, 200) + '...',
-        numberOfQuestions,
-        topic
-      });
-      
-      // Call the generate-quiz edge function (guarded against double-clicks)
+
       const guardKey = `generate-quiz:${selectedNotes.map(n => n.id).join(',')}:${numberOfQuestions}`;
       const { data, error } = await guardAIRequest(guardKey, () =>
         supabase.functions.invoke('generate-quiz', {
           body: {
-            content: noteContents,
+            notes: notesPayload,
             numberOfQuestions,
             difficulty: 'medium',
             topic,
-            usingEnrichedContent: anyEnriched,
           }
         })
       );
-      
+
       if (error) {
         console.error('Error calling generate-quiz function:', error);
         throw new Error(error.message || 'Failed to generate quiz questions');
       }
-      
-      console.log('Response from generate-quiz function:', data);
-      
+
       if (!data || !data.success || !data.quiz || !Array.isArray(data.quiz.questions)) {
-        console.error('Invalid response from generate-quiz:', data);
         throw new Error(data?.error || 'Invalid response from AI generator');
       }
-      
-      // Transform the quiz response to the expected format
+
       const questions = data.quiz.questions.map((item: any) => ({
         question: item.question || '',
         explanation: item.explanation || '',
@@ -96,18 +115,25 @@ export const useNoteToQuizState = () => {
           isCorrect: index === item.correctAnswer
         })) : []
       })).filter((q: any) => q.question && q.options.length >= 2);
-      
+
       if (questions.length === 0) {
         throw new Error('Could not generate any valid questions from these notes');
       }
-      
-      console.log('Generated questions:', questions);
+
       setGeneratedQuestions(questions);
+      setUsedSource(data.usedSource ?? null);
       setActiveTab("review");
-      
+
+      const bumped =
+        typeof data.effectiveQuestions === 'number' &&
+        typeof data.requestedQuestions === 'number' &&
+        data.effectiveQuestions > data.requestedQuestions;
+
       toast({
         title: "Quiz generated",
-        description: `Generated ${questions.length} questions from your notes.`,
+        description: bumped
+          ? `Generated ${questions.length} questions (increased from ${data.requestedQuestions} to cover the entire note).`
+          : `Generated ${questions.length} questions from your notes.`,
       });
     } catch (error) {
       console.error("Error generating quiz:", error);
@@ -122,14 +148,11 @@ export const useNoteToQuizState = () => {
   };
 
   const handleSuccess = () => {
-    console.log("🎉 Quiz creation success callback triggered in useNoteToQuizState");
-    
-    // Reset the form state after successful creation
     setGeneratedQuestions([]);
     setSelectedNotes([]);
+    setUsedSource(null);
     setActiveTab("select");
-    
-    // Show success toast
+    userOverrodeRef.current = false;
     toast({
       title: "Quiz Created Successfully! 🎉",
       description: "Your quiz has been created and is ready to use.",
@@ -140,7 +163,10 @@ export const useNoteToQuizState = () => {
     selectedNotes,
     numberOfQuestions,
     setNumberOfQuestions,
+    recommendedQuestions,
+    useRecommended,
     generatedQuestions,
+    usedSource,
     isGenerating,
     activeTab,
     setActiveTab,
