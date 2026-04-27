@@ -8,6 +8,30 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+
+const StudyBreadcrumb = ({ current }: { current: string }) => (
+  <Breadcrumb className="mb-4">
+    <BreadcrumbList>
+      <BreadcrumbItem>
+        <BreadcrumbLink asChild>
+          <Link to="/flashcards">Flashcards</Link>
+        </BreadcrumbLink>
+      </BreadcrumbItem>
+      <BreadcrumbSeparator />
+      <BreadcrumbItem>
+        <BreadcrumbPage>{current}</BreadcrumbPage>
+      </BreadcrumbItem>
+    </BreadcrumbList>
+  </Breadcrumb>
+);
 
 export const SimplifiedStudyPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,6 +76,7 @@ export const SimplifiedStudyPage = () => {
   if (error) {
     return (
       <div className="container mx-auto p-6">
+        <StudyBreadcrumb current="Study Session" />
         <Alert variant="destructive" className="max-w-2xl mx-auto">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex flex-col gap-4">
@@ -82,6 +107,7 @@ export const SimplifiedStudyPage = () => {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
+        <StudyBreadcrumb current="Study Session" />
         <div className="max-w-4xl mx-auto space-y-6">
           <Skeleton className="h-8 w-64" />
           <div className="border rounded-lg p-8">
@@ -100,6 +126,7 @@ export const SimplifiedStudyPage = () => {
   if (!flashcards || flashcards.length === 0) {
     return (
       <div className="container mx-auto p-6">
+        <StudyBreadcrumb current="Study Session" />
         <Alert className="max-w-2xl mx-auto">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex flex-col gap-4">
@@ -121,6 +148,7 @@ export const SimplifiedStudyPage = () => {
 
   return (
     <div className="container mx-auto p-6">
+      <StudyBreadcrumb current={setName} />
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
