@@ -156,7 +156,8 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
                           )}
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}
