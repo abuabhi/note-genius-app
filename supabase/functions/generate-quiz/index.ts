@@ -4,6 +4,10 @@ import { corsHeaders } from "../_shared/cors.ts";
 
 interface QuizGenerationOptions {
   content: string;
+  /** Optional AI-enriched version of the note content. Preferred over `content` when present. */
+  enrichedContent?: string;
+  /** Hint that the supplied content is already the enriched version (set by callers that pre-resolve). */
+  usingEnrichedContent?: boolean;
   numberOfQuestions?: number;
   difficulty?: 'easy' | 'medium' | 'hard';
   topic?: string;
@@ -24,13 +28,19 @@ serve(async (req) => {
   
   try {
     const requestData: QuizGenerationOptions = await req.json();
-    const { content, numberOfQuestions = 5, difficulty = 'medium', topic } = requestData;
-    
+    const { numberOfQuestions = 5, difficulty = 'medium', topic, enrichedContent, usingEnrichedContent } = requestData;
+    // Prefer the AI-enriched version of the note when supplied — it produces
+    // higher-quality, more precise quiz questions than raw user-entered content.
+    const content =
+      typeof enrichedContent === 'string' && enrichedContent.trim().length >= 20
+        ? enrichedContent
+        : requestData.content;
+
     if (!content) {
       throw new Error("Content is required for quiz generation");
     }
-    
-    console.log(`Generating quiz: questions=${numberOfQuestions}, difficulty=${difficulty}, topic=${topic || 'not specified'}`);
+
+    console.log(`Generating quiz: questions=${numberOfQuestions}, difficulty=${difficulty}, topic=${topic || 'not specified'}, enriched=${!!enrichedContent || !!usingEnrichedContent}`);
     
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
@@ -80,7 +90,7 @@ Make sure each question is clear, the correct answer index is accurate (0-3), an
         messages: [
           {
             role: 'system',
-            content: 'You are an expert educational content creator. Generate high-quality quiz questions that test understanding and application of concepts. Always respond with valid JSON only. Ensure export-safe formatting.'
+            content: 'You are an expert educational content creator. Generate high-quality multiple-choice quiz questions that test understanding and application of concepts. Questions must read as professional exam prompts: precise, self-contained, and free of filler. NEVER reference the source document ("According to the text…", "In the note above…", etc.). NEVER insert ellipses ("...") inside a question, option, or explanation — always write complete sentences. Always respond with valid JSON only. Ensure export-safe formatting.'
           },
           {
             role: 'user',

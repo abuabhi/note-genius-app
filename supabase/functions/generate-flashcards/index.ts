@@ -168,8 +168,10 @@ async function callGateway(opts: {
 Rules:
 - Each "front" is a single clear question (≤${FRONT_MAX} chars).
 - Each "back" is a focused, factual answer (≤${BACK_MAX} chars).
-- No filler, no "According to the text…", no duplicate questions.
-- Front and back must NOT be identical.
+- Questions must read as professional exam prompts: precise, self-contained, and free of filler.
+- NEVER reference the source document ("According to the text…", "In the note above…", etc.).
+- NEVER insert ellipses ("...") inside a question or answer; finish complete sentences.
+- Front and back must NOT be identical, and no two fronts may duplicate each other.
 - Prefer high-yield concepts a student should remember.
 - COVERAGE IS REQUIRED: produce the exact per-section quota; never omit a section.
 - Always set "section_index" to the source section's number.${opts.strict ? '\n- Be especially strict on length, uniqueness, and per-section quotas.' : ''}`;
@@ -235,7 +237,14 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
-    const { noteContent, count = 5, subject } = await req.json();
+    const body = await req.json();
+    const { count = 5, subject, enrichedContent } = body;
+    // Prefer the AI-enriched version of the note when supplied — it produces
+    // higher-quality, more precise flashcards than raw user-entered content.
+    const noteContent: string =
+      typeof enrichedContent === 'string' && enrichedContent.trim().length >= 20
+        ? enrichedContent
+        : (body.noteContent ?? '');
     if (!noteContent || typeof noteContent !== 'string' || noteContent.trim().length < 20) {
       return new Response(JSON.stringify({ error: 'noteContent is required (min 20 chars)' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
