@@ -7,6 +7,8 @@ import { ReadinessRing } from './ReadinessRing';
 import { format } from 'date-fns';
 import type { Exam } from '@/types/exam';
 import { daysUntil } from '@/types/exam';
+import { getExamUrgency } from '@/utils/examUrgency';
+import { cn } from '@/lib/utils';
 
 interface ExamCardProps {
   exam: Exam;
@@ -16,18 +18,27 @@ interface ExamCardProps {
 
 export const ExamCard: React.FC<ExamCardProps> = ({ exam, readiness, subjectName }) => {
   const days = daysUntil(exam.exam_date);
-  const overdue = days < 0;
+  const urgency = getExamUrgency(days);
+  const isUpcoming = exam.status === 'upcoming';
 
   return (
     <Link to={`/exam-prep/${exam.id}`}>
-      <Card className="hover:shadow-md transition-shadow border-border bg-card">
+      <Card
+        className={cn(
+          'hover:shadow-md transition-shadow border-border bg-card',
+          isUpcoming && urgency.borderClass,
+        )}
+      >
         <CardContent className="p-4 flex items-center gap-4">
           <ReadinessRing value={readiness} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold text-foreground truncate">{exam.title}</h3>
               {subjectName && <Badge variant="secondary">{subjectName}</Badge>}
-              {exam.status !== 'upcoming' && <Badge variant="outline">{exam.status}</Badge>}
+              {isUpcoming && urgency.emphasise && (
+                <Badge className={urgency.badgeClass}>{urgency.label}</Badge>
+              )}
+              {!isUpcoming && <Badge variant="outline">{exam.status}</Badge>}
             </div>
             <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
               <span className="flex items-center gap-1">
@@ -43,11 +54,20 @@ export const ExamCard: React.FC<ExamCardProps> = ({ exam, readiness, subjectName
             </div>
           </div>
           <div className="text-right">
-            <div className={`text-lg font-semibold ${overdue ? 'text-destructive' : 'text-foreground'}`}>
-              {overdue ? `${Math.abs(days)}d ago` : `${days}d`}
+            <div
+              className={cn(
+                'text-lg font-semibold',
+                urgency.tone === 'overdue' && 'text-destructive',
+                urgency.tone === 'critical' && 'text-red-600',
+                urgency.tone === 'soon' && 'text-orange-600',
+                urgency.tone === 'upcoming' && 'text-amber-700',
+                urgency.tone === 'later' && 'text-foreground',
+              )}
+            >
+              {urgency.tone === 'overdue' ? `${Math.abs(days)}d ago` : `${days}d`}
             </div>
             <div className="text-[10px] text-muted-foreground">
-              {overdue ? 'past' : 'to go'}
+              {urgency.tone === 'overdue' ? 'past' : 'to go'}
             </div>
           </div>
         </CardContent>

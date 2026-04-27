@@ -110,6 +110,9 @@ export const ExamFormDialog: React.FC<ExamFormDialogProps> = ({ open, onOpenChan
             <div className="space-y-2">
               <Label htmlFor="exam-target">Target readiness (%)</Label>
               <Input id="exam-target" type="number" min={0} max={100} value={target} onChange={e => setTarget(Number(e.target.value))} />
+              <p className="text-[11px] text-muted-foreground">
+                Your goal confidence level. Progress fills toward this — not 100%.
+              </p>
             </div>
           </div>
           <div className="space-y-2">

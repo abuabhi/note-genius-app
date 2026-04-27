@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, Trash2 } from 'lucide-react';
-import { format, isSameDay } from 'date-fns';
+import { format, isSameDay, differenceInCalendarDays } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Event } from '@/hooks/events';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
+import { getExamUrgency } from '@/utils/examUrgency';
+import { cn } from '@/lib/utils';
 
 interface UpcomingEventsListProps {
   events: Event[];
@@ -93,20 +95,31 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
                       : format(new Date(day), 'EEEE, MMMM d')}
                   </h3>
                   <div className="space-y-2">
-                    {eventsByDay[day].map(event => (
+                    {eventsByDay[day].map(event => {
+                      const isExam = event.event_type === 'exam';
+                      const examUrgency = isExam
+                        ? getExamUrgency(differenceInCalendarDays(new Date(event.start_time), new Date()))
+                        : null;
+                      return (
                       <div 
                         key={event.id} 
-                        className="p-3 rounded-md border border-mint-100 flex items-start gap-2 hover:shadow-sm transition-shadow"
+                        className={cn(
+                          'p-3 rounded-md border border-mint-100 flex items-start gap-2 hover:shadow-sm transition-shadow',
+                          examUrgency?.emphasise && 'bg-amber-50/40',
+                        )}
                         style={{ borderLeftColor: event.color, borderLeftWidth: '4px' }}
                       >
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
                             <h4 className="font-medium text-mint-800">{event.title}</h4>
                             <div className="flex items-center gap-1">
+                              {examUrgency?.emphasise && (
+                                <Badge className={examUrgency.badgeClass}>{examUrgency.label}</Badge>
+                              )}
                               <Badge
                                 variant={
-                                  event.event_type === 'study' ? 'default' : 
-                                  event.event_type === 'deadline' ? 'destructive' : 'secondary'
+                                  event.event_type === 'study' ? 'default' :
+                                  event.event_type === 'deadline' || event.event_type === 'exam' ? 'destructive' : 'secondary'
                                 }
                                 className={event.event_type === 'study' ? 'bg-mint-500 hover:bg-mint-600' : ''}
                               >
@@ -143,7 +156,8 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
                           )}
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}

@@ -4,10 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Bell, BellOff, Calendar as CalIcon, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Bell, BellOff, Calendar as CalIcon, Sparkles } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import type { Exam } from '@/types/exam';
+import { examsKey } from '@/hooks/exams';
 
 interface ExamRemindersPanelProps {
   exam: Exam;
@@ -102,6 +104,43 @@ export const ExamRemindersPanel: React.FC<ExamRemindersPanelProps> = ({ exam }) 
     }
   };
 
+  const attachEvent = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error('Not authenticated');
+      const start = new Date(exam.exam_date);
+      const end = new Date(start.getTime() + 60 * 60 * 1000);
+      const { data: ev, error: evErr } = await supabase
+        .from('events')
+        .insert({
+          user_id: user.id,
+          title: `Exam: ${exam.title}`,
+          description: exam.notes ?? null,
+          start_time: start.toISOString(),
+          end_time: end.toISOString(),
+          all_day: true,
+          event_type: 'exam',
+          color: '#ef4444',
+        })
+        .select('id')
+        .single();
+      if (evErr) throw evErr;
+      const { error: upErr } = await supabase
+        .from('exams')
+        .update({ event_id: ev.id })
+        .eq('id', exam.id);
+      if (upErr) throw upErr;
+      return ev.id as string;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: examsKey(user?.id) });
+      qc.invalidateQueries({ queryKey: ['exam', exam.id] });
+      qc.invalidateQueries({ queryKey: ['events'] });
+      qc.invalidateQueries({ queryKey: ['upcomingEvents'] });
+      toast.success('Reminders enabled — this exam is now on your schedule too.');
+    },
+    onError: (e: any) => toast.error(e.message ?? 'Failed to enable reminders'),
+  });
+
   if (!eventId) {
     return (
       <Card className="bg-card border-border">
@@ -110,11 +149,19 @@ export const ExamRemindersPanel: React.FC<ExamRemindersPanelProps> = ({ exam }) 
             <Bell className="h-4 w-4 text-primary" /> Exam reminders
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" />
-            This exam has no calendar event, so reminders can't be attached. Re-create the exam to enable reminders.
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Reminders attach to a calendar event. Enable them now to add this exam to
+            your Schedule and turn on 7-, 3-, and 1-day notifications.
           </p>
+          <Button
+            onClick={() => attachEvent.mutate()}
+            disabled={attachEvent.isPending}
+            size="sm"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            {attachEvent.isPending ? 'Enabling…' : 'Enable reminders'}
+          </Button>
         </CardContent>
       </Card>
     );

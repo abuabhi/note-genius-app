@@ -15,6 +15,9 @@ import { TopicRow } from '@/components/exam-prep/TopicRow';
 import { ExamRemindersPanel } from '@/components/exam-prep/ExamRemindersPanel';
 import { calculateReadiness, daysUntil } from '@/types/exam';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { getExamUrgency } from '@/utils/examUrgency';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { HelpCircle } from 'lucide-react';
 
 const ExamDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -49,7 +52,9 @@ const ExamDetailPage: React.FC = () => {
   }
 
   const days = daysUntil(exam.exam_date);
+  const urgency = getExamUrgency(days);
   const overdue = days < 0;
+  const onTrack = readiness >= exam.target_readiness;
 
   const handleAdd = async () => {
     const name = newTopic.trim();
@@ -77,6 +82,9 @@ const ExamDetailPage: React.FC = () => {
                   <GraduationCap className="h-5 w-5 text-primary" />
                   <h1 className="text-2xl font-semibold">{exam.title}</h1>
                   {subjectName && <Badge variant="secondary">{subjectName}</Badge>}
+                  {exam.status === 'upcoming' && urgency.emphasise && (
+                    <Badge className={urgency.badgeClass}>{urgency.label}</Badge>
+                  )}
                 </div>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                   <span className="flex items-center gap-1">
@@ -93,7 +101,27 @@ const ExamDetailPage: React.FC = () => {
 
                 <div className="pt-2">
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                    <span>Target readiness {exam.target_readiness}%</span>
+                    <span className="flex items-center gap-1.5">
+                      <span>Target readiness {exam.target_readiness}%</span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-3 w-3 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            Your goal confidence level for this exam. The bar below fills
+                            relative to this target — so "ready" means hitting your own bar,
+                            not 100%. Edit the exam to change it.
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <Badge
+                        variant="outline"
+                        className={onTrack ? 'border-green-500 text-green-700' : 'border-amber-500 text-amber-700'}
+                      >
+                        {onTrack ? 'On track' : 'Behind'}
+                      </Badge>
+                    </span>
                     <span className={overdue ? 'text-destructive' : ''}>
                       {overdue ? `${Math.abs(days)} days past` : `${days} days to go`}
                     </span>
