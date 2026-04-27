@@ -12,6 +12,7 @@ interface SmartContentProcessorProps {
   noteContent: string;
   noteTitle: string;
   desiredCardCount: number;
+  isCreating?: boolean;
   onCreateFlashcards: (flashcards: Array<{
     front: string;
     back: string;
@@ -23,6 +24,7 @@ export const SmartContentProcessor = ({
   noteContent,
   noteTitle,
   desiredCardCount,
+  isCreating = false,
   onCreateFlashcards
 }: SmartContentProcessorProps) => {
   const [selectedType, setSelectedType] = useState<FlashcardType>('question-answer');
