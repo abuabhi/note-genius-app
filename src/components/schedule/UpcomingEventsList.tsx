@@ -59,20 +59,26 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
     );
   }
 
-  // Group events by day
-  const eventsByDay: Record<string, Event[]> = {};
+  type GoalItem = { kind: 'goal'; goal: UpcomingGoal };
+  type EventItem = { kind: 'event'; event: Event };
+  type DayItem = EventItem | GoalItem;
+
+  // Group events + goals by day
+  const itemsByDay: Record<string, DayItem[]> = {};
   events.forEach(event => {
-    const date = new Date(event.start_time);
-    const dateKey = format(date, 'yyyy-MM-dd');
-    
-    if (!eventsByDay[dateKey]) {
-      eventsByDay[dateKey] = [];
-    }
-    eventsByDay[dateKey].push(event);
+    const dateKey = format(new Date(event.start_time), 'yyyy-MM-dd');
+    if (!itemsByDay[dateKey]) itemsByDay[dateKey] = [];
+    itemsByDay[dateKey].push({ kind: 'event', event });
+  });
+  goals.forEach(goal => {
+    // end_date is a date-only string (YYYY-MM-DD); avoid TZ shifts
+    const dateKey = goal.end_date.length >= 10 ? goal.end_date.slice(0, 10) : format(parseISO(goal.end_date), 'yyyy-MM-dd');
+    if (!itemsByDay[dateKey]) itemsByDay[dateKey] = [];
+    itemsByDay[dateKey].push({ kind: 'goal', goal });
   });
 
   // Get unique days, sorted chronologically
-  const days = Object.keys(eventsByDay).sort();
+  const days = Object.keys(itemsByDay).sort();
 
   return (
     <>
