@@ -114,7 +114,7 @@ export function ScheduleCalendar({ selectedDate, onDateChange }: ScheduleCalenda
     const title = clickInfo.event.title;
 
     if (props.source === 'goal-start' || props.source === 'goal-end') {
-      toast.info('Manage this goal from the Goals & Tasks page.');
+      toast.info('Manage this goal from the Study Goals page.');
       return;
     }
 

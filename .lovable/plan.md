@@ -1,74 +1,78 @@
-## Goals Page — Honest Audit
+## Two small fixes + an honest opinion
 
-### What's actually on the page today
+### 1. Sidebar rename (1-line job)
 
-Header → 4 stat cards → AI Suggestions panel → 5 tabs (All / Due Soon / By Progress / Recent / Analytics) → Search + Status filter → Goals grid → Create dialog.
+Change `Goals & Tasks` → `Study Goals` in:
+- `src/components/ui/sidebar/Navigation.tsx` (the actual sidebar entry)
+- `src/components/dashboard/GoalsSection.tsx` ("View All Goals & Tasks" button)
+- `src/components/schedule/ScheduleCalendar.tsx` (toast message)
+- `src/components/dashboard/progressive/AdvancedDashboard.tsx` (code comment)
+- `src/components/settings/cards/email-digest/ContentTypesSection.tsx` (digest group label)
 
-Supporting machinery behind it: `useStudyGoals`, `useGoalTracking` (auto-progress), `useGoalSuggestions` (AI templates), overdue handling (`OverdueGoalsSection`, `BulkOverdueActions`, `OverdueGoalActionDialog`), `GoalNotifications`, `GoalAnalytics` (336 lines of charts). Total: ~2,000 lines across 11 components.
+This keeps the whole app aligned with the page title "Study Goals" — no half-rename.
 
-### Verdict: Yes, it's overboard for a student
+### 2. Fix Suggested Goals — base them on real content
 
-A student opening this page sees 4 stat cards, an AI suggestion panel, 5 tabs, search + filter, and a grid — before they've created a single goal. Most students just want to answer: *"What am I working on, and am I on track?"* The current page answers that question with a dashboard.
+**The bug you spotted is real.** I checked the database. The current logic reads from `user_subjects`, which gets pre-seeded at onboarding with Biology, Chemistry, Physics, Mathematics, History, English Lit, etc. — regardless of what the user has actually created. That's why you see "Master Biology Fundamentals" when you have zero biology content.
 
-Specific friction points:
+**New logic** (replaces `useGoalSuggestions`):
 
-1. **5 tabs is too many.** "By Progress", "Recent", and "Due Soon" are all just sort orders — they belong in a single sort dropdown, not as top-level tabs.
-2. **Analytics as a tab inside Goals is misplaced.** Charts of goal completion trends belong in the existing Progress/Analytics page, not buried here.
-3. **4 stat cards are noisy.** Total / Completed / Active / Streak — Total and Active overlap conceptually. A single line ("3 active · 2 due soon · 1 overdue") communicates the same thing.
-4. **AI suggestions panel competes with the user's own goals** for attention at the top of the page. Better as a small "+ Suggest a goal" button or an empty-state prompt.
-5. **GoalFormDialog asks for Subject + Target Hours + Start Date + End Date upfront.** Target Hours in particular is a power-user concept — many students don't think in hours, they think in "finish chapter 5 by Friday".
-6. **Overdue handling is its own subsystem** (3 components, bulk actions, action dialog). Useful, but should appear contextually only when overdue goals exist — not as permanent UI.
+Pull the *real* subjects the user is actively working on by aggregating across:
+- `notes.subject` (where `user_id = me`)
+- `flashcard_sets.subject` (where `user_id = me`)
+- `quizzes` joined to `user_subjects` via `user_subject_id` → `user_subjects.name` (quizzes don't have a direct `subject` column)
 
-### Naming: Study Goals vs Goals & Tasks
+Count occurrences per subject, sort by frequency, take top 3, ignore the system "Imports" / "Scanned Documents" buckets.
 
-**Recommendation: keep "Study Goals."**
-
-Reasons:
-- There is no Tasks feature in the codebase. Calling it "Goals & Tasks" would promise something that doesn't exist.
-- "Study Goals" is specific and on-brand for a student tool. "Goals" alone is generic SaaS-speak.
-- The sidebar and navigation already use "Goals" / "Study Goals" consistently.
-
-If you later add lightweight to-dos (e.g. "Read chapter 3"), that's a separate feature — a Tasks tab inside a goal, or a separate Today/To-do surface — not a rename.
-
-### Recommended simplification (proposed, not yet implemented)
-
-Keep the page focused on one job: **see your goals, create one, mark progress.**
+Then suggest something *grounded* in the actual content:
 
 ```text
-┌─ Study Goals ──────────────────── [+ New Goal] ┐
-│  3 active · 2 due soon · 1 overdue             │
-├────────────────────────────────────────────────┤
-│  [ Active | Completed ]   Sort: Due date ▾ 🔍 │
-│                                                │
-│  ▸ Overdue banner (only if overdue > 0)        │
-│                                                │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐        │
-│  │ Goal     │ │ Goal     │ │ Goal     │        │
-│  └──────────┘ └──────────┘ └──────────┘        │
-└────────────────────────────────────────────────┘
+You have 12 notes and 3 flashcard sets in Biology.
+→ "Review Biology — 5h over 7 days"
+
+You have 4 notes in Physics but no flashcards.
+→ "Turn Physics notes into flashcards — 3h over 5 days"
+
+You took 2 quizzes in History and scored under 70%.
+→ "Brush up History weak topics — 4h over 7 days"  (only if quiz_attempts data is available)
 ```
 
-Concrete changes:
-1. Replace 4 stat cards with a single inline summary line.
-2. Collapse 5 tabs → 2 (Active / Completed) + a Sort dropdown (Due date / Progress / Recent).
-3. Move Analytics tab → link to existing Analytics page (or remove if redundant).
-4. Make AI Suggestions a collapsible secondary section below the grid, or surface only in empty state.
-5. Simplify Create Goal form: Title + Due Date required; Description / Subject / Target Hours collapsed under "Add details" (optional).
-6. Show Overdue section only when there are overdue goals (already partly the case — verify and enforce).
-7. Keep the page title "Study Goals."
+If the user has **no content yet**, show a single empty-state card: "Create your first note, quiz, or flashcard set — we'll suggest goals from there." Not three made-up subject goals.
 
-### Technical scope (if you approve)
+### 3. Is this overdoing it? My honest take
 
-- `src/pages/GoalsPage.tsx` — replace stats block, reduce tabs to 2, add sort dropdown, conditionally render overdue.
-- `src/components/goals/GoalStats.tsx` — replace with compact inline summary component (or delete and inline).
-- `src/components/goals/GoalFormDialog.tsx` — make Subject/Target Hours/Start Date optional under a disclosure.
-- `src/components/goals/GoalSuggestions.tsx` — move below grid or render only when `goals.length === 0`.
-- `GoalAnalytics` — remove from this page; keep file for reuse on Analytics page if desired.
-- No DB schema changes. No data loss. No route changes.
+**No, this one is worth doing** — but keep the scope tight.
 
-### What I am NOT proposing
-- Renaming the page.
-- Removing AI suggestions, overdue handling, or auto-tracking — just relocating/conditionalising them.
-- Touching the Schedule or Exam Prep integrations from the previous task.
+The original suggestions are actively misleading. A student sees "Master Biology Fundamentals" and either (a) creates a goal they have no material to work on, then feels behind, or (b) loses trust in the suggestions and ignores the panel forever. Both outcomes are worse than no suggestions.
 
-Approve this and I'll switch to build mode and apply the simplification.
+Where it *would* be overdoing it: building a recommendation engine with quiz-score weighting, spaced-repetition timing, predicted completion dates, etc. Don't go there yet. The simple "what subjects does the user actually have content in?" rule covers 90% of the value with 10% of the complexity.
+
+**Scope I propose for v1:**
+- Rank subjects by combined `notes + flashcard_sets + quizzes` count for that user.
+- 3 templates max, each tied to a real subject the user has content in.
+- Skip quiz-score logic for now (nice-to-have, separate iteration).
+- Empty-state card when there's no content.
+
+### 4. Theme compliance
+
+The current `GoalSuggestions.tsx` uses raw Tailwind colors (`bg-purple-50`, `border-purple-200`, `text-gray-800`, `bg-gradient-to-r from-gray-50 to-gray-100`). That violates the design system rule (semantic tokens only). I'll swap them to:
+- Card surface: `bg-card border-border`
+- Subtle accent surface: `bg-mint-50/50` (mint is already in the project palette and used in the page header)
+- Text: `text-foreground` / `text-muted-foreground`
+- Buttons: default `Button` variants (no hand-rolled colors)
+
+Same pass over `OverdueGoalsSection`, `BulkOverdueActions`, and the now-removed stat cards' descendants if any leftover hardcoded colors remain. Goal: zero raw color classes in the goals/ folder.
+
+### Files I'll touch
+
+- `src/components/ui/sidebar/Navigation.tsx` — rename
+- `src/components/dashboard/GoalsSection.tsx` — rename
+- `src/components/schedule/ScheduleCalendar.tsx` — rename in toast
+- `src/components/dashboard/progressive/AdvancedDashboard.tsx` — rename in comment
+- `src/components/settings/cards/email-digest/ContentTypesSection.tsx` — rename group label
+- `src/hooks/useStudyGoals/goalSuggestions.ts` — rewrite to use real content
+- `src/components/goals/GoalSuggestions.tsx` — replace hardcoded colors with semantic tokens, update copy for empty state
+
+No DB changes, no new tables, no new API calls beyond what already exists.
+
+Approve and I'll switch to build mode.

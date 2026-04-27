@@ -28,7 +28,7 @@ export const AdvancedDashboard = ({ progressState }: AdvancedDashboardProps) => 
         {/* Learning Toolkit Section */}
         <LearningToolkitSection />
         
-        {/* Study Plans + Goals & Tasks */}
+        {/* Study Plans + Study Goals */}
         <div className="space-y-6">
           <div>
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">Your Study Dashboard</h2>

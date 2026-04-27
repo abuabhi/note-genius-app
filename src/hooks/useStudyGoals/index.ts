@@ -28,7 +28,8 @@ export const useStudyGoals = () => {
     setDismissedSuggestions,
     suggestionsEnabled,
     toggleSuggestions,
-    refreshSuggestions
+    refreshSuggestions,
+    hasContent,
   } = useGoalSuggestions();
 
   // Filter goals to only show active and completed goals (not archived)
@@ -121,6 +122,7 @@ export const useStudyGoals = () => {
     suggestionsEnabled,
     toggleSuggestions,
     refreshSuggestions,
+    hasContent,
     refetch: handleFetchGoals
   };
 };
