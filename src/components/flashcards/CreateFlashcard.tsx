@@ -121,26 +121,22 @@ const CreateFlashcard = ({ setId, onSuccess }: CreateFlashcardProps) => {
 
   return (
     <div className="space-y-6">
-      {/* User Tip */}
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertTitle>Pro Tip</AlertTitle>
-        <AlertDescription>
-          For the best learning experience, create flashcards from your existing notes. This helps reinforce what you've already studied and creates a more comprehensive learning workflow.
-        </AlertDescription>
-      </Alert>
-
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Add Flashcards</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="manual" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="manual">Manual Creation</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="manual">Manual</TabsTrigger>
+              <TabsTrigger value="from-note">From Note</TabsTrigger>
               <TabsTrigger value="csv">CSV Import</TabsTrigger>
             </TabsList>
-            
+
+            <TabsContent value="from-note" className="mt-6">
+              <CreateFlashcardFromNote setId={setId} onSuccess={onSuccess} />
+            </TabsContent>
+
             <TabsContent value="manual" className="mt-6">
               <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
