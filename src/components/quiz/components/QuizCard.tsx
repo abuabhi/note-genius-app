@@ -7,6 +7,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Play, Eye, Users, Clock, BookOpen, Star, StarOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import { useQueryClient } from '@tanstack/react-query';
+import { prefetchTakeQuizChunk, prefetchQuizDetails } from '@/lib/quizPrefetch';
 import { QuizActionsMenu } from './QuizActionsMenu';
 
 interface Quiz {
@@ -45,6 +47,11 @@ export const QuizCard: React.FC<QuizCardProps> = ({
   currentUserId
 }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const warmTakeQuiz = () => {
+    prefetchTakeQuizChunk();
+    prefetchQuizDetails(queryClient, quiz.id);
+  };
 
   const handleCardClick = () => {
     if (!isSelectable) {
@@ -139,7 +146,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({
         
         <div className="flex gap-2">
           <Button asChild size="sm" className="flex-1 bg-mint-600 hover:bg-mint-700">
-            <Link to={`/quiz/${quiz.id}/take`}>
+            <Link to={`/quiz/${quiz.id}/take`} onMouseEnter={warmTakeQuiz} onFocus={warmTakeQuiz} onTouchStart={warmTakeQuiz}>
               <Play className="h-4 w-4 mr-2" />
               Take Quiz
             </Link>

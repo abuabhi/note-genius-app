@@ -3,6 +3,8 @@ import { StandardListCard } from '@/components/ui/StandardListCard';
 import { Quiz } from '@/types/quiz';
 import { Play, MessageCircle, Calendar, User, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { prefetchTakeQuizChunk, prefetchQuizDetails } from '@/lib/quizPrefetch';
 import { QuizActionsMenu } from './QuizActionsMenu';
 import { getSubjectColorClasses } from '@/utils/subjectColors';
 
@@ -22,7 +24,13 @@ export const QuizListCard = ({
   currentUserId
 }: QuizListCardProps) => {
   const navigate = useNavigate();
-  
+  const queryClient = useQueryClient();
+
+  const warmTakeQuiz = () => {
+    prefetchTakeQuizChunk();
+    prefetchQuizDetails(queryClient, quiz.id);
+  };
+
   const handleTakeQuiz = () => {
     navigate(`/quiz/${quiz.id}/take`);
   };
@@ -106,6 +114,7 @@ export const QuizListCard = ({
       }
       metadata={metadata}
       onClick={handleQuizClick}
+      onMouseEnter={warmTakeQuiz}
       isPinned={false}
     />
   );
