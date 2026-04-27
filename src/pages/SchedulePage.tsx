@@ -1,6 +1,8 @@
 
-import { useState } from "react";
-import { ScheduleCalendar } from "@/components/schedule/ScheduleCalendar";
+import { useState, lazy, Suspense } from "react";
+// FullCalendar bundle is heavy (~200KB+). Defer it so the page shell paints
+// instantly and the calendar streams in.
+const ScheduleCalendar = lazy(() => import("@/components/schedule/ScheduleCalendar"));
 import { ScheduleHeader } from "@/components/schedule/ScheduleHeader";
 import { UpcomingEventsList } from "@/components/schedule/UpcomingEventsList";
 import { useEvents } from "@/hooks/events";
