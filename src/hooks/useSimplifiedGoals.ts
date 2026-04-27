@@ -40,6 +40,7 @@ export const useSimplifiedGoals = () => {
     },
     enabled: !!user,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    refetchOnMount: 'always',
   });
 
   // Create goal mutation
