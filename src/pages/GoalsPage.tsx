@@ -119,7 +119,9 @@ const GoalsPage = () => {
   const loading = authLoading || goalsLoading;
   const streakBonus: string | null = getStreakBonus();
   const suggestions = getGoalSuggestions();
-  const showSuggestions = suggestions.length > 0 && goals.length === 0;
+  // Show the panel when the user hasn't built any goals yet — either to surface
+  // grounded suggestions, or to nudge them to create some content first.
+  const showSuggestions = goals.length === 0;
 
   const openCreateGoalDialog = (): void => {
     setSelectedGoal(undefined);
