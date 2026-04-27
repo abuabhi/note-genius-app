@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +12,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Target, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Target, ChevronDown, ChevronUp, Settings as SettingsIcon } from 'lucide-react';
+import { useUserSubjects } from '@/hooks/useUserSubjects';
 
 interface GoalFormData {
   title: string;
@@ -50,6 +60,13 @@ export const GoalFormDialog: React.FC<GoalFormDialogProps> = ({
   const [showDetails, setShowDetails] = useState<boolean>(
     Boolean(initialData.description || initialData.subject || initialData.target_hours)
   );
+
+  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
+  const subjectNames = subjects.map(s => s.name);
+  // If the saved subject isn't in the user's current list, surface it so editing
+  // doesn't silently drop the value.
+  const savedSubjectMissing =
+    Boolean(formData.subject) && !subjectNames.includes(formData.subject);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,12 +145,47 @@ export const GoalFormDialog: React.FC<GoalFormDialogProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="subject">Subject</Label>
-                  <Input
-                    id="subject"
-                    value={formData.subject}
-                    onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                    placeholder="e.g. Biology"
-                  />
+                  <Select
+                    value={formData.subject || '__none__'}
+                    onValueChange={(value) =>
+                      setFormData(prev => ({
+                        ...prev,
+                        subject: value === '__none__' ? '' : value,
+                      }))
+                    }
+                    disabled={subjectsLoading}
+                  >
+                    <SelectTrigger id="subject">
+                      <SelectValue placeholder={subjectsLoading ? 'Loading…' : 'Select subject'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— None —</SelectItem>
+                      {subjectNames.length === 0 && !subjectsLoading && (
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                          No subjects yet
+                        </div>
+                      )}
+                      {subjectNames.map(name => (
+                        <SelectItem key={name} value={name}>
+                          {name}
+                        </SelectItem>
+                      ))}
+                      {savedSubjectMissing && (
+                        <SelectItem value={formData.subject}>
+                          {formData.subject} (removed)
+                        </SelectItem>
+                      )}
+                      <SelectSeparator />
+                      <Link
+                        to="/settings"
+                        onClick={() => onOpenChange(false)}
+                        className="flex items-center gap-2 px-2 py-1.5 text-xs text-mint-700 hover:bg-accent rounded-sm"
+                      >
+                        <SettingsIcon className="h-3 w-3" />
+                        Manage subjects in Settings
+                      </Link>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
