@@ -6,6 +6,7 @@ export * from './goalTemplates';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth';
+import { useQueryClient } from '@tanstack/react-query';
 import { StudyGoal, GoalFormValues } from '@/types/study';
 import { toast } from 'sonner';
 import {
@@ -20,6 +21,7 @@ import { useGoalSuggestions } from './goalSuggestions';
 
 export const useStudyGoals = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [goals, setGoals] = useState<StudyGoal[]>([]);
   const [loading, setLoading] = useState(true);
   const {
@@ -53,22 +55,28 @@ export const useStudyGoals = () => {
     await createGoal(user, goalData, setGoals, () => {
       toast.success('Goal created successfully!');
     });
-  }, [user]);
+    queryClient.invalidateQueries({ queryKey: ['study-goals'] });
+    queryClient.invalidateQueries({ queryKey: ['upcomingGoals'] });
+  }, [queryClient, user]);
 
   const handleUpdateGoal = useCallback(async (id: string, goalData: Partial<GoalFormValues>) => {
     await updateGoal(user, id, goalData, setGoals);
+    queryClient.invalidateQueries({ queryKey: ['study-goals'] });
+    queryClient.invalidateQueries({ queryKey: ['upcomingGoals'] });
     toast.success('Goal updated successfully!');
-  }, [user]);
+  }, [queryClient, user]);
 
   const handleDeleteGoal = useCallback(async (id: string): Promise<boolean> => {
     const success = await deleteGoal(user, id, setGoals);
     if (success) {
+      queryClient.invalidateQueries({ queryKey: ['study-goals'] });
+      queryClient.invalidateQueries({ queryKey: ['upcomingGoals'] });
       toast.success('Goal deleted successfully!');
     } else {
       toast.error('Failed to delete goal');
     }
     return success;
-  }, [user]);
+  }, [queryClient, user]);
 
   const handleCreateGoalFromTemplate = useCallback(async (template: any, customizations: any = {}) => {
     await createGoalFromTemplate(
@@ -81,7 +89,9 @@ export const useStudyGoals = () => {
         toast.success(`Goal "${template.title}" created from template!`);
       }
     );
-  }, [user, setDismissedSuggestions]);
+    queryClient.invalidateQueries({ queryKey: ['study-goals'] });
+    queryClient.invalidateQueries({ queryKey: ['upcomingGoals'] });
+  }, [queryClient, user, setDismissedSuggestions]);
 
   const dismissSuggestion = useCallback((templateTitle: string) => {
     setDismissedSuggestions(prev => {

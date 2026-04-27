@@ -25,7 +25,7 @@ export const useSimplifiedGoals = () => {
 
   // Fetch goals with simple query
   const { data: goals = [], isLoading, error } = useQuery({
-    queryKey: ['study-goals'],
+    queryKey: ['study-goals', user?.id],
     queryFn: async () => {
       if (!user) return [];
       
@@ -40,6 +40,7 @@ export const useSimplifiedGoals = () => {
     },
     enabled: !!user,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    refetchOnMount: 'always',
   });
 
   // Create goal mutation
