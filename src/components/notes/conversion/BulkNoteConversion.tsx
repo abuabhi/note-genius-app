@@ -169,6 +169,7 @@ export const BulkNoteConversion = ({
         noteContent={primaryNote.content || primaryNote.description}
         noteTitle={primaryNote.title}
         desiredCardCount={desiredCardCount}
+        isCreating={isConverting}
         onCreateFlashcards={handleCreateFlashcards}
       />
 
