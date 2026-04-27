@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { OptimizedNotesProvider } from "@/contexts/OptimizedNotesContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,7 +11,9 @@ import { PlusCircle } from "lucide-react";
 
 const CreateQuizPageContent = () => {
   const { userProfile } = useRequireAuth();
-  const [activeTab, setActiveTab] = useState("notes");
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") === "manual" ? "manual" : "notes";
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   const breadcrumbs = [
     { label: "Quizzes", href: "/quizzes" },
