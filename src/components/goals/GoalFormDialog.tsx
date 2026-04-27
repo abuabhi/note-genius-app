@@ -61,6 +61,13 @@ export const GoalFormDialog: React.FC<GoalFormDialogProps> = ({
     Boolean(initialData.description || initialData.subject || initialData.target_hours)
   );
 
+  const { subjects, isLoading: subjectsLoading } = useUserSubjects();
+  const subjectNames = subjects.map(s => s.name);
+  // If the saved subject isn't in the user's current list, surface it so editing
+  // doesn't silently drop the value.
+  const savedSubjectMissing =
+    Boolean(formData.subject) && !subjectNames.includes(formData.subject);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
