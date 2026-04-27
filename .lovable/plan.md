@@ -1,72 +1,53 @@
-## Scope confirmation
+# Add "From Note" option to the New Flashcard page
 
-Yes — the same fixes apply to **all flashcard generation paths AND quiz generation**. Audit results:
+## Why
+On `/flashcards/:setId/create`, the user currently sees only **Manual Creation** and **CSV Import** tabs. There's a passive "Pro Tip" mentioning notes, but no actionable path. If the user already has notes, they should be able to turn them into flashcards directly from this page — that's a much better experience than copy-pasting manually.
 
-| Entry point | Generator used today | Content used today | Issue |
-|---|---|---|---|
-| `/note-to-flashcard` "Smart Content Processor" (the one in your screenshot) | **Local templates** (`smartProcessContent`) — no AI | `note.content` only | Silly templated questions, mid-word truncation |
-| "AI Flashcard Generator" button (`AIFlashcardGenerator.tsx`) | LLM (`generate-flashcards` edge fn) | `note.content` only | Ignores enriched content |
-| Chat → "Generate flashcards" (`useFlashcardIntegration`) | LLM (`generate-flashcards`) | passed-in content (raw) | Ignores enriched content |
-| `/note-to-quiz` (`NoteToQuiz` + `useNoteToQuizState`) | LLM (`generate-quiz` edge fn) | `note.content \|\| note.description` only | Ignores enriched content |
+## What changes
 
-So the truncation fix is needed in **one place** (the template fallback), and the "prefer enriched content" fix is needed at **every caller** plus inside both edge functions as a safety net.
+Add a third tab **"From Note"** (alongside Manual / CSV) inside `CreateFlashcard.tsx`. It will:
 
-## Plan
+1. Show a searchable list of the user's existing notes (title + subject + short preview).
+2. Let the user pick one note.
+3. Send them into the existing conversion flow we already built, pre-targeted at the current `setId`, so generated cards land in **this** set (no new set is created).
+4. Use the existing AI generator under the hood — which already prefers `enriched_content`, uses word-aware truncation, and the refined prompts from the previous round.
 
-### A. Replace the template-only path with the LLM (flashcards)
+If the user has **zero notes**, the tab shows an empty state with a CTA to create a note.
 
-`src/components/notes/conversion/SmartContentProcessor.tsx`
-- Replace `smartProcessContent(...)` with `generateFlashcardsFromNotes(content, desiredCardCount, subject)` from `@/services/aiService`.
-- Map the LLM `{front, back}` into the existing preview shape, attaching the user-selected `FlashcardType`.
-- Keep `smartProcessContent` only as a fallback when the AI call throws; show a toast: "AI unavailable — used basic generator."
-- Add a small badge in the header showing "Using enriched note" or "Using original note".
+## UX
 
-### B. Prefer enriched content everywhere
+```text
+[ Manual Creation ] [ CSV Import ] [ From Note ]
+                                    ─────────────
+Search notes…  [____________________]
 
-Update every caller to pass `note.enriched_content || note.content`:
-- `src/components/notes/conversion/BulkNoteConversion.tsx` (passes content into `SmartContentProcessor`)
-- `src/components/notes/conversion/AIFlashcardGenerator.tsx`
-- `src/components/notes/study/chat/hooks/useFlashcardIntegration.ts`
-- `src/components/quiz/note-to-quiz/useNoteToQuizState.ts` (also for quiz)
+○ Biology — Cell Structure        2 days ago
+○ Physics 101 — Newton's Laws     5 days ago
+○ History — French Revolution     1 wk ago
 
-Also, as a server-side safety net, accept an optional `useEnriched` flag plus an `enrichedContent` field in:
-- `supabase/functions/generate-flashcards/index.ts`
-- `supabase/functions/generate-quiz/index.ts`
+[ Generate flashcards from selected note ]
+```
 
-If `enrichedContent` is provided and non-empty, prefer it over `noteContent`/`content`. This way we still benefit from enriched text even from older clients.
+Clicking the button runs the AI generator inline (same component used today on the dedicated `/note-to-flashcard` page) and inserts the resulting cards into the current set. A success toast and "X cards added" summary appear; user stays on the page and can keep adding more.
 
-### C. Word-aware truncation everywhere
+## Technical details
 
-`src/components/notes/conversion/utils/contentProcessingUtils.ts`
-- Replace every naive `string.substring(0, N) + '...'` with `truncateAtWord(text, N)` from `src/utils/textTruncation.ts`. Affects lines 65, 77, 126, 140, 153.
-- Also rewrite the awkward template: `According to "<title>", what can you tell me about: <…>?` → `What are the key points about: <topic phrase>?` and `Explain: <topic phrase>` for variations.
-- Same change applied to any quiz preview/truncation in `src/components/quiz/note-to-quiz/*` if present.
+Files to modify:
+- `src/components/flashcards/CreateFlashcard.tsx` — add a third `<TabsTrigger value="from-note">` and `<TabsContent>`. Switch the grid from `grid-cols-2` to `grid-cols-3`.
 
-`src/components/study/components/FlashcardDisplay.tsx`
-- Render is already CSS-based (no in-string truncation), so no change needed here. The fix lives at generation time, where the "…" is baked into the front text.
+New file:
+- `src/components/flashcards/CreateFlashcardFromNote.tsx` — small component that:
+  - Loads the user's notes via the existing `useOptimizedNotes` (or a lightweight fetch hook already in the codebase).
+  - Renders a search input + radio list.
+  - On submit, calls the existing `AIFlashcardGenerator` inline with the selected note's content/enriched content, `flashcardSetId={setId}`, and the note's subject.
+  - Triggers `onSuccess` so the parent page can navigate or refresh.
 
-### D. Tighten LLM prompts so phrasing stays professional
+No backend, no DB, no new edge functions. Reuses:
+- `AIFlashcardGenerator` (already prioritizes enriched content, calls `generateFlashcardsFromNotes`).
+- The premium gate `usePremiumFeatures().aiFlashcardGenerationEnabled` — if disabled, show the upgrade nudge instead of the generator (same pattern as `NoteToFlashcard.tsx`).
 
-In both edge functions, ensure the system prompt enforces:
-- Self-contained questions (no phrases like "According to the text…").
-- Concise, precise, exam-style wording.
-- Concise back/answer with the key fact first, then optional one-line context.
+Remove or shorten the standalone "Pro Tip" Alert at the top, since the action is now first-class in the tabs.
 
-`generate-flashcards/index.ts` already says *"No filler, no 'According to the text…'"* — extend the same rule to `generate-quiz/index.ts` and add: "Questions must read as professional exam prompts; never reference the source document; never insert ellipses inside questions."
-
-## Files to change
-
-- `src/components/notes/conversion/SmartContentProcessor.tsx` — switch to LLM, fallback only on error
-- `src/components/notes/conversion/BulkNoteConversion.tsx` — prefer enriched content
-- `src/components/notes/conversion/AIFlashcardGenerator.tsx` — prefer enriched content
-- `src/components/notes/study/chat/hooks/useFlashcardIntegration.ts` — prefer enriched content
-- `src/components/quiz/note-to-quiz/useNoteToQuizState.ts` — prefer enriched content
-- `src/components/notes/conversion/utils/contentProcessingUtils.ts` — word-aware truncation + cleaner templates
-- `supabase/functions/generate-flashcards/index.ts` — accept `enrichedContent`, tighten prompt
-- `supabase/functions/generate-quiz/index.ts` — accept `enrichedContent`, tighten prompt
-
-## Result
-
-- The `/note-to-flashcard` page produces professional, LLM-generated cards (Gemini 3 Flash) instead of templated junk.
-- Both flashcards and quizzes are grounded in **enriched content when available**, falling back to original content otherwise.
-- No more mid-word "…" anywhere — the template fallback uses word-aware truncation, and the LLM prompts forbid the ellipsis-in-question pattern entirely.
+## Out of scope
+- The `/flashcards/create` (new-set) page is not changed; users should pick/create a set first, then this option appears in the per-set create page.
+- Bulk multi-note selection is already covered by `/note-to-flashcard`; we keep this single-note for simplicity here, with a "Convert multiple notes" link to `/note-to-flashcard` for power users.
