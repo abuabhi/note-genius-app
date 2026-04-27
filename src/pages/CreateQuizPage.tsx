@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { OptimizedNotesProvider } from "@/contexts/OptimizedNotesContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateQuizForm } from "@/components/quiz/CreateQuizForm";
 import { NoteToQuiz } from "@/components/quiz/NoteToQuiz";
