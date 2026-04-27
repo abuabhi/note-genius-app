@@ -13,6 +13,7 @@ interface FlashcardSetGridProps {
   hasInitiallyLoaded: boolean;
   searchQuery: string;
   subjectFilter: string | undefined;
+  viewMode?: 'card' | 'list';
   detailedProgressData?: Record<string, {
     masteredCards: number;
     needsPracticeCards: number;
