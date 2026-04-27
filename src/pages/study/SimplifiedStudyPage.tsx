@@ -107,6 +107,7 @@ export const SimplifiedStudyPage = () => {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
+        <StudyBreadcrumb current="Study Session" />
         <div className="max-w-4xl mx-auto space-y-6">
           <Skeleton className="h-8 w-64" />
           <div className="border rounded-lg p-8">
