@@ -11,7 +11,11 @@ import { useFlashcardsPageState } from './useFlashcardsPageState';
 import { UniversalFilters } from '@/components/shared/UniversalFilters';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
 
-export const FlashcardsContent = () => {
+interface FlashcardsContentProps {
+  viewMode?: 'card' | 'list';
+}
+
+export const FlashcardsContent = ({ viewMode = 'card' }: FlashcardsContentProps) => {
   const navigate = useNavigate();
   const { filters, setFilters } = useFlashcardsPageState();
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
