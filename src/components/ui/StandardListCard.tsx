@@ -32,6 +32,7 @@ interface StandardListCardProps {
   
   // Card behavior
   onClick?: () => void;
+  onMouseEnter?: () => void;
   className?: string;
   isPinned?: boolean;
 }
@@ -45,6 +46,7 @@ export const StandardListCard = ({
   metadata = [],
   primaryAction,
   onClick,
+  onMouseEnter,
   className = "",
   isPinned = false
 }: StandardListCardProps) => {
@@ -59,6 +61,7 @@ export const StandardListCard = ({
         ${className}
       `}
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
     >
       {/* Gradient overlay for depth */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-transparent to-mint-50/20 pointer-events-none" />
