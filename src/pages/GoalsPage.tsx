@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { PlusCircle, Target } from 'lucide-react';
 import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
@@ -6,21 +5,29 @@ import { GoalStats } from '@/components/goals/GoalStats';
 import { GoalSuggestions } from '@/components/goals/GoalSuggestions';
 import { GoalFilters } from '@/components/goals/GoalFilters';
 import { GoalsGrid } from '@/components/goals/GoalsGrid';
-import { GoalAnalytics } from '@/components/goals/GoalAnalytics';
 import { useStudyGoals, StudyGoal, GoalFormValues } from '@/hooks/useStudyGoals';
 import { useGoalTracking } from '@/hooks/useGoalTracking';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Helmet } from 'react-helmet';
+
+type SortKey = 'due-date' | 'progress' | 'recent';
 
 const GoalsPage = () => {
   const { loading: authLoading } = useRequireAuth();
-  const { 
-    goals, 
-    loading: goalsLoading, 
-    createGoal, 
-    updateGoal, 
+  const {
+    goals,
+    loading: goalsLoading,
+    createGoal,
+    updateGoal,
     deleteGoal,
     createGoalFromTemplate,
     dismissSuggestion,
@@ -28,28 +35,30 @@ const GoalsPage = () => {
     getStreakBonus,
     suggestionsEnabled,
     toggleSuggestions,
-    refreshSuggestions
+    refreshSuggestions,
   } = useStudyGoals();
-  
+
   // Initialize automatic goal tracking
   useGoalTracking();
-  
+
   const [searchQuery, setSearchQuery] = useState('');
+  // Status filter from GoalFilters component (kept for search-bar parity)
   const [filter, setFilter] = useState('all');
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
+  const [sortKey, setSortKey] = useState<SortKey>('due-date');
   const [formOpen, setFormOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<StudyGoal | undefined>(undefined);
-  
+
   const handleCreateGoal = async (data: GoalFormValues): Promise<void> => {
     await createGoal(data);
   };
-  
+
   const handleUpdateGoal = async (data: GoalFormValues): Promise<void> => {
     if (selectedGoal?.id) {
       await updateGoal(selectedGoal.id, data);
     }
   };
-  
+
   const handleEditGoal = (goal: StudyGoal): void => {
     setSelectedGoal(goal);
     setFormOpen(true);
@@ -58,7 +67,7 @@ const GoalsPage = () => {
   const handleCreateFromTemplate = async (template: any): Promise<void> => {
     await createGoalFromTemplate(template);
   };
-  
+
   const handleDismissSuggestion = (templateTitle: string): void => {
     dismissSuggestion(templateTitle);
   };
@@ -72,65 +81,44 @@ const GoalsPage = () => {
     }
   };
 
+  // 1. Tab filter (Active vs Completed)
+  const tabFiltered = goals.filter(g =>
+    activeTab === 'completed' ? g.is_completed : !g.is_completed
+  );
 
-  const filteredGoals = goals.filter(goal => {
-    // Text search
-    const matchesSearch = 
-      goal.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      (goal.description?.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (goal.subject?.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    // Status filter
-    if (filter === 'completed') return goal.is_completed && matchesSearch;
-    if (filter === 'in-progress') return !goal.is_completed && matchesSearch;
-    
-    // Show all that match the search
+  // 2. Search + status filter
+  const filteredGoals = tabFiltered.filter(goal => {
+    const q = searchQuery.toLowerCase();
+    const matchesSearch =
+      goal.title.toLowerCase().includes(q) ||
+      goal.description?.toLowerCase().includes(q) ||
+      goal.subject?.toLowerCase().includes(q);
     return matchesSearch;
   });
-  
+
+  // 3. Sort
   const sortedGoals = [...filteredGoals].sort((a, b) => {
-    // Sort logic based on active tab
-    if (activeTab === 'recent') {
+    if (sortKey === 'recent') {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    } else if (activeTab === 'due-soon') {
-      return new Date(a.end_date).getTime() - new Date(b.end_date).getTime();
-    } else if (activeTab === 'progress') {
+    }
+    if (sortKey === 'progress') {
       return b.progress - a.progress;
-    } else if (activeTab === 'analytics') {
-      // No sorting needed for analytics tab
-      return 0;
     }
-    
-    // Intelligent sorting: overdue first, due soon second, then regular goals
-    const today = new Date();
-    const aDaysLeft = Math.ceil((new Date(a.end_date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    const bDaysLeft = Math.ceil((new Date(b.end_date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
-    const aIsOverdue = aDaysLeft < 0 && !a.is_completed;
-    const bIsOverdue = bDaysLeft < 0 && !b.is_completed;
-    const aIsDueSoon = aDaysLeft <= 3 && aDaysLeft >= 0 && !a.is_completed;
-    const bIsDueSoon = bDaysLeft <= 3 && bDaysLeft >= 0 && !b.is_completed;
-    
-    // Completed goals go to bottom
-    if (a.is_completed !== b.is_completed) {
-      return a.is_completed ? 1 : -1;
-    }
-    
-    // Overdue goals go first
-    if (aIsOverdue && !bIsOverdue) return -1;
-    if (!aIsOverdue && bIsOverdue) return 1;
-    
-    // Due soon goals go second
-    if (aIsDueSoon && !bIsDueSoon && !bIsOverdue) return -1;
-    if (!aIsDueSoon && bIsDueSoon && !aIsOverdue) return 1;
-    
-    // Then sort by due date
+    // due-date: overdue first, then ascending due date
+    const today = new Date().getTime();
+    const aDays = (new Date(a.end_date).getTime() - today) / 86_400_000;
+    const bDays = (new Date(b.end_date).getTime() - today) / 86_400_000;
+    const aOverdue = aDays < 0 && !a.is_completed;
+    const bOverdue = bDays < 0 && !b.is_completed;
+    if (aOverdue && !bOverdue) return -1;
+    if (!aOverdue && bOverdue) return 1;
     return new Date(a.end_date).getTime() - new Date(b.end_date).getTime();
   });
 
   const loading = authLoading || goalsLoading;
   const streakBonus: string | null = getStreakBonus();
   const suggestions = getGoalSuggestions();
+  const showSuggestions = suggestions.length > 0 && goals.length === 0;
 
   const openCreateGoalDialog = (): void => {
     setSelectedGoal(undefined);
@@ -142,7 +130,7 @@ const GoalsPage = () => {
       <Helmet>
         <meta name="robots" content="noindex,nofollow" />
       </Helmet>
-      {/* Simple page header without StandardPageHeader */}
+
       <div className="bg-white/60 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
         <div className="container mx-auto px-6 py-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -152,70 +140,72 @@ const GoalsPage = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-mint-900">Study Goals</h1>
-                <p className="text-gray-600 mt-1">Set, track, and achieve your study objectives automatically</p>
+                <GoalStats goals={goals} streakBonus={streakBonus} />
               </div>
             </div>
-            
+
             <Button onClick={openCreateGoalDialog}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Create Goal
+              <PlusCircle className="mr-2 h-4 w-4" /> New Goal
             </Button>
           </div>
         </div>
       </div>
-      
+
       <div className="container mx-auto px-6 py-8">
         <div className="space-y-6">
-          <GoalStats goals={goals} streakBonus={streakBonus} />
+          {/* Empty-state suggestions only — keeps the page focused once goals exist */}
+          {showSuggestions && (
+            <GoalSuggestions
+              suggestions={suggestions}
+              suggestionsEnabled={suggestionsEnabled}
+              onCreateFromTemplate={handleCreateFromTemplate}
+              onDismissSuggestion={handleDismissSuggestion}
+              onToggleSuggestions={toggleSuggestions}
+              onRefreshSuggestions={refreshSuggestions}
+            />
+          )}
 
-          <GoalSuggestions
-            suggestions={suggestions}
-            suggestionsEnabled={suggestionsEnabled}
-            onCreateFromTemplate={handleCreateFromTemplate}
-            onDismissSuggestion={handleDismissSuggestion}
-            onToggleSuggestions={toggleSuggestions}
-            onRefreshSuggestions={refreshSuggestions}
-          />
-          
-          <div className="mb-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-4">
-                <TabsList className="mb-2 sm:mb-0">
-                  <TabsTrigger value="all">All Goals</TabsTrigger>
-                  <TabsTrigger value="due-soon">Due Soon</TabsTrigger>
-                  <TabsTrigger value="progress">By Progress</TabsTrigger>
-                  <TabsTrigger value="recent">Recent</TabsTrigger>
-                  <TabsTrigger value="analytics">Analytics</TabsTrigger>
-                </TabsList>
-                
-                {activeTab !== 'analytics' && (
-                  <GoalFilters
-                    searchQuery={searchQuery}
-                    filter={filter}
-                    onSearchChange={setSearchQuery}
-                    onFilterChange={setFilter}
-                  />
-                )}
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'active' | 'completed')}>
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
+              <TabsList>
+                <TabsTrigger value="active">Active</TabsTrigger>
+                <TabsTrigger value="completed">Completed</TabsTrigger>
+              </TabsList>
+
+              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                <GoalFilters
+                  searchQuery={searchQuery}
+                  filter={filter}
+                  onSearchChange={setSearchQuery}
+                  onFilterChange={setFilter}
+                />
+                <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="due-date">Due date</SelectItem>
+                    <SelectItem value="progress">Progress</SelectItem>
+                    <SelectItem value="recent">Recently created</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              
-              <TabsContent value={activeTab} className="mt-0">
-                {activeTab === 'analytics' ? (
-                  <GoalAnalytics goals={goals} />
-                ) : (
-                  <GoalsGrid
-                    goals={sortedGoals}
-                    loading={loading}
-                    searchQuery={searchQuery}
-                    filter={filter}
-                    onEditGoal={handleEditGoal}
-                    onDeleteGoal={handleDeleteGoal}
-                    onCreateGoal={openCreateGoalDialog}
-                  />
-                )}
-              </TabsContent>
-            </Tabs>
-          </div>
+            </div>
+
+            <TabsContent value={activeTab} className="mt-0">
+              <GoalsGrid
+                goals={sortedGoals}
+                loading={loading}
+                searchQuery={searchQuery}
+                filter={filter}
+                onEditGoal={handleEditGoal}
+                onDeleteGoal={handleDeleteGoal}
+                onCreateGoal={openCreateGoalDialog}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
-        
+
         <GoalFormDialog
           open={formOpen}
           onOpenChange={setFormOpen}

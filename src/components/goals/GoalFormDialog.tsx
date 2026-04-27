@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Target } from 'lucide-react';
+import { Target, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface GoalFormData {
   title: string;
@@ -45,6 +45,11 @@ export const GoalFormDialog: React.FC<GoalFormDialogProps> = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Show advanced fields only if editing an existing goal that has them set,
+  // otherwise keep the form minimal for new students.
+  const [showDetails, setShowDetails] = useState<boolean>(
+    Boolean(initialData.description || initialData.subject || initialData.target_hours)
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +74,7 @@ export const GoalFormDialog: React.FC<GoalFormDialogProps> = ({
             Create Study Goal
           </DialogTitle>
           <DialogDescription>
-            Convert your study plan into a trackable goal
+            What do you want to finish, and by when?
           </DialogDescription>
         </DialogHeader>
 
@@ -80,70 +85,80 @@ export const GoalFormDialog: React.FC<GoalFormDialogProps> = ({
               id="title"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Enter goal title"
+              placeholder="e.g. Finish chapter 5 of Biology"
               required
+              autoFocus
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Describe your goal..."
-              rows={3}
+            <Label htmlFor="end_date">Due Date</Label>
+            <Input
+              id="end_date"
+              type="date"
+              value={formData.end_date}
+              onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
+              required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="subject">Subject</Label>
-              <Input
-                id="subject"
-                value={formData.subject}
-                onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                placeholder="Subject"
-                required
-              />
-            </div>
+          {/* Optional details — collapsed by default to keep the form approachable */}
+          <button
+            type="button"
+            onClick={() => setShowDetails(v => !v)}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {showDetails ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            {showDetails ? 'Hide details' : 'Add details (optional)'}
+          </button>
 
-            <div className="space-y-2">
-              <Label htmlFor="target_hours">Target Hours</Label>
-              <Input
-                id="target_hours"
-                type="number"
-                value={formData.target_hours}
-                onChange={(e) => setFormData(prev => ({ ...prev, target_hours: parseInt(e.target.value) || 0 }))}
-                min={1}
-                required
-              />
-            </div>
-          </div>
+          {showDetails && (
+            <div className="space-y-4 pt-1">
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Describe your goal..."
+                  rows={2}
+                />
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_date">Start Date</Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={formData.start_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                required
-              />
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="subject">Subject</Label>
+                  <Input
+                    id="subject"
+                    value={formData.subject}
+                    onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                    placeholder="e.g. Biology"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="end_date">End Date</Label>
-              <Input
-                id="end_date"
-                type="date"
-                value={formData.end_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                required
-              />
+                <div className="space-y-2">
+                  <Label htmlFor="target_hours">Target Hours</Label>
+                  <Input
+                    id="target_hours"
+                    type="number"
+                    value={formData.target_hours}
+                    onChange={(e) => setFormData(prev => ({ ...prev, target_hours: parseInt(e.target.value) || 0 }))}
+                    min={1}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="start_date">Start Date</Label>
+                <Input
+                  id="start_date"
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <DialogFooter>
             <Button 
