@@ -244,7 +244,15 @@ serve(async (req) => {
         const key = question.toLowerCase();
         if (seen.has(key)) return null;
         seen.add(key);
-        return { question, options, correctAnswer: q.correctAnswer, explanation };
+        // Shuffle options so the correct answer isn't always at the same index (model bias toward 0)
+        const correctOption = options[q.correctAnswer];
+        const shuffled = [...options];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        const newCorrectIndex = shuffled.indexOf(correctOption);
+        return { question, options: shuffled, correctAnswer: newCorrectIndex, explanation };
       })
       .filter(Boolean)
       .slice(0, effectiveCount);
