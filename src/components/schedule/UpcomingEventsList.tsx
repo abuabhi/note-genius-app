@@ -104,7 +104,37 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
                       : format(new Date(day), 'EEEE, MMMM d')}
                   </h3>
                   <div className="space-y-2">
-                    {eventsByDay[day].map(event => {
+                    {itemsByDay[day].map(item => {
+                      if (item.kind === 'goal') {
+                        const goal = item.goal;
+                        const dueDate = parseISO(goal.end_date);
+                        const daysLeft = differenceInCalendarDays(dueDate, new Date());
+                        const dueLabel =
+                          daysLeft <= 0 ? 'Due today' : daysLeft === 1 ? 'Due tomorrow' : `Due in ${daysLeft} days`;
+                        return (
+                          <div
+                            key={`goal-${goal.id}`}
+                            className="p-3 rounded-md border border-mint-100 flex items-start gap-2 hover:shadow-sm transition-shadow bg-amber-50/40"
+                            style={{ borderLeftColor: 'hsl(38 92% 50%)', borderLeftWidth: '4px' }}
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-medium text-mint-800 flex items-center gap-1.5">
+                                  <Target className="h-4 w-4 text-amber-600" />
+                                  {goal.title}
+                                </h4>
+                                <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-50">Goal due</Badge>
+                              </div>
+                              <div className="text-sm text-amber-700 mt-1">{dueLabel}</div>
+                              {goal.description && (
+                                <p className="text-sm mt-1 line-clamp-2 text-muted-foreground">{goal.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      const event = item.event;
                       const isExam = event.event_type === 'exam';
                       const examUrgency = isExam
                         ? getExamUrgency(differenceInCalendarDays(new Date(event.start_time), new Date()))
