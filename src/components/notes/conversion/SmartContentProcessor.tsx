@@ -86,6 +86,7 @@ export const SmartContentProcessor = ({
         <FlashcardPreview
           cards={previewCards}
           onCreateCards={handleCreateCards}
+          isCreating={isCreating}
         />
       )}
     </div>
