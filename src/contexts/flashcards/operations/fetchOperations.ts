@@ -32,11 +32,24 @@ const fetchWithUserValidation = async (user: any, retryCount = 0): Promise<any> 
 };
 
 /**
+ * In-flight request guard to prevent duplicate concurrent fetches
+ * (e.g. React StrictMode double-invocation, multiple effect triggers)
+ */
+let inFlightFetch: Promise<FlashcardSet[]> | null = null;
+
+/**
  * Fetch all flashcard sets for the current user with enhanced error handling and user validation
  */
 export const fetchFlashcardSets = async (state: FlashcardState): Promise<FlashcardSet[]> => {
   const { user, setLoading, setFlashcardSets } = state;
-  
+
+  // Deduplicate concurrent fetches
+  if (inFlightFetch) {
+    console.log('fetchFlashcardSets: Reusing in-flight fetch');
+    return inFlightFetch;
+  }
+
+  const run = async (): Promise<FlashcardSet[]> => {
   try {
     console.log('fetchFlashcardSets: Starting fetch operation', {
       hasUser: !!user,
