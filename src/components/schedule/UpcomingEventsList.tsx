@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, Trash2 } from 'lucide-react';
-import { format, isSameDay, differenceInCalendarDays } from 'date-fns';
+import { Calendar, Clock, Trash2, Target } from 'lucide-react';
+import { format, isSameDay, differenceInCalendarDays, parseISO } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Event } from '@/hooks/events';
+import type { UpcomingGoal } from '@/hooks/events/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
@@ -12,6 +13,7 @@ import { cn } from '@/lib/utils';
 
 interface UpcomingEventsListProps {
   events: Event[];
+  goals?: UpcomingGoal[];
   isLoading: boolean;
   formatEventDate: (date: string) => string;
   onDeleteEvent?: (id: string) => void;
@@ -19,6 +21,7 @@ interface UpcomingEventsListProps {
 
 export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({ 
   events, 
+  goals = [],
   isLoading, 
   formatEventDate,
   onDeleteEvent 
