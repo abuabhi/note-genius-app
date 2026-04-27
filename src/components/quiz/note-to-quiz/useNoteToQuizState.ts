@@ -69,7 +69,8 @@ export const useNoteToQuizState = () => {
             content: noteContents,
             numberOfQuestions,
             difficulty: 'medium',
-            topic
+            topic,
+            usingEnrichedContent: anyEnriched,
           }
         })
       );
