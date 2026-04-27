@@ -9,14 +9,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QuizPageHeader } from '@/components/quiz/QuizPageHeader';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import { useOptimizedNotes } from '@/contexts/OptimizedNotesContext';
 
 const QuizPage = () => {
   const { loading: authLoading } = useRequireAuth();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const navigate = useNavigate();
+  const { totalCount: notesCount } = useOptimizedNotes();
 
   const handleCreateQuiz = () => {
-    navigate('/quiz/create');
+    navigate('/quiz/create?tab=manual');
+  };
+
+  const handleCreateFromNotes = () => {
+    navigate('/quiz/create?tab=notes');
   };
 
   const handleViewModeChange = (mode: 'grid' | 'list') => {
@@ -48,6 +54,7 @@ const QuizPage = () => {
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
         onOpenCreateDialog={handleCreateQuiz}
+        onCreateFromNotes={notesCount > 0 ? handleCreateFromNotes : undefined}
       />
       
       <div className="container mx-auto px-6 py-8">
