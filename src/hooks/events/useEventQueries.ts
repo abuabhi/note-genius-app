@@ -80,8 +80,8 @@ export const useUpcomingEventsQuery = (userId: string | undefined) => {
     },
     enabled: !!userId,
     retry: 1,
-    staleTime: 0,
-    refetchOnWindowFocus: true
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   });
 };
 
