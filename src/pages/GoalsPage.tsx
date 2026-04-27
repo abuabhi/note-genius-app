@@ -161,6 +161,7 @@ const GoalsPage = () => {
             <GoalSuggestions
               suggestions={suggestions}
               suggestionsEnabled={suggestionsEnabled}
+              hasContent={hasContent}
               onCreateFromTemplate={handleCreateFromTemplate}
               onDismissSuggestion={handleDismissSuggestion}
               onToggleSuggestions={toggleSuggestions}
