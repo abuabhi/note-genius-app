@@ -181,7 +181,7 @@ export const GoalsSection = () => {
             <div className="pt-2">
               <Button asChild variant="outline" className="w-full">
                 <Link to="/goals">
-                  View All Study Goals
+                  View All Goals
                 </Link>
               </Button>
             </div>
