@@ -15,6 +15,9 @@ import { TopicRow } from '@/components/exam-prep/TopicRow';
 import { ExamRemindersPanel } from '@/components/exam-prep/ExamRemindersPanel';
 import { calculateReadiness, daysUntil } from '@/types/exam';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
+import { getExamUrgency } from '@/utils/examUrgency';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { HelpCircle } from 'lucide-react';
 
 const ExamDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
