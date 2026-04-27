@@ -12,7 +12,7 @@ interface ContentTypesSectionProps {
 export const ContentTypesSection = ({ preferences, updatePreferences }: ContentTypesSectionProps) => {
   const contentTypes = [
     {
-      group: "Goals & Tasks",
+      group: "Study Goals",
       items: [
         {
           key: "include_goals" as keyof EmailDigestPreferences,

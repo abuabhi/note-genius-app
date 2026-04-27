@@ -114,7 +114,7 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
               <NavLink
                 to="/goals"
                 icon={Target}
-                label="Goals & Tasks"
+                label="Study Goals"
                 isActive={pathname.startsWith("/goals") || pathname.startsWith("/todos")}
                 isCollapsed={isCollapsed}
               />
