@@ -154,6 +154,12 @@ export const fetchFlashcardSets = async (state: FlashcardState): Promise<Flashca
   } finally {
     setLoading(prev => ({ ...prev, sets: false }));
   }
+  };
+
+  inFlightFetch = run().finally(() => {
+    inFlightFetch = null;
+  });
+  return inFlightFetch;
 };
 
 /**
