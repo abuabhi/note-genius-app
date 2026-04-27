@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Grid3X3, List, Activity } from "lucide-react";
+import { PlusCircle, Grid3X3, List, Activity, FileText } from "lucide-react";
 import { StandardPageHeader } from "@/components/ui/StandardPageHeader";
 
 interface QuizPageHeaderProps {
@@ -8,13 +8,15 @@ interface QuizPageHeaderProps {
   viewMode: 'grid' | 'list';
   onViewModeChange: (mode: 'grid' | 'list') => void;
   onOpenCreateDialog: () => void;
+  onCreateFromNotes?: () => void;
 }
 
 export const QuizPageHeader = ({ 
   loading, 
   viewMode, 
   onViewModeChange,
-  onOpenCreateDialog
+  onOpenCreateDialog,
+  onCreateFromNotes,
 }: QuizPageHeaderProps) => {
   const breadcrumbs = [
     { label: "Quizzes" }
@@ -41,6 +43,19 @@ export const QuizPageHeader = ({
           <List className="h-4 w-4" />
         </Button>
       </div>
+
+      {/* Create from Notes (only when handler provided / notes exist) */}
+      {onCreateFromNotes && (
+        <Button
+          variant="outline"
+          onClick={onCreateFromNotes}
+          className="border-mint-200 text-mint-700 hover:bg-mint-50 font-semibold"
+          disabled={loading}
+        >
+          <FileText className="h-4 w-4 mr-2" />
+          From Notes
+        </Button>
+      )}
 
       {/* Create Quiz Button */}
       <Button
