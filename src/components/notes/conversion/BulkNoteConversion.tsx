@@ -28,6 +28,7 @@ export const BulkNoteConversion = ({
   const [setDescription, setSetDescription] = useState("");
   const [desiredCardCount, setDesiredCardCount] = useState(10);
   const [isConverting, setIsConverting] = useState(false);
+  const inFlightRef = useRef(false);
   const { createFlashcardSet, createFlashcard, fetchFlashcardSets } = useFlashcards();
   const { subjects } = useUserSubjects();
 
@@ -42,7 +43,12 @@ export const BulkNoteConversion = ({
     back: string;
     type: FlashcardType;
   }>) => {
+    if (inFlightRef.current || isConverting) {
+      console.warn("Flashcard creation already in progress — ignoring duplicate submit");
+      return;
+    }
     try {
+      inFlightRef.current = true;
       setIsConverting(true);
       console.log("Starting flashcard creation process...");
       
