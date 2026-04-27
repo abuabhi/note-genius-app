@@ -75,9 +75,13 @@ export const useSubjectDeletion = () => {
 
       if (error) {
         console.error('Error deleting subject:', error);
-        toast.error('Failed to delete subject');
+        toast.error(`Failed to delete subject: ${error.message}`);
         return false;
       }
+
+      // Invalidate caches so UI reflects the deletion
+      await queryClient.invalidateQueries({ queryKey: ['userSubjects', user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['userSubjects'] });
 
       toast.success('Subject deleted successfully');
       return true;
