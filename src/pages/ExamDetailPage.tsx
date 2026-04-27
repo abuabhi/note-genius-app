@@ -52,7 +52,9 @@ const ExamDetailPage: React.FC = () => {
   }
 
   const days = daysUntil(exam.exam_date);
+  const urgency = getExamUrgency(days);
   const overdue = days < 0;
+  const onTrack = readiness >= exam.target_readiness;
 
   const handleAdd = async () => {
     const name = newTopic.trim();
