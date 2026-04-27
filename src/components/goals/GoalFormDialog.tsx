@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Dialog,
@@ -55,11 +55,29 @@ export const GoalFormDialog: React.FC<GoalFormDialogProps> = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isEditMode = Boolean(initialData.title);
   // Show advanced fields only if editing an existing goal that has them set,
   // otherwise keep the form minimal for new students.
   const [showDetails, setShowDetails] = useState<boolean>(
-    Boolean(initialData.description || initialData.subject || initialData.target_hours)
+    isEditMode || Boolean(initialData.description || initialData.subject)
   );
+
+  // Re-sync form whenever the dialog opens with new initialData (e.g. switching
+  // between Create and Edit, or editing a different goal). Without this the
+  // useState above only runs once and Edit appears broken.
+  useEffect(() => {
+    if (!open) return;
+    setFormData({
+      title: initialData.title || '',
+      description: initialData.description || '',
+      subject: initialData.subject || '',
+      target_hours: initialData.target_hours || 10,
+      start_date: initialData.start_date || new Date().toISOString().split('T')[0],
+      end_date: initialData.end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    });
+    setShowDetails(Boolean(initialData.title) || Boolean(initialData.description || initialData.subject));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialData.title, initialData.description, initialData.subject, initialData.target_hours, initialData.start_date, initialData.end_date]);
 
   const { subjects, isLoading: subjectsLoading } = useUserSubjects();
   const subjectNames = subjects.map(s => s.name);
@@ -88,10 +106,10 @@ export const GoalFormDialog: React.FC<GoalFormDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Target className="h-5 w-5 text-mint-600" />
-            Create Study Goal
+            {isEditMode ? 'Edit Study Goal' : 'Create Study Goal'}
           </DialogTitle>
           <DialogDescription>
-            What do you want to finish, and by when?
+            {isEditMode ? 'Update the details for this goal.' : 'What do you want to finish, and by when?'}
           </DialogDescription>
         </DialogHeader>
 
@@ -226,7 +244,9 @@ export const GoalFormDialog: React.FC<GoalFormDialogProps> = ({
               className="bg-mint-600 hover:bg-mint-700"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Creating...' : 'Create Goal'}
+              {isSubmitting
+                ? (isEditMode ? 'Saving...' : 'Creating...')
+                : (isEditMode ? 'Save Changes' : 'Create Goal')}
             </Button>
           </DialogFooter>
         </form>

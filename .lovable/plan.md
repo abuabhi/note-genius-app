@@ -1,74 +1,38 @@
-# Fix exam reminders, urgency styling & Schedule visibility
+# Fix Edit Study Goal + Clarify Reward Points
 
-## What's actually wrong
+## Issues found
 
-I queried your database — all 6 Extended Investigation exams I added in the last migration have `event_id = NULL`. That's why:
+### 1. Edit Goal is broken
+`GoalFormDialog` initializes `formData` with `useState(initialData)` — React only reads this **once** on first mount. Since the dialog component stays mounted across opens, when the user clicks **Edit** on any goal, the form keeps showing the previously seen values (or empty defaults), and the dialog title is hardcoded to "Create Study Goal" / button says "Create Goal" even in edit mode. Submitting may also send stale data, making it look like edit doesn't work.
 
-1. **You can't set reminders** — the panel requires a linked calendar event.
-2. **They don't appear on `/schedule`** — the Schedule reads from the `events` table, not `exams`.
-3. **There is no 30-Apr exam** in your account. Your earliest one is **1-May "Draft approach submission"** (4 days away). It's missing from "Upcoming Events (Next 7 Days)" for the same reason — no event row exists for it.
+### 2. Reward Points are unexplained
+The `Reward Points` row appears on every goal card (and hits 0 pts at 0% progress) with zero context. New users have no idea:
+- What points are for
+- How they're earned (milestones / completion / early-finish bonus)
+- Whether they can be redeemed (they currently can't — purely motivational)
 
-The bulk migration skipped the calendar-event creation step that the normal "Add Exam" form does. I'll fix this for good.
+## Fix plan
 
-## What I'll change
+### A. Make Edit actually work (`GoalFormDialog.tsx`)
+- Sync internal `formData` whenever `initialData` or `open` changes (via `useEffect`), so opening Edit on a different goal loads its values, and opening Create resets to defaults.
+- Detect edit mode via presence of `initialData.title` (or new `mode` prop passed from `GoalsPage`).
+- Update header/button copy dynamically:
+  - Title: `Edit Study Goal` vs `Create Study Goal`
+  - Submit button: `Save Changes` / `Saving...` vs `Create Goal` / `Creating...`
+- Auto-expand the "details" section in edit mode so users can see/change subject, hours, start date.
 
-### 1. Backfill calendar events for existing exams (data migration)
-For every exam where `event_id IS NULL`, create an `events` row (`event_type = 'exam'`, all-day, red color) and link it back via `exams.event_id`. This will:
-- Enable the reminders panel for all 6 Extended Investigation milestones.
-- Make the 1-May milestone appear in the Schedule and in "Upcoming Events (Next 7 Days)".
+### B. Clarify Reward Points (`GoalCard.tsx`)
+- Add a small `info` icon (`lucide-react` `Info`) next to "Reward Points" with a `Tooltip` / `Popover` that explains:
+  > Earn points as you hit milestones (25/50/75%) and bonus points for completing early. Points celebrate your consistency — they're motivational badges, no redemption needed.
+- Show a one-time dismissible hint banner above the first goal card for new users (stored in `localStorage` key `goals.rewardPointsHintDismissed`) explaining the system briefly with a "Got it" button.
+- Hide the row entirely when `target_hours` is 0 or points = 0 AND goal is brand-new (progress = 0, just created), so first-time users aren't confronted with "0 pts" with no context. Alternative: keep visible but show "Earn points by making progress" instead of "0 pts".
 
-### 2. Reminders panel — never show the dead-end message
-Instead of telling the user "re-create the exam", the panel will offer a **"Enable reminders"** button that creates the missing calendar event on the fly, then proceeds normally. No more recreating exams.
+## Files to edit
 
-### 3. Target Readiness — make it meaningful or remove it
-Currently it's a number stored on the exam (default 80%) shown only as text on the detail page, with no actionable purpose. Two options — I'll go with **(b)** unless you say otherwise:
+- `src/components/goals/GoalFormDialog.tsx` — sync state with `initialData`, dynamic title/button, auto-expand details in edit mode.
+- `src/components/goals/GoalCard.tsx` — Info tooltip on Reward Points, friendlier zero-state copy.
+- `src/pages/GoalsPage.tsx` — render a dismissible "How Reward Points work" hint above the goals grid for first-time users (localStorage-gated).
 
-- (a) Remove the field from the UI entirely.
-- (b) **Keep it but explain it**: add a tooltip/helper — *"Your goal confidence level. The progress bar fills relative to this target so 'ready' means hitting your own bar, not 100%."* Already wired into the progress calc on `ExamDetailPage`. Also surface a small "On track / Behind" badge when `readiness >= target_readiness`.
-
-### 4. ≤7-day urgency styling
-Anywhere an exam is listed (Exam Prep list, Upcoming Exams widget, Exam Detail header, Schedule upcoming list when type=exam):
-- **≤ 1 day**: red badge "Tomorrow" / "Today", red left border.
-- **≤ 3 days**: orange badge "In Nd", orange left border.
-- **≤ 7 days**: amber badge "In Nd", subtle amber accent.
-- **> 7 days**: current neutral styling.
-
-Driven by a single `getExamUrgency(daysUntil)` helper returning `{ tone, label, className }` so it stays consistent.
-
-### 5. Schedule integration
-Once step 1 backfills the events, exams automatically show up on `/schedule` (as red all-day events) and in the next-7-days list. The urgency styling from step 4 will also be applied to event cards where `event_type === 'exam'`.
-
-## Technical details
-
-**Files to change**
-- `supabase/migrations/<new>.sql` — backfill events + link `exams.event_id` for all rows where it's null (scoped to the affected user, or all users — safe either way since condition is `event_id IS NULL`).
-- `src/components/exam-prep/ExamRemindersPanel.tsx` — replace the warning block with an inline "Enable reminders" mutation that inserts an event and patches `exams.event_id`, then refetches.
-- `src/hooks/exams/useExams.ts` — export a small `attachCalendarEventToExam(exam)` mutation reused by the panel.
-- `src/utils/examUrgency.ts` (new) — `getExamUrgency(daysUntil)` helper.
-- `src/components/exam-prep/UpcomingExamsWidget.tsx`, `src/pages/ExamPrepPage.tsx` (list cards), `src/pages/ExamDetailPage.tsx` header, `src/components/schedule/UpcomingEventsList.tsx` — apply urgency classes/badge.
-- `src/pages/ExamDetailPage.tsx` + `src/components/exam-prep/ExamFormDialog.tsx` — add tooltip/helper text for Target Readiness; show "On track / Behind" badge.
-
-**Backfill SQL shape**
-```sql
-WITH to_link AS (
-  SELECT id, user_id, title, exam_date, notes
-  FROM public.exams
-  WHERE event_id IS NULL
-),
-inserted AS (
-  INSERT INTO public.events (user_id, title, description, start_time, end_time, all_day, event_type, color)
-  SELECT user_id, 'Exam: ' || title, notes, exam_date, exam_date + interval '1 hour',
-         true, 'exam', '#ef4444'
-  FROM to_link
-  RETURNING id, user_id, title, start_time
-)
-UPDATE public.exams e
-SET event_id = i.id
-FROM inserted i
-WHERE e.user_id = i.user_id
-  AND ('Exam: ' || e.title) = i.title
-  AND e.exam_date = i.start_time
-  AND e.event_id IS NULL;
-```
-
-No schema changes, no RLS changes.
+## Out of scope
+- No DB schema change; reward points remain a computed display value.
+- No actual redemption system (would be a separate feature).
