@@ -47,6 +47,11 @@ export const QuizCard: React.FC<QuizCardProps> = ({
   currentUserId
 }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const warmTakeQuiz = () => {
+    prefetchTakeQuizChunk();
+    prefetchQuizDetails(queryClient, quiz.id);
+  };
 
   const handleCardClick = () => {
     if (!isSelectable) {
