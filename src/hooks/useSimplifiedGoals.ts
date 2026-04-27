@@ -25,7 +25,7 @@ export const useSimplifiedGoals = () => {
 
   // Fetch goals with simple query
   const { data: goals = [], isLoading, error } = useQuery({
-    queryKey: ['study-goals'],
+    queryKey: ['study-goals', user?.id],
     queryFn: async () => {
       if (!user) return [];
       
