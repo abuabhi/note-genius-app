@@ -126,6 +126,7 @@ export const SimplifiedStudyPage = () => {
   if (!flashcards || flashcards.length === 0) {
     return (
       <div className="container mx-auto p-6">
+        <StudyBreadcrumb current="Study Session" />
         <Alert className="max-w-2xl mx-auto">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="flex flex-col gap-4">
