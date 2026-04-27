@@ -1,50 +1,73 @@
-# Make all main pages open instantly
+## Goal
 
-Goal: Notes, Flashcards, Quiz, Schedule, Goals, Exam, Analytics, Resources, Refer, Feedback, Help should open instantly on revisit (and faster on first visit) in production.
+Make quiz-from-notes generation more transparent and reliable:
+1. Show users which content source was used (enriched vs original) per note.
+2. Guarantee the **entire note** is covered when generating questions (no silent truncation), without showing coverage UI.
+3. Recommend a sensible question count based on note length, while letting users override.
 
-Note: Most of the lag in the Lovable preview is from Vite compiling chunks on first visit — that part disappears in production. The changes below target the lag that **will** still happen in production: provider remounts, blocking data fetches, and cold JS chunks.
+---
 
-## What we'll change
+## 1. Source badge (UI only)
 
-### 1. Hoist heavy data providers to the app root
-Today `FlashcardProvider` lives inside `FlashcardsPage`, so every visit unmounts it and re-fetches sets from Supabase. Same pattern for `OptimizedNotesProvider` and a few others.
+In `src/components/quiz/note-to-quiz/NoteSelectionTab.tsx`, on each note card show a small badge:
+- "Enriched" (mint) when `note.enriched_content` is non-empty.
+- "Original" (gray) otherwise.
 
-- Move `FlashcardProvider` and `OptimizedNotesProvider` into `ProtectedRoute` (or just above `AppRoutes` for authed users) so their cache survives navigation.
-- Audit Quiz, Schedule, Goals, Exam pages for the same anti-pattern and hoist any per-page providers that fetch on mount.
+After generation, in `src/components/quiz/note-to-quiz/QuizReviewTab.tsx` show a single summary line:
+- "Generated from N notes — X enriched, Y original".
 
-### 2. Use React Query for top-level page fetches with proper staleTime
-For pages that fetch directly (Quiz, Schedule, Goals, Exam, Analytics, Resources, Notifications):
-- Wrap the initial list fetch in `useQuery` with `staleTime: 2 * 60 * 1000` and a stable `queryKey` per user.
-- Revisits within 2 min render instantly from cache; background refetch updates the data.
-- Global `QueryProvider` defaults are already good (5 min staleTime) — we just need to actually use `useQuery` instead of `useEffect + setState`.
+Data already exists on `Note`; no schema change needed.
 
-### 3. Don't gate the page shell on data
-Right now several pages render a full-screen skeleton until data arrives. We'll:
-- Render the page shell (header, filters, sidebar, breadcrumbs) immediately.
-- Only the content area shows a small skeleton while loading.
-- This makes the perceived load time near-zero even on first visit.
+---
 
-### 4. Prefetch route chunks on sidebar hover
-In the sidebar nav links:
-- On `onMouseEnter` / `onFocus`, call the same dynamic `import()` used by the lazy route.
-- By the time the user clicks, the chunk is already downloaded and parsed.
-- Applies to all main nav items (Notes, Flashcards, Quiz, Schedule, Goals, Exam, Analytics, Resources, Refer, Feedback, Help).
+## 2. Full-note coverage (no UI)
 
-### 5. Quick wins while we're in there
-- Make sure `refetchOnMount: false` for these list queries (so cached data shows instantly).
-- Remove any `await`-on-mount that blocks first paint (defer to `useEffect` with the shell already rendered).
+Today the entire concatenated content is sent in one prompt. With long notes this risks the model focusing on early sections and ignoring the rest. Fix by **chunking + per-chunk question allocation**, all server-side and invisible to the user.
 
-## Files likely touched
-- `src/components/app/AppRoutes.tsx` — wrap authed routes with hoisted providers
-- `src/pages/FlashcardsPage.tsx` — remove inner `FlashcardProvider`
-- `src/pages/NotesPage.tsx` — remove inner `OptimizedNotesProvider`
-- Sidebar component (likely `src/components/layout/...`) — add hover prefetch
-- Quiz / Schedule / Goals / Exam / Analytics / Resources / Feedback page entry files — switch initial fetch to `useQuery` and split shell from content skeleton
+**Edge function `supabase/functions/generate-quiz/index.ts`:**
 
-## Will this affect production?
-- Vite-compile lag: **preview only**, not production.
-- Provider remount + refetch lag: **happens in production today**, fixed by #1 + #2.
-- Cold chunk download lag: **happens in production today on first visit**, mitigated by #4.
-- Blocking skeletons: **happens in production today**, fixed by #3.
+- After resolving content (enriched preferred), measure size in characters.
+- If `content.length <= ~6000` chars → single call (current behavior).
+- If larger → split into sequential chunks of ~5000 chars on paragraph boundaries (`\n\n`, then sentence fallback).
+- Distribute `numberOfQuestions` proportionally across chunks by chunk length (minimum 1 per chunk; if chunks > requested questions, requested count is auto-bumped to `chunks` so every section gets at least one question — coverage guarantee).
+- Run chunk calls **in parallel** (`Promise.all`) with the existing prompt, each told "generate K questions from this section".
+- Merge, de-dupe by question text (existing logic), and return.
+- Add a small system note in each chunk prompt: "This is section X of Y of a larger note — focus only on this section's content."
 
-After this, revisits should be instant and first visits should show the page shell immediately with a small loading area inside.
+This guarantees every section contributes questions without exposing coverage warnings to the user.
+
+**Client (`useNoteToQuizState.ts`):** no logic change beyond passing through the (possibly auto-bumped) returned question count for the success toast.
+
+---
+
+## 3. Recommended question count
+
+Heuristic: **1 question per ~150 words**, clamped to `[3, 20]`.
+
+- Compute total word count from the resolved (enriched-preferred) content of all selected notes in `useNoteToQuizState.ts` and expose `recommendedQuestions`.
+- When the user changes selection, if they haven't manually overridden the count, auto-set `numberOfQuestions = recommendedQuestions`.
+- Track a `userOverrode` flag set to `true` the first time the user changes the input; after that we stop auto-updating.
+- In `NoteSelectionTab.tsx` (and `QuizGenerationControls.tsx`), show helper text under the input: `Recommended: N (based on note length)`. Add a small "Use recommended" link button shown only when current value ≠ recommended.
+- Expand the dropdown in `QuizGenerationControls.tsx` to support up to 20, or replace with the existing numeric input for consistency.
+
+---
+
+## Technical Details
+
+**Files to edit**
+- `supabase/functions/generate-quiz/index.ts` — add chunking, parallel calls, auto-bump count, return `usedSource` summary `{ enriched: n, original: m }`.
+- `src/components/quiz/note-to-quiz/useNoteToQuizState.ts` — compute `recommendedQuestions`, track `userOverrode`, pass per-note source map to edge function, store `usedSource` from response.
+- `src/components/quiz/note-to-quiz/NoteSelectionTab.tsx` — per-note Enriched/Original badge, recommended-count helper + "Use recommended" button.
+- `src/components/quiz/note-to-quiz/QuizGenerationControls.tsx` — same recommendation helper; allow values up to 20.
+- `src/components/quiz/note-to-quiz/QuizReviewTab.tsx` — summary line showing source breakdown.
+
+**Edge-function payload change**
+Add `notes: Array<{ title, body, isEnriched }>` so the server can build per-note context and report `usedSource`. Keep backward-compatible with existing `content` string.
+
+**No DB migration. No new dependencies.**
+
+---
+
+## Out of Scope
+- Coverage warning UI (explicitly rejected).
+- Changing difficulty controls or quiz review/save flow.

@@ -2,7 +2,7 @@
 import { NoteToQuizForm } from "../NoteToQuizForm";
 import { analyzeSelectedNotesSubjects } from '@/utils/subjectAnalyzer';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, AlertTriangle, Loader2 } from 'lucide-react';
+import { Info, AlertTriangle, Loader2, Sparkles } from 'lucide-react';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { useEffect, useState } from 'react';
 import { ensureUserSubjectExists } from '@/utils/subjectHelpers';
@@ -15,12 +15,14 @@ interface QuizReviewTabProps {
     options: { content: string; isCorrect: boolean }[];
   }[];
   selectedNotes: any[];
+  usedSource?: { enriched: number; original: number } | null;
   onSuccess: () => void;
 }
 
 export const QuizReviewTab = ({
   generatedQuestions,
   selectedNotes,
+  usedSource,
   onSuccess,
 }: QuizReviewTabProps) => {
   const subjectAnalysis = analyzeSelectedNotesSubjects(selectedNotes);
@@ -97,6 +99,18 @@ export const QuizReviewTab = ({
 
   return (
     <div className="space-y-6">
+      {/* Source summary */}
+      {usedSource && (usedSource.enriched + usedSource.original) > 0 && (
+        <div className="flex items-center gap-2 text-sm text-mint-700 bg-mint-50/60 border border-mint-100 rounded-md px-3 py-2">
+          <Sparkles className="h-4 w-4" />
+          <span>
+            Generated from {usedSource.enriched + usedSource.original} note{usedSource.enriched + usedSource.original > 1 ? 's' : ''} —{' '}
+            <span className="font-medium">{usedSource.enriched} enriched</span>,{' '}
+            <span className="font-medium">{usedSource.original} original</span>
+          </span>
+        </div>
+      )}
+
       {/* Enhanced Multi-Subject Information */}
       {subjectAnalysis.hasMultipleSubjects && (
         <Alert className="border-blue-200 bg-blue-50">

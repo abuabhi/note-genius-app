@@ -10,7 +10,10 @@ export const NoteToQuiz = () => {
     selectedNotes,
     numberOfQuestions,
     setNumberOfQuestions,
+    recommendedQuestions,
+    useRecommended,
     generatedQuestions,
+    usedSource,
     isGenerating,
     activeTab,
     setActiveTab,
@@ -35,7 +38,6 @@ export const NoteToQuiz = () => {
           <NoteSelectionTab
             selectedNotes={selectedNotes}
             onNotesChange={(notes) => {
-              // Update selected notes for each note
               notes.forEach(note => toggleNoteSelection(note));
             }}
             onNoteToggle={toggleNoteSelection}
@@ -43,6 +45,8 @@ export const NoteToQuiz = () => {
             isGenerating={isGenerating}
             numberOfQuestions={numberOfQuestions}
             onNumberOfQuestionsChange={setNumberOfQuestions}
+            recommendedQuestions={recommendedQuestions}
+            onUseRecommended={useRecommended}
           />
         </TabsContent>
 
@@ -50,6 +54,7 @@ export const NoteToQuiz = () => {
           <QuizReviewTab
             generatedQuestions={generatedQuestions}
             selectedNotes={selectedNotes}
+            usedSource={usedSource}
             onSuccess={handleSuccess}
           />
         </TabsContent>
