@@ -13,6 +13,7 @@ const importers: Record<string, Importer> = {
   '/flashcards': () => import('@/pages/FlashcardsPage'),
   '/quizzes': () => import('@/pages/QuizPage'),
   '/quiz': () => import('@/pages/QuizPage'),
+  '/quiz/create': () => import('@/pages/CreateQuizPage'),
   '/schedule': () => import('@/pages/SchedulePage'),
   '/goals': () => import('@/pages/GoalsPage'),
   '/exam-prep': () => import('@/pages/ExamPrepPage'),
