@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, Trash2 } from 'lucide-react';
-import { format, isSameDay } from 'date-fns';
+import { format, isSameDay, differenceInCalendarDays } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Event } from '@/hooks/events';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
+import { getExamUrgency } from '@/utils/examUrgency';
+import { cn } from '@/lib/utils';
 
 interface UpcomingEventsListProps {
   events: Event[];
