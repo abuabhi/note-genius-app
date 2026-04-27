@@ -1,8 +1,11 @@
 
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { StudyMode } from '@/pages/study/types';
+
+type CardChoice = 'easy' | 'medium' | 'hard' | 'mastered' | 'needs_practice';
 
 interface OptimizedFlashcardStudyProps {
   setId: string;
@@ -12,8 +15,8 @@ interface OptimizedFlashcardStudyProps {
 export const useOptimizedFlashcardStudy = ({ setId, mode }: OptimizedFlashcardStudyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [studiedToday, setStudiedToday] = useState(0);
-  const [masteredCount, setMasteredCount] = useState(0);
+  // Per-session map: cardId -> latest rating. Single source of truth for counters.
+  const [cardRatings, setCardRatings] = useState<Record<string, CardChoice>>({});
   
   // Manual data fetching states
   const [flashcards, setFlashcards] = useState<any[]>([]);
