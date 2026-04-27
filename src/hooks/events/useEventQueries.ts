@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DateRange, Event, UpcomingGoal } from "./types";
-import { startOfDay, endOfDay, addDays } from "date-fns";
+import { startOfDay, endOfDay, addDays, format } from "date-fns";
 import { PostgrestError } from "@supabase/supabase-js";
 
 /**
@@ -57,8 +57,8 @@ export const useUpcomingEventsQuery = (userId: string | undefined) => {
     queryFn: async () => {
       if (!userId) return [];
       
-      const today = startOfDay(new Date());
-      const nextWeek = endOfDay(addDays(today, 7));
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const nextWeek = format(addDays(new Date(), 7), 'yyyy-MM-dd');
       
       try {
         const { data, error } = await supabase
@@ -102,8 +102,8 @@ export const useUpcomingGoalsQuery = (userId: string | undefined) => {
           .from('study_goals')
           .select('id, title, description, end_date, status, is_completed')
           .eq('user_id', userId)
-          .gte('end_date', today.toISOString().split('T')[0])
-          .lte('end_date', nextWeek.toISOString().split('T')[0])
+          .gte('end_date', today)
+          .lte('end_date', nextWeek)
           .order('end_date', { ascending: true });
 
         if (error) throw error;
