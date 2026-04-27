@@ -58,11 +58,13 @@ export const FlashcardsContent = () => {
     });
   };
 
-  if (loading.sets) {
+  // Only show full-page loading skeleton on the very first load (no cached data yet).
+  // On subsequent navigations we render the UI immediately to avoid a blocking spinner.
+  if (loading.sets && (!flashcardSets || flashcardSets.length === 0)) {
     return <LoadingState />;
   }
 
-  if (!flashcardSets || flashcardSets.length === 0) {
+  if (!loading.sets && (!flashcardSets || flashcardSets.length === 0)) {
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
         <EmptyState
