@@ -1,6 +1,6 @@
 
 import { format, addWeeks } from 'date-fns';
-import { CalendarClock, Clock, Edit, Trash2, Trophy, Zap, Star, Calendar, CheckCircle } from 'lucide-react';
+import { CalendarClock, Clock, Edit, Trash2, Trophy, Zap, Star, Calendar, CheckCircle, Info } from 'lucide-react';
 import { StudyGoal } from '@/hooks/useStudyGoals';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useGoalActions } from '@/hooks/useGoalActions';
 
 interface GoalCardProps {
@@ -160,10 +161,36 @@ export const GoalCard = ({ goal, onEdit, onDelete }: GoalCardProps) => {
             <div className="flex items-center gap-2">
               <Star className="h-4 w-4 text-yellow-500" />
               <span className="text-sm font-medium">Reward Points</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="What are reward points?"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="top" className="w-72 text-xs leading-relaxed">
+                  <p className="font-semibold mb-1 text-sm">How Reward Points work</p>
+                  <p className="text-muted-foreground">
+                    Earn points as you hit progress milestones (25%, 50%, 75%) and big bonus points for finishing the goal — plus an early-bird bonus for completing before the due date.
+                  </p>
+                  <p className="mt-2 text-muted-foreground">
+                    They're motivational badges to celebrate consistency — nothing to redeem.
+                  </p>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-sm font-bold text-yellow-600">{getRewardPoints()}</span>
-              <span className="text-xs text-gray-500">pts</span>
+              {getRewardPoints() === 0 && !goal.is_completed ? (
+                <span className="text-xs text-muted-foreground italic">Earn by making progress</span>
+              ) : (
+                <>
+                  <span className="text-sm font-bold text-yellow-600">{getRewardPoints()}</span>
+                  <span className="text-xs text-gray-500">pts</span>
+                </>
+              )}
               {goal.is_completed && daysLeft > 0 && (
                 <Badge variant="outline" className="ml-1 text-xs bg-green-50 text-green-700">
                   +{Math.floor(daysLeft * 2)} early bonus
