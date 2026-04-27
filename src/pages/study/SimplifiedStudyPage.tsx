@@ -148,6 +148,7 @@ export const SimplifiedStudyPage = () => {
 
   return (
     <div className="container mx-auto p-6">
+      <StudyBreadcrumb current={setName} />
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
