@@ -36,6 +36,7 @@ const GoalsPage = () => {
     suggestionsEnabled,
     toggleSuggestions,
     refreshSuggestions,
+    hasContent,
   } = useStudyGoals();
 
   // Initialize automatic goal tracking
