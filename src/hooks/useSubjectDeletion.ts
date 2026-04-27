@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/auth';
 
 export interface DeletionResult {
   success: boolean;
