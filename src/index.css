@@ -394,10 +394,6 @@
   background: hsl(38 92% 50%) !important; /* amber-500 */
   color: #1f1300 !important;
 }
-.schedule-calendar .fc-event.fc-event-goal-start {
-  background: hsl(38 92% 50% / 0.45) !important;
-  color: hsl(38 92% 20%) !important;
-}
 
 .schedule-calendar .fc .fc-more-link {
   color: hsl(var(--primary));

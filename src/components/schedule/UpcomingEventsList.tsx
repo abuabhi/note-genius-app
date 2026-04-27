@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, Trash2 } from 'lucide-react';
-import { format, isSameDay, differenceInCalendarDays } from 'date-fns';
+import { Calendar, Clock, Trash2, Target } from 'lucide-react';
+import { format, isSameDay, differenceInCalendarDays, parseISO } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Event } from '@/hooks/events';
+import type { UpcomingGoal } from '@/hooks/events/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
@@ -12,6 +13,7 @@ import { cn } from '@/lib/utils';
 
 interface UpcomingEventsListProps {
   events: Event[];
+  goals?: UpcomingGoal[];
   isLoading: boolean;
   formatEventDate: (date: string) => string;
   onDeleteEvent?: (id: string) => void;
@@ -19,6 +21,7 @@ interface UpcomingEventsListProps {
 
 export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({ 
   events, 
+  goals = [],
   isLoading, 
   formatEventDate,
   onDeleteEvent 
@@ -56,20 +59,26 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
     );
   }
 
-  // Group events by day
-  const eventsByDay: Record<string, Event[]> = {};
+  type GoalItem = { kind: 'goal'; goal: UpcomingGoal };
+  type EventItem = { kind: 'event'; event: Event };
+  type DayItem = EventItem | GoalItem;
+
+  // Group events + goals by day
+  const itemsByDay: Record<string, DayItem[]> = {};
   events.forEach(event => {
-    const date = new Date(event.start_time);
-    const dateKey = format(date, 'yyyy-MM-dd');
-    
-    if (!eventsByDay[dateKey]) {
-      eventsByDay[dateKey] = [];
-    }
-    eventsByDay[dateKey].push(event);
+    const dateKey = format(new Date(event.start_time), 'yyyy-MM-dd');
+    if (!itemsByDay[dateKey]) itemsByDay[dateKey] = [];
+    itemsByDay[dateKey].push({ kind: 'event', event });
+  });
+  goals.forEach(goal => {
+    // end_date is a date-only string (YYYY-MM-DD); avoid TZ shifts
+    const dateKey = goal.end_date.length >= 10 ? goal.end_date.slice(0, 10) : format(parseISO(goal.end_date), 'yyyy-MM-dd');
+    if (!itemsByDay[dateKey]) itemsByDay[dateKey] = [];
+    itemsByDay[dateKey].push({ kind: 'goal', goal });
   });
 
   // Get unique days, sorted chronologically
-  const days = Object.keys(eventsByDay).sort();
+  const days = Object.keys(itemsByDay).sort();
 
   return (
     <>
@@ -83,7 +92,7 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
         <CardContent className="p-4 md:p-6">
           {days.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground border border-dashed border-mint-200 rounded-md bg-mint-50/30">
-              No upcoming events in the next 7 days
+              No upcoming events or goals due in the next 7 days
             </div>
           ) : (
             <div className="space-y-4">
@@ -95,7 +104,37 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
                       : format(new Date(day), 'EEEE, MMMM d')}
                   </h3>
                   <div className="space-y-2">
-                    {eventsByDay[day].map(event => {
+                    {itemsByDay[day].map(item => {
+                      if (item.kind === 'goal') {
+                        const goal = item.goal;
+                        const dueDate = parseISO(goal.end_date);
+                        const daysLeft = differenceInCalendarDays(dueDate, new Date());
+                        const dueLabel =
+                          daysLeft <= 0 ? 'Due today' : daysLeft === 1 ? 'Due tomorrow' : `Due in ${daysLeft} days`;
+                        return (
+                          <div
+                            key={`goal-${goal.id}`}
+                            className="p-3 rounded-md border border-mint-100 flex items-start gap-2 hover:shadow-sm transition-shadow bg-amber-50/40"
+                            style={{ borderLeftColor: 'hsl(38 92% 50%)', borderLeftWidth: '4px' }}
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-medium text-mint-800 flex items-center gap-1.5">
+                                  <Target className="h-4 w-4 text-amber-600" />
+                                  {goal.title}
+                                </h4>
+                                <Badge className="bg-amber-500 hover:bg-amber-600 text-amber-50">Goal due</Badge>
+                              </div>
+                              <div className="text-sm text-amber-700 mt-1">{dueLabel}</div>
+                              {goal.description && (
+                                <p className="text-sm mt-1 line-clamp-2 text-muted-foreground">{goal.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      const event = item.event;
                       const isExam = event.event_type === 'exam';
                       const examUrgency = isExam
                         ? getExamUrgency(differenceInCalendarDays(new Date(event.start_time), new Date()))

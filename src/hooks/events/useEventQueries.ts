@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DateRange, Event } from "./types";
+import { DateRange, Event, UpcomingGoal } from "./types";
 import { startOfDay, endOfDay, addDays } from "date-fns";
 import { PostgrestError } from "@supabase/supabase-js";
 
@@ -76,6 +76,48 @@ export const useUpcomingEventsQuery = (userId: string | undefined) => {
       } catch (err) {
         console.error('Error fetching upcoming events:', err);
         return []; 
+      }
+    },
+    enabled: !!userId,
+    retry: 1,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
+};
+
+/**
+ * Hook for fetching study goals due in the next 7 days
+ */
+export const useUpcomingGoalsQuery = (userId: string | undefined) => {
+  return useQuery({
+    queryKey: ['upcomingGoals', userId],
+    queryFn: async () => {
+      if (!userId) return [] as UpcomingGoal[];
+
+      const today = startOfDay(new Date());
+      const nextWeek = endOfDay(addDays(today, 7));
+
+      try {
+        const { data, error } = await supabase
+          .from('study_goals')
+          .select('id, title, description, end_date, status, is_completed')
+          .eq('user_id', userId)
+          .gte('end_date', today.toISOString().split('T')[0])
+          .lte('end_date', nextWeek.toISOString().split('T')[0])
+          .order('end_date', { ascending: true });
+
+        if (error) throw error;
+        return (data || [])
+          .filter((g: any) => g.status !== 'completed' && !g.is_completed)
+          .map((g: any) => ({
+            id: g.id,
+            title: g.title,
+            description: g.description ?? null,
+            end_date: g.end_date,
+          })) as UpcomingGoal[];
+      } catch (err) {
+        console.error('Error fetching upcoming goals:', err);
+        return [] as UpcomingGoal[];
       }
     },
     enabled: !!userId,

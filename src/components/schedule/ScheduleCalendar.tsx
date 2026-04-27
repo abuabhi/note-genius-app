@@ -18,7 +18,7 @@ interface ScheduleCalendarProps {
   onDateChange?: (date: Date) => void;
 }
 
-type SourceKind = 'event' | 'exam' | 'goal-start' | 'goal-end';
+type SourceKind = 'event' | 'exam' | 'goal-end';
 
 interface ScheduleEventExtendedProps {
   source: SourceKind;
@@ -84,19 +84,6 @@ export function ScheduleCalendar({ selectedDate, onDateChange }: ScheduleCalenda
           } satisfies ScheduleEventExtendedProps,
         });
       }
-      if (g.start_date && g.start_date !== g.end_date) {
-        items.push({
-          id: `goal-start:${g.id}`,
-          title: `Goal starts: ${g.title}`,
-          start: g.start_date,
-          allDay: true,
-          classNames: ['fc-event-goal-start'],
-          extendedProps: {
-            source: 'goal-start' as SourceKind,
-            recordId: g.id,
-          } satisfies ScheduleEventExtendedProps,
-        });
-      }
       return items;
     });
 
@@ -113,7 +100,7 @@ export function ScheduleCalendar({ selectedDate, onDateChange }: ScheduleCalenda
     const props = clickInfo.event.extendedProps as ScheduleEventExtendedProps;
     const title = clickInfo.event.title;
 
-    if (props.source === 'goal-start' || props.source === 'goal-end') {
+    if (props.source === 'goal-end') {
       toast.info('Manage this goal from the Study Goals page.');
       return;
     }

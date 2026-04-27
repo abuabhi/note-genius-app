@@ -63,6 +63,7 @@ export const useSimplifiedGoals = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['study-goals'] });
+      queryClient.invalidateQueries({ queryKey: ['upcomingGoals'] });
       toast.success('Goal created successfully');
     },
     onError: (error) => {
@@ -89,6 +90,7 @@ export const useSimplifiedGoals = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['study-goals'] });
+      queryClient.invalidateQueries({ queryKey: ['upcomingGoals'] });
       toast.success('Goal updated successfully');
     },
     onError: (error) => {
@@ -112,6 +114,7 @@ export const useSimplifiedGoals = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['study-goals'] });
+      queryClient.invalidateQueries({ queryKey: ['upcomingGoals'] });
       toast.success('Goal deleted successfully');
     },
     onError: (error) => {

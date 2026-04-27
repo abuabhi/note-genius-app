@@ -16,6 +16,7 @@ const SchedulePage = () => {
   const [date, setDate] = useState<Date>(new Date());
   const { 
     upcomingEvents, 
+    upcomingGoals,
     upcomingLoading, 
     formatEventDate, 
     deleteEvent,
@@ -83,6 +84,7 @@ const SchedulePage = () => {
         <div className="mt-8">
           <UpcomingEventsList 
             events={upcomingEvents} 
+            goals={upcomingGoals}
             isLoading={upcomingLoading} 
             formatEventDate={formatEventDate}
             onDeleteEvent={handleDeleteEvent}
