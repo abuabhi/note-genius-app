@@ -1,97 +1,87 @@
-## Goal
+## Goals
 
-Make headings across **all five study tabs** (Original++, Summary, Key Points, Top 10 Questions, **and Enriched Note**) look identical:
-- Same dark forest green (`#1f5a3d` — already used in Enriched headings, matches the green in your screenshot).
-- Same size hierarchy regardless of whether content is markdown (`#`, `##`) or HTML (`<h2>`).
-- Enriched green block/card styling (mint background, badge, border-left) **stays exactly as today** — only the heading color/size inside it is normalized.
+1. Make `/note-to-flashcard` open fast (currently waits for full notes list + flashcard sets before rendering).
+2. Document the LLM + guardrails for flashcard generation.
+3. **Add a coverage guarantee** so generated flashcards span the entire note, not just one section.
 
-## What's wrong today
+---
 
-| Tab | Heading source | Color today |
-|---|---|---|
-| Original++ | markdown `#`, `##` | bright mint `--primary` |
-| Summary | HTML `<h2>` | unstyled / inherits |
-| Key Points | bullets only | n/a |
-| Top 10 Questions | markdown `#`, `##` | bright mint `--primary` |
-| Enriched Note | HTML inside green card | dark forest `#1f5a3d` ← target |
+## Part 1 — Speed up `/note-to-flashcard`
 
-Two real problems: color mismatch (bright mint vs dark forest) and inconsistent heading scale.
+### Root cause
 
-## Plan
+`NoteToFlashcardPage` mounts `OptimizedNotesProvider` + `FlashcardProvider` and waits for the **entire paginated notes list** to load just to `find()` one note already identified by `noteId` in the URL.
 
-### 1. Add one shared heading token
+### Fix
 
-In `src/index.css` (both `:root` and `.dark`):
-```
---study-heading: 151 49% 24%;   /* ≈ #1f5a3d, matches Enriched */
-```
-Does **not** touch `--primary` (that drives buttons, tabs, etc.).
+- Replace `useOptimizedNotes()` lookup with `useOptimizedNoteStudy(noteId)` (same hook the study page uses) — fetches just that one row, seeded from cache when available.
+- Drop `OptimizedNotesProvider` when `noteId` is in the URL (the common case).
+- Keep `FlashcardProvider` (BulkNoteConversion needs it for set selection) but render the page shell + skeleton independently of its loading state so it doesn't block first paint.
 
-### 2. Standardize one heading scale used everywhere
+**File:** `src/pages/NoteToFlashcardPage.tsx`
 
-| Level | Size | Weight |
-|---|---|---|
-| h1 | 1.5rem | 700, bottom border |
-| h2 | 1.25rem | 700 |
-| h3 | 1.1rem | 600 |
-| h4 | 1.0rem | 600 |
+Expected: interactive in ~150–300 ms warm (or instant from cache) instead of waiting for two list queries.
 
-All in color `hsl(var(--study-heading))`.
+---
 
-### 3. `PlainTextNoteRenderer.tsx` (Original++, Summary fallback, Key Points, Questions)
+## Part 2 — LLM and current guardrails (informational)
 
-- Replace inline `color: 'hsl(var(--primary))'` on h1–h4 with `hsl(var(--study-heading))`.
-- Apply the size/weight scale above.
-- Bullet dots stay `--primary` (small accent only).
+**Model:** `google/gemini-3-flash-preview` via Lovable AI Gateway, called server-side from `supabase/functions/generate-flashcards/index.ts`. Model and prompt are never exposed to the client.
 
-### 4. `SimpleContentRenderer.css`
+**Already in place:**
+- System prompt enforces atomic cards, single clear question front, focused factual back, bans filler and duplicate questions.
+- Subject (when known) injected into user prompt for domain bias.
+- Forced **tool calling** with strict JSON schema (`emit_flashcards`) — no free-form prose, no parsing failures.
+- Server-side `cleanCards`: drops empty/identical/duplicate cards, hard-truncates front to 120 chars and back to 300 chars, caps to requested count (1–20).
+- Input validation: rejects content < 20 chars, clamps count.
+- Single retry with stricter prompt if first call returns fewer valid cards than requested.
+- Surfaces 429 (rate limit), 402 (credits exhausted), 422 (no valid cards) to the client with friendly messages.
 
-Add rules so the Summary HTML branch (`<h2>`) gets the same styling:
-```
-.study-safe-content h1 { font-size:1.5rem;  font-weight:700; color:hsl(var(--study-heading)); ... }
-.study-safe-content h2 { font-size:1.25rem; font-weight:700; color:hsl(var(--study-heading)); ... }
-.study-safe-content h3 { font-size:1.1rem;  font-weight:600; color:hsl(var(--study-heading)); ... }
-.study-safe-content h4 { font-size:1.0rem;  font-weight:600; color:hsl(var(--study-heading)); ... }
-```
+**Not currently guarded:**
+- Factual accuracy vs. source note.
+- **Coverage across the full note** ← addressed in Part 3.
+- Embedding-based dedup (current dedup is exact-string only).
+- Tone consistency.
 
-### 5. `EnrichedContentRenderer.css` — minimal, surgical update
+---
 
-Only the heading rule changes. Card background, badge, border-left, padding, shadow — **all untouched**.
+## Part 3 — Full-note coverage guarantee (new)
 
-Change:
-```
-.enriched-content .ai-enriched-body h1..h6 {
-  color: #1f5a3d !important;   /* hardcoded today */
-  margin: 0.4rem 0;
-  font-weight: 700;
-}
-```
-to use the shared token + the new scale:
-```
-.enriched-content .ai-enriched-body h1 { color: hsl(var(--study-heading)) !important; font-size:1.5rem;  font-weight:700; margin:0.5rem 0; }
-.enriched-content .ai-enriched-body h2 { color: hsl(var(--study-heading)) !important; font-size:1.25rem; font-weight:700; margin:0.5rem 0; }
-.enriched-content .ai-enriched-body h3 { color: hsl(var(--study-heading)) !important; font-size:1.1rem;  font-weight:600; margin:0.4rem 0; }
-.enriched-content .ai-enriched-body h4,
-.enriched-content .ai-enriched-body h5,
-.enriched-content .ai-enriched-body h6 { color: hsl(var(--study-heading)) !important; font-size:1.0rem; font-weight:600; margin:0.4rem 0; }
-```
-Also normalize the matching `.ai-enriched-body strong` color (`#1f5a3d`) to `hsl(var(--study-heading))` so inline emphasis stays consistent. Same color, just tokenized.
+### Approach
 
-That's it for Enriched. No touch to `.ai-enriched-card`, `.ai-enriched-badge`, `.ai-enriched-body p/ul/ol/li`, hide-coloring rules, or `ExpandableContentRenderer.tsx`.
+Rather than feeding the whole note as a single blob and hoping the model spreads its attention, **explicitly chunk the note and require cards from each chunk**.
 
-## Files to edit
+### Implementation in `supabase/functions/generate-flashcards/index.ts`
 
-1. `src/index.css` — add `--study-heading` token.
-2. `src/components/notes/study/viewer/PlainTextNoteRenderer.tsx` — swap heading color + apply scale.
-3. `src/components/notes/study/SimpleContentRenderer.css` — add `.study-safe-content` heading rules for Summary HTML.
-4. `src/components/notes/study/EnrichedContentRenderer.css` — heading color + scale only (card/badge/layout untouched).
+1. **Chunk the note** by structural boundaries (markdown headings `#`/`##`/`###`, then blank-line paragraphs). Cap chunk size to ~1,500 chars; merge tiny chunks; split oversized ones on sentence boundaries.
+2. **Allocate cards per chunk** proportional to chunk length, with a **floor of 1 card per chunk** (when the user-requested `count` is ≥ number of chunks). If `count` < number of chunks, sample chunks evenly and label the result as `partial_coverage: true` so the UI can warn.
+3. **Update the prompt** to pass labelled sections, e.g.:
+    ```text
+    SECTION 1/4: <heading or first line>
+    <chunk text>
+    ---
+    SECTION 2/4: ...
+    ```
+   And instruct the model: "Produce N1 cards from SECTION 1, N2 from SECTION 2, …" Add the per-section counts to the tool schema as `section_index` on each card so we can verify.
+4. **Tool schema update:** add `section_index: integer` to each card. Required so the model attributes each card to a section.
+5. **Server-side coverage check** after `cleanCards`:
+    - Count cards per `section_index`.
+    - If any section has 0 cards (and was allocated ≥1), do a **targeted top-up call** for just that section (reusing existing retry path, but scoped to the missing section's text).
+    - After top-up, drop `section_index` from the response payload (UI doesn't need it).
+6. **Response additions:** include `coverage: { sections: N, sectionsCovered: M }` and `partial_coverage: boolean` in the JSON response. `aiService.ts` shows a toast when coverage is partial (e.g. "Note is long — only N of M sections covered. Increase card count for full coverage.").
+7. **Long-note safety:** if total note length exceeds gateway-friendly size (~30k chars), truncate per-chunk inputs to top 1,500 chars and warn `truncated: true`.
 
-## Files NOT touched
+### Files to change
 
-- `ExpandableContentRenderer.tsx` and the rest of the expansion pipeline
-- Any AI generation / edge function
-- `--primary` token, tabs, buttons
+- `supabase/functions/generate-flashcards/index.ts` — chunking, per-section allocation, prompt update, tool-schema `section_index`, coverage verification + targeted top-up, expanded response.
+- `src/services/aiService.ts` — surface `coverage` / `partial_coverage` / `truncated` flags as toasts.
+- `src/pages/NoteToFlashcardPage.tsx` — the speed fix from Part 1.
 
-## Result
+No DB changes. No new secrets. Default model unchanged.
 
-All five tabs use the same dark forest green at the same heading sizes. Enriched cards still look like Enriched cards — green background, badge, border — just with normalized heading typography that now matches every other tab.
+### Behavior summary
+
+- Short note (one section): same as today.
+- Medium note (3 sections, count=6): 2 cards per section guaranteed.
+- Long note (10 sections, count=5): even sampling across sections, response flagged `partial_coverage: true`, toast nudges user to raise the count.
+- Very long note (>30k chars): per-chunk truncation, `truncated: true` toast.
