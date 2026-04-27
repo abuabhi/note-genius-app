@@ -40,7 +40,7 @@ const FlashcardsPage = () => {
             />
             
             
-            <FlashcardsContent />
+            <FlashcardsContent viewMode={viewMode} />
           </div>
         </div>
       </FlashcardProvider>
