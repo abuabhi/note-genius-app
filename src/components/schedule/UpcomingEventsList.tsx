@@ -92,7 +92,7 @@ export const UpcomingEventsList: React.FC<UpcomingEventsListProps> = ({
         <CardContent className="p-4 md:p-6">
           {days.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground border border-dashed border-mint-200 rounded-md bg-mint-50/30">
-              No upcoming events in the next 7 days
+              No upcoming events or goals due in the next 7 days
             </div>
           ) : (
             <div className="space-y-4">
