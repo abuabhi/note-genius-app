@@ -23,9 +23,17 @@ export type DateRange = {
   end: Date;
 };
 
+export interface UpcomingGoal {
+  id: string;
+  title: string;
+  description: string | null;
+  end_date: string;
+}
+
 export interface UseEventsReturn {
   events: Event[];
   upcomingEvents: Event[];
+  upcomingGoals: UpcomingGoal[];
   upcomingLoading: boolean;
   dueFlashcards: any[];
   isLoading: boolean;
@@ -36,5 +44,6 @@ export interface UseEventsReturn {
   updateDateRange: (range: DateRange) => void;
   refetchEvents: () => void;
   refetchUpcomingEvents: () => void;
+  refetchUpcomingGoals: () => void;
   formatEventDate: (dateString: string) => string;
 }

@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/auth"; // Updated import path
 import { startOfMonth, endOfMonth, addMonths, startOfWeek, endOfWeek } from "date-fns";
 import { DateRange, UseEventsReturn } from "./types";
 import { formatEventDate } from "./eventUtils";
-import { useEventQuery, useUpcomingEventsQuery, useDueFlashcardsQuery } from "./useEventQueries";
+import { useEventQuery, useUpcomingEventsQuery, useUpcomingGoalsQuery, useDueFlashcardsQuery } from "./useEventQueries";
 import { useCreateEvent, useDeleteEvent } from "./useEventMutations";
 import { PostgrestError } from "@supabase/supabase-js";
 
@@ -38,7 +38,13 @@ export const useEvents = (currentDate: Date = new Date()): UseEventsReturn => {
     isLoading: upcomingLoading, 
     refetch: refetchUpcomingEvents 
   } = useUpcomingEventsQuery(user?.id);
-  
+
+  const {
+    data: upcomingGoals = [],
+    isLoading: upcomingGoalsLoading,
+    refetch: refetchUpcomingGoals,
+  } = useUpcomingGoalsQuery(user?.id);
+
   const { data: dueFlashcards = [] } = useDueFlashcardsQuery(user?.id, dateRange);
 
   // Use the mutation hooks
@@ -57,7 +63,8 @@ export const useEvents = (currentDate: Date = new Date()): UseEventsReturn => {
   return {
     events,
     upcomingEvents,
-    upcomingLoading,
+    upcomingGoals,
+    upcomingLoading: upcomingLoading || upcomingGoalsLoading,
     dueFlashcards,
     isLoading,
     error: error as PostgrestError | null, // Ensure correct type is returned
@@ -67,6 +74,7 @@ export const useEvents = (currentDate: Date = new Date()): UseEventsReturn => {
     updateDateRange: setDateRange,
     refetchEvents,
     refetchUpcomingEvents,
+    refetchUpcomingGoals,
     formatEventDate,
   };
 };
