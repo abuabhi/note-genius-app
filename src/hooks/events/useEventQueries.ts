@@ -57,8 +57,8 @@ export const useUpcomingEventsQuery = (userId: string | undefined) => {
     queryFn: async () => {
       if (!userId) return [];
       
-      const today = format(new Date(), 'yyyy-MM-dd');
-      const nextWeek = format(addDays(new Date(), 7), 'yyyy-MM-dd');
+      const today = startOfDay(new Date());
+      const nextWeek = endOfDay(addDays(today, 7));
       
       try {
         const { data, error } = await supabase
@@ -94,8 +94,8 @@ export const useUpcomingGoalsQuery = (userId: string | undefined) => {
     queryFn: async () => {
       if (!userId) return [] as UpcomingGoal[];
 
-      const today = startOfDay(new Date());
-      const nextWeek = endOfDay(addDays(today, 7));
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const nextWeek = format(addDays(new Date(), 7), 'yyyy-MM-dd');
 
       try {
         const { data, error } = await supabase
