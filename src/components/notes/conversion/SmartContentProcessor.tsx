@@ -51,6 +51,7 @@ export const SmartContentProcessor = ({
   };
 
   const handleCreateCards = async () => {
+    if (isCreating) return;
     if (previewCards.length > 0) {
       await onCreateFlashcards(previewCards);
     }
