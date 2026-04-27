@@ -121,6 +121,7 @@ export const FlashcardsContent = ({ viewMode = 'card' }: FlashcardsContentProps)
         hasInitiallyLoaded={true}
         searchQuery={filters.search || ""}
         subjectFilter={filters.subject !== 'all' ? filters.subject : undefined}
+        viewMode={viewMode}
       />
     </div>
   );
