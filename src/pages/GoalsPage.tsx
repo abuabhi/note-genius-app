@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { PlusCircle, Target } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { PlusCircle, Target, Sparkles, X } from 'lucide-react';
 import { GoalFormDialog } from '@/components/goals/GoalFormDialog';
 import { GoalStats } from '@/components/goals/GoalStats';
 import { GoalSuggestions } from '@/components/goals/GoalSuggestions';
@@ -49,6 +49,18 @@ const GoalsPage = () => {
   const [sortKey, setSortKey] = useState<SortKey>('due-date');
   const [formOpen, setFormOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<StudyGoal | undefined>(undefined);
+  const [showRewardHint, setShowRewardHint] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const dismissed = localStorage.getItem('goals.rewardPointsHintDismissed');
+    if (!dismissed) setShowRewardHint(true);
+  }, []);
+
+  const dismissRewardHint = () => {
+    setShowRewardHint(false);
+    try { localStorage.setItem('goals.rewardPointsHintDismissed', '1'); } catch {/* noop */}
+  };
 
   const handleCreateGoal = async (data: GoalFormValues): Promise<void> => {
     await createGoal(data);
@@ -167,6 +179,28 @@ const GoalsPage = () => {
               onToggleSuggestions={toggleSuggestions}
               onRefreshSuggestions={refreshSuggestions}
             />
+          )}
+
+          {showRewardHint && goals.length > 0 && (
+            <div className="relative flex items-start gap-3 p-4 rounded-lg border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50">
+              <div className="p-2 bg-amber-100 rounded-md">
+                <Sparkles className="h-4 w-4 text-amber-600" />
+              </div>
+              <div className="flex-1 pr-6">
+                <p className="text-sm font-semibold text-amber-900">New: Reward Points on each goal</p>
+                <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                  As you make progress, you'll earn points at the 25%, 50%, and 75% milestones, plus a big bonus when you complete the goal — even more if you finish early. They're badges to celebrate your consistency, no redemption needed.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={dismissRewardHint}
+                aria-label="Dismiss reward points hint"
+                className="absolute top-2 right-2 p-1 rounded-md text-amber-700 hover:bg-amber-100 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           )}
 
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'active' | 'completed')}>
