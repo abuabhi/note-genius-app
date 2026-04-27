@@ -80,13 +80,15 @@ LENGTH LIMITS (strict):
 - Each explanation ≤ 250 characters
 - Options must NOT repeat the question text and must NOT all be identical.
 
+IMPORTANT: Vary the position of the correct answer across questions. Distribute correct answers roughly evenly across indices 0, 1, 2, and 3 — do NOT default to index 0.
+
 Format your response as a JSON object with this exact structure:
 {
   "questions": [
     {
       "question": "Question text here?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswer": 0,
+      "options": ["First option", "Second option", "Third option", "Fourth option"],
+      "correctAnswer": 2,
       "explanation": "Brief explanation of why this is correct"
     }
   ]
