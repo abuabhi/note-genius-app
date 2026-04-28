@@ -1,44 +1,50 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin } from 'lucide-react';
+import { Calendar, MapPin, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { ReadinessRing } from './ReadinessRing';
 import { format } from 'date-fns';
 import type { Exam } from '@/types/exam';
-import { daysUntil } from '@/types/exam';
-import { getExamUrgency } from '@/utils/examUrgency';
+import { daysUntil, getExamPhase } from '@/types/exam';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface ExamCardProps {
   exam: Exam;
-  readiness: number;
+  /** Optional — only used when caller wants to surface readiness badge inline. */
+  readiness?: number;
   subjectName?: string;
+  onEdit?: (exam: Exam) => void;
 }
 
-export const ExamCard: React.FC<ExamCardProps> = ({ exam, readiness, subjectName }) => {
+export const ExamCard: React.FC<ExamCardProps> = ({ exam, subjectName, onEdit }) => {
   const days = daysUntil(exam.exam_date);
-  const urgency = getExamUrgency(days);
+  const phase = getExamPhase(exam.exam_date);
   const isUpcoming = exam.status === 'upcoming';
 
   return (
-    <Link to={`/exam-prep/${exam.id}`}>
-      <Card
-        className={cn(
-          'hover:shadow-md transition-shadow border-border bg-card',
-          isUpcoming && urgency.borderClass,
-        )}
-      >
-        <CardContent className="p-4 flex items-center gap-4">
-          <ReadinessRing value={readiness} />
+    <Card
+      className={cn(
+        'hover:shadow-md transition-shadow border-border bg-card',
+        isUpcoming && phase.phase !== 'scheduled' && 'border-l-4',
+        phase.phase === 'today' && 'border-l-red-500',
+        phase.phase === 'tomorrow' && 'border-l-orange-500',
+        phase.phase === 'this-week' && 'border-l-amber-400',
+        phase.phase === 'coming-up' && 'border-l-blue-500',
+        phase.phase === 'past' && 'border-l-muted',
+      )}
+    >
+      <CardContent className="p-4 flex items-center gap-4">
+        <Link to={`/exam-prep/${exam.id}`} className="flex-1 min-w-0 flex items-center gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold text-foreground truncate">{exam.title}</h3>
               {subjectName && <Badge variant="secondary">{subjectName}</Badge>}
-              {isUpcoming && urgency.emphasise && (
-                <Badge className={urgency.badgeClass}>{urgency.label}</Badge>
+              {isUpcoming ? (
+                <Badge className={phase.pillClass}>{phase.label}</Badge>
+              ) : (
+                <Badge variant="outline">{exam.status}</Badge>
               )}
-              {!isUpcoming && <Badge variant="outline">{exam.status}</Badge>}
             </div>
             <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
               <span className="flex items-center gap-1">
@@ -53,25 +59,44 @@ export const ExamCard: React.FC<ExamCardProps> = ({ exam, readiness, subjectName
               )}
             </div>
           </div>
-          <div className="text-right">
+          <div className="text-right shrink-0">
             <div
               className={cn(
                 'text-lg font-semibold',
-                urgency.tone === 'overdue' && 'text-destructive',
-                urgency.tone === 'critical' && 'text-red-600',
-                urgency.tone === 'soon' && 'text-orange-600',
-                urgency.tone === 'upcoming' && 'text-amber-700',
-                urgency.tone === 'later' && 'text-foreground',
+                phase.phase === 'past' && 'text-muted-foreground',
+                phase.phase === 'today' && 'text-red-600',
+                phase.phase === 'tomorrow' && 'text-orange-600',
+                phase.phase === 'this-week' && 'text-amber-700',
+                phase.phase === 'coming-up' && 'text-foreground',
               )}
             >
-              {urgency.tone === 'overdue' ? `${Math.abs(days)}d ago` : `${days}d`}
+              {phase.phase === 'past'
+                ? `${Math.abs(days)}d ago`
+                : phase.phase === 'today'
+                  ? 'Today'
+                  : `${days}d`}
             </div>
             <div className="text-[10px] text-muted-foreground">
-              {urgency.tone === 'overdue' ? 'past' : 'to go'}
+              {phase.phase === 'past' ? 'past' : phase.phase === 'today' ? '' : 'to go'}
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </Link>
+        </Link>
+        {onEdit && (
+          <Button
+            size="icon"
+            variant="ghost"
+            className="shrink-0"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onEdit(exam);
+            }}
+            aria-label="Edit exam"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        )}
+      </CardContent>
+    </Card>
   );
 };
