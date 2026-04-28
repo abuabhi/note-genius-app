@@ -8,42 +8,31 @@ import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { ExamFormDialog } from '@/components/exam-prep/ExamFormDialog';
 import { ExamCard } from '@/components/exam-prep/ExamCard';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth';
-import { calculateReadiness, type ExamTopic } from '@/types/exam';
 import { Helmet } from 'react-helmet';
+import type { Exam } from '@/types/exam';
 
 const ExamPrepPage: React.FC = () => {
-  const { user } = useAuth();
   const { exams, isLoading } = useExams();
   const { subjects } = useUserSubjects();
   const [showCreate, setShowCreate] = useState(false);
+  const [editing, setEditing] = useState<Exam | null>(null);
 
   const subjectMap = useMemo(
     () => new Map(subjects.map(s => [s.id, s.name])),
     [subjects],
   );
 
-  const { data: topicsByExam = {} } = useQuery({
-    queryKey: ['exam-topics-all', user?.id, exams.map(e => e.id).join(',')],
-    enabled: !!user?.id && exams.length > 0,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('exam_topics')
-        .select('exam_id, weight, status')
-        .in('exam_id', exams.map(e => e.id));
-      if (error) throw error;
-      const grouped: Record<string, Pick<ExamTopic, 'weight' | 'status'>[]> = {};
-      (data || []).forEach((t: any) => {
-        (grouped[t.exam_id] ||= []).push({ weight: t.weight, status: t.status });
-      });
-      return grouped;
-    },
-  });
-
   const upcoming = exams.filter(e => e.status === 'upcoming');
   const past = exams.filter(e => e.status !== 'upcoming');
+
+  const renderCard = (exam: Exam) => (
+    <ExamCard
+      key={exam.id}
+      exam={exam}
+      subjectName={exam.subject_id ? subjectMap.get(exam.subject_id) : undefined}
+      onEdit={(e) => setEditing(e)}
+    />
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-50/30 via-white to-blue-50/30">
@@ -53,7 +42,7 @@ const ExamPrepPage: React.FC = () => {
       </Helmet>
       <StandardPageHeader
         title="Exam Prep"
-        description="Track exam dates, topics, and your readiness using your existing notes, flashcards, quizzes and goals."
+        description="Track exam dates and link notes, flashcards, quizzes and goals. Add topics from inside an exam if you want detailed tracking."
         icon={<GraduationCap className="h-6 w-6 text-white" />}
         breadcrumbs={[{ label: 'Exam Prep' }]}
         actions={
@@ -84,25 +73,11 @@ const ExamPrepPage: React.FC = () => {
               <TabsTrigger value="past">Past / Archived ({past.length})</TabsTrigger>
             </TabsList>
             <TabsContent value="upcoming" className="grid gap-3">
-              {upcoming.map(exam => (
-                <ExamCard
-                  key={exam.id}
-                  exam={exam}
-                  subjectName={exam.subject_id ? subjectMap.get(exam.subject_id) : undefined}
-                  readiness={calculateReadiness(topicsByExam[exam.id] ?? [])}
-                />
-              ))}
+              {upcoming.map(renderCard)}
               {upcoming.length === 0 && <p className="text-sm text-muted-foreground">No upcoming exams.</p>}
             </TabsContent>
             <TabsContent value="past" className="grid gap-3">
-              {past.map(exam => (
-                <ExamCard
-                  key={exam.id}
-                  exam={exam}
-                  subjectName={exam.subject_id ? subjectMap.get(exam.subject_id) : undefined}
-                  readiness={calculateReadiness(topicsByExam[exam.id] ?? [])}
-                />
-              ))}
+              {past.map(renderCard)}
               {past.length === 0 && <p className="text-sm text-muted-foreground">Nothing here yet.</p>}
             </TabsContent>
           </Tabs>
@@ -110,6 +85,11 @@ const ExamPrepPage: React.FC = () => {
       </div>
 
       <ExamFormDialog open={showCreate} onOpenChange={setShowCreate} />
+      <ExamFormDialog
+        open={!!editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+        exam={editing}
+      />
     </div>
   );
 };

@@ -68,3 +68,65 @@ export function daysUntil(dateIso: string): number {
   const ms = new Date(dateIso).getTime() - Date.now();
   return Math.ceil(ms / (1000 * 60 * 60 * 24));
 }
+
+export type ExamPhase = 'past' | 'today' | 'tomorrow' | 'this-week' | 'coming-up' | 'scheduled';
+
+export interface ExamPhaseInfo {
+  phase: ExamPhase;
+  /** Short label e.g. "Today", "Tomorrow", "This week", "Coming up", "Scheduled" */
+  label: string;
+  /** Countdown text e.g. "12 days to go", "3 days ago" */
+  countdown: string;
+  /** Tailwind classes for a status pill */
+  pillClass: string;
+}
+
+export function getExamPhase(dateIso: string): ExamPhaseInfo {
+  const days = daysUntil(dateIso);
+  if (days < 0) {
+    return {
+      phase: 'past',
+      label: 'Past',
+      countdown: `${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} ago`,
+      pillClass: 'bg-muted text-muted-foreground',
+    };
+  }
+  if (days === 0) {
+    return {
+      phase: 'today',
+      label: 'Today',
+      countdown: 'Today',
+      pillClass: 'bg-red-500 text-white',
+    };
+  }
+  if (days === 1) {
+    return {
+      phase: 'tomorrow',
+      label: 'Tomorrow',
+      countdown: '1 day to go',
+      pillClass: 'bg-orange-500 text-white',
+    };
+  }
+  if (days <= 7) {
+    return {
+      phase: 'this-week',
+      label: 'This week',
+      countdown: `${days} days to go`,
+      pillClass: 'bg-amber-400 text-amber-950',
+    };
+  }
+  if (days <= 30) {
+    return {
+      phase: 'coming-up',
+      label: 'Coming up',
+      countdown: `${days} days to go`,
+      pillClass: 'bg-blue-500 text-white',
+    };
+  }
+  return {
+    phase: 'scheduled',
+    label: 'Scheduled',
+    countdown: `${days} days to go`,
+    pillClass: 'bg-secondary text-secondary-foreground',
+  };
+}
