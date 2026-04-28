@@ -1,22 +1,16 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { GraduationCap, Plus } from 'lucide-react';
+import { GraduationCap, Plus, Calendar as CalIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { useExams } from '@/hooks/exams';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth';
-import { calculateReadiness, daysUntil, type ExamTopic } from '@/types/exam';
-import { ReadinessRing } from './ReadinessRing';
+import { daysUntil, getExamPhase } from '@/types/exam';
 import { format } from 'date-fns';
-import { getExamUrgency } from '@/utils/examUrgency';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 export const UpcomingExamsWidget: React.FC = () => {
-  const { user } = useAuth();
   const { exams, isLoading } = useExams();
   const { subjects } = useUserSubjects();
 
@@ -29,23 +23,6 @@ export const UpcomingExamsWidget: React.FC = () => {
     () => new Map(subjects.map(s => [s.id, s.name])),
     [subjects],
   );
-
-  const { data: topicsByExam = {} } = useQuery({
-    queryKey: ['exam-topics-widget', user?.id, upcoming.map(e => e.id).join(',')],
-    enabled: !!user?.id && upcoming.length > 0,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('exam_topics')
-        .select('exam_id, weight, status')
-        .in('exam_id', upcoming.map(e => e.id));
-      if (error) throw error;
-      const grouped: Record<string, Pick<ExamTopic, 'weight' | 'status'>[]> = {};
-      (data || []).forEach((t: any) => {
-        (grouped[t.exam_id] ||= []).push({ weight: t.weight, status: t.status });
-      });
-      return grouped;
-    },
-  });
 
   return (
     <Card className="bg-card border-border">
@@ -75,27 +52,30 @@ export const UpcomingExamsWidget: React.FC = () => {
         ) : (
           upcoming.map(exam => {
             const days = daysUntil(exam.exam_date);
-            const urgency = getExamUrgency(days);
-            const readiness = calculateReadiness(topicsByExam[exam.id] ?? []);
+            const phase = getExamPhase(exam.exam_date);
             const subjectName = exam.subject_id ? subjectMap.get(exam.subject_id) : undefined;
             return (
               <Link
                 key={exam.id}
                 to={`/exam-prep/${exam.id}`}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-muted/50 transition',
-                  urgency.borderClass,
+                  'flex items-center gap-3 rounded-lg border border-border p-3 hover:bg-muted/50 transition border-l-4',
+                  phase.phase === 'today' && 'border-l-red-500',
+                  phase.phase === 'tomorrow' && 'border-l-orange-500',
+                  phase.phase === 'this-week' && 'border-l-amber-400',
+                  phase.phase === 'coming-up' && 'border-l-blue-500',
+                  phase.phase === 'scheduled' && 'border-l-border',
                 )}
               >
-                <ReadinessRing value={readiness} size={48} stroke={5} />
+                <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                  <CalIcon className="h-4 w-4 text-primary" />
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <div className="text-sm font-medium truncate">{exam.title}</div>
-                    {urgency.emphasise && (
-                      <Badge className={cn('shrink-0 text-[10px] px-1.5 py-0', urgency.badgeClass)}>
-                        {urgency.label}
-                      </Badge>
-                    )}
+                    <Badge className={cn('shrink-0 text-[10px] px-1.5 py-0', phase.pillClass)}>
+                      {phase.label}
+                    </Badge>
                   </div>
                   <div className="text-xs text-muted-foreground truncate">
                     {subjectName ? `${subjectName} • ` : ''}
@@ -104,14 +84,13 @@ export const UpcomingExamsWidget: React.FC = () => {
                 </div>
                 <div
                   className={cn(
-                    'text-sm font-semibold',
-                    urgency.tone === 'overdue' && 'text-destructive',
-                    urgency.tone === 'critical' && 'text-red-600',
-                    urgency.tone === 'soon' && 'text-orange-600',
-                    urgency.tone === 'upcoming' && 'text-amber-700',
+                    'text-sm font-semibold shrink-0',
+                    phase.phase === 'today' && 'text-red-600',
+                    phase.phase === 'tomorrow' && 'text-orange-600',
+                    phase.phase === 'this-week' && 'text-amber-700',
                   )}
                 >
-                  {urgency.tone === 'overdue' ? `${Math.abs(days)}d ago` : `${days}d`}
+                  {phase.phase === 'today' ? 'Today' : `${days}d`}
                 </div>
               </Link>
             );
