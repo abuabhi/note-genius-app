@@ -1,23 +1,24 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { ArrowLeft, Plus, Trash2, Calendar as CalIcon, MapPin, GraduationCap } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Calendar as CalIcon, MapPin, GraduationCap, Pencil, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 import { useExam, useExams, useExamTopics } from '@/hooks/exams';
 import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { ReadinessRing } from '@/components/exam-prep/ReadinessRing';
 import { TopicRow } from '@/components/exam-prep/TopicRow';
 import { ExamRemindersPanel } from '@/components/exam-prep/ExamRemindersPanel';
-import { calculateReadiness, daysUntil } from '@/types/exam';
+import { ExamFormDialog } from '@/components/exam-prep/ExamFormDialog';
+import { calculateReadiness, getExamPhase } from '@/types/exam';
 import { confirmDialog } from '@/components/ui/confirm-dialog';
-import { getExamUrgency } from '@/utils/examUrgency';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { HelpCircle } from 'lucide-react';
+
+const advancedKey = (id: string) => `examPrep:advanced:${id}`;
 
 const ExamDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +28,28 @@ const ExamDetailPage: React.FC = () => {
   const { topics, addTopic } = useExamTopics(id);
   const { subjects } = useUserSubjects();
   const [newTopic, setNewTopic] = useState('');
+  const [editOpen, setEditOpen] = useState(false);
+  const [advanced, setAdvanced] = useState(false);
+
+  // Persist advanced toggle per exam.
+  useEffect(() => {
+    if (!id) return;
+    try {
+      setAdvanced(localStorage.getItem(advancedKey(id)) === '1');
+    } catch {
+      // ignore
+    }
+  }, [id]);
+
+  const toggleAdvanced = (next: boolean) => {
+    setAdvanced(next);
+    if (!id) return;
+    try {
+      localStorage.setItem(advancedKey(id), next ? '1' : '0');
+    } catch {
+      // ignore
+    }
+  };
 
   const handleDelete = async () => {
     const ok = await confirmDialog({
@@ -51,10 +74,7 @@ const ExamDetailPage: React.FC = () => {
     return <div className="p-8 text-sm text-muted-foreground">Loading…</div>;
   }
 
-  const days = daysUntil(exam.exam_date);
-  const urgency = getExamUrgency(days);
-  const overdue = days < 0;
-  const onTrack = readiness >= exam.target_readiness;
+  const phase = getExamPhase(exam.exam_date);
 
   const handleAdd = async () => {
     const name = newTopic.trim();
@@ -76,20 +96,19 @@ const ExamDetailPage: React.FC = () => {
         <Card className="bg-card border-border">
           <CardContent className="p-6">
             <div className="flex items-start gap-6 flex-wrap">
-              <ReadinessRing value={readiness} size={96} stroke={8} label="ready" />
-              <div className="flex-1 min-w-[240px] space-y-2">
+              <div className="flex-1 min-w-[240px] space-y-3">
                 <div className="flex items-center gap-2 flex-wrap">
                   <GraduationCap className="h-5 w-5 text-primary" />
                   <h1 className="text-2xl font-semibold">{exam.title}</h1>
                   {subjectName && <Badge variant="secondary">{subjectName}</Badge>}
-                  {exam.status === 'upcoming' && urgency.emphasise && (
-                    <Badge className={urgency.badgeClass}>{urgency.label}</Badge>
+                  {exam.status === 'upcoming' && (
+                    <Badge className={phase.pillClass}>{phase.label}</Badge>
                   )}
                 </div>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                   <span className="flex items-center gap-1">
                     <CalIcon className="h-4 w-4" />
-                    {format(new Date(exam.exam_date), 'PPPp')}
+                    {format(new Date(exam.exam_date), 'PPP')}
                   </span>
                   {exam.location && (
                     <span className="flex items-center gap-1">
@@ -97,39 +116,18 @@ const ExamDetailPage: React.FC = () => {
                     </span>
                   )}
                 </div>
-                {exam.notes && <p className="text-sm text-foreground/80">{exam.notes}</p>}
+                {exam.notes && <p className="text-sm text-foreground/80 whitespace-pre-wrap">{exam.notes}</p>}
 
-                <div className="pt-2">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                    <span className="flex items-center gap-1.5">
-                      <span>Target readiness {exam.target_readiness}%</span>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="h-3 w-3 cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
-                            Your goal confidence level for this exam. The bar below fills
-                            relative to this target — so "ready" means hitting your own bar,
-                            not 100%. Edit the exam to change it.
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <Badge
-                        variant="outline"
-                        className={onTrack ? 'border-green-500 text-green-700' : 'border-amber-500 text-amber-700'}
-                      >
-                        {onTrack ? 'On track' : 'Behind'}
-                      </Badge>
-                    </span>
-                    <span className={overdue ? 'text-destructive' : ''}>
-                      {overdue ? `${Math.abs(days)} days past` : `${days} days to go`}
-                    </span>
+                <div className="pt-1">
+                  <div className="text-3xl font-bold tracking-tight">
+                    {phase.countdown}
                   </div>
-                  <Progress value={Math.min(100, (readiness / Math.max(1, exam.target_readiness)) * 100)} />
                 </div>
               </div>
-              <div>
+              <div className="flex flex-col gap-2">
+                <Button variant="outline" onClick={() => setEditOpen(true)}>
+                  <Pencil className="h-4 w-4 mr-2" /> Edit
+                </Button>
                 <Button variant="outline" onClick={handleDelete}>
                   <Trash2 className="h-4 w-4 mr-2" /> Delete
                 </Button>
@@ -139,41 +137,79 @@ const ExamDetailPage: React.FC = () => {
         </Card>
 
         <Card className="bg-card border-border">
-          <CardContent className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Topics</h2>
-              <span className="text-xs text-muted-foreground">{topics.length} total</span>
-            </div>
-
-            <div className="flex gap-2">
-              <Input
-                value={newTopic}
-                onChange={e => setNewTopic(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleAdd()}
-                placeholder="Add a topic (e.g. Calculus — limits)"
-              />
-              <Button onClick={handleAdd}>
-                <Plus className="h-4 w-4 mr-1" /> Add
-              </Button>
-            </div>
-
-            <div className="space-y-2">
-              {topics.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-6 text-center">
-                  No topics yet. Add the first one above.
-                </p>
-              ) : (
-                topics.map(t => (
-                  <TopicRow key={t.id} topic={t} examId={exam.id} examSubjectName={subjectName} />
-                ))
-              )}
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Settings2 className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="advanced-toggle" className="text-sm font-medium cursor-pointer">
+                  Advanced tracking
+                </Label>
+                <span className="text-xs text-muted-foreground">
+                  Break the exam into topics and track your confidence per topic.
+                </span>
+              </div>
+              <Switch id="advanced-toggle" checked={advanced} onCheckedChange={toggleAdvanced} />
             </div>
           </CardContent>
         </Card>
 
+        {advanced && (
+          <>
+            <Card className="bg-card border-border">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-6 flex-wrap">
+                  <ReadinessRing value={readiness} size={88} stroke={8} label="ready" />
+                  <div className="flex-1 min-w-[200px] text-sm text-muted-foreground">
+                    Readiness is the weighted average of your topic confidence below. Mark topics as
+                    Learning, Reviewing or Confident to update it.
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">Topics</h2>
+                  <span className="text-xs text-muted-foreground">{topics.length} total</span>
+                </div>
+
+                <div className="flex gap-2">
+                  <Input
+                    value={newTopic}
+                    onChange={e => setNewTopic(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleAdd()}
+                    placeholder="Add a topic (e.g. Calculus — limits)"
+                  />
+                  <Button onClick={handleAdd}>
+                    <Plus className="h-4 w-4 mr-1" /> Add
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  {topics.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-6 text-center">
+                      No topics yet. Add the first one above.
+                    </p>
+                  ) : (
+                    topics.map(t => (
+                      <TopicRow key={t.id} topic={t} examId={exam.id} examSubjectName={subjectName} />
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+
         <ExamRemindersPanel exam={exam} />
       </div>
 
+      <ExamFormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        exam={exam}
+      />
     </div>
   );
 };
