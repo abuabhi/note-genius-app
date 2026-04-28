@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,33 +10,56 @@ import { useUserSubjects } from '@/hooks/useUserSubjects';
 import { useExams } from '@/hooks/exams';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
+import type { Exam } from '@/types/exam';
 
 interface ExamFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated?: (examId: string) => void;
+  /** When provided, dialog runs in edit mode and prefills fields. */
+  exam?: Exam | null;
 }
 
-export const ExamFormDialog: React.FC<ExamFormDialogProps> = ({ open, onOpenChange, onCreated }) => {
+const toDateInputValue = (iso: string) => {
+  const d = new Date(iso);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
+export const ExamFormDialog: React.FC<ExamFormDialogProps> = ({ open, onOpenChange, onCreated, exam }) => {
   const { subjects } = useUserSubjects();
-  const { createExam } = useExams();
+  const { createExam, updateExam } = useExams();
   const { user } = useAuth();
+  const isEdit = !!exam;
+
   const [title, setTitle] = useState('');
   const [subjectId, setSubjectId] = useState<string>('');
   const [examDate, setExamDate] = useState('');
+  const [location, setLocation] = useState('');
   const [topic, setTopic] = useState('');
   const [notes, setNotes] = useState('');
-  const [target, setTarget] = useState(80);
   const [remind7, setRemind7] = useState(true);
   const [remind3, setRemind3] = useState(true);
   const [remind1, setRemind1] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  const reset = () => {
-    setTitle(''); setSubjectId(''); setExamDate('');
-    setTopic(''); setNotes(''); setTarget(80);
-    setRemind7(true); setRemind3(true); setRemind1(true);
-  };
+  // Prefill / reset whenever the dialog opens or the exam target changes.
+  useEffect(() => {
+    if (!open) return;
+    if (exam) {
+      setTitle(exam.title);
+      setSubjectId(exam.subject_id ?? '');
+      setExamDate(toDateInputValue(exam.exam_date));
+      setLocation(exam.location ?? '');
+      setNotes(exam.notes ?? '');
+      setTopic('');
+      setRemind7(true); setRemind3(true); setRemind1(true);
+    } else {
+      setTitle(''); setSubjectId(''); setExamDate('');
+      setLocation(''); setTopic(''); setNotes('');
+      setRemind7(true); setRemind3(true); setRemind1(true);
+    }
+  }, [open, exam]);
 
   const submit = async () => {
     if (!title.trim() || !examDate) return;
@@ -48,22 +71,38 @@ export const ExamFormDialog: React.FC<ExamFormDialogProps> = ({ open, onOpenChan
         remind1 ? 1 : null,
       ].filter((d): d is number => d !== null);
 
-      // examDate is yyyy-mm-dd (date-only); store at start of day in local time
-      const exam = await createExam({
+      const examIso = new Date(`${examDate}T00:00:00`).toISOString();
+
+      if (isEdit && exam) {
+        const dateChanged = examIso !== exam.exam_date;
+        await updateExam({
+          id: exam.id,
+          title: title.trim(),
+          subject_id: subjectId || null,
+          exam_date: examIso,
+          location: location.trim() || null,
+          notes: notes.trim() || null,
+          // Only re-write reminders if date changed (avoids surprise wipes).
+          ...(dateChanged ? { reminderDaysBefore } : {}),
+        });
+        onOpenChange(false);
+        return;
+      }
+
+      const created = await createExam({
         title: title.trim(),
         subject_id: subjectId || null,
-        exam_date: new Date(`${examDate}T00:00:00`).toISOString(),
-        location: null,
+        exam_date: examIso,
+        location: location.trim() || null,
         notes: notes.trim() || null,
-        target_readiness: target,
         createCalendarEvent: true,
         reminderDaysBefore,
       });
 
-      // Optional initial topic
+      // Optional initial topic (create-only).
       if (topic.trim() && user?.id) {
         await supabase.from('exam_topics').insert({
-          exam_id: exam.id,
+          exam_id: created.id,
           user_id: user.id,
           name: topic.trim(),
           weight: 1,
@@ -71,9 +110,8 @@ export const ExamFormDialog: React.FC<ExamFormDialogProps> = ({ open, onOpenChan
         });
       }
 
-      reset();
       onOpenChange(false);
-      onCreated?.(exam.id);
+      onCreated?.(created.id);
     } finally {
       setSubmitting(false);
     }
@@ -83,7 +121,7 @@ export const ExamFormDialog: React.FC<ExamFormDialogProps> = ({ open, onOpenChan
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add an exam</DialogTitle>
+          <DialogTitle>{isEdit ? 'Edit exam' : 'Add an exam'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -108,20 +146,21 @@ export const ExamFormDialog: React.FC<ExamFormDialogProps> = ({ open, onOpenChan
               <Input id="exam-date" type="date" value={examDate} onChange={e => setExamDate(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="exam-target">Target readiness (%)</Label>
-              <Input id="exam-target" type="number" min={0} max={100} value={target} onChange={e => setTarget(Number(e.target.value))} />
-              <p className="text-[11px] text-muted-foreground">
-                Your goal confidence level. Progress fills toward this — not 100%.
-              </p>
+              <Label htmlFor="exam-location">
+                Location <span className="text-xs text-muted-foreground font-normal">(optional)</span>
+              </Label>
+              <Input id="exam-location" value={location} onChange={e => setLocation(e.target.value)} placeholder="Hall B / Online" />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="exam-topic">
-              Topic <span className="text-xs text-muted-foreground font-normal">(optional)</span>
-            </Label>
-            <Input id="exam-topic" value={topic} onChange={e => setTopic(e.target.value)} placeholder="e.g. Calculus — limits" />
-            <p className="text-[11px] text-muted-foreground">You can add more topics after creating the exam.</p>
-          </div>
+          {!isEdit && (
+            <div className="space-y-2">
+              <Label htmlFor="exam-topic">
+                Topic <span className="text-xs text-muted-foreground font-normal">(optional)</span>
+              </Label>
+              <Input id="exam-topic" value={topic} onChange={e => setTopic(e.target.value)} placeholder="e.g. Calculus — limits" />
+              <p className="text-[11px] text-muted-foreground">You can add more topics later from Advanced tracking.</p>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="exam-notes">
               Notes <span className="text-xs text-muted-foreground font-normal">(optional)</span>
@@ -141,12 +180,17 @@ export const ExamFormDialog: React.FC<ExamFormDialogProps> = ({ open, onOpenChan
                 <Checkbox checked={remind1} onCheckedChange={v => setRemind1(!!v)} /> 1 day
               </label>
             </div>
+            {isEdit && (
+              <p className="text-[11px] text-muted-foreground">
+                Reminders are only re-scheduled if you change the exam date.
+              </p>
+            )}
           </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={submit} disabled={submitting || !title.trim() || !examDate}>
-            {submitting ? 'Adding…' : 'Add exam'}
+            {submitting ? (isEdit ? 'Saving…' : 'Adding…') : (isEdit ? 'Save changes' : 'Add exam')}
           </Button>
         </DialogFooter>
       </DialogContent>
