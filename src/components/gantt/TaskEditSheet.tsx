@@ -93,6 +93,34 @@ export const TaskEditSheet = ({
   const handleSave = () => {
     if (!draft.name.trim()) return;
     onSave(draft.id, draft);
+    // Suggest marking the linked exam topic as confident when task hits 100%
+    if (
+      draft.progress >= 100 &&
+      (task?.progress ?? 0) < 100 &&
+      draft.topicId &&
+      linkedTopic &&
+      linkedTopic.status !== 'confident'
+    ) {
+      toast(`Mark topic "${linkedTopic.name}" as confident in Exam Prep?`, {
+        action: {
+          label: 'Apply',
+          onClick: async () => {
+            try {
+              const { useExamTopics: _u } = await import('@/hooks/exams');
+              // We don't have direct access to setTopicStatus here without
+              // re-instantiating; rely on a custom event the page can wire up.
+              window.dispatchEvent(
+                new CustomEvent('gantt:set-topic-confident', {
+                  detail: { topicId: draft.topicId },
+                }),
+              );
+            } catch {
+              // ignore
+            }
+          },
+        },
+      });
+    }
     onOpenChange(false);
   };
 
