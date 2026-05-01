@@ -30,6 +30,7 @@ const BlogPage = lazy(() => import('@/pages/BlogPage'));
 const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'));
 const ExamPrepPage = lazy(() => import('@/pages/ExamPrepPage'));
 const ExamDetailPage = lazy(() => import('@/pages/ExamDetailPage'));
+const GanttPage = lazy(() => import('@/pages/GanttPage'));
 
 
 export const standardRoutes: RouteConfig[] = [
@@ -166,5 +167,9 @@ export const standardRoutes: RouteConfig[] = [
   {
     path: '/exam-prep/:id',
     element: <ExamDetailPage />
+  },
+  {
+    path: '/gantt',
+    element: <GanttPage />
   },
 ];
