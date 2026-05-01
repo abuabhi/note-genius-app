@@ -8,6 +8,7 @@ interface GanttBoardProps {
   viewMode: ViewMode;
   onChange: (id: string, patch: Partial<GanttTask>) => void;
   onDelete: (id: string) => void;
+  onEdit: (id: string) => void;
 }
 
 const toLibTask = (t: GanttTask): Task => ({
@@ -29,7 +30,7 @@ const toLibTask = (t: GanttTask): Task => ({
   },
 });
 
-export const GanttBoard = ({ tasks, viewMode, onChange, onDelete }: GanttBoardProps) => {
+export const GanttBoard = ({ tasks, viewMode, onChange, onDelete, onEdit }: GanttBoardProps) => {
   const libTasks = useMemo(() => tasks.map(toLibTask), [tasks]);
 
   if (libTasks.length === 0) {
@@ -59,6 +60,8 @@ export const GanttBoard = ({ tasks, viewMode, onChange, onDelete }: GanttBoardPr
           return true;
         }}
         onExpanderClick={(task) => onChange(task.id, { hideChildren: task.hideChildren })}
+        onDoubleClick={(task) => onEdit(task.id)}
+        onClick={(task) => onEdit(task.id)}
       />
     </div>
   );
