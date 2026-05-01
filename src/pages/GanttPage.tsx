@@ -13,15 +13,14 @@ import { toast } from 'sonner';
 
 const GanttPage = () => {
   const { user, loading } = useRequireAuth();
-  const { query: examsQuery } = useExams() as any;
-  const exams = examsQuery?.data ?? [];
+  const { exams } = useExams();
 
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
 
-  const { data: topics = [] } = useExamTopics(selectedExamId ?? undefined) as any;
+  const { topics } = useExamTopics(selectedExamId ?? undefined);
   const selectedExam = useMemo(
-    () => exams.find((e: any) => e.id === selectedExamId) ?? null,
+    () => exams.find((e) => e.id === selectedExamId) ?? null,
     [exams, selectedExamId],
   );
 
