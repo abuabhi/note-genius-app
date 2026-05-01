@@ -51,7 +51,7 @@ export const TaskEditSheet = ({
   onDelete,
 }: TaskEditSheetProps) => {
   const [draft, setDraft] = useState<GanttTask | null>(task);
-  const { topics, addTopic } = useExamTopics(examId ?? undefined);
+  const { topics, addTopic, setTopicStatus } = useExamTopics(examId ?? undefined);
   const [linking, setLinking] = useState(false);
 
   useEffect(() => {
@@ -101,22 +101,15 @@ export const TaskEditSheet = ({
       linkedTopic &&
       linkedTopic.status !== 'confident'
     ) {
-      toast(`Mark topic "${linkedTopic.name}" as confident in Exam Prep?`, {
+      const topicIdToSet = draft.topicId;
+      const topicName = linkedTopic.name;
+      toast(`Mark "${topicName}" as confident in Exam Prep?`, {
         action: {
           label: 'Apply',
-          onClick: async () => {
-            try {
-              const { useExamTopics: _u } = await import('@/hooks/exams');
-              // We don't have direct access to setTopicStatus here without
-              // re-instantiating; rely on a custom event the page can wire up.
-              window.dispatchEvent(
-                new CustomEvent('gantt:set-topic-confident', {
-                  detail: { topicId: draft.topicId },
-                }),
-              );
-            } catch {
-              // ignore
-            }
+          onClick: () => {
+            setTopicStatus(topicIdToSet, 'confident')
+              .then(() => toast.success(`"${topicName}" → Confident`))
+              .catch(() => toast.error('Failed to update topic'));
           },
         },
       });
