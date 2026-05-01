@@ -9,6 +9,9 @@ import { useGanttPlan } from '@/hooks/gantt/useGanttPlan';
 import { autoSeedFromExam } from '@/hooks/gantt/useAutoSeed';
 import { ExamPickerBar } from '@/components/gantt/ExamPickerBar';
 import { GanttBoard } from '@/components/gantt/GanttBoard';
+import { TaskEditSheet } from '@/components/gantt/TaskEditSheet';
+import { PlanSummary } from '@/components/gantt/PlanSummary';
+import { computePlanStats } from '@/utils/ganttRollup';
 import { toast } from 'sonner';
 
 const GanttPage = () => {
@@ -17,6 +20,7 @@ const GanttPage = () => {
 
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const { topics } = useExamTopics(selectedExamId ?? undefined);
   const selectedExam = useMemo(
