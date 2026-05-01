@@ -1586,6 +1586,117 @@ export type Database = {
           },
         ]
       }
+      gantt_plans: {
+        Row: {
+          created_at: string
+          exam_id: string | null
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_id?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_id?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gantt_plans_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gantt_tasks: {
+        Row: {
+          created_at: string
+          dependencies: string[]
+          end_date: string
+          hide_children: boolean
+          id: string
+          name: string
+          parent_id: string | null
+          plan_id: string
+          position: number
+          progress: number
+          start_date: string
+          topic_id: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dependencies?: string[]
+          end_date: string
+          hide_children?: boolean
+          id?: string
+          name: string
+          parent_id?: string | null
+          plan_id: string
+          position?: number
+          progress?: number
+          start_date: string
+          topic_id?: string | null
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dependencies?: string[]
+          end_date?: string
+          hide_children?: boolean
+          id?: string
+          name?: string
+          parent_id?: string | null
+          plan_id?: string
+          position?: number
+          progress?: number
+          start_date?: string
+          topic_id?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gantt_tasks_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "gantt_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gantt_tasks_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "gantt_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gantt_tasks_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "exam_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grades: {
         Row: {
           created_at: string

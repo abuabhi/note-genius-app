@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { CalendarIcon, Trash2 } from 'lucide-react';
+import { CalendarIcon, Trash2, GraduationCap } from 'lucide-react';
+import { useExamTopics } from '@/hooks/exams';
+import { toast } from 'sonner';
 import {
   Sheet,
   SheetContent,
@@ -30,6 +32,7 @@ import { statusOf, statusLabel } from '@/utils/ganttRollup';
 interface TaskEditSheetProps {
   task: GanttTask | null;
   allTasks: GanttTask[];
+  examId?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (id: string, patch: Partial<GanttTask>) => void;
@@ -41,18 +44,44 @@ const isoDate = (d: Date) => format(d, 'yyyy-MM-dd');
 export const TaskEditSheet = ({
   task,
   allTasks,
+  examId,
   open,
   onOpenChange,
   onSave,
   onDelete,
 }: TaskEditSheetProps) => {
   const [draft, setDraft] = useState<GanttTask | null>(task);
+  const { topics, addTopic, setTopicStatus } = useExamTopics(examId ?? undefined);
+  const [linking, setLinking] = useState(false);
 
   useEffect(() => {
     setDraft(task);
   }, [task]);
 
   if (!draft) return null;
+
+  const linkedTopic = topics.find((t) => t.id === draft.topicId);
+
+  const linkToTopic = async (topicId: string) => {
+    if (topicId === 'none') {
+      setDraft({ ...draft, topicId: null });
+      return;
+    }
+    if (topicId === '__new__') {
+      setLinking(true);
+      try {
+        const created = await addTopic({ name: draft.name });
+        setDraft({ ...draft, topicId: created.id });
+        toast.success(`Added "${created.name}" to Exam Prep`);
+      } catch {
+        // toast handled in hook
+      } finally {
+        setLinking(false);
+      }
+      return;
+    }
+    setDraft({ ...draft, topicId });
+  };
 
   const isProject = draft.type === 'project';
   const status = statusOf(draft.progress);
@@ -64,6 +93,27 @@ export const TaskEditSheet = ({
   const handleSave = () => {
     if (!draft.name.trim()) return;
     onSave(draft.id, draft);
+    // Suggest marking the linked exam topic as confident when task hits 100%
+    if (
+      draft.progress >= 100 &&
+      (task?.progress ?? 0) < 100 &&
+      draft.topicId &&
+      linkedTopic &&
+      linkedTopic.status !== 'confident'
+    ) {
+      const topicIdToSet = draft.topicId;
+      const topicName = linkedTopic.name;
+      toast(`Mark "${topicName}" as confident in Exam Prep?`, {
+        action: {
+          label: 'Apply',
+          onClick: () => {
+            setTopicStatus(topicIdToSet, 'confident')
+              .then(() => toast.success(`"${topicName}" → Confident`))
+              .catch(() => toast.error('Failed to update topic'));
+          },
+        },
+      });
+    }
     onOpenChange(false);
   };
 
@@ -237,6 +287,43 @@ export const TaskEditSheet = ({
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {examId && (
+            <div className="space-y-1.5 rounded-md border border-border bg-muted/30 p-3">
+              <Label className="flex items-center gap-1.5">
+                <GraduationCap className="h-4 w-4" /> Exam Prep link
+              </Label>
+              <Select
+                value={draft.topicId ?? 'none'}
+                onValueChange={linkToTopic}
+                disabled={linking}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Not linked" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Not linked</SelectItem>
+                  <SelectItem value="__new__">
+                    + Add "{draft.name}" as a new topic
+                  </SelectItem>
+                  {topics.length > 0 && (
+                    <div className="px-2 py-1 text-xs text-muted-foreground">Existing topics</div>
+                  )}
+                  {topics.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {linkedTopic && (
+                <p className="text-xs text-muted-foreground">
+                  Linked to <strong>{linkedTopic.name}</strong>. When you mark this task done,
+                  we'll suggest setting the topic to "Confident".
+                </p>
+              )}
             </div>
           )}
         </div>
