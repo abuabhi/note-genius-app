@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GanttPlan, GanttTask } from '@/types/gantt';
 import { ganttKey } from '@/types/gantt';
+import { rollupParentProgress } from '@/utils/ganttRollup';
 
 const loadPlan = (examId: string | null): GanttPlan => {
   try {
@@ -43,12 +44,34 @@ export function useGanttPlan(examId: string | null) {
   const setTasks = useCallback(
     (updater: GanttTask[] | ((prev: GanttTask[]) => GanttTask[])) => {
       setTasksState((prev) => {
-        const next = typeof updater === 'function' ? (updater as any)(prev) : updater;
+        const raw = typeof updater === 'function' ? (updater as any)(prev) : updater;
+        const next = rollupParentProgress(raw);
         persist(next);
         return next;
       });
     },
     [persist],
+  );
+
+  const addSubTask = useCallback(
+    (parentId: string, partial: Partial<GanttTask>) => {
+      setTasks((prev) => {
+        const parent = prev.find((t) => t.id === parentId);
+        if (!parent) return prev;
+        const newTask: GanttTask = {
+          id: `task-${Date.now()}`,
+          name: 'New sub-task',
+          start: parent.start,
+          end: parent.end,
+          progress: 0,
+          type: 'task',
+          parentId,
+          ...partial,
+        };
+        return [...prev, newTask];
+      });
+    },
+    [setTasks],
   );
 
   const updateTask = useCallback(
@@ -71,5 +94,5 @@ export function useGanttPlan(examId: string | null) {
 
   const clearPlan = useCallback(() => setTasks([]), [setTasks]);
 
-  return { tasks, setTasks, updateTask, addTask, removeTask, clearPlan };
+  return { tasks, setTasks, updateTask, addTask, addSubTask, removeTask, clearPlan };
 }
