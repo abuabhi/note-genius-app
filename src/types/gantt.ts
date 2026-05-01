@@ -10,14 +10,17 @@ export interface GanttTask {
   parentId?: string;
   dependencies?: string[];
   hideChildren?: boolean;
+  topicId?: string | null;
+  position?: number;
 }
 
 export interface GanttPlan {
-  examId: string | null; // null = standalone
-  tasks: GanttTask[];
+  id: string;
+  title: string;
+  examId: string | null;
+  createdAt: string;
   updatedAt: string;
 }
 
+// Legacy localStorage shape (used only by one-time migration)
 export const GANTT_STORAGE_PREFIX = 'gantt:plan:';
-export const ganttKey = (examId: string | null) =>
-  `${GANTT_STORAGE_PREFIX}${examId ?? 'standalone'}`;
