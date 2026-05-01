@@ -42,13 +42,6 @@ export const PlanningNavigationSection = ({
           isCollapsed={isCollapsed}
         />
       )}
-      <NavLink
-        to="/gantt"
-        icon={GanttChartSquare}
-        label="Gantt (beta)"
-        isActive={pathname.includes("/gantt")}
-        isCollapsed={isCollapsed}
-      />
     </>
   );
 };

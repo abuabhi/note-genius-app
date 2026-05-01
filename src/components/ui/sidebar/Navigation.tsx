@@ -23,6 +23,7 @@ import {
   Calendar,
   HelpCircle,
   GraduationCap,
+  GanttChartSquare,
 } from "lucide-react";
 
 interface NavigationProps {
@@ -116,6 +117,13 @@ export const Navigation = ({ isCollapsed }: NavigationProps) => {
                 icon={Target}
                 label="Study Goals"
                 isActive={pathname.startsWith("/goals") || pathname.startsWith("/todos")}
+                isCollapsed={isCollapsed}
+              />
+              <NavLink
+                to="/gantt"
+                icon={GanttChartSquare}
+                label="Planner"
+                isActive={pathname.startsWith("/gantt")}
                 isCollapsed={isCollapsed}
               />
               <NavLink
