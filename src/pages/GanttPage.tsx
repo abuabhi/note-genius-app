@@ -86,16 +86,26 @@ const GanttPage = () => {
           onViewModeChange={setViewMode}
           hasTasks={tasks.length > 0}
         />
+        {tasks.length > 0 && <PlanSummary stats={computePlanStats(tasks)} />}
         <GanttBoard
           tasks={tasks}
           viewMode={viewMode}
           onChange={updateTask}
           onDelete={removeTask}
+          onEdit={setEditingId}
         />
         <p className="text-xs text-muted-foreground">
-          Prototype: data lives in localStorage under key{' '}
-          <code className="px-1 py-0.5 rounded bg-muted">{`gantt:plan:${selectedExamId ?? 'standalone'}`}</code>.
+          Tip: <strong>click or double-click</strong> a bar to edit its name, dates, dependencies, and progress.
+          Drag bars to reschedule, drag the right edge to resize, drag the round handle to set % complete.
         </p>
+        <TaskEditSheet
+          task={tasks.find((t) => t.id === editingId) ?? null}
+          allTasks={tasks}
+          open={!!editingId}
+          onOpenChange={(o) => !o && setEditingId(null)}
+          onSave={updateTask}
+          onDelete={removeTask}
+        />
       </div>
     </div>
   );
