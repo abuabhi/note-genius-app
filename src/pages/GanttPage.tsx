@@ -9,6 +9,9 @@ import { useGanttPlan } from '@/hooks/gantt/useGanttPlan';
 import { autoSeedFromExam } from '@/hooks/gantt/useAutoSeed';
 import { ExamPickerBar } from '@/components/gantt/ExamPickerBar';
 import { GanttBoard } from '@/components/gantt/GanttBoard';
+import { TaskEditSheet } from '@/components/gantt/TaskEditSheet';
+import { PlanSummary } from '@/components/gantt/PlanSummary';
+import { computePlanStats } from '@/utils/ganttRollup';
 import { toast } from 'sonner';
 
 const GanttPage = () => {
@@ -17,6 +20,7 @@ const GanttPage = () => {
 
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Week);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const { topics } = useExamTopics(selectedExamId ?? undefined);
   const selectedExam = useMemo(
@@ -82,16 +86,26 @@ const GanttPage = () => {
           onViewModeChange={setViewMode}
           hasTasks={tasks.length > 0}
         />
+        {tasks.length > 0 && <PlanSummary stats={computePlanStats(tasks)} />}
         <GanttBoard
           tasks={tasks}
           viewMode={viewMode}
           onChange={updateTask}
           onDelete={removeTask}
+          onEdit={setEditingId}
         />
         <p className="text-xs text-muted-foreground">
-          Prototype: data lives in localStorage under key{' '}
-          <code className="px-1 py-0.5 rounded bg-muted">{`gantt:plan:${selectedExamId ?? 'standalone'}`}</code>.
+          Tip: <strong>click or double-click</strong> a bar to edit its name, dates, dependencies, and progress.
+          Drag bars to reschedule, drag the right edge to resize, drag the round handle to set % complete.
         </p>
+        <TaskEditSheet
+          task={tasks.find((t) => t.id === editingId) ?? null}
+          allTasks={tasks}
+          open={!!editingId}
+          onOpenChange={(o) => !o && setEditingId(null)}
+          onSave={updateTask}
+          onDelete={removeTask}
+        />
       </div>
     </div>
   );
