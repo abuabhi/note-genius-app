@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { CalendarIcon, Trash2 } from 'lucide-react';
+import { CalendarIcon, Trash2, GraduationCap } from 'lucide-react';
+import { useExamTopics } from '@/hooks/exams';
+import { toast } from 'sonner';
 import {
   Sheet,
   SheetContent,
@@ -30,6 +32,7 @@ import { statusOf, statusLabel } from '@/utils/ganttRollup';
 interface TaskEditSheetProps {
   task: GanttTask | null;
   allTasks: GanttTask[];
+  examId?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (id: string, patch: Partial<GanttTask>) => void;
@@ -41,18 +44,44 @@ const isoDate = (d: Date) => format(d, 'yyyy-MM-dd');
 export const TaskEditSheet = ({
   task,
   allTasks,
+  examId,
   open,
   onOpenChange,
   onSave,
   onDelete,
 }: TaskEditSheetProps) => {
   const [draft, setDraft] = useState<GanttTask | null>(task);
+  const { topics, addTopic } = useExamTopics(examId ?? undefined);
+  const [linking, setLinking] = useState(false);
 
   useEffect(() => {
     setDraft(task);
   }, [task]);
 
   if (!draft) return null;
+
+  const linkedTopic = topics.find((t) => t.id === draft.topicId);
+
+  const linkToTopic = async (topicId: string) => {
+    if (topicId === 'none') {
+      setDraft({ ...draft, topicId: null });
+      return;
+    }
+    if (topicId === '__new__') {
+      setLinking(true);
+      try {
+        const created = await addTopic({ name: draft.name });
+        setDraft({ ...draft, topicId: created.id });
+        toast.success(`Added "${created.name}" to Exam Prep`);
+      } catch {
+        // toast handled in hook
+      } finally {
+        setLinking(false);
+      }
+      return;
+    }
+    setDraft({ ...draft, topicId });
+  };
 
   const isProject = draft.type === 'project';
   const status = statusOf(draft.progress);

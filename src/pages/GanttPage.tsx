@@ -114,7 +114,7 @@ const GanttPage = () => {
             exams={exams}
             onSelect={setCurrentPlanId}
             onCreate={handleCreatePlan}
-            onRename={renamePlan}
+            onRename={(id, title) => renamePlan({ id, title })}
             onDelete={async (id) => {
               await deletePlan(id);
               if (id === currentPlanId) setCurrentPlanId(null);
