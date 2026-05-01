@@ -1,45 +1,72 @@
-## What's wrong
+## Goal
 
-After tracing the data flow on `/schedule`, two real bugs explain what you're seeing:
+A throwaway prototype at `/gantt` where you can pick an existing exam (e.g. Maths Methods, 1-Oct), have a task tree auto-seeded across the weeks before it, then drag, resize, and link dependencies on a Gantt chart. All state lives in `localStorage` so we can rip it out cleanly if you don't like it.
 
-**Bug 1 — Calendar shows goals on the start date.**
-`src/components/schedule/ScheduleCalendar.tsx` (lines 72–101) creates TWO calendar entries for every goal: a `Goal due: …` chip on `end_date` AND a `Goal starts: …` chip on `start_date`. That's why a goal appears on the day it begins instead of (or in addition to) the day it's due.
+## What you'll see
 
-**Bug 2 — Goals never appear in "Upcoming Events (Next 7 Days)".**
-`src/components/schedule/UpcomingEventsList.tsx` only renders items from the `events` array, and `useUpcomingEventsQuery` (`src/hooks/events/useEventQueries.ts`, lines 54–86) queries only the `events` table. Study goals live in the `study_goals` table and are never merged in, so a goal due in the next 7 days is invisible there.
+```text
+/gantt
+┌─────────────────────────────────────────────────────────────────┐
+│  Plan for: [Maths Methods — 1 Oct ▼]   [+ Auto-seed] [+ Task]   │
+├──────────────────────────┬──────────────────────────────────────┤
+│ TASKS (tree)             │  TIMELINE  (Day | Week | Month)      │
+│ ▾ Calculus               │  ████████░░░░░░░░░░░░░░░  40%        │
+│   • Limits               │     ███░░░                            │
+│   • Derivatives          │        ████░░                         │
+│   • Integrals            │            █████░ ─→ depends on Deriv │
+│ ▾ Statistics             │  ░░░░░░████████░░░░░░░░░░  60%       │
+│   • Distributions        │        ████░░                         │
+│ ▸ Mock Exam (Sep 25)     │  ░░░░░░░░░░░░░░░░░░██████  0%        │
+└──────────────────────────┴──────────────────────────────────────┘
+```
 
-The same `UpcomingEventsList` is used on this page exclusively, so the fix is localized.
+Left = collapsible task/sub-task tree with % complete. Right = bars on a date axis. Drag to move, drag edges to resize, drag from one bar's right edge to another's left to create a dependency arrow. Inline edit task names. Toolbar to switch Day/Week/Month zoom.
 
-## Fix
+## Auto-seed logic
 
-1. **Calendar — remove goal start markers.**
-   In `ScheduleCalendar.tsx`, drop the `if (g.start_date && g.start_date !== g.end_date) { … goal-start … }` block so only the `Goal due: …` chip on `end_date` is rendered. Also remove the now-unused `'goal-start'` from the `SourceKind` union, the `goal-start` branch in `handleEventClick`, and the `.fc-event-goal-start` CSS rule in `src/index.css`.
+When you pick an exam and hit **Auto-seed**:
+1. Read existing `exam_topics` for that exam (we already have the table). If none exist, generate a default tree: `Foundations → Core Topics → Practice → Mock Exam → Final Review`.
+2. Spread tasks evenly between **today** and **exam_date − 3 days**.
+3. Create one parent task per topic, with sub-tasks `Learn`, `Practice`, `Review`.
+4. Add a `Mock Exam` milestone 1 week before, and `Final Review` in the last 3 days.
+5. Default dependencies: each topic's `Practice` depends on its `Learn`, `Review` depends on `Practice`, `Mock Exam` depends on all `Review`s.
 
-2. **Upcoming Events — include goals due in the next 7 days.**
-   - Add `useUpcomingGoalsQuery` in `src/hooks/events/useEventQueries.ts` that selects `id, title, description, end_date` from `study_goals` where `user_id = userId`, `status != 'completed'`, and `end_date` is between today and today+7.
-   - Expose it through `useEvents` (`src/hooks/events/useEvents.ts`) and the `UseEventsReturn` type (`src/hooks/events/types.ts`) as `upcomingGoals`.
-   - In `SchedulePage.tsx`, pass `upcomingGoals` into `UpcomingEventsList`.
-   - In `UpcomingEventsList.tsx`, normalize each goal into the same day-grouped structure used for events (key by `end_date`), render with a distinct "Goal due" badge + blue accent (matching the existing `.fc-event-goal` color), and show days-remaining context (e.g. "Due in 3 days"). No time row for goals (they're all-day).
-   - Invalidate the new query inside `useGoalActions` / `useSimplifiedGoals` mutations so creating, editing, or completing a goal refreshes the list immediately.
+You can then drag/edit anything.
 
-3. **Cache invalidation hooks.**
-   Add `queryClient.invalidateQueries({ queryKey: ['upcomingGoals'] })` wherever goals are mutated (`useSimplifiedGoals.ts` create/update/delete paths and `useOverdueGoalManager.ts` reschedules) so the Upcoming list stays in sync.
+## Library choice
 
-## Files to change
+`gantt-task-react` (MIT, ~40KB, React-native, supports drag/resize/dependencies/progress/zoom out of the box). Alternatives considered: `frappe-gantt` (not React-native, awkward), `dhtmlx-gantt` (commercial for advanced features). `gantt-task-react` is the right fit for a prototype.
 
-- `src/components/schedule/ScheduleCalendar.tsx`
-- `src/index.css` (remove `.fc-event-goal-start` rule)
-- `src/hooks/events/useEventQueries.ts`
-- `src/hooks/events/useEvents.ts`
-- `src/hooks/events/types.ts`
-- `src/components/schedule/UpcomingEventsList.tsx`
-- `src/pages/SchedulePage.tsx`
-- `src/hooks/useSimplifiedGoals.ts` (invalidate `upcomingGoals`)
-- `src/hooks/useOverdueGoalManager.ts` (invalidate `upcomingGoals`)
+## Persistence
 
-No database migration required — `study_goals` already has `end_date` and `status`.
+LocalStorage key per exam: `gantt:plan:<examId>` containing `{ tasks: GanttTask[], updatedAt: string }`. A separate `gantt:plan:standalone` for plans not linked to an exam. Auto-save on every change (debounced 400ms).
 
-## Result
+## Files to add
 
-- Calendar: each goal shows up exactly once, on its due date, as "Goal due: …". No more start-date noise.
-- Upcoming Events (Next 7 Days): goals due within the window appear grouped by their due date alongside events, with a clear "Goal due" badge.
+- `src/pages/GanttPage.tsx` — page shell, exam picker, toolbar, save indicator.
+- `src/components/gantt/GanttBoard.tsx` — wraps `gantt-task-react`, handles change events.
+- `src/components/gantt/TaskTreeSidebar.tsx` — collapsible left panel (we render our own tree above the library's built-in one for nicer UX, or use the library's if it suffices in v1).
+- `src/components/gantt/ExamPickerBar.tsx` — dropdown of user's exams + "Standalone plan" option.
+- `src/hooks/gantt/useGanttPlan.ts` — load/save/migrate localStorage, expose `tasks`, `setTasks`, `addTask`, `removeTask`, `seedFromExam`.
+- `src/hooks/gantt/useAutoSeed.ts` — the seeding algorithm above; pulls exam + topics via existing `useExams` / `useExamTopics`.
+- `src/types/gantt.ts` — `GanttTask`, `GanttDependency`, storage shape.
+
+## Files to edit
+
+- `src/routes/standardRoutes.tsx` — add lazy route `/gantt → GanttPage`.
+- `package.json` — add `gantt-task-react` dependency.
+- (Optional) `src/components/ui/sidebar/sections/PlanningNavigationSection.tsx` — add a temporary "Gantt (beta)" link so you can find it. Behind a simple flag so removing it later is one line.
+
+## Out of scope (v1)
+
+- No Supabase table, no calendar sync, no sharing, no print/export. All deferred until you decide to merge with `/schedule`.
+- No mobile-optimised view. Desktop-first prototype (you're testing at 1460px anyway).
+- No undo/redo (localStorage snapshot on every save means worst-case you re-seed).
+
+## How we'd graduate it later (not now)
+
+If you like it: create `study_plan_tasks` + `study_plan_dependencies` tables with RLS, swap the localStorage hook for a Supabase-backed one, optionally render bars as overlays on the FullCalendar `/schedule` view, and remove the `/gantt` route or keep it as the dedicated planning surface.
+
+---
+
+Approve and I'll build it.
