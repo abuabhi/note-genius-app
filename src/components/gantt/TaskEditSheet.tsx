@@ -289,6 +289,43 @@ export const TaskEditSheet = ({
               </div>
             </div>
           )}
+
+          {examId && (
+            <div className="space-y-1.5 rounded-md border border-border bg-muted/30 p-3">
+              <Label className="flex items-center gap-1.5">
+                <GraduationCap className="h-4 w-4" /> Exam Prep link
+              </Label>
+              <Select
+                value={draft.topicId ?? 'none'}
+                onValueChange={linkToTopic}
+                disabled={linking}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Not linked" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Not linked</SelectItem>
+                  <SelectItem value="__new__">
+                    + Add "{draft.name}" as a new topic
+                  </SelectItem>
+                  {topics.length > 0 && (
+                    <div className="px-2 py-1 text-xs text-muted-foreground">Existing topics</div>
+                  )}
+                  {topics.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {linkedTopic && (
+                <p className="text-xs text-muted-foreground">
+                  Linked to <strong>{linkedTopic.name}</strong>. When you mark this task done,
+                  we'll suggest setting the topic to "Confident".
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <SheetFooter className="gap-2 sm:gap-2">
