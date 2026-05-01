@@ -1,7 +1,7 @@
 
 import { useLocation } from "react-router-dom";
 import { NavLink } from "../NavLink";
-import { Calendar, Target, ListTodo, GanttChartSquare } from "lucide-react";
+import { Calendar, Target, ListTodo } from "lucide-react";
 
 interface PlanningNavigationSectionProps {
   isCollapsed: boolean;
