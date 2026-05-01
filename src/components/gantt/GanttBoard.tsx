@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Gantt, Task, ViewMode } from 'gantt-task-react';
 import 'gantt-task-react/dist/index.css';
 import type { GanttTask } from '@/types/gantt';
+import { buildTaskListTable } from './GanttTaskList';
 
 interface GanttBoardProps {
   tasks: GanttTask[];
@@ -9,6 +10,7 @@ interface GanttBoardProps {
   onChange: (id: string, patch: Partial<GanttTask>) => void;
   onDelete: (id: string) => void;
   onEdit: (id: string) => void;
+  onRename: (id: string, name: string) => void;
 }
 
 const toLibTask = (t: GanttTask): Task => ({
@@ -30,13 +32,21 @@ const toLibTask = (t: GanttTask): Task => ({
   },
 });
 
-export const GanttBoard = ({ tasks, viewMode, onChange, onDelete, onEdit }: GanttBoardProps) => {
+export const GanttBoard = ({
+  tasks,
+  viewMode,
+  onChange,
+  onDelete,
+  onEdit,
+  onRename,
+}: GanttBoardProps) => {
   const libTasks = useMemo(() => tasks.map(toLibTask), [tasks]);
+  const TaskListTable = useMemo(() => buildTaskListTable(onRename), [onRename]);
 
   if (libTasks.length === 0) {
     return (
       <div className="flex h-[400px] items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 text-sm text-muted-foreground">
-        No tasks yet — pick an exam and click <span className="mx-1 font-medium">Auto-seed</span>, or add one manually.
+        No tasks yet — click <span className="mx-1 font-medium">Auto-seed</span> or <span className="mx-1 font-medium">+ Task</span> to get started.
       </div>
     );
   }
@@ -46,8 +56,9 @@ export const GanttBoard = ({ tasks, viewMode, onChange, onDelete, onEdit }: Gant
       <Gantt
         tasks={libTasks}
         viewMode={viewMode}
-        listCellWidth="220px"
+        listCellWidth="260px"
         columnWidth={viewMode === ViewMode.Month ? 200 : viewMode === ViewMode.Week ? 120 : 50}
+        TaskListTable={TaskListTable}
         onDateChange={(task) =>
           onChange(task.id, {
             start: task.start.toISOString().slice(0, 10),
